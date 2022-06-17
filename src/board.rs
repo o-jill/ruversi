@@ -23,8 +23,46 @@ impl Board {
     ret
   }
 
+  pub fn from(rfen : &str) -> Result<Board, String> {
+    let elem = rfen.split_whitespace().collect::<Vec<_>>();
+
+    if elem.len() != 2 || elem[1].find(|c:char| c == 'b' || c == 'f' || c == 'w').is_none() {
+        return Err(String::from("Invalid rfen"));
+    }
+    let mut ret = Board {
+        cells : Vec::new(),
+    };
+    ret.cells.resize(8 * 8, BLANK);
+    let mut idx = 0;
+    for ch in elem[0].chars() {
+        match ch {
+            'A'..='H' => {
+                let n = ch as i32 + 1 - 'A' as i32;
+                for i in 0..n {
+                    ret.cells[idx] = SENTE;
+                    idx += 1;
+                }
+            },
+            'a'..='h' => {
+                let n = ch as i32 + 1 - 'a' as i32;
+                for i in 0..n {
+                    ret.cells[idx] = GOTE;
+                    idx += 1;
+                }
+            },
+            '1'..='8' => {
+                idx += ch as usize - '0' as usize;
+            },
+            '/' => {},
+            _ => {
+                return Err(format!("unknown letter rfen [{}]", ch));
+            }
+        }
+    }
+    Ok(ret)
+  }
+
   pub fn put(&self) {
-    println!("Hello, reversi board! sz:{}", self.cells.len());
     for y in 0..8 {
         for x in 0..8 {
             let c = self.cells[index(x, y)];
