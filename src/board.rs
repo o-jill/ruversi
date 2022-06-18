@@ -158,4 +158,146 @@ impl Board {
     pub fn set(&mut self, x : usize, y : usize) {
         self.cells[Board::index(x, y)] = self.teban;
     }
+
+    fn reverse(&mut self, x : usize, y : usize) {
+        let color = self.teban;
+        // 左
+        for i in (0..x).rev() {
+            let val = self.at(i, y);
+            if val == color {
+                for n in (i + 1)..x {
+                    self.set(n, y);
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 右
+        for i in  (x + 1)..NUMCELL {
+            let val = self.at(i, y);
+            if val == color {
+                for n in (x + 1)..i {
+                    self.set(n, y);
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 上
+        for i in (0..y).rev() {
+            let val = self.at(x, i);
+            if val == color {
+                for n in (i + 1)..y {
+                    self.set(x, n);
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 下
+        for i in (y + 1)..NUMCELL {
+            let val = self.at(x, i);
+            if val == color {
+                for n in (y + 1)..i {
+                    self.set(x, n);
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 左上
+        for i in 1..NUMCELL {
+            if x < i || y < i {
+                break;
+            }
+            let val = self.at(x - i, y - i);
+            if val == color {
+                for n in 1..i {
+                    self.set(x - n, y - n);
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 右上
+        for i in 1..NUMCELL {
+            if x + i >= NUMCELL || y < i {
+                break;
+            }
+            let val = self.at(x + i, y - i);
+            if val == color {
+                for n in 1..i {
+                    self.set(x + n, y - n);
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 右下
+        for i in 1..NUMCELL {
+            if x + i >= NUMCELL || y + i >= NUMCELL {
+                break;
+            }
+            let val = self.at(x + i, y + i);
+            if val == color {
+                for n in 1..i {
+                    self.set(x + n, y + n);
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 左下
+        for i in 1..NUMCELL {
+            if x < i || y + i >= NUMCELL {
+                break;
+            }
+            let val = self.at(x - i, y + i);
+            if val == color {
+                for n in 1..i {
+                    self.set(x - n, y + n);
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+    }
+
+    pub fn r#move(&self, x : usize, y : usize) -> Result<Board, &str> {
+        let xc = x - 1;
+        let yc = y - 1;
+        if self.at(xc, yc) != BLANK {
+            return Err("stone exists.");
+        }
+        let teban = self.teban;
+        let mut ban = self.clone();
+        ban.set(xc, yc);
+        ban.reverse(xc, yc);
+        ban.flipturn();
+
+        Ok(ban)
+    }
 }

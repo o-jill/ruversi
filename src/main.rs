@@ -10,7 +10,10 @@ fn main() {
     ban.put();
     println!("RFEN:{}", ban.to_str());
     let mut ban = board::Board::init();
-    ban.put();
     ban.flipturn();
     ban.put();
+    let ban2 = ban.r#move(3, 4).unwrap();
+    ban2.put();
+    let ban2 = ban2.r#move(3, 3).unwrap();
+    ban2.put();
 }
