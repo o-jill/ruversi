@@ -8,4 +8,5 @@ fn main() {
     println!("rfen: {}", rfen);
     let ban = board::Board::from(rfen).unwrap();
     ban.put();
+    println!("RFEN:{}", ban.to_str());
 }

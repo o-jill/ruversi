@@ -1,6 +1,11 @@
 const SENTE : i8 = 1;
 const BLANK : i8 = 0;
 const GOTE : i8 = -1;
+const NONE : i8 = 127;
+
+const STR_SENTE : &str = "0ABCDEFGH";
+const STR_GOTE : &str = "0abcdefgh";
+const STR_NUM : &str = "012345678";
 
 pub struct Board {
     cells: Vec<i8>,
@@ -38,14 +43,14 @@ impl Board {
         match ch {
             'A'..='H' => {
                 let n = ch as i32 + 1 - 'A' as i32;
-                for i in 0..n {
+                for _i in 0..n {
                     ret.cells[idx] = SENTE;
                     idx += 1;
                 }
             },
             'a'..='h' => {
                 let n = ch as i32 + 1 - 'a' as i32;
-                for i in 0..n {
+                for _i in 0..n {
                     ret.cells[idx] = GOTE;
                     idx += 1;
                 }
@@ -60,6 +65,40 @@ impl Board {
         }
     }
     Ok(ret)
+  }
+
+  pub fn to_str(&self) -> String {
+    let mut ban = Vec::<String>::new();
+    for y in 0..8 {
+        let mut old = NONE;
+        let mut count = 0;
+        let mut line = String::new();
+        for x in 0..8 {
+            let c = self.cells[index(x, y)];
+            if c == old {
+                count += 1;
+                continue;
+            }
+            if old == SENTE {
+                line += &STR_SENTE.chars().nth(count).unwrap().to_string();
+            } else if old == GOTE {
+                line += &STR_GOTE.chars().nth(count).unwrap().to_string();
+            } else if old == BLANK {
+                line += &STR_NUM.chars().nth(count).unwrap().to_string();
+            }
+            old = c;
+            count = 1;
+        }
+        if old == SENTE {
+            line += &STR_SENTE.chars().nth(count).unwrap().to_string();
+        } else if old == GOTE {
+            line += &STR_GOTE.chars().nth(count).unwrap().to_string();
+        } else if old == BLANK {
+            line += &STR_NUM.chars().nth(count).unwrap().to_string();
+        }
+        ban.push(line);
+    }
+    ban.join("/")
   }
 
   pub fn put(&self) {
