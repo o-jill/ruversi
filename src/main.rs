@@ -1,4 +1,5 @@
 mod board;
+mod node;
 
 fn main() {
     println!("Hello, reversi world!");
