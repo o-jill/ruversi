@@ -2,7 +2,8 @@ const SENTE : i8 = 1;
 const BLANK : i8 = 0;
 const GOTE : i8 = -1;
 const NONE : i8 = 127;
-
+const NUMCELL : usize = 8;
+const CELL_2D : usize = NUMCELL * NUMCELL;
 const STR_SENTE : &str = "0ABCDEFGH";
 const STR_GOTE : &str = "0abcdefgh";
 const STR_NUM : &str = "012345678";
@@ -47,7 +48,7 @@ impl Board {
             cells : Vec::new(),
             teban : teban,
         };
-        ret.cells.resize(8 * 8, BLANK);
+        ret.cells.resize(CELL_2D, BLANK);
         let mut idx = 0;
         for ch in elem[0].chars() {
             match ch {
@@ -83,11 +84,11 @@ impl Board {
 
     pub fn to_str(&self) -> String {
         let mut ban = Vec::<String>::new();
-        for y in 0..8 {
+        for y in 0..NUMCELL {
             let mut old = NONE;
             let mut count = 0;
             let mut line = String::new();
-            for x in 0..8 {
+            for x in 0..NUMCELL {
                 let c = self.cells[index(x, y)];
                 if c == old {
                     count += 1;
@@ -118,9 +119,9 @@ impl Board {
     }
 
     pub fn put(&self) {
-        for y in 0..8 {
+        for y in 0..NUMCELL {
             let mut line = String::new();
-            for x in 0..8 {
+            for x in 0..NUMCELL {
                 let c = self.cells[index(x, y)];
                 line +=
                     if c == SENTE {
