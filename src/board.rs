@@ -9,6 +9,7 @@ const STR_NUM : &str = "012345678";
 
 pub struct Board {
     cells: Vec<i8>,
+    teban: i8,
 }
 
 fn index(x: usize, y: usize) -> usize {
@@ -16,68 +17,87 @@ fn index(x: usize, y: usize) -> usize {
 }
 
 impl Board {
-  pub fn new() -> Board {
-    let mut ret = Board {
-        cells : Vec::new(),
-    };
-    ret.cells.resize(8 * 8, BLANK);
-    ret.cells[index(3, 3)] = SENTE;
-    ret.cells[index(4, 4)] = SENTE;
-    ret.cells[index(3, 4)] = GOTE;
-    ret.cells[index(4, 3)] = GOTE;
-    ret
-  }
-
-  pub fn from(rfen : &str) -> Result<Board, String> {
-    let elem = rfen.split_whitespace().collect::<Vec<_>>();
-
-    if elem.len() != 2 || elem[1].find(|c:char| c == 'b' || c == 'f' || c == 'w').is_none() {
-        return Err(String::from("Invalid rfen"));
+    pub fn new() -> Board {
+        let mut ret = Board {
+            cells : Vec::new(),
+            teban : SENTE,
+        };
+        ret.cells.resize(8 * 8, BLANK);
+        ret.cells[index(3, 3)] = SENTE;
+        ret.cells[index(4, 4)] = SENTE;
+        ret.cells[index(3, 4)] = GOTE;
+        ret.cells[index(4, 3)] = GOTE;
+        ret
     }
-    let mut ret = Board {
-        cells : Vec::new(),
-    };
-    ret.cells.resize(8 * 8, BLANK);
-    let mut idx = 0;
-    for ch in elem[0].chars() {
-        match ch {
-            'A'..='H' => {
-                let n = ch as i32 + 1 - 'A' as i32;
-                for _i in 0..n {
-                    ret.cells[idx] = SENTE;
-                    idx += 1;
+
+    pub fn from(rfen : &str) -> Result<Board, String> {
+        let elem = rfen.split_whitespace().collect::<Vec<_>>();
+
+        if elem.len() != 2 || elem[1].find(|c:char| c == 'b' || c == 'f' || c == 'w').is_none() {
+            return Err(String::from("Invalid rfen"));
+        }
+        let teban;
+        match elem[1] {
+            "b" => {teban = SENTE},
+            "w" => {teban = GOTE},
+            "f" => {teban = BLANK}
+            _ => { return Err(format!("Invalid teban: {}", elem[1])); }
+        }
+        let mut ret = Board {
+            cells : Vec::new(),
+            teban : teban,
+        };
+        ret.cells.resize(8 * 8, BLANK);
+        let mut idx = 0;
+        for ch in elem[0].chars() {
+            match ch {
+                'A'..='H' => {
+                    let n = ch as i32 + 1 - 'A' as i32;
+                    for _i in 0..n {
+                        ret.cells[idx] = SENTE;
+                        idx += 1;
+                    }
+                },
+                'a'..='h' => {
+                    let n = ch as i32 + 1 - 'a' as i32;
+                    for _i in 0..n {
+                        ret.cells[idx] = GOTE;
+                        idx += 1;
+                    }
+                },
+                '1'..='8' => {
+                    idx += ch as usize - '0' as usize;
+                },
+                '/' => {},
+                _ => {
+                    return Err(format!("unknown letter rfen [{}]", ch));
                 }
-            },
-            'a'..='h' => {
-                let n = ch as i32 + 1 - 'a' as i32;
-                for _i in 0..n {
-                    ret.cells[idx] = GOTE;
-                    idx += 1;
-                }
-            },
-            '1'..='8' => {
-                idx += ch as usize - '0' as usize;
-            },
-            '/' => {},
-            _ => {
-                return Err(format!("unknown letter rfen [{}]", ch));
             }
         }
+        Ok(ret)
     }
-    Ok(ret)
-  }
 
-  pub fn to_str(&self) -> String {
-    let mut ban = Vec::<String>::new();
-    for y in 0..8 {
-        let mut old = NONE;
-        let mut count = 0;
-        let mut line = String::new();
-        for x in 0..8 {
-            let c = self.cells[index(x, y)];
-            if c == old {
-                count += 1;
-                continue;
+    pub fn to_str(&self) -> String {
+        let mut ban = Vec::<String>::new();
+        for y in 0..8 {
+            let mut old = NONE;
+            let mut count = 0;
+            let mut line = String::new();
+            for x in 0..8 {
+                let c = self.cells[index(x, y)];
+                if c == old {
+                    count += 1;
+                    continue;
+                }
+                if old == SENTE {
+                    line += &STR_SENTE.chars().nth(count).unwrap().to_string();
+                } else if old == GOTE {
+                    line += &STR_GOTE.chars().nth(count).unwrap().to_string();
+                } else if old == BLANK {
+                    line += &STR_NUM.chars().nth(count).unwrap().to_string();
+                }
+                old = c;
+                count = 1;
             }
             if old == SENTE {
                 line += &STR_SENTE.chars().nth(count).unwrap().to_string();
@@ -86,20 +106,12 @@ impl Board {
             } else if old == BLANK {
                 line += &STR_NUM.chars().nth(count).unwrap().to_string();
             }
-            old = c;
-            count = 1;
+            ban.push(line);
         }
-        if old == SENTE {
-            line += &STR_SENTE.chars().nth(count).unwrap().to_string();
-        } else if old == GOTE {
-            line += &STR_GOTE.chars().nth(count).unwrap().to_string();
-        } else if old == BLANK {
-            line += &STR_NUM.chars().nth(count).unwrap().to_string();
+        ban.join("/") + match self.teban {
+            SENTE => { " b"}, GOTE => {" w"}, _ => {" f"}
         }
-        ban.push(line);
     }
-    ban.join("/")
-  }
 
     pub fn put(&self) {
         for y in 0..8 {
@@ -117,5 +129,12 @@ impl Board {
             }
             println!("{}|", line);
         }
+        println!("{}", 
+            match self.teban {
+                SENTE => { "@@'s turn."},
+                GOTE => { "[]'s turn."},
+                _ => {"finished."}
+            }
+        )
     }
 }
