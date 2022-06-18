@@ -299,4 +299,12 @@ impl Board {
 
         Ok(ban)
     }
+
+    pub fn count(&self) -> i32 {
+        let mut sum : i32 = 0;
+        for c in self.cells.iter() {
+            sum += *c as i32;
+        }
+        sum
+    }
 }
