@@ -13,6 +13,10 @@ fn main() {
     let mut ban = board::Board::init();
     ban.flipturn();
     ban.put();
+    let mut node = node::Node::new(0, 0, 7);
+    let val = node::Node::think(&mut node, &ban);
+    println!("val:{:?} {}", val, node.dump());
+
     println!("candidate:{:?}", ban.genmove());
     let ban2 = ban.r#move(3, 4).unwrap();
     ban2.put();

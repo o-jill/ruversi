@@ -415,6 +415,12 @@ impl Board {
     }
 
     pub fn r#move(&self, x : usize, y : usize) -> Result<Board, &str> {
+        if x == 0 && y == 0 {  // pass
+            let mut ban = self.clone();
+            ban.flipturn();
+            return Ok(ban);
+        }
+
         let xc = x - 1;
         let yc = y - 1;
         if self.at(xc, yc) != BLANK {
