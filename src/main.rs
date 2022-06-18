@@ -6,7 +6,9 @@ fn main() {
     ban.put();
     let rfen = "aAaAaAaA/BbBb/C2c/dD/E3/2f/g1/H b";
     println!("rfen: {}", rfen);
-    let ban = board::Board::from(rfen).unwrap();
+    let mut ban = board::Board::from(rfen).unwrap();
     ban.put();
     println!("RFEN:{}", ban.to_str());
+    ban.flipturn();
+    ban.put();
 }

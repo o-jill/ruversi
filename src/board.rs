@@ -137,4 +137,8 @@ impl Board {
             }
         )
     }
+
+    pub fn flipturn(&mut self) {
+        self.teban = -self.teban;
+    }
 }
