@@ -20,10 +20,10 @@ impl Board {
             teban : SENTE,
         };
         ret.cells.resize(8 * 8, BLANK);
-        ret.cells[index(3, 3)] = SENTE;
-        ret.cells[index(4, 4)] = SENTE;
-        ret.cells[index(3, 4)] = GOTE;
-        ret.cells[index(4, 3)] = GOTE;
+        ret.cells[Board::index(3, 3)] = SENTE;
+        ret.cells[Board::index(4, 4)] = SENTE;
+        ret.cells[Board::index(3, 4)] = GOTE;
+        ret.cells[Board::index(4, 3)] = GOTE;
         ret
     }
 
