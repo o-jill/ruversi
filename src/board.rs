@@ -101,21 +101,21 @@ impl Board {
     ban.join("/")
   }
 
-  pub fn put(&self) {
-    for y in 0..8 {
-        for x in 0..8 {
-            let c = self.cells[index(x, y)];
-            print!("|{}", String::from(
-                if c == SENTE {
-                    "@@"
-                } else if c == GOTE {
-                    "[]"
-                } else {
-                    "__"
-                })
-            );
+    pub fn put(&self) {
+        for y in 0..8 {
+            let mut line = String::new();
+            for x in 0..8 {
+                let c = self.cells[index(x, y)];
+                line +=
+                    if c == SENTE {
+                        "|@@"
+                    } else if c == GOTE {
+                        "|[]"
+                    } else {
+                        "|__"
+                    };
+            }
+            println!("{}|", line);
         }
-        println!("|");
     }
-  }
 }
