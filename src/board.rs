@@ -13,10 +13,6 @@ pub struct Board {
     teban: i8,
 }
 
-fn index(x: usize, y: usize) -> usize {
-    x + y * 8
-}
-
 impl Board {
     pub fn new() -> Board {
         let mut ret = Board {
@@ -145,5 +141,21 @@ impl Board {
 
     pub fn flipturn(&mut self) {
         self.teban = -self.teban;
+    }
+
+    pub fn clone(&self) -> Board {
+        Board { cells: self.cells.to_vec(), teban: self.teban }
+    }
+
+    fn index(x: usize, y: usize) -> usize {
+        x + y * NUMCELL
+    }
+
+    pub fn at(&self, x: usize, y: usize) -> i8 {
+        self.cells[x + y * NUMCELL]
+    }
+
+    pub fn set(&mut self, x : usize, y : usize) {
+        self.cells[index(x, y)] = self.teban;
     }
 }
