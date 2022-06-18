@@ -85,7 +85,7 @@ impl Board {
             let mut count = 0;
             let mut line = String::new();
             for x in 0..NUMCELL {
-                let c = self.cells[index(x, y)];
+                let c = self.at(x, y);
                 if c == old {
                     count += 1;
                     continue;
@@ -118,7 +118,7 @@ impl Board {
         for y in 0..NUMCELL {
             let mut line = String::new();
             for x in 0..NUMCELL {
-                let c = self.cells[index(x, y)];
+                let c = self.at(x, y);
                 line +=
                     if c == SENTE {
                         "|@@"
@@ -156,6 +156,6 @@ impl Board {
     }
 
     pub fn set(&mut self, x : usize, y : usize) {
-        self.cells[index(x, y)] = self.teban;
+        self.cells[Board::index(x, y)] = self.teban;
     }
 }
