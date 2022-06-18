@@ -1,5 +1,6 @@
 mod board;
 mod node;
+mod kifu;
 
 fn main() {
     println!("Hello, reversi world!");
@@ -24,4 +25,14 @@ fn main() {
     let ban2 = ban2.r#move(3, 3).unwrap();
     ban2.put();
     println!("candidate:{:?}", ban2.genmove());
+
+    let mut kifu = kifu::Kifu::new();
+    kifu.append(1, 1, 1);
+    kifu.append(2, 2, -1);
+    kifu.append(3, 3, 1);
+    kifu.append(4, 4, -1);
+    kifu.append(5, 5, 1);
+    kifu.append(6, 6, -1);
+    kifu.append(7, 7, 0);
+    print!("{}", kifu.to_str());
 }
