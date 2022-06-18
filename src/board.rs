@@ -292,7 +292,6 @@ impl Board {
         if self.at(xc, yc) != BLANK {
             return Err("stone exists.");
         }
-        let teban = self.teban;
         let mut ban = self.clone();
         ban.set(xc, yc);
         ban.reverse(xc, yc);
