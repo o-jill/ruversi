@@ -77,6 +77,10 @@ impl Board {
         Ok(ret)
     }
 
+    pub fn init() -> Board {
+        Board::from("8/8/8/3Aa3/3aA3/8/8/8 b").unwrap()
+    }
+
     pub fn to_str(&self) -> String {
         let mut ban = Vec::<String>::new();
         for y in 0..8 {
