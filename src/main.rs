@@ -13,8 +13,11 @@ fn main() {
     let mut ban = board::Board::init();
     ban.flipturn();
     ban.put();
+    println!("candidate:{:?}", ban.genmove());
     let ban2 = ban.r#move(3, 4).unwrap();
     ban2.put();
+    println!("candidate:{:?}", ban2.genmove());
     let ban2 = ban2.r#move(3, 3).unwrap();
     ban2.put();
+    println!("candidate:{:?}", ban2.genmove());
 }

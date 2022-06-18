@@ -1,16 +1,16 @@
-const SENTE : i8 = 1;
-const BLANK : i8 = 0;
-const GOTE : i8 = -1;
-const NONE : i8 = 127;
-const NUMCELL : usize = 8;
-const CELL_2D : usize = NUMCELL * NUMCELL;
+pub const SENTE : i8 = 1;
+pub const BLANK : i8 = 0;
+pub const GOTE : i8 = -1;
+pub const NONE : i8 = 127;
+pub const NUMCELL : usize = 8;
+pub const CELL_2D : usize = NUMCELL * NUMCELL;
 const STR_SENTE : &str = "0ABCDEFGH";
 const STR_GOTE : &str = "0abcdefgh";
 const STR_NUM : &str = "012345678";
 
 pub struct Board {
     cells: Vec<i8>,
-    teban: i8,
+    pub teban: i8,
 }
 
 impl Board {
@@ -286,6 +286,134 @@ impl Board {
         }
     }
 
+    pub fn checkreverse(&self, x : usize, y : usize) -> bool {
+        let color = self.teban;
+        // 左
+        for i in (0..x).rev() {
+            let val = self.at(i, y);
+            if val == color {
+                if i + 1 < x {
+                    return true;
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 右
+        for i in  (x + 1)..NUMCELL {
+            let val = self.at(i, y);
+            if val == color {
+                if x + 1 < i {
+                    return true;
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 上
+        for i in (0..y).rev() {
+            let val = self.at(x, i);
+            if val == color {
+                if i + 1 < y {
+                    return true;
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 下
+        for i in (y + 1)..NUMCELL {
+            let val = self.at(x, i);
+            if val == color {
+                if y + 1 < i {
+                    return true;
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 左上
+        for i in 1..NUMCELL {
+            if x < i || y < i {
+                break;
+            }
+            let val = self.at(x - i, y - i);
+            if val == color {
+                if 1 < i {
+                    return true;
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 右上
+        for i in 1..NUMCELL {
+            if x + i >= NUMCELL || y < i {
+                break;
+            }
+            let val = self.at(x + i, y - i);
+            if val == color {
+                if 1 < i {
+                    return true;
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 右下
+        for i in 1..NUMCELL {
+            if x + i >= NUMCELL || y + i >= NUMCELL {
+                break;
+            }
+            let val = self.at(x + i, y + i);
+            if val == color {
+                if 1 < i {
+                    return true;
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+
+        // 左下
+        for i in 1..NUMCELL {
+            if x < i || y + i >= NUMCELL {
+                break;
+            }
+            let val = self.at(x - i, y + i);
+            if val == color {
+                if 1 < i {
+                    return true;
+                }
+                break;
+            }
+            if val == BLANK {
+                break;
+            }
+        }
+        false
+    }
+
     pub fn r#move(&self, x : usize, y : usize) -> Result<Board, &str> {
         let xc = x - 1;
         let yc = y - 1;
@@ -298,6 +426,22 @@ impl Board {
         ban.flipturn();
 
         Ok(ban)
+    }
+
+    pub fn genmove(&self) -> Vec<(usize, usize)> {
+        let mut ret = Vec::<(usize, usize)>::new();
+        for y in 0..8 {
+            for x in 0..8 {
+                let c = self.at(x, y);
+                if c != BLANK {
+                    continue;
+                }
+                if self.checkreverse(x, y) {
+                    ret.push((x + 1, y + 1));
+                }
+            }
+        }
+        ret
     }
 
     pub fn count(&self) -> i32 {
