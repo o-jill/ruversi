@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 
 mod board;
+mod game;
 mod node;
 mod kifu;
 
@@ -39,4 +40,7 @@ fn main() {
     kifu.append(6, 6, -1, String::new());
     kifu.append(7, 7, 0, String::new());
     print!("{}", kifu.to_str());
+
+    let mut g = game::Game::new();
+    g.start();
 }

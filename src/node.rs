@@ -4,7 +4,7 @@ pub struct Node {
     child : Vec<Node>,
     hyoka : Option<f32>,
     pub kyokumen : usize,
-    best : Option<(f32, usize, usize, i8)>,
+    pub best : Option<(f32, usize, usize, i8)>,
     pub x : usize,
     pub y : usize,
     depth : usize,
@@ -49,8 +49,8 @@ impl Node {
             let x = mv.0;
             let y = mv.1;
             let newban = ban.r#move(x, y).unwrap();
+            let idx = node.child.len();
             node.child.push(Node::new(x, y, depth - 1));
-            let idx = node.child.len() - 1;
             let val = Node::think(
                 &mut node.child[idx], &newban);
 
