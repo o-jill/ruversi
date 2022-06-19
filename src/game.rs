@@ -25,8 +25,9 @@ impl Game {
             let val = node::Node::think(&mut node, &self.ban);
             let ft = st.elapsed();
             println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
-            let x = node.best.unwrap().1;
-            let y = node.best.unwrap().2;
+            let best = node.best.unwrap();
+            let x = best.x;
+            let y = best.y;
             // apply move
             let ban = self.ban.r#move(x, y).unwrap();
             let rfen = self.ban.to_str();

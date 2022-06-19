@@ -4,11 +4,34 @@ use rand::Rng;
 static mut INITIALIZED : bool = false;
 static mut WEIGHT : Option<Vec<f32>> = None;
 
+pub struct Best {
+    pub hyoka : f32,
+    pub x : usize,
+    pub y : usize,
+    pub teban : i8,
+}
+
+impl Best {
+    pub fn new(h : f32, x : usize, y : usize, t : i8) -> Best {
+        Best { hyoka: h, x: x, y: y, teban: t }
+    }
+
+    pub fn pos(&self) -> String {
+        format!("{}{}{}",
+            if self.teban == board::SENTE { "@@" } else { "[]" },
+            board::STR_GOTE.chars().nth(self.x).unwrap(), self.y)
+    }
+
+    pub fn to_str(&self) -> String {
+        format!("h:{} {}", self.hyoka, self.pos())
+    }
+}
+
 pub struct Node {
     child : Vec<Node>,
     hyoka : Option<f32>,
     pub kyokumen : usize,
-    pub best : Option<(f32, usize, usize, i8)>,
+    pub best : Option<Best>,
     pub x : usize,
     pub y : usize,
     depth : usize,
@@ -80,7 +103,7 @@ impl Node {
                 &mut node.child[0], &newban);
             node.hyoka = val;
             node.kyokumen += node.child[0].kyokumen;
-            node.best = Some((val.unwrap(), 0, 0, teban));
+            node.best = Some(Best::new(val.unwrap(), 0, 0, teban));
             return val;
         }
 
@@ -96,19 +119,20 @@ impl Node {
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
+            let best = node.best.as_ref();
             let val = val.unwrap();
-            if node.best.is_none() {
-                node.best = Some((val, x, y, teban));
-            } else if teban == board::SENTE && node.best.unwrap().0 < val {
-                node.best = Some((val, x, y, teban));
-            } else if teban == board::GOTE && node.best.unwrap().0 > val {
-                node.best = Some((val, x, y, teban));
+            if best.is_none() {
+                node.best = Some(Best::new(val, x, y, teban));
+            } else if teban == board::SENTE && best.unwrap().hyoka < val {
+                node.best = Some(Best::new(val, x, y, teban));
+            } else if teban == board::GOTE && best.unwrap().hyoka > val {
+                node.best = Some(Best::new(val, x, y, teban));
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
                 node.child[idx].release();
             }
         }
-        return Some(node.best.unwrap().0);
+        return Some(node.best.as_ref().unwrap().hyoka);
     }
 
     fn release(&mut self) {
@@ -125,15 +149,17 @@ impl Node {
         // ret += &format!("{:?}", n.unwrap().best);
         let mut n = self;
         loop {
-            ret += &format!("{:?}", n.best);
-            let x = n.best.unwrap().1;
-            let y = n.best.unwrap().2;
+            let best = n.best.as_ref().unwrap();
+            ret += &format!("{}", best.to_str());
+            let x = best.x;
+            let y = best.y;
             let m = n.child.iter().find(|&a| a.x == x && a.y == y);
             if m.is_none() {
                 break;
             }
             n = m.unwrap();
-            ret += &format!("{:?}", n.best);
+            // ret += &format!("{}", best.pos());
+            ret += &best.pos();
             if n.best.is_none() {
                 break;
             }
