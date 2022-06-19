@@ -118,11 +118,26 @@ impl Node {
     pub fn dump(&self) -> String {
         let mut ret = String::new();
         ret += &format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen);
-        ret += &format!("{:?}", self.best);
-        let x = self.best.unwrap().1;
-        let y = self.best.unwrap().2;
-        let n = self.child.iter().find(|&a| a.x == x && a.y == y);
-        ret += &format!("{:?}", n.unwrap().best);
+        // ret += &format!("{:?}", self.best);
+        // let x = self.best.unwrap().1;
+        // let y = self.best.unwrap().2;
+        // let n = self.child.iter().find(|&a| a.x == x && a.y == y);
+        // ret += &format!("{:?}", n.unwrap().best);
+        let mut n = self;
+        loop {
+            ret += &format!("{:?}", n.best);
+            let x = n.best.unwrap().1;
+            let y = n.best.unwrap().2;
+            let m = n.child.iter().find(|&a| a.x == x && a.y == y);
+            if m.is_none() {
+                break;
+            }
+            n = m.unwrap();
+            ret += &format!("{:?}", n.best);
+            if n.best.is_none() {
+                break;
+            }
+        }
         ret
     }
 }

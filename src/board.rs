@@ -450,10 +450,10 @@ impl Board {
         ret
     }
 
-    pub fn count(&self) -> i32 {
-        let mut sum : i32 = 0;
+    pub fn count(&self) -> i8 {
+        let mut sum : i8 = 0;
         for c in self.cells.iter() {
-            sum += *c as i32;
+            sum += *c;
         }
         sum
     }

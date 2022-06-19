@@ -19,7 +19,7 @@ impl Te {
 
     pub fn to_str(&self, i : usize) -> String {
         format!(
-            "{} {} {}{} {}",
+            "{} {} {}{} {}\n",
             i, match self.teban {
                 board::SENTE => { "@@" },
                 board::GOTE => { "[]" },
@@ -30,13 +30,15 @@ impl Te {
 }
 
 pub struct Kifu {
-    list: Vec<Te>
+    list: Vec<Te>,
+    score : Option<i8>,
 }
 
 impl Kifu {
     pub fn new() -> Kifu {
         Kifu {
-            list : Vec::<Te>::new()
+            list : Vec::<Te>::new(),
+            score : None,
         }
     }
 
@@ -47,6 +49,24 @@ impl Kifu {
     pub fn to_str(&self) -> String {
         let lines = self.list.iter().enumerate().map(
             |(i, a)| a.to_str(i)).collect::<Vec<String>>();
-        lines.join("\n")
+        lines.join("") + &self.score2str()
+    }
+
+    fn score2str(&self) -> String {
+        if self.score.is_none() {
+            return String::from("on going...");
+        }
+        let score = self.score.unwrap();
+        if score.is_negative() {
+            return format!("GOTE won. {}", score);
+        }
+        if score.is_positive() {
+            return format!("SENTE won. {}", score);
+        }
+        String::from("DRAW.")
+    }
+
+    pub fn winner(&mut self, n : i8) {
+        self.score = Some(n);
     }
 }

@@ -21,7 +21,7 @@ impl Game {
             self.ban.put();
             // think
             let st = Instant::now();
-            let mut node = node::Node::new(0, 0, 7);
+            let mut node = node::Node::new(0, 0, 5);
             let val = node::Node::think(&mut node, &self.ban);
             let ft = st.elapsed();
             println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
@@ -34,6 +34,8 @@ impl Game {
             self.ban = ban;
             if x == 0 && y == 0 {
                 self.pass += 1
+            } else {
+                self.pass = 0
             }
 
             // save to kifu
@@ -45,7 +47,8 @@ impl Game {
             }
         }
         // check who won
-        print!("{}", self.kifu.to_str());
+        self.kifu.winner(self.ban.count());
+        println!("{}", self.kifu.to_str());
         Ok(())
     }
 }
