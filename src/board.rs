@@ -457,4 +457,13 @@ impl Board {
         }
         sum
     }
+
+    pub fn is_full(&self) -> bool {
+        for c in self.cells.iter() {
+            if *c == BLANK {
+                return false;
+            }
+        }
+        true
+    }
 }
