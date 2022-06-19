@@ -35,6 +35,7 @@ fn main() {
     println!("candidate:{:?}", ban2.genmove());
 
     let mut kifu = kifu::Kifu::new();
+    kifu.append(0, 0, 1, String::new());
     kifu.append(1, 1, 1, String::new());
     kifu.append(2, 2, -1, String::new());
     kifu.append(3, 3, 1, String::new());

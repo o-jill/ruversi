@@ -17,15 +17,22 @@ impl Te {
         }
     }
 
+    pub fn pos(&self) -> String {
+        if (self.x == 0 || self.y == 0) {
+            return String::from("PS")
+        }
+        format!("{}{}", board::STR_GOTE.chars().nth(self.x).unwrap(), self.y)
+    }
+
     pub fn to_str(&self, i : usize) -> String {
         format!(
-            "{} {} {}{} {}\n",
+            "{} {} {} {}\n",
             i, match self.teban {
                 board::SENTE => { "@@" },
                 board::GOTE => { "[]" },
                 _ => { "  "},
             },
-            board::STR_GOTE.chars().nth(self.x).unwrap(), self.y, self.rfen)
+            self.pos(), self.rfen)
     }
 }
 
