@@ -1,5 +1,6 @@
 use std::time::{Instant};
-
+use std::thread;
+use std::sync::mpsc;
 use crate::node::init_weight;
 
 mod board;
@@ -34,6 +35,15 @@ fn main() {
     ban2.put();
     println!("candidate:{:?}", ban2.genmove());
 
+    let (tx, rx) = mpsc::channel();
+    let th = thread::spawn(move ||
+        for i in 0..10 {
+            let msg = format!("thread: -- {} -- -- -- --", i);
+            tx.send(msg).unwrap();
+            thread::sleep_ms(1000 as u32);
+        }
+    );
+
     let mut kifu = kifu::Kifu::new();
     kifu.append(0, 0, 1, String::new());
     kifu.append(1, 1, 1, String::new());
@@ -44,6 +54,15 @@ fn main() {
     kifu.append(6, 6, -1, String::new());
     kifu.append(7, 7, 0, String::new());
     print!("{}", kifu.to_str());
+
+    th.join().unwrap();
+    loop {
+        let received = rx.recv();
+        if received.is_err() {
+            break;
+        }
+        println!("{}", received.unwrap());
+    }
 
     let mut g = game::Game::new();
     g.start();
