@@ -31,12 +31,12 @@ fn main() {
     println!("candidate:{:?}", ban2.genmove());
 
     let mut kifu = kifu::Kifu::new();
-    kifu.append(1, 1, 1);
-    kifu.append(2, 2, -1);
-    kifu.append(3, 3, 1);
-    kifu.append(4, 4, -1);
-    kifu.append(5, 5, 1);
-    kifu.append(6, 6, -1);
-    kifu.append(7, 7, 0);
+    kifu.append(1, 1, 1, String::new());
+    kifu.append(2, 2, -1, String::new());
+    kifu.append(3, 3, 1, String::new());
+    kifu.append(4, 4, -1, String::new());
+    kifu.append(5, 5, 1, String::new());
+    kifu.append(6, 6, -1, String::new());
+    kifu.append(7, 7, 0, String::new());
     print!("{}", kifu.to_str());
 }

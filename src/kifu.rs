@@ -8,12 +8,12 @@ struct Te {
 }
 
 impl Te {
-    pub fn new(x : usize, y : usize, t : i8) -> Te {
+    pub fn new(x : usize, y : usize, t : i8, rfen : String) -> Te {
         Te {
             x : x,
             y : y,
             teban : t,
-            rfen : String::new()
+            rfen : rfen
         }
     }
 
@@ -40,8 +40,8 @@ impl Kifu {
         }
     }
 
-    pub fn append(&mut self, x : usize, y : usize, t : i8) {
-        self.list.push(Te::new(x, y, t));
+    pub fn append(&mut self, x : usize, y : usize, t : i8, rfen : String) {
+        self.list.push(Te::new(x, y, t, rfen));
     }
 
     pub fn to_str(&self) -> String {
