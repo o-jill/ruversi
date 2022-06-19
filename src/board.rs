@@ -9,7 +9,7 @@ pub const STR_GOTE : &str = "0abcdefgh";
 const STR_NUM : &str = "012345678";
 
 pub struct Board {
-    cells: Vec<i8>,
+    pub cells: Vec<i8>,
     pub teban: i8,
 }
 

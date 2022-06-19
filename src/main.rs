@@ -1,4 +1,6 @@
-use std::time::{Duration, Instant};
+use std::time::{Instant};
+
+use crate::node::init_weight;
 
 mod board;
 mod game;
@@ -7,6 +9,7 @@ mod kifu;
 
 fn main() {
     println!("Hello, reversi world!");
+    init_weight();
     let ban = board::Board::new();
     ban.put();
     let rfen = "aAaAaAaA/BbBb/C2c/dD/E3/2f/g1/H b";

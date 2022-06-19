@@ -1,4 +1,8 @@
 use super::*;
+use rand::Rng;
+
+static mut INITIALIZED : bool = false;
+static mut WEIGHT : Option<Vec<f32>> = None;
 
 pub struct Node {
     child : Vec<Node>,
@@ -8,6 +12,25 @@ pub struct Node {
     pub x : usize,
     pub y : usize,
     depth : usize,
+}
+
+pub fn init_weight() {
+    unsafe {
+        if INITIALIZED {
+            return;
+        }
+    }
+
+    let mut rng = rand::thread_rng();
+    unsafe {
+        let mut array = Vec::<f32>::new();
+        array.resize_with(board::CELL_2D, || {
+            rng.gen::<f32>()
+        });
+        WEIGHT = Some(array);
+
+        INITIALIZED = true;
+    }
 }
 
 impl Node {
@@ -23,11 +46,27 @@ impl Node {
         }
     }
 
+    fn evaluate(ban : &board::Board) -> f32 {
+        let mut sum : f32 = 0.0;
+        let cells = &ban.cells;
+        unsafe {
+            let ow = &WEIGHT;
+            let w = ow.as_ref().unwrap();
+            for (i, we) in w.iter().enumerate() {
+                sum += cells[i] as f32 * *we;
+            }
+            // for i in 0..board::CELL_2D {
+            //     sum += cells[i] as f32 * w[i];
+            // }
+        }
+        sum
+    }
+
     pub fn think(node:&mut Node, ban : &board::Board) -> Option<f32> {
         let depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
-            return Some(1.0);
+            return Some(Node::evaluate(&ban));
         }
 
         let teban = ban.teban;
