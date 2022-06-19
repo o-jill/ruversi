@@ -1,5 +1,6 @@
 use super::*;
 use rand::Rng;
+use std::fs;
 
 static mut INITIALIZED : bool = false;
 static mut WEIGHT : Option<Vec<f32>> = None;
@@ -54,6 +55,16 @@ pub fn init_weight() {
 
         INITIALIZED = true;
     }
+}
+
+pub fn read_weight(path : &str) -> Result<(), String> {
+    let content = fs::read_to_string(path).unwrap();
+    let csv = content.split(",").collect::<Vec<_>>();
+    let newtable = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+    unsafe {
+        WEIGHT = Some(newtable);
+    }
+    Ok(())
 }
 
 impl Node {
