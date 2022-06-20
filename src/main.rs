@@ -1,16 +1,16 @@
 use std::time::{Instant};
 use std::thread;
 use std::sync::mpsc;
-use crate::node::init_weight;
 
 mod board;
 mod game;
 mod node;
 mod kifu;
+mod weight;
 
 fn main() {
     println!("Hello, reversi world!");
-    init_weight();
+    node::init_weight();
     let ban = board::Board::new();
     ban.put();
     let rfen = "aAaAaAaA/BbBb/C2c/dD/E3/2f/g1/H b";

@@ -1,6 +1,4 @@
 use super::*;
-use rand::Rng;
-use std::fs;
 
 static mut INITIALIZED : bool = false;
 
@@ -9,7 +7,8 @@ static mut INITIALIZED : bool = false;
  * hidden: 4 + 1
  * output: 1
  */
-static mut WEIGHT : Option<Vec<f32>> = None;
+// static mut WEIGHT : Option<Vec<f32>> = None;
+static mut WEIGHT : Option<weight::Weight> = None;
 
 pub struct Best {
     pub hyoka : f32,
@@ -51,34 +50,14 @@ pub fn init_weight() {
         }
     }
 
-    let mut rng = rand::thread_rng();
-    let sz = board::CELL_2D * 4 + 4 + 4 + 4 + 1;
-    let range =
-        f64::sqrt(6.0) / f64::sqrt((board::CELL_2D + 1 + 4 + 1) as f64);
+    let mut weight = weight::Weight::new();
+    weight.init();
+
     unsafe {
-        let mut array = Vec::<f32>::new();
-        array.resize_with(sz, || {
-            (rng.gen::<f64>() * 2.0 * range - range) as f32
-        });
-        WEIGHT = Some(array);
+        WEIGHT = Some(weight);
 
         INITIALIZED = true;
     }
-}
-
-pub fn read_weight(path : &str) -> Result<(), String> {
-    let content = fs::read_to_string(path).unwrap();
-    let csv = content.split(",").collect::<Vec<_>>();
-    let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
-    unsafe {
-        let wsz = WEIGHT.as_ref().unwrap().len();
-        let nsz = newtable.len();
-        if wsz != nsz {
-            return Err(String::from("size mismatch"));
-        }
-        WEIGHT = Some(newtable);
-    }
-    Ok(())
 }
 
 impl Node {
@@ -95,45 +74,9 @@ impl Node {
     }
 
     fn evaluate(ban : &board::Board) -> f32 {
-        let mut sum : f32 = 0.0;
-        let cells = &ban.cells;
         unsafe {
-            let ow = &WEIGHT;
-            let w = ow.as_ref().unwrap();
-            for (i, we) in w.iter().enumerate() {
-                sum += cells[i] as f32 * *we;
-            }
-            // for i in 0..board::CELL_2D {
-            //     sum += cells[i] as f32 * w[i];
-            // }
+            WEIGHT.as_ref().unwrap().evaluate(ban)
         }
-        sum
-    }
-    fn evaluate2(ban : &board::Board) -> f32 {
-        let mut sum : f32;
-        let cells = &ban.cells;
-        let teban = ban.teban;
-        let mut hidden : [f32 ; 5] = [0.0 ; 5];
-        let w1sz = board::CELL_2D + 1 + 1;
-        unsafe {
-            let ow = WEIGHT.as_ref().unwrap();
-            let w2 = &ow.as_slice()[w1sz * 4..];
-
-            sum = *ow.last().unwrap();
-
-            for i in 0..4 {
-                let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
-                let mut hidsum : f32 = *w1.last().unwrap();
-                for (idx, c)  in cells.iter().enumerate() {
-                    hidsum += *c as f32 * w1[idx];
-                }
-                hidsum += teban as f32 * w1[w1sz - 2];
-                hidden[i] = w2[i] / (f32::exp(hidsum) + 1.0);
-                sum += hidden[i];
-            }
-            // hidden -> output
-        }
-        sum
     }
 
     pub fn think(node:&mut Node, ban : &board::Board) -> Option<f32> {
@@ -141,7 +84,7 @@ impl Node {
         if depth == 0 {
             node.kyokumen = 1;
             // return Some(Node::evaluate(&ban));
-            return Some(Node::evaluate2(&ban));
+            return Some(Node::evaluate(&ban));
         }
 
         let teban = ban.teban;
