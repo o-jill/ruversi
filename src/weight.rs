@@ -68,4 +68,16 @@ impl Weight {
         }
         sum
     }
+
+    pub fn train(&mut self, rfen : String, winner : i8, eta : f32) -> Result<(), String> {
+        let ban = board::Board::from(&rfen).unwrap();
+        // forward
+        // backword
+
+        let ban180 = ban.rotate180();
+        // forward
+        // backword
+
+        Ok(())
+    }
 }

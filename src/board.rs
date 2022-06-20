@@ -466,4 +466,14 @@ impl Board {
         }
         true
     }
+
+    pub fn rotate180(&self) -> Board {
+        let mut b = Board::new();
+        b.teban = self.teban;
+        let cells = &self.cells;
+        for (i, c) in b.cells.iter_mut().enumerate() {
+            *c = cells[i];
+        }
+        b
+    }
 }
