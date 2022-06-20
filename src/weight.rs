@@ -69,13 +69,45 @@ impl Weight {
         sum
     }
 
+    pub fn forward(&self, ban : &board::Board)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
+        let mut ret = Vec::<Vec<f32>>::new();
+        let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
+        let mut sum : f32;
+        let cells = &ban.cells;
+        let teban = ban.teban;
+        let w1sz = board::CELL_2D + 1 + 1;
+        let ow = &self.weight;
+        let w2 = &ow.as_slice()[w1sz * 4..];
+
+        sum = *ow.last().unwrap();
+
+        for i in 0..N_HIDDEN {
+            let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
+            let mut hidsum : f32 = *w1.last().unwrap();
+            for (idx, c)  in cells.iter().enumerate() {
+                hidsum += *c as f32 * w1[idx];
+            }
+            hidsum += teban as f32 * w1[w1sz - 2];
+            hidden[i] = hidsum;
+            hidsig[i] = 1.0 / (f32::exp(hidsum) + 1.0);
+            sum += w2[i] * hidsig[i];
+        }
+        output[0] = sum;
+        (hidden, hidsig, output)
+    }
+
     pub fn train(&mut self, rfen : String, winner : i8, eta : f32) -> Result<(), String> {
         let ban = board::Board::from(&rfen).unwrap();
         // forward
+        let (hidden, hidsig, output) = self.forward(&ban);
         // backword
 
-        let ban180 = ban.rotate180();
+        let ban = ban.rotate180();
         // forward
+        let (hidden, hidsig, output) = self.forward(&ban);
         // backword
 
         Ok(())
