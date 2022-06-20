@@ -18,7 +18,7 @@ impl Te {
     }
 
     pub fn pos(&self) -> String {
-        if (self.x == 0 || self.y == 0) {
+        if self.x == 0 || self.y == 0 {
             return String::from("PS")
         }
         format!("{}{}", board::STR_GOTE.chars().nth(self.x).unwrap(), self.y)
