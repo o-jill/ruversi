@@ -101,15 +101,43 @@ impl Weight {
 
     pub fn train(&mut self, rfen : String, winner : i8, eta : f32) -> Result<(), String> {
         let ban = board::Board::from(&rfen).unwrap();
-        // forward
-        let (hidden, hidsig, output) = self.forward(&ban);
-        // backword
+        self.learn(&ban, winner, eta);
 
         let ban = ban.rotate180();
+        self.learn(&ban, winner, eta);
+        Ok(())
+    }
+
+    fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
+        let cells = &ban.cells;
+        let teban = ban.teban;
         // forward
         let (hidden, hidsig, output) = self.forward(&ban);
         // backword
+        let w1sz = board::CELL_2D + 1 + 1;
+        let mut ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - winner as f32;
+        let mut w2 = &mut ow.as_mut_slice()[w1sz * 4..];
+        for i in 0..N_HIDDEN {
+            w2[i] -= hidsig[i] * diff * eta;
+        }
+        w2[N_HIDDEN] -= diff * eta;
 
-        Ok(())
+        let mut dhid = [0.0 as f32 ; N_HIDDEN + 1];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            let tmp = w2[i] * diff;
+            let sig = 1.0 / (1.0 + f32::exp(hidden[i]));
+            *h = tmp * sig * (1.0 - sig);
+        }
+        // back to input
+        for (i, h) in dhid.iter().enumerate() {
+            let mut w1 = &mut ow.as_mut_slice()[i * w1sz .. (i + 1) * w1sz];
+            for (j, c) in cells.iter().enumerate() {
+                w1[j] -= *h * *c as f32 * eta;
+            }
+            w1[board::CELL_2D] -= *h * teban as f32 * eta;
+            w1[board::CELL_2D + 1] -= *h * eta;
+        }
     }
 }
