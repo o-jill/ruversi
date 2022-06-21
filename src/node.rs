@@ -152,7 +152,7 @@ impl Node {
         let mut n = self;
         loop {
             let best = n.best.as_ref().unwrap();
-            ret += &format!("{}", best.to_str());
+            // ret += &format!("{}", best.to_str());
             let x = best.x;
             let y = best.y;
             let m = n.child.iter().find(|&a| a.x == x && a.y == y);
