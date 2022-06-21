@@ -13,6 +13,13 @@ impl Game {
         }
     }
 
+    pub fn from(rfen : &str) -> Game {
+        Game {
+            ban: board::Board::from(rfen).unwrap(),
+            kifu: kifu::Kifu::new()
+        }
+    }
+
     pub fn start(&mut self) -> Result<(), String> {
         loop {
             // show
