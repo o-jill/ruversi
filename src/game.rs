@@ -43,6 +43,8 @@ impl Game {
         // check who won
         self.kifu.winner(self.ban.count());
         println!("{}", self.kifu.to_str());
+        // show
+        self.ban.put();
         Ok(())
     }
 }
