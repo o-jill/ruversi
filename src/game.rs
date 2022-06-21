@@ -26,8 +26,7 @@ impl Game {
             self.ban.put();
             // think
             let st = Instant::now();
-            let mut node = node::Node::new(0, 0, 5);
-            let val = node::Node::think(&mut node, &self.ban);
+            let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             let ft = st.elapsed();
             println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
             let best = node.best.unwrap();

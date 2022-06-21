@@ -22,8 +22,7 @@ fn main() {
     ban.flipturn();
     ban.put();
     let st = Instant::now();
-    let mut node = node::Node::new(0, 0, 7);
-    let val = node::Node::think(&mut node, &ban);
+    let (val, node) = node::Node::think( &ban, 7).unwrap();
     let ft = st.elapsed();
     println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
 

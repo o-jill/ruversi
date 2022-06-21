@@ -79,7 +79,106 @@ impl Node {
         }
     }
 
-    pub fn think(node:&mut Node, ban : &board::Board) -> Option<f32> {
+    pub fn think(ban : &board::Board, depth : usize) -> Option<(f32,Node)> {
+        let mut node = node::Node::new(0, 0, depth);
+        if depth == 0 {
+            return None;
+        }
+        if ban.is_passpass() {
+            return None;
+        }
+        let teban = ban.teban;
+        // let sum = 0;
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            return None;
+        }
+        let moves = moves.unwrap();
+        let n = moves.len();
+        // let moves1 = &moves[0..n/2];
+        let moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());
+        let moves2 = Vec::from_iter(moves[n/2..].iter().cloned());
+        let ban2 = ban.clone();
+        let (tx, rx) = mpsc::channel();
+
+        let sub =
+                thread::spawn(move || {
+            let mut node2 = node::Node::new(0, 0, depth);
+            for mv in moves1 {
+                let x = mv.0;
+                let y = mv.1;
+                let newban = ban2.r#move(x, y).unwrap();
+                let idx = node2.child.len();
+                node2.child.push(Node::new(x, y, depth - 1));
+                let val = Node::think_internal(
+                    &mut node2.child[idx], &newban);
+
+                let mut ch = &mut node2.child[idx];
+                ch.hyoka = val;
+                node2.kyokumen += ch.kyokumen;
+                let best = node2.best.as_ref();
+                let val = val.unwrap();
+                if best.is_none() {
+                    node2.best = Some(Best::new(val, x, y, teban));
+                    node2.hyoka = Some(val);
+                } else if teban == board::SENTE && best.unwrap().hyoka < val {
+                    node2.best = Some(Best::new(val, x, y, teban));
+                    node2.hyoka = Some(val);
+                } else if teban == board::GOTE && best.unwrap().hyoka > val {
+                    node2.best = Some(Best::new(val, x, y, teban));
+                    node2.hyoka = Some(val);
+                } else {
+                    // node2.child[node.child.len() - 1].as_ref().unwrap().release();
+                    node2.child[idx].release();
+                }
+            }
+            tx.send(node2).unwrap();
+            // return Some(node.best.as_ref().unwrap().hyoka);
+        });
+
+        for mv in moves2 {
+            let x = mv.0;
+            let y = mv.1;
+            let newban = ban.r#move(x, y).unwrap();
+            let idx = node.child.len();
+            node.child.push(Node::new(x, y, depth - 1));
+            let val = Node::think_internal(
+                &mut node.child[idx], &newban);
+
+            let mut ch = &mut node.child[idx];
+            ch.hyoka = val;
+            node.kyokumen += ch.kyokumen;
+            let best = node.best.as_ref();
+            let val = val.unwrap();
+            if best.is_none() {
+                node.best = Some(Best::new(val, x, y, teban));
+                node.hyoka = Some(val);
+            } else if teban == board::SENTE && best.unwrap().hyoka < val {
+                node.best = Some(Best::new(val, x, y, teban));
+                node.hyoka = Some(val);
+            } else if teban == board::GOTE && best.unwrap().hyoka > val {
+                node.best = Some(Best::new(val, x, y, teban));
+                node.hyoka = Some(val);
+            } else {
+                // node.child[node.child.len() - 1].as_ref().unwrap().release();
+                node.child[idx].release();
+            }
+        }
+        sub.join().unwrap();
+        let mut subresult = rx.recv().unwrap();
+        if subresult.best.is_none() ||
+            node.best.as_ref().unwrap().hyoka * teban as f32
+                > subresult.best.as_ref().unwrap().hyoka * teban as f32 {
+            node.kyokumen += subresult.kyokumen;
+            return Some((node.best.as_ref().unwrap().hyoka, node));
+        }
+        subresult.kyokumen += node.kyokumen;
+        Some((subresult.best.as_ref().unwrap().hyoka, subresult))
+    }
+
+    pub fn think_internal(node:&mut Node, ban : &board::Board) -> Option<f32> {
         let depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
@@ -107,7 +206,7 @@ impl Node {
             let newban = ban.r#move(x, y).unwrap();
             let idx = node.child.len();
             node.child.push(Node::new(x, y, depth - 1));
-            let val = Node::think(
+            let val = Node::think_internal(
                 &mut node.child[idx], &newban);
 
             let mut ch = &mut node.child[idx];
