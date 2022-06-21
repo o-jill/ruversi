@@ -91,6 +91,13 @@ impl Node {
         // let sum = 0;
         let moves = ban.genmove();
 
+        // no more empty cells
+        if moves.is_none() {
+            node.kyokumen = 1;
+            return Some(ban.count()  as f32 * 10.0);
+        }
+        let moves = moves.unwrap();
+        // pass
         if moves.is_empty() {
             let newban = ban.r#move(0, 0).unwrap();
             node.child.push(Node::new(0, 0, depth -1));

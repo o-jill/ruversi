@@ -434,20 +434,25 @@ impl Board {
         Ok(ban)
     }
 
-    pub fn genmove(&self) -> Vec<(usize, usize)> {
+    pub fn genmove(&self) -> Option<Vec<(usize, usize)>> {
         let mut ret = Vec::<(usize, usize)>::new();
+        let mut nblank = 0;
         for y in 0..8 {
             for x in 0..8 {
                 let c = self.at(x, y);
                 if c != BLANK {
                     continue;
                 }
+                nblank += 1;
                 if self.checkreverse(x, y) {
                     ret.push((x + 1, y + 1));
                 }
             }
         }
-        ret
+        if nblank == 0 {
+            return None;
+        }
+        Some(ret)
     }
 
     pub fn count(&self) -> i8 {
