@@ -2,7 +2,6 @@ use super::*;
 
 pub struct Game {
     ban : board::Board,
-    pass : i32,
     kifu : kifu::Kifu,
 }
 
@@ -10,7 +9,6 @@ impl Game {
     pub fn new() -> Game {
         Game {
             ban : board::Board::init(),
-            pass : 0,
             kifu : kifu::Kifu::new(),
         }
     }
@@ -33,17 +31,12 @@ impl Game {
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
-            if x == 0 && y == 0 {
-                self.pass += 1
-            } else {
-                self.pass = 0
-            }
 
             // save to kifu
             self.kifu.append(x, y, teban, rfen);
 
             // check finished
-            if self.pass == 2 || self.ban.is_full() {
+            if self.ban.is_passpass() || self.ban.is_full() {
                 break;
             }
         }

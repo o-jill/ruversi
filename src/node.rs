@@ -86,7 +86,10 @@ impl Node {
             // return Some(Node::evaluate(&ban));
             return Some(Node::evaluate(&ban));
         }
-
+        if ban.is_passpass() {
+            node.kyokumen = 1;
+            return Some(ban.count()  as f32 * 10.0);
+        }
         let teban = ban.teban;
         // let sum = 0;
         let moves = ban.genmove();
@@ -97,17 +100,6 @@ impl Node {
             return Some(ban.count()  as f32 * 10.0);
         }
         let moves = moves.unwrap();
-        // pass
-        if moves.is_empty() {
-            let newban = ban.r#move(0, 0).unwrap();
-            node.child.push(Node::new(0, 0, depth -1));
-            let val = Node::think(
-                &mut node.child[0], &newban);
-            node.hyoka = val;
-            node.kyokumen += node.child[0].kyokumen;
-            node.best = Some(Best::new(val.unwrap(), 0, 0, teban));
-            return val;
-        }
 
         for mv in moves {
             let x = mv.0;

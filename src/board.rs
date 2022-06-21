@@ -11,6 +11,7 @@ const STR_NUM : &str = "012345678";
 pub struct Board {
     pub cells: Vec<i8>,
     pub teban: i8,
+    pub pass: i8,
 }
 
 impl Board {
@@ -18,6 +19,7 @@ impl Board {
         let mut ret = Board {
             cells : Vec::new(),
             teban : SENTE,
+            pass : 0,
         };
         ret.cells.resize(8 * 8, BLANK);
         ret.cells[Board::index(3, 3)] = SENTE;
@@ -43,6 +45,7 @@ impl Board {
         let mut ret = Board {
             cells : Vec::new(),
             teban : teban,
+            pass : 0,
         };
         ret.cells.resize(CELL_2D, BLANK);
         let mut idx = 0;
@@ -143,8 +146,22 @@ impl Board {
         self.teban = -self.teban;
     }
 
+    pub fn resetpass(&mut self) {
+        self.pass = 0;
+    }
+
+    pub fn pass(&mut self) {
+        self.teban = -self.teban;
+        self.pass += 1;
+    }
+
+    pub fn is_passpass(&self) -> bool {
+        self.pass >= 2
+    }
     pub fn clone(&self) -> Board {
-        Board { cells: self.cells.to_vec(), teban: self.teban }
+        Board {
+            cells: self.cells.to_vec(), teban: self.teban , pass: self.pass
+        }
     }
 
     fn index(x: usize, y: usize) -> usize {
@@ -417,7 +434,7 @@ impl Board {
     pub fn r#move(&self, x : usize, y : usize) -> Result<Board, &str> {
         if x == 0 && y == 0 {  // pass
             let mut ban = self.clone();
-            ban.flipturn();
+            ban.pass();
             return Ok(ban);
         }
 
@@ -430,6 +447,7 @@ impl Board {
         ban.set(xc, yc);
         ban.reverse(xc, yc);
         ban.flipturn();
+        ban.resetpass();
 
         Ok(ban)
     }
@@ -449,8 +467,11 @@ impl Board {
                 }
             }
         }
-        if nblank == 0 {
+        if nblank == 0 {  // no more move
             return None;
+        }
+        if ret.is_empty() {  // pass
+            return Some(vec![(0, 0)]);
         }
         Some(ret)
     }
