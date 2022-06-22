@@ -33,7 +33,7 @@ impl Weight {
         }
     }
 
-    pub fn read_weight(&mut self, path : &str) -> Result<(), String> {
+    pub fn read(&mut self, path : &str) -> Result<(), String> {
         let content = fs::read_to_string(path).unwrap();
         let csv = content.split(",").collect::<Vec<_>>();
         let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
@@ -45,6 +45,12 @@ impl Weight {
         self.weight = newtable;
 
         Ok(())
+    }
+
+    pub fn write(&self, path : &str) {
+        let sv = self.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        let mut f = fs::File::create(path).unwrap();
+        f.write(sv.join(",").as_bytes()).unwrap();
     }
 
     pub fn evaluate(&self, ban : &board::Board) -> f32 {

@@ -85,24 +85,7 @@ fn trial() {
     }
 }
 
-fn main() {
-    println!("Hello, reversi world!");
-
-    node::init_weight();
-
-    trial();
-
-    // read command options
-
-    // read eval table
-    let path = "./evaltable.txt";
-    if std::path::Path::new(path).exists() {
-        unsafe {
-            node::WEIGHT.as_mut().unwrap().read_weight(path).unwrap();
-        }
-    }
-
-    // gen kifu
+fn gen_kifu() {
     for (idx, &rfen) in initialpos::RFENTBL.iter().enumerate() {
         // prepare game
         let mut g = game::Game::from(rfen);
@@ -113,22 +96,50 @@ fn main() {
         let mut f = File::create(kifuname).unwrap();
         f.write(g.kifu.to_str().as_bytes()).unwrap();
     }
+}
 
-    // training
+fn training() {
     // list up kifu
     let files = std::fs::read_dir("./kifu/").unwrap();
-    let files = files.filter_map(|entry| {
+    let mut files = files.filter_map(|entry| {
         entry.ok().and_then(|e|
             e.path().file_name().and_then(|n|
                 n.to_str().map(|s| String::from(s))
             )
         )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-            fnm.find(".txt").is_some()
+            fnm.find("kifu").is_some()
+            // fnm.find(".txt").is_some()
         }).cloned().collect::<Vec<String>>();
-    println!("{:?}", files);
-    // repeat
-    // shuffle
+    // println!("{:?}", files);
     // train
+    let mut tr = trainer::Trainer::new(0.001, 1000);
+    tr.learn(&mut files);
 
     // put new eval table
+    unsafe {
+        node::WEIGHT.as_ref().unwrap().write("./kifu/newevaltable.txt");
+    }
+}
+
+fn main() {
+    println!("Hello, reversi world!");
+
+    node::init_weight();
+
+    // trial();
+
+    // read command options
+
+    // read eval table
+    let path = "./evaltable.txt";
+    if std::path::Path::new(path).exists() {
+        println!("read eval table: {}", path);
+        unsafe {
+            node::WEIGHT.as_mut().unwrap().read(path).unwrap();
+        }
+    }
+
+    // gen_kifu();
+
+    training();
 }
