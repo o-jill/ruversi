@@ -97,8 +97,8 @@ fn main() {
         // play
         g.start().unwrap();
         // store kifu
-        let kifuname = format!("./kifu/kifu{}.txt", idx);
-        let mut f = std::fs::File::create(kifuname).unwrap();
+        let kifuname = format!("./kifu/kifu{:06}.txt", idx);
+        let mut f = File::create(kifuname).unwrap();
         f.write(g.kifu.to_str().as_bytes()).unwrap();
     }
 
