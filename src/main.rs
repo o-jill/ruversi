@@ -1,3 +1,4 @@
+use std::fs::File;
 use std::io::Write;
 use std::time::{Duration, Instant};
 use std::thread;
@@ -12,6 +13,17 @@ mod trainer;
 mod weight;
 
 fn trial() {
+    let files = std::fs::read_dir("./kifu/").unwrap();
+    let files = files.filter_map(|entry| {
+        entry.ok().and_then(|e|
+            e.path().file_name().and_then(|n|
+                n.to_str().map(|s| String::from(s))
+            )
+        )}).collect::<Vec<String>>().iter().filter(|&fnm| {
+            fnm.find(".txt").is_some()
+        }).cloned().collect::<Vec<String>>();
+    println!("{:?}", files);
+
     let ban = board::Board::new();
     ban.put();
     let rfen = "aAaAaAaA/BbBb/C2c/dD/E3/2f/g1/H b";
@@ -78,7 +90,7 @@ fn main() {
 
     node::init_weight();
 
-    // trial();
+    trial();
 
     // read command options
 
@@ -104,7 +116,16 @@ fn main() {
 
     // training
     // list up kifu
-
+    let files = std::fs::read_dir("./kifu/").unwrap();
+    let files = files.filter_map(|entry| {
+        entry.ok().and_then(|e|
+            e.path().file_name().and_then(|n|
+                n.to_str().map(|s| String::from(s))
+            )
+        )}).collect::<Vec<String>>().iter().filter(|&fnm| {
+            fnm.find(".txt").is_some()
+        }).cloned().collect::<Vec<String>>();
+    println!("{:?}", files);
     // repeat
     // shuffle
     // train
