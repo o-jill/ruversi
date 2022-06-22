@@ -9,8 +9,7 @@ mod kifu;
 mod trainer;
 mod weight;
 
-fn main() {
-    println!("Hello, reversi world!");
+fn trial() {
     node::init_weight();
     let ban = board::Board::new();
     ban.put();
@@ -71,4 +70,29 @@ fn main() {
     unsafe {
         tr.run(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
     }
+}
+
+fn main() {
+    println!("Hello, reversi world!");
+
+    trial();
+
+    // read command options
+
+    // read eval table
+
+    // gen kifu
+    // for in rfen table
+    // prepare game
+    // play
+    // store kifu
+    // end loop
+
+    // training
+    // list up kifu
+    // repeat
+    // shuffle
+    // train
+
+    // put new eval table
 }
