@@ -64,5 +64,5 @@ fn main() {
     }
 
     let mut g = game::Game::new();
-    g.start();
+    g.start().unwrap();
 }
