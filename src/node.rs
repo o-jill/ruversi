@@ -8,7 +8,7 @@ static mut INITIALIZED : bool = false;
  * output: 1
  */
 // static mut WEIGHT : Option<Vec<f32>> = None;
-static mut WEIGHT : Option<weight::Weight> = None;
+pub static mut WEIGHT : Option<weight::Weight> = None;
 
 pub struct Best {
     pub hyoka : f32,

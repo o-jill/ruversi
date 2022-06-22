@@ -1,10 +1,14 @@
 use super::*;
 
-struct Te {
+pub const SENTEWIN : i8 = 1;
+pub const DRAW : i8 = 0;
+pub const GOTEWIN : i8 = -1;
+
+pub struct Te {
     x : usize,
     y : usize,
     teban : i8,
-    rfen : String,
+    pub rfen : String,
 }
 
 impl Te {
@@ -37,7 +41,7 @@ impl Te {
 }
 
 pub struct Kifu {
-    list: Vec<Te>,
+    pub list: Vec<Te>,
     score : Option<i8>,
 }
 
@@ -73,7 +77,21 @@ impl Kifu {
         String::from("DRAW.")
     }
 
-    pub fn winner(&mut self, n : i8) {
+    pub fn winneris(&mut self, n : i8) {
         self.score = Some(n);
+    }
+
+    pub fn winner(&self) -> Option<i8> {
+        if self.score.is_none() {
+            return None;
+        }
+        let score = self.score.unwrap();
+        if score.is_positive() {
+            return Some(SENTEWIN);
+        }
+        if score.is_negative() {
+            return Some(GOTEWIN);
+        }
+        Some(DRAW)
     }
 }

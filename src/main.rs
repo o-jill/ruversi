@@ -6,6 +6,7 @@ mod board;
 mod game;
 mod node;
 mod kifu;
+mod trainer;
 mod weight;
 
 fn main() {
@@ -65,4 +66,9 @@ fn main() {
 
     let mut g = game::Game::new();
     g.start().unwrap();
+
+    let tr = trainer::Trainer::new(0.01, 100);
+    unsafe {
+        tr.run(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+    }
 }

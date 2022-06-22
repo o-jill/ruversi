@@ -2,7 +2,7 @@ use super::*;
 
 pub struct Game {
     ban : board::Board,
-    kifu : kifu::Kifu,
+    pub kifu : kifu::Kifu,
 }
 
 impl Game {
@@ -47,7 +47,7 @@ impl Game {
             }
         }
         // check who won
-        self.kifu.winner(self.ban.count());
+        self.kifu.winneris(self.ban.count());
         println!("{}", self.kifu.to_str());
         // show
         self.ban.put();

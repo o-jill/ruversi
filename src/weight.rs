@@ -99,8 +99,8 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
-    pub fn train(&mut self, rfen : String, winner : i8, eta : f32) -> Result<(), String> {
-        let ban = board::Board::from(&rfen).unwrap();
+    pub fn train(&mut self, rfen : &str, winner : i8, eta : f32) -> Result<(), String> {
+        let ban = board::Board::from(rfen).unwrap();
         self.learn(&ban, winner, eta);
 
         let ban = ban.rotate180();
@@ -124,7 +124,7 @@ impl Weight {
         }
         w2[N_HIDDEN] -= diff * eta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN + 1];
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(hidden[i]));
