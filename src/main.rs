@@ -91,7 +91,6 @@ fn main() {
     }
 
     // gen kifu
-    // for in rfen table
     for (idx, &rfen) in initialpos::RFENTBL.iter().enumerate() {
         // prepare game
         let mut g = game::Game::from(rfen);
@@ -102,7 +101,6 @@ fn main() {
         let mut f = std::fs::File::create(kifuname).unwrap();
         f.write(g.kifu.to_str().as_bytes()).unwrap();
     }
-    // end loop
 
     // training
     // list up kifu
