@@ -1,4 +1,4 @@
-use std::time::{Instant};
+use std::time::{Duration, Instant};
 use std::thread;
 use std::sync::mpsc;
 
@@ -39,7 +39,7 @@ fn main() {
         for i in 0..10 {
             let msg = format!("thread: -- {} -- -- -- --", i);
             tx.send(msg).unwrap();
-            thread::sleep_ms(1000 as u32);
+            thread::sleep(Duration::from_secs_f32(0.5))
         }
     );
 
