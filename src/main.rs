@@ -1,16 +1,17 @@
+use std::io::Write;
 use std::time::{Duration, Instant};
 use std::thread;
 use std::sync::mpsc;
 
 mod board;
 mod game;
+mod initialpos;
 mod node;
 mod kifu;
 mod trainer;
 mod weight;
 
 fn trial() {
-    node::init_weight();
     let ban = board::Board::new();
     ban.put();
     let rfen = "aAaAaAaA/BbBb/C2c/dD/E3/2f/g1/H b";
@@ -75,21 +76,37 @@ fn trial() {
 fn main() {
     println!("Hello, reversi world!");
 
-    trial();
+    node::init_weight();
+
+    // trial();
 
     // read command options
 
     // read eval table
+    let path = "./evaltable.txt";
+    if std::path::Path::new(path).exists() {
+        unsafe {
+            node::WEIGHT.as_mut().unwrap().read_weight(path).unwrap();
+        }
+    }
 
     // gen kifu
     // for in rfen table
-    // prepare game
-    // play
-    // store kifu
+    for (idx, &rfen) in initialpos::RFENTBL.iter().enumerate() {
+        // prepare game
+        let mut g = game::Game::from(rfen);
+        // play
+        g.start().unwrap();
+        // store kifu
+        let kifuname = format!("./kifu/kifu{}.txt", idx);
+        let mut f = std::fs::File::create(kifuname).unwrap();
+        f.write(g.kifu.to_str().as_bytes()).unwrap();
+    }
     // end loop
 
     // training
     // list up kifu
+
     // repeat
     // shuffle
     // train
