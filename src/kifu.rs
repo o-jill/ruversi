@@ -29,8 +29,8 @@ impl Te {
             return None;
         }
         let teban = match elem[1] {
-            "@@" => board::SENTE,
-            "[]" => board::GOTE,
+            board::STONE_SENTE => board::SENTE,
+            board::STONE_GOTE => board::GOTE,
             _ => return None
         };
         let x : usize;
@@ -67,8 +67,8 @@ impl Te {
         format!(
             "{} {} {} {}\n",
             i, match self.teban {
-                board::SENTE => { "@@" },
-                board::GOTE => { "[]" },
+                board::SENTE => { board::STONE_SENTE },
+                board::GOTE => { board::STONE_GOTE },
                 _ => { "  "},
             },
             self.pos(), self.rfen)

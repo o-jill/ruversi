@@ -24,7 +24,11 @@ impl Best {
 
     pub fn pos(&self) -> String {
         format!("{}{}{}",
-            if self.teban == board::SENTE { "@@" } else { "[]" },
+            if self.teban == board::SENTE {
+                board::STONE_SENTE
+            } else {
+                board::STONE_GOTE
+            },
             board::STR_GOTE.chars().nth(self.x).unwrap(), self.y)
     }
 

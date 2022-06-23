@@ -7,6 +7,8 @@ pub const CELL_2D : usize = NUMCELL * NUMCELL;
 const STR_SENTE : &str = "0ABCDEFGH";
 pub const STR_GOTE : &str = "0abcdefgh";
 const STR_NUM : &str = "012345678";
+pub const STONE_SENTE : &str = "@@";
+pub const STONE_GOTE : &str = "[]";
 
 pub struct Board {
     pub cells: Vec<i8>,
@@ -122,22 +124,23 @@ impl Board {
             let mut line = String::new();
             for x in 0..NUMCELL {
                 let c = self.at(x, y);
+                line += "|";
                 line +=
                     if c == SENTE {
-                        "|@@"
+                        STONE_SENTE
                     } else if c == GOTE {
-                        "|[]"
+                        STONE_GOTE
                     } else {
-                        "|__"
+                        "__"
                     };
             }
             println!("{}|", line);
         }
         println!("{}", 
             match self.teban {
-                SENTE => { "@@'s turn."},
-                GOTE => { "[]'s turn."},
-                _ => {"finished."}
+                SENTE => { format!("{}'s turn.", STONE_SENTE)},
+                GOTE => { format!("{}'s turn.", STONE_GOTE)},
+                _ => {"finished.".to_string()}
             }
         )
     }
