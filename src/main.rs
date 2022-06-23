@@ -139,7 +139,7 @@ fn main() {
         }
     }
 
-    // gen_kifu();
+    gen_kifu();
 
     training();
 }
