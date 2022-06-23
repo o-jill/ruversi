@@ -202,3 +202,12 @@ impl Kifu {
         Some(DRAW)
     }
 }
+
+#[test]
+fn testkifu() {
+    // new, from, append, to_str, winneris, winner
+    let kifu = Kifu::new();
+    assert_eq!(0, kifu.list.len());
+    assert_eq!(None, kifu.score);
+    assert_eq!("on going...", kifu.to_str());
+}
