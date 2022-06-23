@@ -22,3 +22,13 @@ jobs:
       run: cargo test --verbose
     - name: Run
       run: cargo run --release
+    - name: Set current datetime as env variable
+      env:
+        TZ: 'Asia/Tokyo' # タイムゾーン指定
+      run: echo "CURRENT_DATETIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+    - name: Save artifacts
+      uses: actions/upload-artifacts@v3
+      with:
+        name: kifu${{ env.CURRENT_DATETIME }}
+        path: |
+          kifu
