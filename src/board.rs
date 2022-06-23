@@ -6,7 +6,6 @@ pub const NUMCELL : usize = 8;
 pub const CELL_2D : usize = NUMCELL * NUMCELL;
 const STR_SENTE : &str = "0ABCDEFGH";
 pub const STR_GOTE : &str = "0abcdefgh";
-pub const STR_POSX : &str = "0abcdefgh";
 const STR_NUM : &str = "012345678";
 
 pub struct Board {

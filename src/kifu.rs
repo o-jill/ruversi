@@ -28,6 +28,11 @@ impl Te {
         if elem.len() != 5 {
             return None;
         }
+        let teban = match elem[1] {
+            "@@" => board::SENTE,
+            "[]" => board::GOTE,
+            _ => return None
+        };
         let x : usize;
         let y : usize;
         if elem[2] == "PS" {
@@ -46,7 +51,7 @@ impl Te {
         Some(Te {
             x : x,
             y : y,
-            teban : 0,
+            teban : teban,
             rfen : rfen
         })
     }
@@ -78,7 +83,7 @@ fn testte() {
     assert_eq!(board::SENTE, te.teban);
     assert_eq!("abcdefgh", te.rfen);
     assert_eq!("PS", te.pos());
-    assert_eq!("99 @@ PS abcdefgh", te.to_str(99));
+    assert_eq!("99 @@ PS abcdefgh\n", te.to_str(99));
 
     let te = Te::new(3, 4, board::GOTE, "ABCDEFGH".to_string());
     assert_eq!(3, te.x);
@@ -86,7 +91,7 @@ fn testte() {
     assert_eq!(board::GOTE, te.teban);
     assert_eq!("ABCDEFGH", te.rfen);
     assert_eq!("c4", te.pos());
-    assert_eq!("23 [] c4 ABCDEFGH", te.to_str(23));
+    assert_eq!("23 [] c4 ABCDEFGH\n", te.to_str(23));
 
     let te = Te::from("");
     assert!(te.is_none());
@@ -105,6 +110,7 @@ fn testte() {
     assert_eq!(board::SENTE, te.teban);
     assert_eq!("rfen b", te.rfen);
     assert_eq!("a1", te.pos());
+    assert_eq!("1 @@ a1 rfen b\n", te.to_str(1));
 
     let te = Te::from("2 [] h8 rfen w");
     assert!(te.is_some());
@@ -114,6 +120,7 @@ fn testte() {
     assert_eq!(board::GOTE, te.teban);
     assert_eq!("rfen w", te.rfen);
     assert_eq!("h8", te.pos());
+    assert_eq!("2 [] h8 rfen w\n", te.to_str(2));
 }
 
 pub struct Kifu {
