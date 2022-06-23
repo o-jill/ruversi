@@ -7,10 +7,15 @@ use std::sync::mpsc;
 mod board;
 mod game;
 mod initialpos;
+mod myoption;
 mod node;
 mod kifu;
 mod trainer;
 mod weight;
+
+
+/// global settings.
+static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::OnceCell::new();
 
 fn trial() {
     let files = std::fs::read_dir("./kifu/").unwrap();
@@ -85,20 +90,36 @@ fn trial() {
     }
 }
 
-fn gen_kifu() {
-    for (idx, &rfen) in initialpos::RFENTBL.iter().enumerate() {
+fn gen_kifu(n : Option<usize>) {
+    let grp;
+    let rfentbl = if n.is_none() {
+        grp = 0;
+        initialpos::RFENTBL.to_vec()
+    } else {
+        let n = n.unwrap();
+        grp = n;
+        let sz = initialpos::RFENTBL.len();
+        let b = sz * n / 10;
+        let e = sz * (n + 1) / 10;
+        initialpos::RFENTBL[b..e].to_vec()
+    };
+
+    for (idx, &rfen) in rfentbl.iter().enumerate() {
         // prepare game
         let mut g = game::Game::from(rfen);
         // play
         g.start().unwrap();
         // store kifu
-        let kifuname = format!("./kifu/kifu{:06}.txt", idx);
+        let kifuname = format!("./kifu/kifu{}{:06}.txt", grp, idx);
         let mut f = File::create(kifuname).unwrap();
         f.write(g.kifu.to_str().as_bytes()).unwrap();
     }
 }
 
-fn training() {
+fn training(repeat : Option<usize>, eta : Option<f32>) {
+    let repeat = repeat.unwrap_or(1000);
+    let eta = eta.unwrap_or(0.001);
+
     // list up kifu
     let files = std::fs::read_dir("./kifu/").unwrap();
     let mut files = files.filter_map(|entry| {
@@ -111,8 +132,9 @@ fn training() {
             // fnm.find(".txt").is_some()
         }).cloned().collect::<Vec<String>>();
     // println!("{:?}", files);
+
     // train
-    let mut tr = trainer::Trainer::new(0.001, 1000);
+    let mut tr = trainer::Trainer::new(eta, repeat);
     tr.learn(&mut files);
 
     // put new eval table
@@ -121,8 +143,19 @@ fn training() {
     }
 }
 
+fn readeval(path: &str) {
+    println!("read eval table: {}", path);
+    unsafe {
+        node::WEIGHT.as_mut().unwrap().read(path).unwrap();
+    }
+}
+
 fn main() {
     println!("Hello, reversi world!");
+
+    MYOPT
+        .set(myoption::MyOption::new(std::env::args().collect()))
+        .unwrap();
 
     node::init_weight();
 
@@ -131,15 +164,25 @@ fn main() {
     // read command options
 
     // read eval table
-    let path = "./evaltable.txt";
-    if std::path::Path::new(path).exists() {
-        println!("read eval table: {}", path);
-        unsafe {
-            node::WEIGHT.as_mut().unwrap().read(path).unwrap();
+    let mut path = &MYOPT.get().unwrap().evaltable1;
+    if path.is_empty() {
+        let path = "./evaltable.txt";
+        if std::path::Path::new(path).exists() {
+            readeval(path);
         }
+    } else {
+        readeval(path);
     }
 
-    gen_kifu();
+    let mode = &MYOPT.get().unwrap().mode;
+    if mode.is_empty() || mode == "genkifu" {
+        let n = MYOPT.get().unwrap().n;
+        gen_kifu(n);
+    }
+    if mode.is_empty() || mode == "learn" {
+        let repeat = MYOPT.get().unwrap().repeat;
+        let eta = MYOPT.get().unwrap().eta;
+        training(repeat, eta);
+    }
 
-    training();
 }
