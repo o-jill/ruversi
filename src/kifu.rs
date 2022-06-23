@@ -70,6 +70,52 @@ impl Te {
     }
 }
 
+#[test]
+fn testte() {
+    let te = Te::new(0, 0, board::SENTE, "abcdefgh".to_string());
+    assert_eq!(0, te.x);
+    assert_eq!(0, te.y);
+    assert_eq!(board::SENTE, te.teban);
+    assert_eq!("abcdefgh", te.rfen);
+    assert_eq!("PS", te.pos());
+    assert_eq!("99 @@ PS abcdefgh", te.to_str(99));
+
+    let te = Te::new(3, 4, board::GOTE, "ABCDEFGH".to_string());
+    assert_eq!(3, te.x);
+    assert_eq!(4, te.y);
+    assert_eq!(board::GOTE, te.teban);
+    assert_eq!("ABCDEFGH", te.rfen);
+    assert_eq!("c4", te.pos());
+    assert_eq!("23 [] c4 ABCDEFGH", te.to_str(23));
+
+    let te = Te::from("");
+    assert!(te.is_none());
+
+    let te = Te::from("1 @@ a1 rfenb");
+    assert!(te.is_none());
+
+    let te = Te::from("1  @@ a1 rfenb");
+    assert!(te.is_none());
+
+    let te = Te::from("1 @@ a1 rfen b");
+    assert!(te.is_some());
+    let te = te.unwrap();
+    assert_eq!(1, te.x);
+    assert_eq!(1, te.y);
+    assert_eq!(board::SENTE, te.teban);
+    assert_eq!("rfen b", te.rfen);
+    assert_eq!("a1", te.pos());
+
+    let te = Te::from("2 [] h8 rfen w");
+    assert!(te.is_some());
+    let te = te.unwrap();
+    assert_eq!(8, te.x);
+    assert_eq!(8, te.y);
+    assert_eq!(board::GOTE, te.teban);
+    assert_eq!("rfen w", te.rfen);
+    assert_eq!("h8", te.pos());
+}
+
 pub struct Kifu {
     pub list: Vec<Te>,
     score : Option<i8>,
