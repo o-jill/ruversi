@@ -14,14 +14,23 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        kifu: ['-N0', '-N1', '-N2', '-N3', '-N4', '-N5', '-N6', '-N7', '-N8', '-N9']
+
     steps:
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
     - name: Run tests
+      continue-on-error: true # とにかくログを保存するとこまで行きたい
+      id: utest
       run: cargo test --verbose
     - name: Run
-      run: cargo run --release
+      continue-on-error: true # とにかくログを保存するとこまで行きたい
+      id: releaserun
+      run: cargo run --release -- ${{ matrix.kifu }}
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定
@@ -29,6 +38,16 @@ jobs:
     - name: Save artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: kifu${{ env.CURRENT_DATETIME }}
+        name: kifu${{ matrix.kifu }}_${{ env.CURRENT_DATETIME }}
         path: |
           kifu
+    - name: check error test
+      if: ${{ steps.utest.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.utest.outcome }} == 'failure'
+        exit 1
+    - name: check error run
+      if: ${{ steps.releaserun.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.releaserun.outcome }} == 'failure'
+        exit 1
