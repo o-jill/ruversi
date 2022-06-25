@@ -166,7 +166,7 @@ impl Kifu {
 
     pub fn to_str(&self) -> String {
         let lines = self.list.iter().enumerate().map(
-            |(i, a)| a.to_str(i)).collect::<Vec<String>>();
+            |(i, a)| a.to_str(i + 1)).collect::<Vec<String>>();
         lines.join("") + &self.score2str()
     }
 
