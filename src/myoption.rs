@@ -1,5 +1,3 @@
-// use super::*;
-
 /// Options specified in command line args.
 /// See 'options:' section in Readme.md.
 #[derive(Debug)]
@@ -35,7 +33,6 @@ impl MyOption {
             mode : String::new(),
             evaltable1 : String::new(),
             evaltable2 : String::new(),
-
         };
         let mut old = String::new();
         for e in args {
