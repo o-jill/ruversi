@@ -14,17 +14,17 @@ pub struct Best {
     pub hyoka : f32,
     pub x : usize,
     pub y : usize,
-    pub teban : i8,
+    pub teban : board::Teban,
 }
 
 impl Best {
-    pub fn new(h : f32, x : usize, y : usize, t : i8) -> Best {
+    pub fn new(h : f32, x : usize, y : usize, t : board::Teban) -> Best {
         Best { hyoka: h, x: x, y: y, teban: t }
     }
 
     pub fn pos(&self) -> String {
         format!("{}{}{}",
-            if self.teban == board::SENTE {
+            if self.teban.is_sente() {
                 board::STONE_SENTE
             } else {
                 board::STONE_GOTE
@@ -127,10 +127,10 @@ impl Node {
                 if best.is_none() {
                     node2.best = Some(Best::new(val, x, y, teban));
                     node2.hyoka = Some(val);
-                } else if teban == board::SENTE && best.unwrap().hyoka < val {
+                } else if teban.is_sente() && best.unwrap().hyoka < val {
                     node2.best = Some(Best::new(val, x, y, teban));
                     node2.hyoka = Some(val);
-                } else if teban == board::GOTE && best.unwrap().hyoka > val {
+                } else if teban.is_sente() && best.unwrap().hyoka > val {
                     node2.best = Some(Best::new(val, x, y, teban));
                     node2.hyoka = Some(val);
                 } else {
@@ -159,10 +159,10 @@ impl Node {
             if best.is_none() {
                 node.best = Some(Best::new(val, x, y, teban));
                 node.hyoka = Some(val);
-            } else if teban == board::SENTE && best.unwrap().hyoka < val {
+            } else if teban.is_sente() && best.unwrap().hyoka < val {
                 node.best = Some(Best::new(val, x, y, teban));
                 node.hyoka = Some(val);
-            } else if teban == board::GOTE && best.unwrap().hyoka > val {
+            } else if teban.is_gote() && best.unwrap().hyoka > val {
                 node.best = Some(Best::new(val, x, y, teban));
                 node.hyoka = Some(val);
             } else {
@@ -173,8 +173,8 @@ impl Node {
         sub.join().unwrap();
         let mut subresult = rx.recv().unwrap();
         if subresult.best.is_none() ||
-            node.best.as_ref().unwrap().hyoka * teban as f32
-                > subresult.best.as_ref().unwrap().hyoka * teban as f32 {
+            node.best.as_ref().unwrap().hyoka * (teban as i8) as f32
+                > subresult.best.as_ref().unwrap().hyoka * (teban as i8) as f32 {
             node.kyokumen += subresult.kyokumen;
             return Some((node.best.as_ref().unwrap().hyoka, node));
         }
@@ -220,9 +220,9 @@ impl Node {
             let val = val.unwrap();
             if best.is_none() {
                 node.best = Some(Best::new(val, x, y, teban));
-            } else if teban == board::SENTE && best.unwrap().hyoka < val {
+            } else if teban.is_sente() && best.unwrap().hyoka < val {
                 node.best = Some(Best::new(val, x, y, teban));
-            } else if teban == board::GOTE && best.unwrap().hyoka > val {
+            } else if teban.is_gote() && best.unwrap().hyoka > val {
                 node.best = Some(Best::new(val, x, y, teban));
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();

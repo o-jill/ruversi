@@ -11,7 +11,7 @@ pub const STONE_SENTE : &str = "@@";
 pub const STONE_GOTE : &str = "[]";
 
 #[derive(Clone, PartialEq)]
-enum Teban {
+pub enum Teban {
     Sente,
     Gote,
     Blank,
@@ -27,6 +27,14 @@ impl Teban {
         }
     }
 
+    /* pub fn into(&self) -> f32 {
+        match self {
+            Sente => 1.0,
+            Gote => -1.0,
+            Blank => 0.0,
+        }
+    }*/
+
     pub fn from(s : &str) -> Option<Teban> {
         match s {
             "b" => Some(Teban::Sente),
@@ -36,12 +44,32 @@ impl Teban {
         }
     }
 
+    pub fn is_sente(&self) -> bool {
+        *self == Teban::Sente
+    }
+    pub fn is_gote(&self) -> bool {
+        *self == Teban::Gote
+    }
+    pub fn is_blank(&self) -> bool {
+        *self == Teban::Blank
+    }
+
     pub fn flip(&mut self) {
         *self = match self {
             Sente => Teban::Gote,
             Gote => Teban::Sente,
             Blank => Teban::Blank,
         };
+    }
+}
+
+impl From<Teban> for f32 {
+    fn from(t: Teban) -> Self {
+        match t {
+            Sente => 1.0,
+            Gote => -1.0,
+            Blank => 0.0,
+        }
     }
 }
 
@@ -128,9 +156,9 @@ impl Board {
                     count += 1;
                     continue;
                 }
-                if old == Teban::Sente {
+                if old.is_sente() {
                     line += &STR_SENTE.chars().nth(count).unwrap().to_string();
-                } else if old == Teban::Gote {
+                } else if old.is_gote() {
                     line += &STR_GOTE.chars().nth(count).unwrap().to_string();
                 } else if old == Teban::Blank {
                     line += &STR_NUM.chars().nth(count).unwrap().to_string();
@@ -138,11 +166,11 @@ impl Board {
                 old = c;
                 count = 1;
             }
-            if old == Teban::Sente {
+            if old.is_sente() {
                 line += &STR_SENTE.chars().nth(count).unwrap().to_string();
-            } else if old == Teban::Gote {
+            } else if old.is_gote() {
                 line += &STR_GOTE.chars().nth(count).unwrap().to_string();
-            } else if old == Teban::Blank {
+            } else if old.is_blank() {
                 line += &STR_NUM.chars().nth(count).unwrap().to_string();
             }
             ban.push(line);
@@ -159,9 +187,9 @@ impl Board {
                 let c = self.at(x, y);
                 line += "|";
                 line +=
-                    if c == Teban::Sente {
+                    if c.is_sente() {
                         STONE_SENTE
-                    } else if c == Teban::Gote {
+                    } else if c.is_gote() {
                         STONE_GOTE
                     } else {
                         "__"
@@ -223,7 +251,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -237,7 +265,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -251,7 +279,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -265,7 +293,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -282,7 +310,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -299,7 +327,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -316,7 +344,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -333,7 +361,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -350,7 +378,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -364,7 +392,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -378,7 +406,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -392,7 +420,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -409,7 +437,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -426,7 +454,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -443,7 +471,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -460,7 +488,7 @@ impl Board {
                 }
                 break;
             }
-            if val == Teban::Blank {
+            if val.is_blank() {
                 break;
             }
         }
@@ -494,7 +522,7 @@ impl Board {
         for y in 0..8 {
             for x in 0..8 {
                 let c = self.at(x, y);
-                if c != Teban::Blank {
+                if !c.is_blank() {
                     continue;
                 }
                 nblank += 1;
@@ -515,14 +543,14 @@ impl Board {
     pub fn count(&self) -> i8 {
         let mut sum : i8 = 0;
         for c in self.cells.iter() {
-            sum += *c;
+            sum += *c as i8;
         }
         sum
     }
 
     pub fn is_full(&self) -> bool {
         for c in self.cells.iter() {
-            if *c == Teban::Blank {
+            if c.is_blank() {
                 return false;
             }
         }
