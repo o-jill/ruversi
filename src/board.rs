@@ -1,6 +1,6 @@
-pub const SENTE : i8 = 1;
-pub const BLANK : i8 = 0;
-pub const GOTE : i8 = -1;
+// pub const SENTE : i8 = 1;
+// pub const BLANK : i8 = 0;
+// pub const GOTE : i8 = -1;
 pub const NONE : i8 = 127;
 pub const NUMCELL : usize = 8;
 pub const CELL_2D : usize = NUMCELL * NUMCELL;
@@ -10,9 +10,44 @@ const STR_NUM : &str = "012345678";
 pub const STONE_SENTE : &str = "@@";
 pub const STONE_GOTE : &str = "[]";
 
+#[derive(Clone, PartialEq)]
+enum Teban {
+    Sente,
+    Gote,
+    Blank,
+    None,
+}
+
+impl Teban {
+    pub fn into(&self) -> i8 {
+        match self {
+            Sente => 1,
+            Gote => -1,
+            Blank => 0,
+        }
+    }
+
+    pub fn from(s : &str) -> Option<Teban> {
+        match s {
+            "b" => Some(Teban::Sente),
+            "w" => Some(Teban::Gote),
+            "f" => Some(Teban::Blank),
+            _ => None
+        }
+    }
+
+    pub fn flip(&mut self) {
+        *self = match self {
+            Sente => Teban::Gote,
+            Gote => Teban::Sente,
+            Blank => Teban::Blank,
+        };
+    }
+}
+
 pub struct Board {
-    pub cells: Vec<i8>,
-    pub teban: i8,
+    pub cells: Vec<Teban>,
+    pub teban: Teban,
     pub pass: i8,
 }
 
@@ -20,14 +55,14 @@ impl Board {
     pub fn new() -> Board {
         let mut ret = Board {
             cells : Vec::new(),
-            teban : SENTE,
+            teban : Teban::Sente,
             pass : 0,
         };
-        ret.cells.resize(8 * 8, BLANK);
-        ret.cells[Board::index(3, 3)] = SENTE;
-        ret.cells[Board::index(4, 4)] = SENTE;
-        ret.cells[Board::index(3, 4)] = GOTE;
-        ret.cells[Board::index(4, 3)] = GOTE;
+        ret.cells.resize(8 * 8, Teban::Blank);
+        ret.cells[Board::index(3, 3)] = Teban::Sente;
+        ret.cells[Board::index(4, 4)] = Teban::Sente;
+        ret.cells[Board::index(3, 4)] = Teban::Gote;
+        ret.cells[Board::index(4, 3)] = Teban::Gote;
         ret
     }
 
@@ -37,33 +72,31 @@ impl Board {
         if elem.len() != 2 || elem[1].find(|c:char| c == 'b' || c == 'f' || c == 'w').is_none() {
             return Err(String::from("Invalid rfen"));
         }
-        let teban;
-        match elem[1] {
-            "b" => {teban = SENTE},
-            "w" => {teban = GOTE},
-            "f" => {teban = BLANK}
-            _ => { return Err(format!("Invalid teban: {}", elem[1])); }
+        let teban = Teban::from(elem[1]);
+        if teban.is_none() {
+            return Err(format!("Invalid teban: {}", elem[1]));
         }
+        let teban = teban.unwrap();
         let mut ret = Board {
             cells : Vec::new(),
             teban : teban,
             pass : 0,
         };
-        ret.cells.resize(CELL_2D, BLANK);
+        ret.cells.resize(CELL_2D, Teban::Blank);
         let mut idx = 0;
         for ch in elem[0].chars() {
             match ch {
                 'A'..='H' => {
                     let n = ch as i32 + 1 - 'A' as i32;
                     for _i in 0..n {
-                        ret.cells[idx] = SENTE;
+                        ret.cells[idx] = Teban::Sente;
                         idx += 1;
                     }
                 },
                 'a'..='h' => {
                     let n = ch as i32 + 1 - 'a' as i32;
                     for _i in 0..n {
-                        ret.cells[idx] = GOTE;
+                        ret.cells[idx] = Teban::Gote;
                         idx += 1;
                     }
                 },
@@ -86,7 +119,7 @@ impl Board {
     pub fn to_str(&self) -> String {
         let mut ban = Vec::<String>::new();
         for y in 0..NUMCELL {
-            let mut old = NONE;
+            let mut old = Teban::None;
             let mut count = 0;
             let mut line = String::new();
             for x in 0..NUMCELL {
@@ -95,27 +128,27 @@ impl Board {
                     count += 1;
                     continue;
                 }
-                if old == SENTE {
+                if old == Teban::Sente {
                     line += &STR_SENTE.chars().nth(count).unwrap().to_string();
-                } else if old == GOTE {
+                } else if old == Teban::Gote {
                     line += &STR_GOTE.chars().nth(count).unwrap().to_string();
-                } else if old == BLANK {
+                } else if old == Teban::Blank {
                     line += &STR_NUM.chars().nth(count).unwrap().to_string();
                 }
                 old = c;
                 count = 1;
             }
-            if old == SENTE {
+            if old == Teban::Sente {
                 line += &STR_SENTE.chars().nth(count).unwrap().to_string();
-            } else if old == GOTE {
+            } else if old == Teban::Gote {
                 line += &STR_GOTE.chars().nth(count).unwrap().to_string();
-            } else if old == BLANK {
+            } else if old == Teban::Blank {
                 line += &STR_NUM.chars().nth(count).unwrap().to_string();
             }
             ban.push(line);
         }
         ban.join("/") + match self.teban {
-            SENTE => { " b"}, GOTE => {" w"}, _ => {" f"}
+            Teban::Sente => { " b"}, Teban::Gote => {" w"}, _ => {" f"}
         }
     }
 
@@ -126,9 +159,9 @@ impl Board {
                 let c = self.at(x, y);
                 line += "|";
                 line +=
-                    if c == SENTE {
+                    if c == Teban::Sente {
                         STONE_SENTE
-                    } else if c == GOTE {
+                    } else if c == Teban::Gote {
                         STONE_GOTE
                     } else {
                         "__"
@@ -138,15 +171,15 @@ impl Board {
         }
         println!("{}", 
             match self.teban {
-                SENTE => { format!("{}'s turn.", STONE_SENTE)},
-                GOTE => { format!("{}'s turn.", STONE_GOTE)},
+                Teban::Sente => { format!("{}'s turn.", STONE_SENTE)},
+                Teban::Gote => { format!("{}'s turn.", STONE_GOTE)},
                 _ => {"finished.".to_string()}
             }
         )
     }
 
     pub fn flipturn(&mut self) {
-        self.teban = -self.teban;
+        self.teban.flip();
     }
 
     pub fn resetpass(&mut self) {
@@ -154,7 +187,7 @@ impl Board {
     }
 
     pub fn pass(&mut self) {
-        self.teban = -self.teban;
+        self.teban.flip();
         self.pass += 1;
     }
 
@@ -171,7 +204,7 @@ impl Board {
         x + y * NUMCELL
     }
 
-    pub fn at(&self, x: usize, y: usize) -> i8 {
+    pub fn at(&self, x: usize, y: usize) -> Teban {
         self.cells[x + y * NUMCELL]
     }
 
@@ -190,7 +223,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -204,7 +237,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -218,7 +251,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -232,7 +265,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -249,7 +282,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -266,7 +299,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -283,7 +316,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -300,7 +333,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -317,7 +350,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -331,7 +364,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -345,7 +378,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -359,7 +392,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -376,7 +409,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -393,7 +426,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -410,7 +443,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -427,7 +460,7 @@ impl Board {
                 }
                 break;
             }
-            if val == BLANK {
+            if val == Teban::Blank {
                 break;
             }
         }
@@ -443,7 +476,7 @@ impl Board {
 
         let xc = x - 1;
         let yc = y - 1;
-        if self.at(xc, yc) != BLANK {
+        if self.at(xc, yc) != Teban::Blank {
             return Err("stone exists.");
         }
         let mut ban = self.clone();
@@ -461,7 +494,7 @@ impl Board {
         for y in 0..8 {
             for x in 0..8 {
                 let c = self.at(x, y);
-                if c != BLANK {
+                if c != Teban::Blank {
                     continue;
                 }
                 nblank += 1;
@@ -489,7 +522,7 @@ impl Board {
 
     pub fn is_full(&self) -> bool {
         for c in self.cells.iter() {
-            if *c == BLANK {
+            if *c == Teban::Blank {
                 return false;
             }
         }
