@@ -8,12 +8,12 @@ pub const STR_POSX : &str = "0abcdefgh";
 pub struct Te {
     x : usize,
     y : usize,
-    teban : i8,
+    teban : board::Teban,
     pub rfen : String,
 }
 
 impl Te {
-    pub fn new(x : usize, y : usize, t : i8, rfen : String) -> Te {
+    pub fn new(x : usize, y : usize, t : board::Teban, rfen : String) -> Te {
         Te {
             x : x,
             y : y,
@@ -32,8 +32,8 @@ impl Te {
             return None;
         }
         let teban = match elem[1] {
-            board::STONE_SENTE => board::SENTE,
-            board::STONE_GOTE => board::GOTE,
+            board::STONE_SENTE => board::Teban::Sente,
+            board::STONE_GOTE => board::Teban::Gote,
             _ => return None
         };
         let x : usize;
@@ -70,9 +70,9 @@ impl Te {
         format!(
             "{} {} {} {}\n",
             i, match self.teban {
-                board::SENTE => { board::STONE_SENTE },
-                board::GOTE => { board::STONE_GOTE },
-                _ => { "  "},
+                board::Teban::Sente => { board::STONE_SENTE },
+                board::Teban::Gote => { board::STONE_GOTE },
+                _ => { "  " },
             },
             self.pos(), self.rfen)
     }
@@ -80,18 +80,18 @@ impl Te {
 
 #[test]
 fn testte() {
-    let te = Te::new(0, 0, board::SENTE, "abcdefgh".to_string());
+    let te = Te::new(0, 0, board::Teban::Sente, "abcdefgh".to_string());
     assert_eq!(0, te.x);
     assert_eq!(0, te.y);
-    assert_eq!(board::SENTE, te.teban);
+    assert!(te.teban.is_sente());
     assert_eq!("abcdefgh", te.rfen);
     assert_eq!("PS", te.pos());
     assert_eq!("99 @@ PS abcdefgh\n", te.to_str(99));
 
-    let te = Te::new(3, 4, board::GOTE, "ABCDEFGH".to_string());
+    let te = Te::new(3, 4, board::Teban::Gote, "ABCDEFGH".to_string());
     assert_eq!(3, te.x);
     assert_eq!(4, te.y);
-    assert_eq!(board::GOTE, te.teban);
+    assert!(te.teban.is_gote());
     assert_eq!("ABCDEFGH", te.rfen);
     assert_eq!("c4", te.pos());
     assert_eq!("23 [] c4 ABCDEFGH\n", te.to_str(23));
@@ -110,7 +110,7 @@ fn testte() {
     let te = te.unwrap();
     assert_eq!(1, te.x);
     assert_eq!(1, te.y);
-    assert_eq!(board::SENTE, te.teban);
+    assert!(te.teban.is_sente());
     assert_eq!("rfen b", te.rfen);
     assert_eq!("a1", te.pos());
     assert_eq!("1 @@ a1 rfen b\n", te.to_str(1));
@@ -120,7 +120,7 @@ fn testte() {
     let te = te.unwrap();
     assert_eq!(8, te.x);
     assert_eq!(8, te.y);
-    assert_eq!(board::GOTE, te.teban);
+    assert!(te.teban.is_gote());
     assert_eq!("rfen w", te.rfen);
     assert_eq!("h8", te.pos());
     assert_eq!("2 [] h8 rfen w\n", te.to_str(2));
@@ -163,7 +163,7 @@ impl Kifu {
         ret
     }
 
-    pub fn append(&mut self, x : usize, y : usize, t : i8, rfen : String) {
+    pub fn append(&mut self, x : usize, y : usize, t : board::Teban, rfen : String) {
         self.list.push(Te::new(x, y, t, rfen));
     }
 
