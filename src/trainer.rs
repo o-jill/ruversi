@@ -32,6 +32,7 @@ impl Trainer {
                     self.run(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
                 }
             }
+            println!("");
         }
         println!("Done.");
     }
