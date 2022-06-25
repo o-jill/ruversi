@@ -23,6 +23,9 @@ impl Te {
     }
 
     pub fn from(line : &str) -> Option<Te> {
+        if line.starts_with("#") {
+            return None;
+        }
         let elem = line.split_whitespace().collect::<Vec<&str>>();
         // nth teban posxy rfen rfen-teban
         if elem.len() != 5 {
