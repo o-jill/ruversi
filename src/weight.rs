@@ -77,7 +77,6 @@ impl Weight {
 
     pub fn forward(&self, ban : &board::Board)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
-        let mut ret = Vec::<Vec<f32>>::new();
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -121,10 +120,10 @@ impl Weight {
         let (hidden, hidsig, output) = self.forward(&ban);
         // backword
         let w1sz = board::CELL_2D + 1 + 1;
-        let mut ow = &mut self.weight;
+        let ow = &mut self.weight;
         // back to hidden
         let diff : f32 = output[0] - 10.0 * winner as f32;
-        let mut w2 = &mut ow.as_mut_slice()[w1sz * 4..];
+        let w2 = &mut ow.as_mut_slice()[w1sz * 4..];
         for i in 0..N_HIDDEN {
             w2[i] -= hidsig[i] * diff * eta;
         }
@@ -138,7 +137,7 @@ impl Weight {
         }
         // back to input
         for (i, h) in dhid.iter().enumerate() {
-            let mut w1 = &mut ow.as_mut_slice()[i * w1sz .. (i + 1) * w1sz];
+            let w1 = &mut ow.as_mut_slice()[i * w1sz .. (i + 1) * w1sz];
             for (j, c) in cells.iter().enumerate() {
                 w1[j] -= *h * *c as f32 * eta;
             }

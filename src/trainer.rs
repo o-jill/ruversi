@@ -1,4 +1,4 @@
-use rand::{prelude::SliceRandom, Rng};
+use rand::prelude::SliceRandom;
 
 use super::*;
 

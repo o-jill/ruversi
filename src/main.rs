@@ -134,7 +134,7 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
     // println!("{:?}", files);
 
     // train
-    let mut tr = trainer::Trainer::new(eta, repeat);
+    let tr = trainer::Trainer::new(eta, repeat);
     tr.learn(&mut files);
 
     // put new eval table
@@ -164,7 +164,7 @@ fn main() {
     // read command options
 
     // read eval table
-    let mut path = &MYOPT.get().unwrap().evaltable1;
+    let path = &MYOPT.get().unwrap().evaltable1;
     if path.is_empty() {
         let path = "./evaltable.txt";
         if std::path::Path::new(path).exists() {
