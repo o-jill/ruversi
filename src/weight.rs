@@ -56,7 +56,9 @@ impl Weight {
     pub fn evaluate(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let tebanr = &ban.teban;
+        let teban8 = tebanr.into();
+        let teban = teban8 as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
         let w2 = &ow.as_slice()[w1sz * 4..];
@@ -67,7 +69,8 @@ impl Weight {
             let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
             let mut hidsum : f32 = *w1.last().unwrap();
             for (idx, c)  in cells.iter().enumerate() {
-                hidsum += *c as f32 * w1[idx];
+                let cell = c.into();
+                hidsum += cell as f32 * w1[idx];
             }
             hidsum += teban as f32 * w1[w1sz - 2];
             sum += w2[i] / (f32::exp(hidsum) + 1.0);
@@ -83,7 +86,9 @@ impl Weight {
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
         let mut sum : f32;
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let tebanr = &ban.teban;
+        let teban8 = tebanr.into();
+        let teban = teban8 as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
         let w2 = &ow.as_slice()[w1sz * 4..];
@@ -94,9 +99,10 @@ impl Weight {
             let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
             let mut hidsum : f32 = *w1.last().unwrap();
             for (idx, c)  in cells.iter().enumerate() {
-                hidsum += *c as f32 * w1[idx];
+                let cell = c.into();
+                hidsum += cell as f32 * w1[idx];
             }
-            hidsum += teban as f32 * w1[w1sz - 2];
+            hidsum += teban * w1[w1sz - 2];
             hidden[i] = hidsum;
             hidsig[i] = 1.0 / (f32::exp(hidsum) + 1.0);
             sum += w2[i] * hidsig[i];
@@ -116,7 +122,9 @@ impl Weight {
 
     fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let tebanr = &ban.teban;
+        let teban8 = tebanr.into();
+        let teban = teban8 as f32;
         // forward
         let (hidden, hidsig, output) = self.forward(&ban);
         // backword
@@ -140,9 +148,10 @@ impl Weight {
         for (i, h) in dhid.iter().enumerate() {
             let mut w1 = &mut ow.as_mut_slice()[i * w1sz .. (i + 1) * w1sz];
             for (j, c) in cells.iter().enumerate() {
-                w1[j] -= *h * *c as f32 * eta;
+                let cell = c.into();
+                w1[j] -= *h * cell as f32 * eta;
             }
-            w1[board::CELL_2D] -= *h * teban as f32 * eta;
+            w1[board::CELL_2D] -= *h * teban * eta;
             w1[board::CELL_2D + 1] -= *h * eta;
         }
     }

@@ -62,14 +62,17 @@ fn trial() {
     );
 
     let mut kifu = kifu::Kifu::new();
-    kifu.append(0, 0, 1, String::new());
-    kifu.append(1, 1, 1, String::new());
-    kifu.append(2, 2, -1, String::new());
-    kifu.append(3, 3, 1, String::new());
-    kifu.append(4, 4, -1, String::new());
-    kifu.append(5, 5, 1, String::new());
-    kifu.append(6, 6, -1, String::new());
-    kifu.append(7, 7, 0, String::new());
+    let s = board::Teban::Sente;
+    let g = board::Teban::Gote;
+    let b = board::Teban::Blank;
+    kifu.append(0, 0, s, String::new());
+    kifu.append(1, 1, s, String::new());
+    kifu.append(2, 2, g, String::new());
+    kifu.append(3, 3, s, String::new());
+    kifu.append(4, 4, g, String::new());
+    kifu.append(5, 5, s, String::new());
+    kifu.append(6, 6, g, String::new());
+    kifu.append(7, 7, b, String::new());
     print!("{}", kifu.to_str());
 
     th.join().unwrap();

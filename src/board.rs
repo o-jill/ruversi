@@ -1,7 +1,7 @@
 // pub const SENTE : i8 = 1;
 // pub const BLANK : i8 = 0;
 // pub const GOTE : i8 = -1;
-pub const NONE : i8 = 127;
+// pub const NONE : i8 = 127;
 pub const NUMCELL : usize = 8;
 pub const CELL_2D : usize = NUMCELL * NUMCELL;
 const STR_SENTE : &str = "0ABCDEFGH";
@@ -10,7 +10,7 @@ const STR_NUM : &str = "012345678";
 pub const STONE_SENTE : &str = "@@";
 pub const STONE_GOTE : &str = "[]";
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Teban {
     Sente,
     Gote,
@@ -20,10 +20,12 @@ pub enum Teban {
 
 impl Teban {
     pub fn into(&self) -> i8 {
-        match self {
-            Sente => 1,
-            Gote => -1,
-            Blank => 0,
+        if self.is_sente() {
+            1
+        } else if self.is_gote() {
+            -1
+        } else {
+            0
         }
     }
 
@@ -55,20 +57,25 @@ impl Teban {
     }
 
     pub fn flip(&mut self) {
-        *self = match self {
-            Sente => Teban::Gote,
-            Gote => Teban::Sente,
-            Blank => Teban::Blank,
-        };
+        *self =
+            if self.is_sente() {
+                Teban::Gote
+            } else if self.is_gote() {
+                Teban::Sente
+            } else {
+                Teban::Blank
+            }
     }
 }
 
 impl From<Teban> for f32 {
     fn from(t: Teban) -> Self {
-        match t {
-            Sente => 1.0,
-            Gote => -1.0,
-            Blank => 0.0,
+        if t.is_sente() {
+            1.0
+        } else if t.is_gote() {
+            -1.0
+        } else {
+            0.0
         }
     }
 }
