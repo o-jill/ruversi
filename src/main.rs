@@ -117,8 +117,8 @@ fn gen_kifu(n : Option<usize>) {
 }
 
 fn training(repeat : Option<usize>, eta : Option<f32>) {
-    let repeat = repeat.unwrap_or(1000);
-    let eta = eta.unwrap_or(0.001);
+    let repeat = repeat.unwrap_or(10000);
+    let eta = eta.unwrap_or(0.0001);
 
     // list up kifu
     let files = std::fs::read_dir("./kifu/").unwrap();
