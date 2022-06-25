@@ -123,7 +123,7 @@ impl Weight {
         let w1sz = board::CELL_2D + 1 + 1;
         let mut ow = &mut self.weight;
         // back to hidden
-        let diff : f32 = output[0] - winner as f32;
+        let diff : f32 = output[0] - 10.0 * winner as f32;
         let mut w2 = &mut ow.as_mut_slice()[w1sz * 4..];
         for i in 0..N_HIDDEN {
             w2[i] -= hidsig[i] * diff * eta;
