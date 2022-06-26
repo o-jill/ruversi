@@ -218,18 +218,17 @@ impl Node {
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
             let val = val.unwrap();
+            let fteban = teban as f32;
             if best.is_none() {
                 node.best = Some(Best::new(val, x, y, teban));
-            } else if teban == board::SENTE && best.unwrap().hyoka < val {
-                node.best = Some(Best::new(val, x, y, teban));
-            } else if teban == board::GOTE && best.unwrap().hyoka > val {
+            } else if best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, x, y, teban));
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
                 node.child[idx].release();
             }
         }
-        return Some(node.best.as_ref().unwrap().hyoka);
+        Some(node.best.as_ref().unwrap().hyoka)
     }
 
     fn release(&mut self) {
