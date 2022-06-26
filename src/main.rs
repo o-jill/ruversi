@@ -5,6 +5,7 @@ use std::thread;
 use std::sync::mpsc;
 
 mod board;
+mod extractrfen;
 mod game;
 mod initialpos;
 mod myoption;
@@ -140,6 +141,10 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
     // put new eval table
     unsafe {
         node::WEIGHT.as_ref().unwrap().write("./kifu/newevaltable.txt");
+    }
+
+    for path in files.iter() {
+        extractrfen::extract(&format!("kifu/{}", path));
     }
 }
 
