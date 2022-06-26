@@ -8,7 +8,7 @@ pub fn extract(path : &str) {
     let move2 = &kifu.list[1];
     let rfen = &kifu.list[2].rfen;
     let n = countmoves(&rfen);
-    println!("\"{}\",  # {} {} {}", rfen, move1.pos(), move2.pos(), n);
+    println!("\"{}\",  // {} {} {}", rfen, move1.pos(), move2.pos(), n);
 }
 
 const BLK : &str = " ABCDEFGH";
@@ -35,22 +35,3 @@ fn countmoves(rfen : &str) -> i32{
     }
     moves
 }
-
-/*class ExtractRfen
-
-  def extract(path)
-    # path = "./kifu/kifu000000000.txt"
-    lines = read(path)
-
-    # line1 move1
-    move1 = lines[0].split(' ')[1]
-    # line2 move2
-    move2 = lines[1].split(' ')[1]
-    # line3 rfen
-    elem = lines[2].split(' ')
-    rfen = elem[-2] + ' ' + elem[-1]
-    puts "'#{rfen}', # #{move1} #{move2} #{countmoves(elem[-2])}"
-  end
-end
-
- */
