@@ -124,13 +124,11 @@ impl Node {
                 node2.kyokumen += ch.kyokumen;
                 let best = node2.best.as_ref();
                 let val = val.unwrap();
+                let fteban = teban as f32;
                 if best.is_none() {
                     node2.best = Some(Best::new(val, x, y, teban));
                     node2.hyoka = Some(val);
-                } else if teban == board::SENTE && best.unwrap().hyoka < val {
-                    node2.best = Some(Best::new(val, x, y, teban));
-                    node2.hyoka = Some(val);
-                } else if teban == board::GOTE && best.unwrap().hyoka > val {
+                } else if fteban * best.unwrap().hyoka < fteban * val {
                     node2.best = Some(Best::new(val, x, y, teban));
                     node2.hyoka = Some(val);
                 } else {
@@ -156,13 +154,11 @@ impl Node {
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
             let val = val.unwrap();
+            let fteban = teban as f32;
             if best.is_none() {
                 node.best = Some(Best::new(val, x, y, teban));
                 node.hyoka = Some(val);
-            } else if teban == board::SENTE && best.unwrap().hyoka < val {
-                node.best = Some(Best::new(val, x, y, teban));
-                node.hyoka = Some(val);
-            } else if teban == board::GOTE && best.unwrap().hyoka > val {
+            } else if fteban * best.unwrap().hyoka < fteban * val {
                 node.best = Some(Best::new(val, x, y, teban));
                 node.hyoka = Some(val);
             } else {
