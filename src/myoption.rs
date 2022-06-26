@@ -8,6 +8,7 @@ pub struct MyOption {
     pub mode : String,  // "", "genkifu", "learn"
     pub evaltable1 : String,
     pub evaltable2 : String,
+    pub think : String,  // "all", "ab"
 }
 
 impl MyOption {
@@ -25,6 +26,7 @@ impl MyOption {
     /// - mode: ""
     /// - evaltable1: ""
     /// - evaltable2: ""
+    /// - think: ""
     pub fn new(args: Vec<String>) -> MyOption {
         let mut opt = MyOption {
             n : None,
@@ -33,6 +35,7 @@ impl MyOption {
             mode : String::new(),
             evaltable1 : String::new(),
             evaltable2 : String::new(),
+            think : String::new(),
         };
         let mut old = String::new();
         for e in args {
@@ -40,6 +43,10 @@ impl MyOption {
                 opt.mode = "genkifu".to_string();
             } else if e == "--learn" {
                 opt.mode = "learn".to_string();
+            } else if e == "--thinkab" {
+                opt.think = "ab".to_string();
+            } else if e == "--thinkall" {
+                opt.think = "all".to_string();
             } else if e == "--repeat" {
                 old = e;
             } else if e == "--eta" {

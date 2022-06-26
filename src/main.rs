@@ -109,7 +109,17 @@ fn gen_kifu(n : Option<usize>) {
         // prepare game
         let mut g = game::Game::from(rfen);
         // play
-        g.start(node::Node::think_ab, 7).unwrap();
+        let think = MYOPT.get().unwrap().think.as_str();
+        match think {
+            "" | "ab" => {
+                g.start(node::Node::think_ab, 7).unwrap()
+            },
+            "all" => {
+                g.start(node::Node::think, 7).unwrap()
+            },
+            _ => { panic!("unknown thinking method.") }
+        }
+        ;
         // store kifu
         let kifuname = format!("./kifu/kifu{}{:06}.txt", grp, idx);
         let mut f = File::create(kifuname).unwrap();
