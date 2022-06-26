@@ -83,7 +83,7 @@ fn trial() {
     }
 
     let mut g = game::Game::new();
-    g.start().unwrap();
+    g.start(node::Node::think, 7).unwrap();
 
     let tr = trainer::Trainer::new(0.01, 100);
     unsafe {
@@ -109,7 +109,7 @@ fn gen_kifu(n : Option<usize>) {
         // prepare game
         let mut g = game::Game::from(rfen);
         // play
-        g.start().unwrap();
+        g.start(node::Node::think_ab, 7).unwrap();
         // store kifu
         let kifuname = format!("./kifu/kifu{}{:06}.txt", grp, idx);
         let mut f = File::create(kifuname).unwrap();

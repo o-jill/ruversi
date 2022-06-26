@@ -20,13 +20,15 @@ impl Game {
         }
     }
 
-    pub fn start(&mut self) -> Result<(), String> {
+    pub fn start(&mut self, f : fn(&board::Board, usize) -> Option<(f32, node::Node)>, depth : usize) -> Result<(), String> {
         loop {
             // show
             self.ban.put();
             // think
             let st = Instant::now();
-            let (val, node) = node::Node::think(&self.ban, 7).unwrap();
+            let (val, node) = f(&self.ban, depth).unwrap();
+            // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
+            // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
             println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
             let best = node.best.unwrap();
