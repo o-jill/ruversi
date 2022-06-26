@@ -18,12 +18,12 @@ impl Trainer {
     pub fn learn(&self, files : &mut Vec<String>) {
         let mut rng = rand::thread_rng();
         for i in 0..self.repeat {
-            println!("{} / {}", i, self.repeat);
+            // println!("{} / {}", i, self.repeat);
             // rng.shuffle(files);
             files.shuffle(&mut rng);
             for fname in files.iter() {
                 let path = format!("kifu/{}", fname);
-                print!("{}", path);
+                print!("{} / {} : {}\r", i, self.repeat, path);
                 let content =
                     std::fs::read_to_string(path).unwrap();
                 let lines:Vec<&str> = content.split("\n").collect();
