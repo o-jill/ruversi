@@ -35,4 +35,4 @@ NO Warranty.
 | --genkifu      |             yes |       no |
 | --genkifu --learn |          yes |      yes |
 
---
+---
