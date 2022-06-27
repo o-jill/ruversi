@@ -273,7 +273,7 @@ impl Node {
                 let fteban = teban as f32;
                 if teban == board::SENTE && alpha < val {
                     alpha = val;
-                } else if teban == board::SENTE && beta > val {
+                } else if teban == board::GOTE && beta > val {
                     beta = val;
                 }
                 if best.is_none() {
@@ -310,7 +310,7 @@ impl Node {
             let fteban = teban as f32;
             if teban == board::SENTE && alpha < val {
                 alpha = val;
-            } else if teban == board::SENTE && beta > val {
+            } else if teban == board::GOTE && beta > val {
                 beta = val;
             }
             if best.is_none() {
