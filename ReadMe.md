@@ -17,12 +17,16 @@ NO Warranty.
   set generatin kifu mode.
 * -Nx  
   initial board group x for generating kifu. 0~9. all of the initial board positions will be used when this option is not specified.
+* --thinkab
+  use alpha-beta prunning. default.
+* --thinkall
+  search every node. (no prunning)
 * --learn  
   set lerning mode.
 * --repeat <number>  
-  number of learning.
+  number of learning. default 10000.
 * --eta <ratio>  
-  learning ratio.
+  learning ratio. default 0.0001.
 
 | command option | generating kifu | learning |
 |:--------------:|:---------------:|:--------:|
