@@ -1,5 +1,16 @@
 use super::*;
 
+const SORT_PRI : [i32 ; 64]= [
+    0, 3, 1, 2, 2, 1, 3, 0,
+    3, 3, 4, 4, 4, 4, 3, 3,
+    1, 4, 5, 5, 5, 5, 4, 1,
+    2, 4, 5, 5, 5, 5, 4, 2,
+    2, 4, 5, 5, 5, 5, 4, 2,
+    1, 4, 5, 5, 5, 5, 4, 1,
+    3, 3, 4, 4, 4, 4, 3, 3,
+    0, 3, 1, 2, 2, 1, 3, 0,
+];
+
 static mut INITIALIZED : bool = false;
 
 /*
@@ -246,13 +257,20 @@ impl Node {
         let moves = moves.unwrap();
         let n = moves.len();
         // let moves1 = &moves[0..n/2];
-        let moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());
-        let moves2 = Vec::from_iter(moves[n/2..].iter().cloned());
+        let mut moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());
+        let mut moves2 = Vec::from_iter(moves[n/2..].iter().cloned());
         let ban2 = ban.clone();
         let (tx, rx) = mpsc::channel();
 
         let sub =
                 thread::spawn(move || {
+            moves1.sort_by(|a, b| {
+                let ia = a.0 + a.1 * 8 - 9;
+                let ib = b.0 + b.1 * 8 - 9;
+                let pa = SORT_PRI[ia];
+                let pb = SORT_PRI[ib];
+                pa.partial_cmp(&pb).unwrap()
+            });
             let mut node2 = node::Node::new(0, 0, depth);
             let mut alpha : f32 = -100000.0;
             let mut beta : f32 = 100000.0;
@@ -291,6 +309,13 @@ impl Node {
             // return Some(node.best.as_ref().unwrap().hyoka);
         });
 
+        moves2.sort_by(|a, b| {
+            let ia = a.0 + a.1 * 8 - 9;
+            let ib = b.0 + b.1 * 8 - 9;
+            let pa = SORT_PRI[ia];
+            let pb = SORT_PRI[ib];
+            pa.partial_cmp(&pb).unwrap()
+        });
         let mut alpha : f32 = -100000.0;
         let mut beta : f32 = 100000.0;
         for mv in moves2 {
@@ -357,7 +382,14 @@ impl Node {
             node.kyokumen = 1;
             return Some(ban.count()  as f32 * 10.0);
         }
-        let moves = moves.unwrap();
+        let mut moves = moves.unwrap();
+        moves.sort_by(|a, b| {
+            let ia = a.0 + a.1 * 8 - 9;
+            let ib = b.0 + b.1 * 8 - 9;
+            let pa = SORT_PRI[ia];
+            let pb = SORT_PRI[ib];
+            pa.partial_cmp(&pb).unwrap()
+        });
 
         for mv in moves {
             let x = mv.0;
