@@ -153,9 +153,23 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
         node::WEIGHT.as_ref().unwrap().write("./kifu/newevaltable.txt");
     }
 
+    let mut win = 0;
+    let mut draw = 0;
+    let mut lose = 0;
+    let mut total = 0;
     for path in files.iter() {
-        extractrfen::extract(&format!("kifu/{}", path));
+        let kifu = extractrfen::extract(&format!("kifu/{}", path));
+        let result = kifu.winner();
+        total += 1;
+        let result = result.unwrap();
+        match result {
+            kifu::SENTEWIN => {win += 1;},
+            kifu::DRAW => {draw += 1;},
+            kifu::GOTEWIN => {lose += 1;},
+            _ => {}
+        }
     }
+    println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
 }
 
 fn readeval(path: &str) {

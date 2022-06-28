@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn extract(path : &str) {
+pub fn extract(path : &str) -> kifu::Kifu {
     let content = std::fs::read_to_string(path).unwrap();
     let lines:Vec<&str> = content.split("\n").collect();
     let kifu = kifu::Kifu::from(&lines);
@@ -8,7 +8,8 @@ pub fn extract(path : &str) {
     let move2 = &kifu.list[1];
     let rfen = &kifu.list[2].rfen;
     let n = countmoves(&rfen);
-    println!("\"{}\",  // {} {} {}", rfen, move1.pos(), move2.pos(), n);
+    println!("\"{}\", // {} {} {}", rfen, move1.pos(), move2.pos(), n);
+    return kifu;
 }
 
 const BLK : &str = " ABCDEFGH";
