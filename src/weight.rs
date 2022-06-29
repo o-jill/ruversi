@@ -53,6 +53,12 @@ impl Weight {
         f.write(sv.join(",").as_bytes()).unwrap();
     }
 
+    pub fn copy(&mut self, src : &Weight) {
+        for (d, s) in src.weight.iter().zip(src.weight.iter()) {
+            d = s;
+        }
+    }
+
     pub fn evaluate(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
