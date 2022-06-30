@@ -102,7 +102,6 @@ impl Node {
         if ban.is_passpass() {
             return None;
         }
-        let teban = ban.teban;
         // let sum = 0;
         let moves = ban.genmove();
 
@@ -121,6 +120,7 @@ impl Node {
         let sub =
                 thread::spawn(move || {
             let mut node2 = node::Node::new(0, 0, depth);
+            let teban = ban2.teban;
             for mv in moves1 {
                 let x = mv.0;
                 let y = mv.1;
@@ -151,6 +151,7 @@ impl Node {
             // return Some(node.best.as_ref().unwrap().hyoka);
         });
 
+        let teban = ban.teban;
         for mv in moves2 {
             let x = mv.0;
             let y = mv.1;
@@ -169,9 +170,11 @@ impl Node {
             if best.is_none() {
                 node.best = Some(Best::new(val, x, y, teban));
                 node.hyoka = Some(val);
+                // println!("best : {}", val);
             } else if fteban * best.unwrap().hyoka < fteban * val {
                 node.best = Some(Best::new(val, x, y, teban));
                 node.hyoka = Some(val);
+                // println!("best : -> {}", val);
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
                 node.child[idx].release();
@@ -246,7 +249,6 @@ impl Node {
         if ban.is_passpass() {
             return None;
         }
-        let teban = ban.teban;
         // let sum = 0;
         let moves = ban.genmove();
 
@@ -271,6 +273,7 @@ impl Node {
                 let pb = SORT_PRI[ib];
                 pa.partial_cmp(&pb).unwrap()
             });
+            let teban = ban2.teban;
             let mut node2 = node::Node::new(0, 0, depth);
             let mut alpha : f32 = -100000.0;
             let mut beta : f32 = 100000.0;
@@ -297,7 +300,7 @@ impl Node {
                 if best.is_none() {
                     node2.best = Some(Best::new(val, x, y, teban));
                     node2.hyoka = Some(val);
-                } else if best.unwrap().hyoka * fteban < val  * fteban {
+                } else if best.unwrap().hyoka * fteban < val * fteban {
                     node2.best = Some(Best::new(val, x, y, teban));
                     node2.hyoka = Some(val);
                 } else {
@@ -318,6 +321,7 @@ impl Node {
         });
         let mut alpha : f32 = -100000.0;
         let mut beta : f32 = 100000.0;
+        let teban = ban.teban;
         for mv in moves2 {
             let x = mv.0;
             let y = mv.1;
@@ -341,7 +345,7 @@ impl Node {
             if best.is_none() {
                 node.best = Some(Best::new(val, x, y, teban));
                 node.hyoka = Some(val);
-            } else if best.unwrap().hyoka * fteban < val  * fteban {
+            } else if best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, x, y, teban));
                 node.hyoka = Some(val);
             } else {
@@ -412,7 +416,7 @@ impl Node {
                 continue;
             }
             let fteban = teban as f32;
-            if best.unwrap().hyoka * fteban < val  * fteban {
+            if best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, x, y, teban));
                 continue;
             }
