@@ -5,7 +5,7 @@ pub struct MyOption {
     pub n : Option<usize>,
     pub repeat : Option<usize>,
     pub eta : Option<f32>,
-    pub mode : String,  // "", "genkifu", "learn"
+    pub mode : String,  // "", "genkifu", "learn" "duel"
     pub evaltable1 : String,
     pub evaltable2 : String,
     pub think : String,  // "all", "ab"
@@ -43,6 +43,8 @@ impl MyOption {
                 opt.mode = "genkifu".to_string();
             } else if e == "--learn" {
                 opt.mode = "learn".to_string();
+            } else if e == "--duel" {
+                opt.mode = "duel".to_string();
             } else if e == "--thinkab" {
                 opt.think = "ab".to_string();
             } else if e == "--thinkall" {

@@ -172,6 +172,41 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
     println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
 }
 
+fn duel(ev1 : &str, ev2 : &str) {
+    let mut w1 = weight::Weight::new();
+    w1.read(ev1).unwrap();
+    let mut w2 = weight::Weight::new();
+    w2.read(ev2).unwrap();
+    let mut win = 0;
+    let mut draw = 0;
+    let mut lose = 0;
+    let mut total = 0;
+
+    let mut g = game::Game::new();
+    g.start_with_2et(node::Node::think_ab, 7, &w1, &w2).unwrap();
+    let result = g.kifu.winner();
+    total += 1;
+    let result = result.unwrap();
+    match result {
+        kifu::SENTEWIN => {win += 1;},
+        kifu::DRAW => {draw += 1;},
+        kifu::GOTEWIN => {lose += 1;},
+        _ => {}
+    }
+    let mut g = game::Game::new();
+    g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
+    let result = g.kifu.winner();
+    total += 1;
+    let result = result.unwrap();
+    match result {
+        kifu::SENTEWIN => {win += 1;},
+        kifu::DRAW => {draw += 1;},
+        kifu::GOTEWIN => {lose += 1;},
+        _ => {}
+    }
+    println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
+}
+
 fn readeval(path: &str) {
     println!("read eval table: {}", path);
     unsafe {
@@ -213,5 +248,9 @@ fn main() {
         let eta = MYOPT.get().unwrap().eta;
         training(repeat, eta);
     }
-
+    if mode == "duel" {
+        let ev1 = &MYOPT.get().unwrap().evaltable1;
+        let ev2 = &MYOPT.get().unwrap().evaltable2;
+        duel(ev1, ev2);
+    }
 }

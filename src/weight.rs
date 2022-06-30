@@ -54,8 +54,8 @@ impl Weight {
     }
 
     pub fn copy(&mut self, src : &Weight) {
-        for (d, s) in src.weight.iter().zip(src.weight.iter()) {
-            d = s;
+        for (d, s) in self.weight.iter_mut().zip(src.weight.iter()) {
+            *d = *s;
         }
     }
 
