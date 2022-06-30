@@ -182,27 +182,30 @@ fn duel(ev1 : &str, ev2 : &str) {
     let mut lose = 0;
     let mut total = 0;
 
-    let mut g = game::Game::new();
-    g.start_with_2et(node::Node::think_ab, 7, &w1, &w2).unwrap();
-    let result = g.kifu.winner();
-    total += 1;
-    let result = result.unwrap();
-    match result {
-        kifu::SENTEWIN => {win += 1;},
-        kifu::DRAW => {draw += 1;},
-        kifu::GOTEWIN => {lose += 1;},
-        _ => {}
-    }
-    let mut g = game::Game::new();
-    g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
-    let result = g.kifu.winner();
-    total += 1;
-    let result = result.unwrap();
-    match result {
-        kifu::SENTEWIN => {win += 1;},
-        kifu::DRAW => {draw += 1;},
-        kifu::GOTEWIN => {lose += 1;},
-        _ => {}
+    for i in 0..(1 + 12 + 56) {
+        let rfen = initialpos::RFENTBL[i];
+        let mut g = game::Game::from(rfen);
+        g.start_with_2et(node::Node::think_ab, 7, &w1, &w2).unwrap();
+        let result = g.kifu.winner();
+        total += 1;
+        let result = result.unwrap();
+        match result {
+            kifu::SENTEWIN => {win += 1;},
+            kifu::DRAW => {draw += 1;},
+            kifu::GOTEWIN => {lose += 1;},
+            _ => {}
+        }
+        let mut g = game::Game::from(rfen);
+        g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
+        let result = g.kifu.winner();
+        total += 1;
+        let result = result.unwrap();
+        match result {
+            kifu::SENTEWIN => {lose += 1;},
+            kifu::DRAW => {draw += 1;},
+            kifu::GOTEWIN => {win += 1;},
+            _ => {}
+        }
     }
     println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
 }
