@@ -213,7 +213,10 @@ fn duel(ev1 : &str, ev2 : &str) {
 fn readeval(path: &str) {
     println!("read eval table: {}", path);
     unsafe {
-        node::WEIGHT.as_mut().unwrap().read(path).unwrap();
+        match node::WEIGHT.as_mut().unwrap().read(path) {
+            Err(msg) => {println!("{}", msg)},
+            _ => {}
+        }
     }
 }
 
