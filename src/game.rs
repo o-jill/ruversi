@@ -45,7 +45,13 @@ impl Game {
             self.kifu.append(x, y, teban, rfen);
 
             // check finished
-            if self.ban.is_passpass() || self.ban.is_full() {
+            if self.ban.is_passpass() {
+                break;
+            }
+            if self.ban.is_full() {
+                let rfen = self.ban.to_str();
+                let teban = self.ban.teban;
+                self.kifu.append(0, 0, teban, rfen);
                 break;
             }
         }
@@ -95,7 +101,13 @@ impl Game {
             self.kifu.append(x, y, teban, rfen);
 
             // check finished
-            if self.ban.is_passpass() || self.ban.is_full() {
+            if self.ban.is_passpass() {
+                break;
+            }
+            if self.ban.is_full() {
+                let rfen = self.ban.to_str();
+                let teban = self.ban.teban;
+                self.kifu.append(0, 0, teban, rfen);
                 break;
             }
         }
