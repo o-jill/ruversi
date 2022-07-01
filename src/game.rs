@@ -23,7 +23,8 @@ impl Game {
     pub fn start(&mut self, f : fn(&board::Board, usize) -> Option<(f32, node::Node)>, depth : usize) -> Result<(), String> {
         loop {
             // show
-            self.ban.put();
+            // self.ban.put();
+            println!("{}", self.ban.to_str());
             // think
             let st = Instant::now();
             let (val, node) = f(&self.ban, depth).unwrap();
@@ -62,7 +63,8 @@ impl Game {
             -> Result<(), String> {
         loop {
             // show
-            self.ban.put();
+            // self.ban.put();
+            println!("{}", self.ban.to_str());
             // switch weight
             if self.ban.teban == board::SENTE {
                 unsafe {
