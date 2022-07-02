@@ -62,6 +62,7 @@ impl Weight {
     pub fn write(&self, path : &str) {
         let sv = self.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let mut f = fs::File::create(path).unwrap();
+        f.write(format!("# {}-{}-{}\n", N_INPUT, N_HIDDEN, N_OUTPUT).as_bytes()).unwrap();
         f.write(sv.join(",").as_bytes()).unwrap();
     }
 
