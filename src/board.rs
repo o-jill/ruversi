@@ -470,11 +470,12 @@ impl Board {
                 }
             }
         }
-        if nblank == 0 {  // no more move
-            return None;
-        }
         if ret.is_empty() {  // pass
-            return Some(vec![(0, 0)]);
+            return if nblank == 0 {
+                None
+            } else {
+                Some(vec![(0, 0)])
+            }
         }
         Some(ret)
     }

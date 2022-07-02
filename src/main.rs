@@ -91,6 +91,22 @@ fn trial() {
     }
 }
 
+fn verbose(rfen : &str) {
+    match board::Board::from(rfen) {
+        Err(msg) => {println!("{}", msg)},
+        Ok(ban) => {
+            ban.put();
+
+            let st = Instant::now();
+            let (val, node) =
+                node::Node::vb_think_ab( &ban, 7).unwrap();
+            let ft = st.elapsed();
+            println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+        }
+    }
+    // aaa;
+}
+
 fn gen_kifu(n : Option<usize>) {
     let grp;
     let rfentbl = if n.is_none() {
@@ -258,5 +274,9 @@ fn main() {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         duel(ev1, ev2);
+    }
+    if mode == "rfen" {
+        let rfen = &MYOPT.get().unwrap().rfen;
+        verbose(rfen);
     }
 }

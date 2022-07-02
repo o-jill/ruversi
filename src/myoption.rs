@@ -5,10 +5,11 @@ pub struct MyOption {
     pub n : Option<usize>,
     pub repeat : Option<usize>,
     pub eta : Option<f32>,
-    pub mode : String,  // "", "genkifu", "learn" "duel"
+    pub mode : String,  // "", "genkifu", "learn" "duel" "rfen"
     pub evaltable1 : String,
     pub evaltable2 : String,
     pub think : String,  // "all", "ab"
+    pub rfen : String,
 }
 
 impl MyOption {
@@ -27,6 +28,7 @@ impl MyOption {
     /// - evaltable1: ""
     /// - evaltable2: ""
     /// - think: ""
+    /// - rfen: ""
     pub fn new(args: Vec<String>) -> MyOption {
         let mut opt = MyOption {
             n : None,
@@ -36,6 +38,7 @@ impl MyOption {
             evaltable1 : String::new(),
             evaltable2 : String::new(),
             think : String::new(),
+            rfen : String::new()
         };
         let mut old = String::new();
         for e in args {
@@ -45,6 +48,9 @@ impl MyOption {
                 opt.mode = "learn".to_string();
             } else if e == "--duel" {
                 opt.mode = "duel".to_string();
+            } else if e == "--rfen" {
+                opt.mode = "rfen".to_string();
+                old = e;
             } else if e == "--thinkab" {
                 opt.think = "ab".to_string();
             } else if e == "--thinkall" {
@@ -94,6 +100,8 @@ impl MyOption {
                     } else {
                         println!("failed find \"{}\".", e);
                     }
+                } else if old == "--rfen" {
+                    opt.rfen = e;
                 } else {
                     println!("unknown option: {}", e);
                 }
