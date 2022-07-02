@@ -1,6 +1,6 @@
 use super::*;
 use rand::Rng;
-use std::fs;
+use std::{fs, io::{BufReader, BufRead}};
 
 /*
  * input: NUMCELL * NUMCELL + 1(teban) + 1
@@ -34,17 +34,29 @@ impl Weight {
     }
 
     pub fn read(&mut self, path : &str) -> Result<(), String> {
-        let content = fs::read_to_string(path).unwrap();
-        let csv = content.split(",").collect::<Vec<_>>();
-        let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
-        let wsz = self.weight.len();
-        let nsz = newtable.len();
-        if wsz != nsz {
-            return Err(String::from("size mismatch"));
+        let file = File::open(path).unwrap();
+        let lines = BufReader::new(file);
+        for line in lines.lines() {
+            match line {
+                Ok(l) => {
+                    if l.starts_with("#") {
+                        continue;
+                    }
+                    let csv = l.split(",").collect::<Vec<_>>();
+                    let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+                    let wsz = self.weight.len();
+                    let nsz = newtable.len();
+                    if wsz != nsz {
+                        return Err(String::from("size mismatch"));
+                    }
+                    self.weight = newtable;
+                    return Ok(());
+                },
+                Err(err) => {return Err(err.to_string())}
+            }
         }
-        self.weight = newtable;
 
-        Ok(())
+        Err("no weight".to_string())
     }
 
     pub fn write(&self, path : &str) {
