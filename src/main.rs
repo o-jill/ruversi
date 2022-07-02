@@ -139,7 +139,8 @@ fn gen_kifu(n : Option<usize>) {
         // store kifu
         let kifuname = format!("./kifu/kifu{}{:06}.txt", grp, idx);
         let mut f = File::create(kifuname).unwrap();
-        f.write(g.kifu.to_str().as_bytes()).unwrap();
+        let content = format!("{}{}", kifu::HEADER, g.kifu.to_str());
+        f.write(content.as_bytes()).unwrap();
     }
 }
 

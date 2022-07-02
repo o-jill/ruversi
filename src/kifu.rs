@@ -4,6 +4,7 @@ pub const SENTEWIN : i8 = 1;
 pub const DRAW : i8 = 0;
 pub const GOTEWIN : i8 = -1;
 pub const STR_POSX : &str = "0abcdefgh";
+pub const HEADER : &str = "# reversi kifu revision 1.0\n";
 
 pub struct Te {
     x : usize,
