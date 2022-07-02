@@ -422,7 +422,7 @@ impl Node {
             }
             if newalpha >= beta {
                 // cut
-                return Some(newalpha);
+                return Some(node.best.as_ref().unwrap().hyoka);
             }
             node.child[idx].release();
         }
@@ -552,7 +552,6 @@ impl Node {
             }
             if newalpha >= beta {
                 // cut
-                // return Some(newalpha);
                 return Some(node.best.as_ref().unwrap().hyoka);
             }
             node.child[idx].release();
