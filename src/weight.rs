@@ -89,7 +89,7 @@ impl Weight {
                 hidsum += *c as f32 * w1[idx];
             }
             hidsum += teban as f32 * w1[w1sz - 2];
-            sum += w2[i] / (f32::exp(hidsum) + 1.0);
+            sum += w2[i] / (f32::exp(-hidsum) + 1.0);
         }
         sum
     }
@@ -116,7 +116,7 @@ impl Weight {
             }
             hidsum += teban as f32 * w1[w1sz - 2];
             hidden[i] = hidsum;
-            hidsig[i] = 1.0 / (f32::exp(hidsum) + 1.0);
+            hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
             sum += w2[i] * hidsig[i];
         }
         output[0] = sum;
@@ -151,7 +151,7 @@ impl Weight {
         let mut dhid = [0.0 as f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
-            let sig = 1.0 / (1.0 + f32::exp(hidden[i]));
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
             *h = tmp * sig * (1.0 - sig);
         }
         // back to input
