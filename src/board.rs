@@ -507,3 +507,44 @@ impl Board {
         b
     }
 }
+
+#[test]
+fn testbrd() {
+    let b = Board::new();
+    assert_eq!(b.teban, SENTE);
+    assert_eq!(b.pass, 0);
+    for (i, c) in b.cells.iter().zip(
+        [
+            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
+            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
+            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
+            BLANK,BLANK,BLANK,SENTE,GOTE,BLANK,BLANK,BLANK,
+            BLANK,BLANK,BLANK,GOTE,SENTE,BLANK,BLANK,BLANK,
+            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
+            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
+            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,].iter()) {
+        assert_eq!(*i, *c);
+    }
+    let b = Board::from("H/H/H/H/H/H/H/H b").unwrap();
+    assert_eq!(b.teban, SENTE);
+    assert_eq!(b.pass, 0);
+    for i in b.cells.iter() {
+        assert_eq!(*i, SENTE);
+    }
+    let mut b = Board::from("h/h/h/h/h/h/h/h w").unwrap();
+    assert_eq!(b.teban, GOTE);
+    assert_eq!(b.pass, 0);
+    for i in b.cells.iter() {
+        assert_eq!(*i, GOTE);
+    }
+    b.pass();
+    assert_eq!(b.teban, SENTE);
+    assert_eq!(b.pass, 1);
+    assert!(!b.is_passpass());
+    assert!(b.is_full());
+    b.pass();
+    assert_eq!(b.teban, GOTE);
+    assert_eq!(b.pass, 2);
+    assert!(b.is_passpass());
+    assert!(b.is_full());
+}
