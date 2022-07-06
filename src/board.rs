@@ -474,7 +474,8 @@ impl Board {
             return if nblank == 0 {
                 None
             } else {
-                Some(vec![(0, 0)])
+                Some(vec![])
+                // Some(vec![(0, 0)])
             }
         }
         Some(ret)

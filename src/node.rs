@@ -94,7 +94,7 @@ impl Node {
         }
     }
 
-    pub fn think(ban : &board::Board, depth : usize) -> Option<(f32,Node)> {
+    pub fn think(ban : &board::Board, mut depth : usize) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth);
         if depth == 0 {
             return None;
@@ -109,7 +109,12 @@ impl Node {
         if moves.is_none() {
             return None;
         }
-        let moves = moves.unwrap();
+        let mut moves = moves.unwrap();
+        if moves.len() == 0 {  // pass
+            moves.push((0, 0));
+            node.depth += 1;
+            depth += 1;
+        }
         let n = moves.len();
         // let moves1 = &moves[0..n/2];
         let moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());
@@ -193,7 +198,7 @@ impl Node {
     }
 
     pub fn think_internal(node:&mut Node, ban : &board::Board) -> Option<f32> {
-        let depth = node.depth;
+        let mut depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
             // return Some(Node::evaluate(&ban));
@@ -212,7 +217,11 @@ impl Node {
             node.kyokumen = 1;
             return Some(ban.count()  as f32 * 10.0);
         }
-        let moves = moves.unwrap();
+        let mut moves = moves.unwrap();
+        if moves.len() == 0 {  // pass
+            moves.push((0, 0));
+            depth += 1;
+        }
 
         for mv in moves {
             let x = mv.0;
@@ -241,7 +250,7 @@ impl Node {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn think_ab(ban : &board::Board, depth : usize) -> Option<(f32,Node)> {
+    pub fn think_ab(ban : &board::Board, mut depth : usize) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth);
         if depth == 0 {
             return None;
@@ -256,7 +265,12 @@ impl Node {
         if moves.is_none() {
             return None;
         }
-        let moves = moves.unwrap();
+        let mut moves = moves.unwrap();
+        if moves.len() == 0 {  // pass
+            moves.push((0, 0));
+            depth += 1;
+            node.depth += 1;
+        }
         let n = moves.len();
         // let moves1 = &moves[0..n/2];
         let mut moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());
@@ -367,7 +381,7 @@ impl Node {
 
     pub fn think_internal_ab(node:&mut Node, ban : &board::Board, alpha : f32, beta : f32) -> Option<f32> {
         let mut newalpha = alpha;
-        let depth = node.depth;
+        let mut depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
             // return Some(Node::evaluate(&ban));
@@ -387,13 +401,18 @@ impl Node {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        moves.sort_by(|a, b| {
-            let ia = a.0 + a.1 * 8 - 9;
-            let ib = b.0 + b.1 * 8 - 9;
-            let pa = SORT_PRI[ia];
-            let pb = SORT_PRI[ib];
-            pa.partial_cmp(&pb).unwrap()
-        });
+        if moves.len() == 0 {  // pass
+            moves.push((0, 0));
+            depth += 1;
+        } else {
+            moves.sort_by(|a, b| {
+                let ia = a.0 + a.1 * 8 - 9;
+                let ib = b.0 + b.1 * 8 - 9;
+                let pa = SORT_PRI[ia];
+                let pb = SORT_PRI[ib];
+                pa.partial_cmp(&pb).unwrap()
+            });
+        }
 
         for mv in moves {
             let x = mv.0;
@@ -429,7 +448,7 @@ impl Node {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn vb_think_ab(ban : &board::Board, depth : usize) -> Option<(f32,Node)> {
+    pub fn vb_think_ab(ban : &board::Board, mut depth : usize) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth);
         if depth == 0 {
             return None;
@@ -445,15 +464,20 @@ impl Node {
             return None;
         }
         let mut moves = moves.unwrap();
-        let n = moves.len();
-
-        moves.sort_by(|a, b| {
-            let ia = a.0 + a.1 * 8 - 9;
-            let ib = b.0 + b.1 * 8 - 9;
-            let pa = SORT_PRI[ia];
-            let pb = SORT_PRI[ib];
-            pa.partial_cmp(&pb).unwrap()
-        });
+        // let n = moves.len();
+        if moves.len() == 0 {  // pass
+            depth += 1;
+            moves.push((0, 0));
+            println!("pass");
+        } else {
+            moves.sort_by(|a, b| {
+                let ia = a.0 + a.1 * 8 - 9;
+                let ib = b.0 + b.1 * 8 - 9;
+                let pa = SORT_PRI[ia];
+                let pb = SORT_PRI[ib];
+                pa.partial_cmp(&pb).unwrap()
+            });
+        }
         let mut alpha : f32 = -100000.0;
         let mut beta : f32 = 100000.0;
         let teban = ban.teban;
@@ -465,7 +489,7 @@ impl Node {
             node.child.push(Node::new(x, y, depth - 1));
             let val = Node::vb_think_internal_ab(
                 &mut node.child[idx], &newban, alpha, beta);
-    println!("({},{})@{} {:?}", x, y, depth-1, val);
+    println!("({},{})@{} {:?}", x, y, depth - 1, val);
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
@@ -493,7 +517,7 @@ impl Node {
 
     pub fn vb_think_internal_ab(node:&mut Node, ban : &board::Board, alpha : f32, beta : f32) -> Option<f32> {
         let mut newalpha = alpha;
-        let depth = node.depth;
+        let mut depth = node.depth;
         if depth == 0 {
             println!("depth zero");
             node.kyokumen = 1;
@@ -516,14 +540,18 @@ impl Node {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        moves.sort_by(|a, b| {
-            let ia = a.0 + a.1 * 8 - 9;
-            let ib = b.0 + b.1 * 8 - 9;
-            let pa = SORT_PRI[ia];
-            let pb = SORT_PRI[ib];
-            pa.partial_cmp(&pb).unwrap()
-        });
-
+        if moves.len() == 0 {  // pass
+            depth += 1;
+            moves.push((0, 0));
+        } else {
+            moves.sort_by(|a, b| {
+                let ia = a.0 + a.1 * 8 - 9;
+                let ib = b.0 + b.1 * 8 - 9;
+                let pa = SORT_PRI[ia];
+                let pb = SORT_PRI[ib];
+                pa.partial_cmp(&pb).unwrap()
+            });
+        }
         for mv in moves {
             let x = mv.0;
             let y = mv.1;
