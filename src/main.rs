@@ -194,9 +194,9 @@ fn duel(ev1 : &str, ev2 : &str) {
     w1.read(ev1).unwrap();
     let mut w2 = weight::Weight::new();
     w2.read(ev2).unwrap();
-    let mut win = 0;
-    let mut draw = 0;
-    let mut lose = 0;
+    let mut win = [0, 0];
+    let mut draw = [0, 0];
+    let mut lose = [0, 0];
     let mut total = 0;
 
     for i in 0..(1 + 12 + 56) {
@@ -207,9 +207,9 @@ fn duel(ev1 : &str, ev2 : &str) {
         total += 1;
         let result = result.unwrap();
         match result {
-            kifu::SENTEWIN => {win += 1;},
-            kifu::DRAW => {draw += 1;},
-            kifu::GOTEWIN => {lose += 1;},
+            kifu::SENTEWIN => {win[0] += 1;},
+            kifu::DRAW => {draw[0] += 1;},
+            kifu::GOTEWIN => {lose[0] += 1;},
             _ => {}
         }
         let mut g = game::Game::from(rfen);
@@ -218,13 +218,20 @@ fn duel(ev1 : &str, ev2 : &str) {
         total += 1;
         let result = result.unwrap();
         match result {
-            kifu::SENTEWIN => {lose += 1;},
-            kifu::DRAW => {draw += 1;},
-            kifu::GOTEWIN => {win += 1;},
+            kifu::SENTEWIN => {lose[1] += 1;},
+            kifu::DRAW => {draw[1] += 1;},
+            kifu::GOTEWIN => {win[1] += 1;},
             _ => {}
         }
     }
-    println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
+    let twin = win[0] + win[1];
+    let tdraw = draw[0] + draw[1];
+    let tlose = lose[0] + lose[1];
+    let r = 400.0 * (twin as f64 / tlose as f64).log10();
+    println!("total,{},win,{},draw,{},lose,{},R{}",
+        total, twin, tdraw, tlose, r);
+    println!("ev1 sente,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
+    println!("ev1 gote,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
 }
 
 fn readeval(path: &str) {
