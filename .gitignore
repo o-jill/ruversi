@@ -1,2 +1,3 @@
 /target
-/kifu
+kifu/*.txt
+kifu*
