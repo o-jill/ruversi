@@ -29,7 +29,7 @@ NO Warranty.
   number of learning. default 10000.
 * --eta \<ratio>  
   learning ratio. default 0.0001.
-* -- rfen \<rfen>
+* -- rfen \<rfen>  
   think from rfen for debug. don't forget "" not to be recognized as 2 part.  
 
 | command option | generating kifu | learning |
