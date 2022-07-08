@@ -230,8 +230,8 @@ fn duel(ev1 : &str, ev2 : &str) {
     let r = 400.0 * (twin as f64 / tlose as f64).log10();
     println!("total,{},win,{},draw,{},lose,{},R{:0.1}",
         total, twin, tdraw, tlose, r);
-    println!("ev1 sente,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
-    println!("ev1 gote,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
+    println!("ev1 @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
+    println!("ev1 [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
 }
 
 fn readeval(path: &str) {
