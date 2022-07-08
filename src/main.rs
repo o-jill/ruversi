@@ -227,7 +227,7 @@ fn duel(ev1 : &str, ev2 : &str) {
     let twin = win[0] + win[1];
     let tdraw = draw[0] + draw[1];
     let tlose = lose[0] + lose[1];
-    let winrate = twin as f64 / (total - tdraw) as f64;
+    let winrate = 100.0 * twin as f64 / (total - tdraw) as f64;
     let r = 400.0 * (twin as f64 / tlose as f64).log10();
     println!("total,{},win,{},draw,{},lose,{},{:.2}%,R,{:+.1}",
         total, twin, tdraw, tlose, winrate, r);
