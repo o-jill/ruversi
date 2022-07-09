@@ -129,7 +129,7 @@ fn testte() {
 
 pub struct Kifu {
     pub list: Vec<Te>,
-    score : Option<i8>,
+    pub score : Option<i8>,
 }
 
 impl Kifu {
@@ -154,13 +154,16 @@ impl Kifu {
         }
         // score?
         let result = lines.last().unwrap();
-        if result.find("SENTE won.").is_some() {
-            ret.score = Some(1);
-        } else if result.find("GOTE won.").is_some() {
-            ret.score = Some(-1);
-        } else if result.find("DRAW.").is_some() {
-            ret.score = Some(0);
-        }
+        let score = result.split(" ").collect::<Vec<&str>>();
+        let score = score.last().unwrap().parse::<i8>().unwrap();
+        ret.winneris(score);
+        // if result.find("SENTE won.").is_some() {
+        //     ret.score = Some(1);
+        // } else if result.find("GOTE won.").is_some() {
+        //     ret.score = Some(-1);
+        // } else if result.find("DRAW.").is_some() {
+        //     ret.score = Some(0);
+        // }
         ret
     }
 
