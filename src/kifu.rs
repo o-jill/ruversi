@@ -154,8 +154,12 @@ impl Kifu {
         }
         // score?
         let result = lines.last().unwrap();
+        // println!("{:?}", result);
         let score = result.split(" ").collect::<Vec<&str>>();
-        let score = score.last().unwrap().parse::<i8>().unwrap();
+        let score = match score.last().unwrap().parse::<i8>() {
+            Ok(n) => n,
+            Err(_) => 0
+        };
         ret.winneris(score);
         // if result.find("SENTE won.").is_some() {
         //     ret.score = Some(1);
