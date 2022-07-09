@@ -205,23 +205,43 @@ fn duel(ev1 : &str, ev2 : &str) {
         g.start_with_2et(node::Node::think_ab, 7, &w1, &w2).unwrap();
         let result = g.kifu.winner();
         total += 1;
+        let teban = g.kifu.nth(0).teban;
         let result = result.unwrap();
-        match result {
-            kifu::SENTEWIN => {win[0] += 1;},
-            kifu::DRAW => {draw[0] += 1;},
-            kifu::GOTEWIN => {lose[0] += 1;},
-            _ => {}
+        if teban == board::SENTE {
+            match result {
+                kifu::SENTEWIN => {win[0] += 1;},
+                kifu::DRAW => {draw[0] += 1;},
+                kifu::GOTEWIN => {lose[0] += 1;},
+                _ => {}
+            }
+        } else {
+            match result {
+                kifu::SENTEWIN => {lose[1] += 1;},
+                kifu::DRAW => {draw[1] += 1;},
+                kifu::GOTEWIN => {win[1] += 1;},
+                _ => {}
+            }
         }
         let mut g = game::Game::from(rfen);
         g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
         let result = g.kifu.winner();
         total += 1;
+        let teban = g.kifu.nth(1).teban;
         let result = result.unwrap();
-        match result {
-            kifu::SENTEWIN => {lose[1] += 1;},
-            kifu::DRAW => {draw[1] += 1;},
-            kifu::GOTEWIN => {win[1] += 1;},
-            _ => {}
+        if teban == board::SENTE {
+            match result {
+                kifu::SENTEWIN => {win[0] += 1;},
+                kifu::DRAW => {draw[0] += 1;},
+                kifu::GOTEWIN => {lose[0] += 1;},
+                _ => {}
+            }
+        } else {
+            match result {
+                kifu::SENTEWIN => {lose[1] += 1;},
+                kifu::DRAW => {draw[1] += 1;},
+                kifu::GOTEWIN => {win[1] += 1;},
+                _ => {}
+            }
         }
     }
     let twin = win[0] + win[1];

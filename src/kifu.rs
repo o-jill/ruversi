@@ -9,7 +9,7 @@ pub const HEADER : &str = "# reversi kifu revision 1.0\n";
 pub struct Te {
     x : usize,
     y : usize,
-    teban : i8,
+    pub teban : i8,
     pub rfen : String,
 }
 
@@ -172,6 +172,10 @@ impl Kifu {
         let lines = self.list.iter().enumerate().map(
             |(i, a)| a.to_str(i + 1)).collect::<Vec<String>>();
         lines.join("") + &self.score2str()
+    }
+
+    pub fn nth(&self, idx : usize) -> &Te {
+        &self.list[idx]
     }
 
     fn score2str(&self) -> String {
