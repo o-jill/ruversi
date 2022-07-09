@@ -225,4 +225,34 @@ fn testkifu() {
     assert_eq!(0, kifu.list.len());
     assert_eq!(None, kifu.score);
     assert_eq!("on going...", kifu.to_str());
+
+    let lines = "55 @@ h5 dD/AdC/BcC/BaAbAa/Af1/AaAaA1a1/BcC/G1 b\n\
+    56 [] f6 dD/AdC/BcC/BaAbB/H/AaAaA1A1/BcC/G1 w\n\
+    57 @@ PS dD/AdC/BcC/BdB/DbB/AaAcA1/BcC/G1 b\n\
+    58 [] h6 dD/AdC/BcC/BdB/DbB/AaAcA1/BcC/G1 w\n\
+    59 @@ PS dD/AdC/BcC/BdB/DcA/AaAe/BcC/G1 b\n\
+    60 [] h8 dD/AdC/BcC/BdB/DcA/AaAe/BcC/G1 w\n\
+    SENTE won. 4";
+    let kifu = Kifu::from(&lines.split("\n").collect::<Vec<&str>>());
+    let te = kifu.nth(0);
+    assert_eq!(te.pos(), "h5");
+    assert_eq!(te.x, 8);
+    assert_eq!(te.y, 5);
+    assert_eq!(te.teban, board::SENTE);
+    assert_eq!(te.rfen, "dD/AdC/BcC/BaAbAa/Af1/AaAaA1a1/BcC/G1 b");
+    let te = kifu.nth(1);
+    assert_eq!(te.pos(), "f6");
+    assert_eq!(te.x, 6);
+    assert_eq!(te.y, 6);
+    assert_eq!(te.teban, board::GOTE);
+    assert_eq!(te.rfen, "dD/AdC/BcC/BaAbB/H/AaAaA1A1/BcC/G1 w");
+    let te = kifu.nth(2);
+    assert_eq!(te.pos(), "PS");
+    assert_eq!(te.x, 0);
+    assert_eq!(te.y, 0);
+    assert_eq!(te.teban, board::SENTE);
+    assert_eq!(te.rfen, "dD/AdC/BcC/BdB/DbB/AaAcA1/BcC/G1 b");
+    assert_eq!(kifu.score, Some(4));
+    assert_eq!(kifu.winner(), Some(SENTEWIN));
+    assert_eq!(kifu.score2str(), "SENTE won. 4");
 }
