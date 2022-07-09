@@ -253,6 +253,8 @@ fn duel(ev1 : &str, ev2 : &str) {
         total, twin, tdraw, tlose, winrate, r);
     println!("ev1 @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
     println!("ev1 [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
+    println!("ev1:{}", MYOPT.get().unwrap().evaltable1);
+    println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
 }
 
 fn readeval(path: &str) {
