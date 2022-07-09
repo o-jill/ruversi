@@ -87,7 +87,8 @@ fn trial() {
 
     let tr = trainer::Trainer::new(0.01, 100);
     unsafe {
-        tr.run4win(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+        tr.run4stones(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+        // tr.run4win(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
     }
 }
 
@@ -163,7 +164,8 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
 
     // train
     let tr = trainer::Trainer::new(eta, repeat);
-    tr.learn_win(&mut files);
+    tr.learn_stones(&mut files);
+    // tr.learn_win(&mut files);
 
     // put new eval table
     unsafe {
