@@ -31,7 +31,7 @@ impl Game {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+            println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
             let best = node.best.unwrap();
             let x = best.x;
             let y = best.y;
