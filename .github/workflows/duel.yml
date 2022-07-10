@@ -21,7 +21,11 @@ jobs:
     - name: Run duel
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel
-      run: cargo run --release -- --duel --ev1 evaltable.txt --ev2 evaltable.txt.old
+      run: cargo run --release -- --duel --ev1 evaltable.txt --ev2 evaltable.txt.old | tee > log.txt
+    - name: duel result
+      continue-on-error: true # とにかくログを保存するとこまで行きたい
+      id: duel-result
+      run: tail -n 10 log.txt
     # - name: Set current datetime as env variable
     #   env:
     #     TZ: 'Asia/Tokyo' # タイムゾーン指定
