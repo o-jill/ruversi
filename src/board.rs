@@ -507,7 +507,9 @@ impl Board {
         b.teban = self.teban;
         let cells = &self.cells;
         for (i, c) in b.cells.iter_mut().enumerate() {
-            *c = cells[i];
+            let x = i % 8;
+            let y = i / 8;
+            *c = cells[8 - 1 - x + 8 * (8 - 1 - y)];
         }
         b
     }
@@ -559,9 +561,9 @@ fn testbrd() {
     let b = b.unwrap();
     assert_eq!(b.to_str(), "h/h/h/h/h/h/h/h b");
     let b = Board::from("1Fa/Bf/AaAe/AbAd/AcAc/AdAb/AeAa/h w").unwrap();
-    b.put();
+    // b.put();
     let b = b.rotate180();
-    b.put();
+    // b.put();
     let b = b.r#move(8, 8);
     assert!(b.is_ok());
     let b = b.unwrap();
