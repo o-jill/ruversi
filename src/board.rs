@@ -179,6 +179,10 @@ impl Board {
         self.cells[Board::index(x, y)] = self.teban;
     }
 
+    /**
+     * x : 0~7
+     * y : 0~7
+     */
     fn reverse(&mut self, x : usize, y : usize) {
         let color = self.teban;
         // 左
@@ -548,4 +552,18 @@ fn testbrd() {
     assert_eq!(b.pass, 2);
     assert!(b.is_passpass());
     assert!(b.is_full());
+    let b = Board::from("1Fa/Bf/AaAe/AbAd/AcAc/AdAb/AeAa/h w").unwrap();
+    assert!(b.checkreverse(0, 0));
+    let b = b.r#move(1, 1);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_str(), "h/h/h/h/h/h/h/h b");
+    let b = Board::from("1Fa/Bf/AaAe/AbAd/AcAc/AdAb/AeAa/h w").unwrap();
+    b.put();
+    let b = b.rotate180();
+    b.put();
+    let b = b.r#move(8, 8);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_str(), "h/h/h/h/h/h/h/h b");
 }
