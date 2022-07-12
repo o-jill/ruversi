@@ -73,6 +73,9 @@ impl Trainer {
         println!("Done.");
     }
 
+    /**
+     * @note まだマルスレじゃないよ
+     */
     pub fn learn_stones_multhre(&self, files : &mut Vec<String>) {
         let mut rng = rand::thread_rng();
         let mut kifucache : Vec<(String, kifu::Kifu)> = Vec::new();
