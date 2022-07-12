@@ -95,11 +95,10 @@ impl Trainer {
                             std::fs::read_to_string(&path).unwrap();
                         let lines:Vec<&str> = content.split("\n").collect();
                         let kifu = kifu::Kifu::from(&lines);
-                        let ret = kifu.Copy();
                         let p = String::from(&path);
-                        kifucache.push((p, kifu));
+                        kifucache.push((p, kifu.copy()));
                         unsafe {
-                            self.run4stones(&ret, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                            self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
                         }
                     }
                 };
