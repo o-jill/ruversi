@@ -73,6 +73,42 @@ impl Trainer {
         println!("Done.");
     }
 
+    pub fn learn_stones_multhre(&self, files : &mut Vec<String>) {
+        let mut rng = rand::thread_rng();
+        let mut kifucache : Vec<(String, kifu::Kifu)> = Vec::new();
+        for i in 0..self.repeat {
+            files.shuffle(&mut rng);
+            for fname in files.iter() {
+                let path = format!("kifu/{}", fname);
+                print!("{} / {} : {}\r", i, self.repeat, path);
+                let kifucch = kifucache.iter().find(|&a| {
+                    a.0 == path
+                });
+                let kifu = match kifucch {
+                    Some((_, kifu)) => {
+                        unsafe {
+                            self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                        }
+                    },
+                    None => {
+                        let content =
+                            std::fs::read_to_string(&path).unwrap();
+                        let lines:Vec<&str> = content.split("\n").collect();
+                        let kifu = kifu::Kifu::from(&lines);
+                        let ret = kifu.Copy();
+                        let p = String::from(&path);
+                        kifucache.push((p, kifu));
+                        unsafe {
+                            self.run4stones(&ret, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                        }
+                    }
+                };
+            }
+            println!("");
+        }
+        println!("Done.");
+    }
+
     pub fn run4stones(&self, kifu: &kifu::Kifu, weight: &mut weight::Weight) -> Result<(), String> {
         let score = kifu.score;
         if score.is_none() {

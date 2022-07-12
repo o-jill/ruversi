@@ -171,6 +171,14 @@ impl Kifu {
         ret
     }
 
+    pub fn Copy(&self) -> Kifu {
+        let mut ret = Kifu::new();
+        ret.score = self.score;
+        for te in self.list.iter() {
+            ret.append(te.x, te.y, te.teban, te.rfen.clone());
+        }
+        ret
+    }
     pub fn append(&mut self, x : usize, y : usize, t : i8, rfen : String) {
         self.list.push(Te::new(x, y, t, rfen));
     }
