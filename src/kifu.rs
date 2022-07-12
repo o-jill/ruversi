@@ -263,4 +263,9 @@ fn testkifu() {
     assert_eq!(kifu.score, Some(4));
     assert_eq!(kifu.winner(), Some(SENTEWIN));
     assert_eq!(kifu.score2str(), "SENTE won. 4");
+    let kifu2 = kifu.Copy();
+    assert_eq!(kifu.score, kifu2.score);
+    for ((i, a), b) in kifu.list.iter().enumerate().zip(kifu2.list.iter()) {
+        assert_eq!(a.to_str(i), b.to_str(i));
+    }
 }
