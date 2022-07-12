@@ -149,6 +149,8 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.0001);
 
+    let st = Instant::now();
+
     // list up kifu
     let files = std::fs::read_dir("./kifu/").unwrap();
     let mut files = files.filter_map(|entry| {
@@ -188,6 +190,12 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
             _ => {}
         }
     }
+    let ft = st.elapsed();
+    let min = ft.as_secs() / 60;
+    let sec = ft.as_secs() % 60;
+    let spdbatch = ft.as_secs_f64() * 1000.0 / repeat as f64;
+    let spdkifu = spdbatch / files.len() as f64;
+    println!("processing time: {}min {}sec ({:.1}msec/batch, {:.3}msec/file)", min, sec, spdbatch, spdkifu);
     println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
 }
 
