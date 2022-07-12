@@ -166,7 +166,8 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
 
     // train
     let tr = trainer::Trainer::new(eta, repeat);
-    tr.learn_stones(&mut files);
+    tr.learn_stones_multhre(&mut files);
+    // tr.learn_stones(&mut files);
     // tr.learn_win(&mut files);
 
     // put new eval table
