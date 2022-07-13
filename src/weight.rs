@@ -179,6 +179,66 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
+    pub fn forward_simd(&self, ban : &board::Board)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
+        let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
+        let mut sum : f32;
+        let cells = &ban.cells;
+        let teban = ban.teban;
+        let w1sz = board::CELL_2D + 1 + 1;
+        let ow = &self.weight;
+        let w2 = &ow.as_slice()[w1sz * 4..];
+
+        sum = *ow.last().unwrap();
+
+        let mut sum4: std::arch::x86_64::__m128;
+        for i in 0..N_HIDDEN {
+            let mut sum4: std::arch::x86_64::__m128;
+            unsafe {
+                sum4 = std::arch::x86_64::_mm_setzero_ps();
+            }
+            let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
+            let mut hidsum : f32 = *w1.last().unwrap();
+            for i in 0..board::CELL_2D / 4 {
+                // let x4 = f32x4::load(w1[i + 4], 4);
+                // let y4 = f32x4::new(cells[i * 4], cells[i * 4 + 1],
+                //     cells[i * 4 + 2], cells[i * 4 + 3]);
+                // sum4 += x4 * y4;
+                let idx = i * 4;
+                unsafe {
+                    let x4 = std::arch::x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
+                    // let y4 = std::arch::x86_64::_mm_set_ps(
+                    //     cells[idx] as f32, cells[idx + 1] as f32,
+                    //     cells[idx + 2] as f32, cells[idx + 3] as f32);
+                    let y4 = std::arch::x86_64::_mm_set_epi32(
+                        cells[idx + 3] as i32, cells[idx + 2] as i32,
+                        cells[idx + 1] as i32, cells[idx + 0] as i32);
+                    // let y4 = std::arch::x86_64::_mm_set_epi32(
+                    //     cells[idx] as i32, cells[idx + 1] as i32,
+                    //     cells[idx + 2] as i32, cells[idx + 3] as i32);
+                    let y4 = std::arch::x86_64::_mm_cvtepi32_ps(y4);
+                    let mul = std::arch::x86_64::_mm_mul_ps(x4, y4);
+                    sum4 = std::arch::x86_64::_mm_add_ps(sum4, mul);
+                }
+            }
+            let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
+            unsafe {
+                std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
+                // std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(),
+                //     std::arch::x86_64::_mm_hadd_ps(sum4, sum4));
+            }
+            hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
+            hidsum += teban as f32 * w1[w1sz - 2];
+            hidden[i] = hidsum;
+            hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
+            sum += w2[i] * hidsig[i];
+        }
+        output[0] = sum;
+        (hidden, hidsig, output)
+    }
+
     pub fn train(&mut self, rfen : &str, winner : i8, eta : f32) -> Result<(), String> {
         let ban = board::Board::from(rfen).unwrap();
         self.learn(&ban, winner, eta);
@@ -192,7 +252,11 @@ impl Weight {
         let cells = &ban.cells;
         let teban = ban.teban;
         // forward
-        let (hidden, hidsig, output) = self.forward(&ban);
+        if cfg!(feature="nosimd") {
+            let (hidden, hidsig, output) = self.forward(&ban);
+        } else {
+            let (hidden, hidsig, output) = self.forward_simd(&ban);
+        }
         // backword
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &mut self.weight;
