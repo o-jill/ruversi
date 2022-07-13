@@ -39,4 +39,9 @@ NO Warranty.
 | --genkifu      |             yes |       no |
 | --genkifu --learn |          yes |      yes |
 
+# Compile options(features)  
+* nosimd  
+  stop using simd instructions(SSE) for evaluation.  
+  SSE floating-point SIMD instructions will be used when no features are specified.  
+
 ---
