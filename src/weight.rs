@@ -257,7 +257,7 @@ impl Weight {
                 self.forward(&ban);
             } else {
                 self.forward_simd(&ban);
-            }
+            };
         // backword
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &mut self.weight;
