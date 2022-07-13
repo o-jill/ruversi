@@ -90,7 +90,11 @@ impl Node {
 
     fn evaluate(ban : &board::Board) -> f32 {
         unsafe {
-            WEIGHT.as_ref().unwrap().evaluate(ban)
+            if cfg!(feature = "nosimd") {
+                WEIGHT.as_ref().unwrap().evaluate(ban)
+            } else {
+                WEIGHT.as_ref().unwrap().evaluate_simd(ban)
+            }
         }
     }
 
