@@ -30,7 +30,11 @@ jobs:
     - name: Run
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaserun
-      run: cargo run --release -- ${{ matrix.kifu }}
+      run: cargo run --release -- --genkifu ${{ matrix.kifu }}
+    - name: Learn
+      continue-on-error: true # とにかくログを保存するとこまで行きたい
+      id: releaselearn
+      run: cargo run --release -- --learn
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定
@@ -50,4 +54,9 @@ jobs:
       if: ${{ steps.releaserun.outcome == 'failure' }}
       run: |
         echo ${{ steps.releaserun.outcome }} == 'failure'
+        exit 1
+    - name: check error run learn
+      if: ${{ steps.releaselearn.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.releaselearn.outcome }} == 'failure'
         exit 1
