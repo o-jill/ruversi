@@ -254,9 +254,9 @@ impl Weight {
         // forward
         let (hidden, hidsig, output) = 
             if cfg!(feature="nosimd") {
-                self.forward(&ban);
+                self.forward(&ban)
             } else {
-                self.forward_simd(&ban);
+                self.forward_simd(&ban)
             };
         // backword
         let w1sz = board::CELL_2D + 1 + 1;
