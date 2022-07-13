@@ -92,35 +92,20 @@ impl Trainer {
                     self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
                 }
             }
+            println!("");
         }
-        println!("");
         for i in 1..self.repeat {
             files.shuffle(&mut rng);
             for fname in files.iter() {
                 let path = format!("kifu/{}", fname);
                 print!("{} / {} : {}\r", i, self.repeat, path);
-                let kifucch = kifucache.binary_search_by(|x| {
+                let idx = kifucache.binary_search_by(|x| {
                     x.0.cmp(&path)
-                });
-                let kifu = match kifucch {
-                    Ok(idx) => {
-                        let kifu = kifucache.iter().nth(idx).unwrap();
-                        unsafe {
-                            self.run4stones(&kifu.1, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
-                        }
-                    },
-                    Err(_) => {
-                        let content =
-                            std::fs::read_to_string(&path).unwrap();
-                        let lines:Vec<&str> = content.split("\n").collect();
-                        let kifu = kifu::Kifu::from(&lines);
-                        let p = String::from(&path);
-                        kifucache.push((p, kifu.copy()));
-                        unsafe {
-                            self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
-                        }
-                    }
-                };
+                }).unwrap();
+                let kifu = kifucache.iter().nth(idx).unwrap();
+                unsafe {
+                    self.run4stones(&kifu.1, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                }
             }
             println!("");
         }
