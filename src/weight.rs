@@ -252,11 +252,12 @@ impl Weight {
         let cells = &ban.cells;
         let teban = ban.teban;
         // forward
-        if cfg!(feature="nosimd") {
-            let (hidden, hidsig, output) = self.forward(&ban);
-        } else {
-            let (hidden, hidsig, output) = self.forward_simd(&ban);
-        }
+        let (hidden, hidsig, output) = 
+            if cfg!(feature="nosimd") {
+                self.forward(&ban);
+            } else {
+                self.forward_simd(&ban);
+            }
         // backword
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &mut self.weight;
