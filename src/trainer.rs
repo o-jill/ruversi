@@ -74,26 +74,42 @@ impl Trainer {
     }
 
     /**
-     * @note まだマルスレじゃないよ
+     * 読み込んだ棋譜をキャッシュする版
      */
-    pub fn learn_stones_multhre(&self, files : &mut Vec<String>) {
+    pub fn learn_stones_cache(&self, files : &mut Vec<String>) {
         let mut rng = rand::thread_rng();
         let mut kifucache : Vec<(String, kifu::Kifu)> = Vec::new();
-        for i in 0..self.repeat {
+        for i in 0..1 {
+            for fname in files.iter() {
+                let path = format!("kifu/{}", fname);
+                print!("{} / {} : {}\r", i, self.repeat, path);
+                let content = std::fs::read_to_string(&path).unwrap();
+                let lines:Vec<&str> = content.split("\n").collect();
+                let kifu = kifu::Kifu::from(&lines);
+                let p = String::from(&path);
+                kifucache.push((p, kifu.copy()));
+                unsafe {
+                    self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                }
+            }
+        }
+        println!("");
+        for i in 1..self.repeat {
             files.shuffle(&mut rng);
             for fname in files.iter() {
                 let path = format!("kifu/{}", fname);
                 print!("{} / {} : {}\r", i, self.repeat, path);
-                let kifucch = kifucache.iter().find(|&a| {
-                    a.0 == path
+                let kifucch = kifucache.binary_search_by(|x| {
+                    x.0.cmp(&path)
                 });
                 let kifu = match kifucch {
-                    Some((_, kifu)) => {
+                    Ok(idx) => {
+                        let kifu = kifucache.iter().nth(idx).unwrap();
                         unsafe {
-                            self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                            self.run4stones(&kifu.1, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
                         }
                     },
-                    None => {
+                    Err(_) => {
                         let content =
                             std::fs::read_to_string(&path).unwrap();
                         let lines:Vec<&str> = content.split("\n").collect();

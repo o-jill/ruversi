@@ -164,9 +164,11 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
         }).cloned().collect::<Vec<String>>();
     // println!("{:?}", files);
 
+    files.sort();
+
     // train
     let tr = trainer::Trainer::new(eta, repeat);
-    tr.learn_stones_multhre(&mut files);
+    tr.learn_stones_cache(&mut files);
     // tr.learn_stones(&mut files);
     // tr.learn_win(&mut files);
 
