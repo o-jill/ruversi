@@ -94,17 +94,18 @@ impl Trainer {
             }
             println!("");
         }
+        let n = files.len();
+        let mut numbers : Vec<usize> = Vec::with_capacity(n);
+        unsafe { numbers.set_len(n); }
+        for (i, it) in numbers.iter_mut().enumerate() {*it = i;}
         for i in 1..self.repeat {
-            files.shuffle(&mut rng);
-            for fname in files.iter() {
-                let path = format!("kifu/{}", fname);
+            numbers.shuffle(&mut rng);
+            for idx in numbers.iter() {
+                let (path, kifu) = kifucache.iter().nth(*idx).unwrap();
                 print!("{} / {} : {}\r", i, self.repeat, path);
-                let idx = kifucache.binary_search_by(|x| {
-                    x.0.cmp(&path)
-                }).unwrap();
-                let kifu = kifucache.iter().nth(idx).unwrap();
                 unsafe {
-                    self.run4stones(&kifu.1, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                    self.run4stones(
+                        &kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
                 }
             }
             println!("");
