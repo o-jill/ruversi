@@ -278,8 +278,29 @@ impl Weight {
         // back to input
         for (i, h) in dhid.iter().enumerate() {
             let w1 = &mut ow.as_mut_slice()[i * w1sz .. (i + 1) * w1sz];
-            for (j, c) in cells.iter().enumerate() {
-                w1[j] -= *h * *c as f32 * eta;
+            if cfg!(feature="nosimd") {
+                for (j, c) in cells.iter().enumerate() {
+                    w1[j] -= *h * *c as f32 * eta;
+                }
+            } else {
+                let heta4: std::arch::x86_64::__m128;
+                unsafe {
+                    heta4 = std::arch::x86_64::_mm_set1_ps(*h * eta);
+                }
+                for j in 0..board::CELL_2D / 4 {
+                    let idx = j * 4;
+                    unsafe {
+                        let y4 = std::arch::x86_64::_mm_set_epi32(
+                            cells[idx + 3] as i32, cells[idx + 2] as i32,
+                            cells[idx + 1] as i32, cells[idx + 0] as i32);
+                        let y4 = std::arch::x86_64::_mm_cvtepi32_ps(y4);
+                        let diff4 = std::arch::x86_64::_mm_mul_ps(heta4, y4);
+
+                        let x4 = std::arch::x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
+                        let w4 = stf::std::arch::x86_64::_mm_sub_ps(x4, diff4);
+                        std::arch::x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w4);
+                    }
+                }
             }
             w1[board::CELL_2D] -= *h * teban as f32 * eta;
             w1[board::CELL_2D + 1] -= *h * eta;
