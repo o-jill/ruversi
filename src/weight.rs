@@ -193,7 +193,6 @@ impl Weight {
 
         sum = *ow.last().unwrap();
 
-        let mut sum4: std::arch::x86_64::__m128;
         for i in 0..N_HIDDEN {
             let mut sum4: std::arch::x86_64::__m128;
             unsafe {
@@ -298,7 +297,7 @@ impl Weight {
 
                         let x4 = std::arch::x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
                         let w4 = std::arch::x86_64::_mm_sub_ps(x4, diff4);
-                        std::arch::x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w4);
+                        std::arch::x86_64::_mm_storeu_ps(w1[idx..].as_mut_ptr(), w4);
                     }
                 }
             }
