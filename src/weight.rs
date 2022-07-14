@@ -194,31 +194,38 @@ impl Weight {
         sum = *ow.last().unwrap();
 
         for i in 0..N_HIDDEN {
+            let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
+            let mut hidsum : f32 = *w1.last().unwrap();
+            // let mut hidsum2 : f32 = 0.0;//*w1.last().unwrap();
+            // let mut hidsum3 : f32 = 0.0;
+            // let mut hidsum4 : f32 = 0.0;
+            // let mut hidsum5 : f32 = 0.0;
             let mut sum4: std::arch::x86_64::__m128;
             unsafe {
                 sum4 = std::arch::x86_64::_mm_setzero_ps();
             }
-            let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
-            let mut hidsum : f32 = *w1.last().unwrap();
-            for i in 0..board::CELL_2D / 4 {
-                // let x4 = f32x4::load(w1[i + 4], 4);
-                // let y4 = f32x4::new(cells[i * 4], cells[i * 4 + 1],
-                //     cells[i * 4 + 2], cells[i * 4 + 3]);
-                // sum4 += x4 * y4;
-                let idx = i * 4;
+            // for (idx, c)  in cells.iter().enumerate() {
+            //     hidsum2 += *c as f32 * w1[idx];
+            // }
+            // for j in 0..board::CELL_2D / 4 {
+            //     hidsum2 += cells[j * 4] as f32 * w1[j * 4];
+            //     hidsum3 += cells[j * 4 + 1] as f32 * w1[j * 4 + 1];
+            //     hidsum4 += cells[j * 4 + 2] as f32 * w1[j * 4 + 2];
+            //     hidsum5 += cells[j * 4 + 3] as f32 * w1[j * 4 + 3];
+            // }
+            // hidsum2 += hidsum3 + hidsum4 + hidsum5 + *w1.last().unwrap();
+            for j in 0..board::CELL_2D / 4 {
+                    let idx = j * 4;
                 unsafe {
                     let x4 = std::arch::x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
-                    // let y4 = std::arch::x86_64::_mm_set_ps(
-                    //     cells[idx] as f32, cells[idx + 1] as f32,
-                    //     cells[idx + 2] as f32, cells[idx + 3] as f32);
-                    let y4 = std::arch::x86_64::_mm_set_epi32(
+
+                    let c4 = std::arch::x86_64::_mm_set_epi32(
                         cells[idx + 3] as i32, cells[idx + 2] as i32,
                         cells[idx + 1] as i32, cells[idx + 0] as i32);
-                    // let y4 = std::arch::x86_64::_mm_set_epi32(
-                    //     cells[idx] as i32, cells[idx + 1] as i32,
-                    //     cells[idx + 2] as i32, cells[idx + 3] as i32);
-                    let y4 = std::arch::x86_64::_mm_cvtepi32_ps(y4);
-                    let mul = std::arch::x86_64::_mm_mul_ps(x4, y4);
+                    let c4 = std::arch::x86_64::_mm_cvtepi32_ps(c4);
+
+                    let mul = std::arch::x86_64::_mm_mul_ps(x4, c4);
+
                     sum4 = std::arch::x86_64::_mm_add_ps(sum4, mul);
                 }
             }
@@ -229,6 +236,10 @@ impl Weight {
                 //     std::arch::x86_64::_mm_hadd_ps(sum4, sum4));
             }
             hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
+            // if f32::abs(hidsum - hidsum2) > 0.001 {
+            //     println!("{} - {} > 0.001", hidsum, hidsum2);
+            //     panic!("diffffffffffff");
+            // }
             hidsum += teban as f32 * w1[w1sz - 2];
             hidden[i] = hidsum;
             hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
@@ -277,9 +288,10 @@ impl Weight {
         // back to input
         for (i, h) in dhid.iter().enumerate() {
             let w1 = &mut ow.as_mut_slice()[i * w1sz .. (i + 1) * w1sz];
+            let heta = *h * eta;
             if cfg!(feature="nosimd") {
                 for (j, c) in cells.iter().enumerate() {
-                    w1[j] -= *h * *c as f32 * eta;
+                    w1[j] -= *c as f32 * heta;
                 }
             } else {
                 let heta4: std::arch::x86_64::__m128;
@@ -301,8 +313,8 @@ impl Weight {
                     }
                 }
             }
-            w1[board::CELL_2D] -= *h * teban as f32 * eta;
-            w1[board::CELL_2D + 1] -= *h * eta;
+            w1[board::CELL_2D] -= teban as f32 * heta;
+            w1[board::CELL_2D + 1] -= heta;
         }
     }
 }
