@@ -297,7 +297,7 @@ impl Weight {
                         let diff4 = std::arch::x86_64::_mm_mul_ps(heta4, y4);
 
                         let x4 = std::arch::x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
-                        let w4 = stf::std::arch::x86_64::_mm_sub_ps(x4, diff4);
+                        let w4 = std::arch::x86_64::_mm_sub_ps(x4, diff4);
                         std::arch::x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w4);
                     }
                 }
