@@ -171,7 +171,7 @@ impl Weight {
     pub fn evaluatev1(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let teban = ban.teban as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
         let w2 = &ow.as_slice()[w1sz * 4..];
@@ -184,7 +184,7 @@ impl Weight {
             for (idx, c)  in cells.iter().enumerate() {
                 hidsum += *c as f32 * w1[idx];
             }
-            hidsum += teban as f32 * w1[w1sz - 2];
+            hidsum += teban * w1[w1sz - 2];
             sum += w2[i] / (f32::exp(-hidsum) + 1.0);
         }
         sum
@@ -193,7 +193,7 @@ impl Weight {
     pub fn evaluatev1_simd(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let teban = ban.teban as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
         let w2 = &ow.as_slice()[w1sz * 4..];
@@ -240,7 +240,7 @@ impl Weight {
             }
             hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
             // hidsum += sumarr[0] + sumarr[2];
-            hidsum += teban as f32 * w1[w1sz - 2];
+            hidsum += teban * w1[w1sz - 2];
             sum += w2[i] / (f32::exp(-hidsum) + 1.0);
         }
         sum
@@ -249,7 +249,7 @@ impl Weight {
     pub fn evaluatev2(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let teban = ban.teban as f32;
         let ow = &self.weight;
 
         sum = *ow.last().unwrap();
@@ -263,7 +263,7 @@ impl Weight {
             for (idx, c)  in cells.iter().enumerate() {
                 hidsum += *c as f32 * w1[idx];
             }
-            hidsum += teban as f32 * tbn[i];
+            hidsum += teban * tbn[i];
             sum += w2[i] / (f32::exp(-hidsum) + 1.0);
         }
         sum
@@ -272,7 +272,7 @@ impl Weight {
     pub fn evaluatev2_simd(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let teban = ban.teban as f32;
         let ow = &self.weight;
 
         sum = *ow.last().unwrap();
@@ -304,7 +304,7 @@ impl Weight {
                 std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
             }
             hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
-            hidsum += teban as f32 * tbn[i];
+            hidsum += teban * tbn[i];
             sum += w2[i] / (f32::exp(-hidsum) + 1.0);
         }
         sum
@@ -317,7 +317,7 @@ impl Weight {
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
         let mut sum : f32;
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let teban = ban.teban as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
         let w2 = &ow.as_slice()[w1sz * 4..];
@@ -330,7 +330,7 @@ impl Weight {
             for (idx, c)  in cells.iter().enumerate() {
                 hidsum += *c as f32 * w1[idx];
             }
-            hidsum += teban as f32 * w1[w1sz - 2];
+            hidsum += teban * w1[w1sz - 2];
             hidden[i] = hidsum;
             hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
             sum += w2[i] * hidsig[i];
@@ -346,7 +346,7 @@ impl Weight {
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
         let mut sum : f32;
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let teban = ban.teban as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
         let w2 = &ow.as_slice()[w1sz * 4..];
@@ -400,7 +400,7 @@ impl Weight {
             //     println!("{} - {} > 0.001", hidsum, hidsum2);
             //     panic!("diffffffffffff");
             // }
-            hidsum += teban as f32 * w1[w1sz - 2];
+            hidsum += teban * w1[w1sz - 2];
             hidden[i] = hidsum;
             hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
             sum += w2[i] * hidsig[i];
