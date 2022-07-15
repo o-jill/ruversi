@@ -66,11 +66,12 @@ impl Weight {
             match line {
                 Ok(l) => {
                     if l.starts_with("#") {
-                        if format == EvalFile::Unknown {
-                            let res = EvalFile::from(&l);
-                            if res.is_some() {
-                                format = res.unwrap();
-                            }
+                        if format != EvalFile::Unknown {
+                            continue;
+                        }
+                        let res = EvalFile::from(&l);
+                        if res.is_some() {
+                            format = res.unwrap();
                         }
                         continue;
                     }
