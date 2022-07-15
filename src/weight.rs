@@ -181,8 +181,8 @@ impl Weight {
         for i in 0..N_HIDDEN {
             let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
             let mut hidsum : f32 = *w1.last().unwrap();
-            for (idx, c)  in cells.iter().enumerate() {
-                hidsum += *c as f32 * w1[idx];
+            for (&w, &c) in w1.iter().zip(cells.iter()) {
+                hidsum += w * c as f32;
             }
             hidsum += teban * w1[w1sz - 2];
             sum += w2[i] / (f32::exp(-hidsum) + 1.0);
@@ -327,8 +327,8 @@ impl Weight {
         for i in 0..N_HIDDEN {
             let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
             let mut hidsum : f32 = *w1.last().unwrap();
-            for (idx, c)  in cells.iter().enumerate() {
-                hidsum += *c as f32 * w1[idx];
+            for (&w, &c) in w1.iter().zip(cells.iter()) {
+                hidsum += w * c as f32;
             }
             hidsum += teban * w1[w1sz - 2];
             hidden[i] = hidsum;
