@@ -310,7 +310,7 @@ impl Weight {
         sum
     }
 
-    pub fn forward(&self, ban : &board::Board)
+    pub fn forwardv1(&self, ban : &board::Board)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -339,7 +339,7 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
-    pub fn forward_simd(&self, ban : &board::Board)
+    pub fn forwardv1_simd(&self, ban : &board::Board)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -409,6 +409,38 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
+    pub fn forwardv2(&self, ban : &board::Board)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
+        let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
+        let mut sum : f32;
+        let cells = &ban.cells;
+        let teban = ban.teban as f32;
+        let w1sz = board::CELL_2D + 1 + 1;
+        let ow = &self.weight;
+        let w2 = &ow.as_slice()[w1sz * 4..];
+
+        sum = *ow.last().unwrap();
+
+        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let mut hidsum : f32 = dc[i];
+            for (&w, &c) in w1.iter().zip(cells.iter()) {
+                hidsum += w * c as f32;
+            }
+            hidsum += teban * tbn[i];
+            hidden[i] = hidsum;
+            hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
+            sum += w2[i] * hidsig[i];
+        }
+        output[0] = sum;
+        (hidden, hidsig, output)
+    }
+
     pub fn train(&mut self, rfen : &str, winner : i8, eta : f32) -> Result<(), String> {
         let ban = board::Board::from(rfen).unwrap();
         self.learn(&ban, winner, eta);
@@ -423,10 +455,14 @@ impl Weight {
         let teban = ban.teban;
         // forward
         let (hidden, hidsig, output) = 
-            if cfg!(feature="nosimd") {
-                self.forward(&ban)
-            } else {
-                self.forward_simd(&ban)
+            if cfg!(feature="nnv2") {
+                self.forwardv2(&ban)
+            }else {
+                if cfg!(feature="nosimd") {
+                    self.forwardv1(&ban)
+                } else {
+                    self.forwardv1_simd(&ban)
+                }
             };
         // backword
         let w1sz = board::CELL_2D + 1 + 1;
