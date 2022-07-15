@@ -117,16 +117,27 @@ impl Weight {
         Ok(())
     }
 
-    pub fn write(&self, path : &str) {
+    pub fn writev1(&self, path : &str) {
         let sv = self.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let mut f = fs::File::create(path).unwrap();
         // f.write(format!("# {}-{}-{}\n", N_INPUT, N_HIDDEN, N_OUTPUT).as_bytes()).unwrap();
-        f.write(format!("{}\n",
-            if cfg!(feature="nnv2") {
-                EvalFile::V2.to_str()
-            } else {
-                EvalFile::V1.to_str()
-            }).as_bytes()).unwrap();
+        f.write(format!("{}\n", EvalFile::V1.to_str()).as_bytes()).unwrap();
+        f.write(sv.join(",").as_bytes()).unwrap();
+    }
+
+    pub fn writev2(&self, path : &str) {
+        let sv = self.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        let mut f = fs::File::create(path).unwrap();
+        f.write(format!("{}\n", EvalFile::V2.to_str()).as_bytes()).unwrap();
+        f.write(sv.join(",").as_bytes()).unwrap();
+    }
+
+    pub fn writev1asv2(&self, path : &str) {
+        let mut w = Weight::new();
+        w.fromv1(&self.weight);
+        let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        let mut f = fs::File::create(path).unwrap();
+        f.write(format!("{}\n", EvalFile::V2.to_str()).as_bytes()).unwrap();
         f.write(sv.join(",").as_bytes()).unwrap();
     }
 

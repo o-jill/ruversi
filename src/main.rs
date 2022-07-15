@@ -174,7 +174,11 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
 
     // put new eval table
     unsafe {
-        node::WEIGHT.as_ref().unwrap().write("./kifu/newevaltable.txt");
+        if cfg!(feature="nnv2") {
+            node::WEIGHT.as_ref().unwrap().writev2("./kifu/newevaltable.txt");
+        } else {
+            node::WEIGHT.as_ref().unwrap().writev1asv2("./kifu/newevaltable.txt");
+        }
     }
 
     let mut win = 0;
