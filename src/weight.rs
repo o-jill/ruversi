@@ -120,7 +120,12 @@ impl Weight {
         let sv = self.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let mut f = fs::File::create(path).unwrap();
         // f.write(format!("# {}-{}-{}\n", N_INPUT, N_HIDDEN, N_OUTPUT).as_bytes()).unwrap();
-        f.write(format!("{}\n", EvalFile::V1.to_str()).as_bytes()).unwrap();
+        f.write(format!("{}\n",
+            if cfg!(feature="nnv2") {
+                EvalFile::V2.to_str()
+            } else {
+                EvalFile::V1.to_str()
+            }).as_bytes()).unwrap();
         f.write(sv.join(",").as_bytes()).unwrap();
     }
 
@@ -246,6 +251,47 @@ impl Weight {
             for (idx, c)  in cells.iter().enumerate() {
                 hidsum += *c as f32 * w1[idx];
             }
+            hidsum += teban as f32 * tbn[i];
+            sum += w2[i] / (f32::exp(-hidsum) + 1.0);
+        }
+        sum
+    }
+
+    pub fn evaluatev2_simd(&self, ban : &board::Board) -> f32 {
+        let mut sum : f32;
+        let cells = &ban.cells;
+        let teban = ban.teban;
+        let ow = &self.weight;
+
+        sum = *ow.last().unwrap();
+
+        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let mut hidsum : f32 = dc[i];
+            let mut sum4: std::arch::x86_64::__m128;
+            unsafe {
+                sum4 = std::arch::x86_64::_mm_setzero_ps();
+            }
+            for i in 0..board::CELL_2D / 4 {
+                let idx = i * 4;
+                unsafe {
+                    let x4 = std::arch::x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                    let y4 = std::arch::x86_64::_mm_set_epi32(
+                        cells[idx + 3] as i32, cells[idx + 2] as i32,
+                        cells[idx + 1] as i32, cells[idx + 0] as i32);
+                    let y4 = std::arch::x86_64::_mm_cvtepi32_ps(y4);
+                    let mul = std::arch::x86_64::_mm_mul_ps(x4, y4);
+                    sum4 = std::arch::x86_64::_mm_add_ps(sum4, mul);
+                }
+            }
+            let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
+            unsafe {
+                std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
+            }
+            hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
             hidsum += teban as f32 * tbn[i];
             sum += w2[i] / (f32::exp(-hidsum) + 1.0);
         }
