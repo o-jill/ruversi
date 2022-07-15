@@ -417,9 +417,7 @@ impl Weight {
         let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban as f32;
-        let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
-        let w2 = &ow.as_slice()[w1sz * 4..];
 
         sum = *ow.last().unwrap();
 
