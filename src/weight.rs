@@ -554,6 +554,75 @@ impl Weight {
         }        
     }
 
+    fn backwordv2(&mut self,
+        ban : &board::Board, winner : i8, eta : f32,
+        hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN], output : &[f32 ; N_OUTPUT]) {
+        let cells = &ban.cells;
+        let teban = ban.teban as f32;
+
+        let ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - 10.0 * winner as f32;
+        let w2 = &mut ow.as_mut_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            w2[i] -= hidsig[i] * diff * eta;
+        }
+        w2[N_HIDDEN] -= diff * eta;
+
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            let tmp = w2[i] * diff;
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            *h = tmp * sig * (1.0 - sig);
+        }
+        // back to input
+        for (i, h) in dhid.iter().enumerate() {
+            let w1 = &mut ow.as_mut_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let heta = *h * eta;
+            if cfg!(feature="nnv2") {
+            // if cfg!(feature="nosimd") {
+                for (&c, w) in cells.iter().zip(w1.iter_mut()) {
+                    *w -= c as f32 * heta;
+                }
+                let tbndc = &mut ow.as_mut_slice()[board::CELL_2D * N_HIDDEN ..];
+                tbndc[i] -= teban * heta;
+                tbndc[i + N_HIDDEN] -= heta;
+            } else {
+                let heta4: std::arch::x86_64::__m128;
+                unsafe {
+                    heta4 = std::arch::x86_64::_mm_set1_ps(*h * eta);
+                }
+                for j in 0..board::CELL_2D / 4 {
+                    let idx = j * 4;
+                    unsafe {
+                        let y4 = std::arch::x86_64::_mm_set_epi32(
+                            cells[idx + 3] as i32, cells[idx + 2] as i32,
+                            cells[idx + 1] as i32, cells[idx + 0] as i32);
+                        let y4 = std::arch::x86_64::_mm_cvtepi32_ps(y4);
+                        let diff4 = std::arch::x86_64::_mm_mul_ps(heta4, y4);
+
+                        let x4 = std::arch::x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                        let w4 = std::arch::x86_64::_mm_sub_ps(x4, diff4);
+                        std::arch::x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w4);
+                    }
+                }
+                let tbndc = &mut ow.as_mut_slice()[board::CELL_2D * N_HIDDEN ..];
+                // tbndc[i] -= teban * heta;
+                unsafe {
+                    let x4 = std::arch::x86_64::_mm_load_ps(tbndc.as_mut_ptr());
+                    let heta4 = std::arch::x86_64::_mm_set1_ps(teban * heta);
+                    let y4 = std::arch::x86_64::_mm_sub_ps(x4, heta4);
+                    std::arch::x86_64::_mm_store_ps(tbndc.as_mut_ptr(), y4);
+                    // tbndc[i + N_HIDDEN] -= heta;
+                    let x4 = std::arch::x86_64::_mm_load_ps(tbndc[N_HIDDEN..].as_mut_ptr());
+                    let heta4 = std::arch::x86_64::_mm_set1_ps(heta);
+                    let y4 = std::arch::x86_64::_mm_sub_ps(x4, heta4);
+                    std::arch::x86_64::_mm_store_ps(tbndc[N_HIDDEN..].as_mut_ptr(), y4);
+                }
+            }
+        }
+    }
+
     fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
         let cells = &ban.cells;
         let teban = ban.teban;
