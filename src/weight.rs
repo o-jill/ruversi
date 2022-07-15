@@ -439,6 +439,57 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
+    pub fn forwardv2_simd(&self, ban : &board::Board)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
+        let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
+        let mut sum : f32;
+        let cells = &ban.cells;
+        let teban = ban.teban as f32;
+        let ow = &self.weight;
+
+        sum = *ow.last().unwrap();
+
+        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let mut hidsum : f32 = dc[i];
+            let mut sum4: std::arch::x86_64::__m128;
+            unsafe {
+                sum4 = std::arch::x86_64::_mm_setzero_ps();
+            }
+            for j in 0..board::CELL_2D / 4 {
+                let idx = j * 4;
+                unsafe {
+                    let x4 = std::arch::x86_64::_mm_load_ps(w1[idx..].as_ptr());
+
+                    let c4 = std::arch::x86_64::_mm_set_epi32(
+                        cells[idx + 3] as i32, cells[idx + 2] as i32,
+                        cells[idx + 1] as i32, cells[idx + 0] as i32);
+                    let c4 = std::arch::x86_64::_mm_cvtepi32_ps(c4);
+
+                    let mul = std::arch::x86_64::_mm_mul_ps(x4, c4);
+
+                    sum4 = std::arch::x86_64::_mm_add_ps(sum4, mul);
+                }
+            }
+            let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
+            unsafe {
+                std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
+            }
+            hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
+            hidsum += teban * tbn[i];
+            hidden[i] = hidsum;
+            hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
+            sum += w2[i] * hidsig[i];
+        }
+        output[0] = sum;
+        (hidden, hidsig, output)
+    }
+
     pub fn train(&mut self, rfen : &str, winner : i8, eta : f32) -> Result<(), String> {
         let ban = board::Board::from(rfen).unwrap();
         self.learn(&ban, winner, eta);
@@ -448,21 +499,12 @@ impl Weight {
         Ok(())
     }
 
-    fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
+    fn backwordv1(&mut self,
+            ban : &board::Board, winner : i8, eta : f32,
+            hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN], output : &[f32 ; N_OUTPUT]) {
         let cells = &ban.cells;
         let teban = ban.teban;
-        // forward
-        let (hidden, hidsig, output) = 
-            if cfg!(feature="nnv2") {
-                self.forwardv2(&ban)
-            }else {
-                if cfg!(feature="nosimd") {
-                    self.forwardv1(&ban)
-                } else {
-                    self.forwardv1_simd(&ban)
-                }
-            };
-        // backword
+
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &mut self.weight;
         // back to hidden
@@ -484,8 +526,8 @@ impl Weight {
             let w1 = &mut ow.as_mut_slice()[i * w1sz .. (i + 1) * w1sz];
             let heta = *h * eta;
             if cfg!(feature="nosimd") {
-                for (j, c) in cells.iter().enumerate() {
-                    w1[j] -= *c as f32 * heta;
+                for (&c, w) in cells.iter().zip(w1.iter_mut()) {
+                    *w -= c as f32 * heta;
                 }
             } else {
                 let heta4: std::arch::x86_64::__m128;
@@ -509,6 +551,24 @@ impl Weight {
             }
             w1[board::CELL_2D] -= teban as f32 * heta;
             w1[board::CELL_2D + 1] -= heta;
-        }
+        }        
+    }
+
+    fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
+        let cells = &ban.cells;
+        let teban = ban.teban;
+        // forward
+        let (hidden, hidsig, output) = 
+            if cfg!(feature="nnv2") {
+                self.forwardv2(&ban)
+            }else {
+                if cfg!(feature="nosimd") {
+                    self.forwardv1(&ban)
+                } else {
+                    self.forwardv1_simd(&ban)
+                }
+            };
+        // backword
+        self.backwordv1(ban, winner, eta, &hidden, &hidsig, &output);
     }
 }
