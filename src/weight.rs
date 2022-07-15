@@ -503,7 +503,7 @@ impl Weight {
             ban : &board::Board, winner : i8, eta : f32,
             hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN], output : &[f32 ; N_OUTPUT]) {
         let cells = &ban.cells;
-        let teban = ban.teban;
+        let teban = ban.teban as f32;
 
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &mut self.weight;
@@ -549,7 +549,7 @@ impl Weight {
                     }
                 }
             }
-            w1[board::CELL_2D] -= teban as f32 * heta;
+            w1[board::CELL_2D] -= teban * heta;
             w1[board::CELL_2D + 1] -= heta;
         }        
     }
