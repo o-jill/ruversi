@@ -12,6 +12,31 @@ const N_HIDDEN : usize = 4;
 const N_OUTPUT : usize = 1;
 const N_WEIGHT: usize = (N_INPUT + 1) * N_HIDDEN + N_HIDDEN + 1;
 
+#[derive(PartialEq)]
+enum EvalFile{
+    Unknown,
+    V1,
+    V2,
+}
+
+impl EvalFile {
+    pub fn to_str(&self) -> &str {
+        match self {
+            EvalFile::Unknown => {"unknown eval file format."},
+            EvalFile::V1 => {"# 65-4-1"},
+            EvalFile::V2 => {"# 64+1-4-1"},
+        }
+    }
+
+    pub fn from(txt : &str) -> Option<EvalFile> {
+        match txt {
+            "# 65-4-1" => Some(EvalFile::V1),
+            "# 64+1-4-1" => Some(EvalFile::V2),
+            _ => None
+        }
+    }
+}
+
 pub struct Weight {
     weight : Vec<f32>
 }
@@ -34,23 +59,26 @@ impl Weight {
     }
 
     pub fn read(&mut self, path : &str) -> Result<(), String> {
+        let mut format = EvalFile::Unknown;
         let file = File::open(path).unwrap();
         let lines = BufReader::new(file);
         for line in lines.lines() {
             match line {
                 Ok(l) => {
                     if l.starts_with("#") {
+                        if format == EvalFile::Unknown {
+                            let res = EvalFile::from(&l);
+                            if res.is_some() {
+                                format = res.unwrap();
+                            }
+                        }
                         continue;
                     }
-                    let csv = l.split(",").collect::<Vec<_>>();
-                    let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
-                    let wsz = self.weight.len();
-                    let nsz = newtable.len();
-                    if wsz != nsz {
-                        return Err(String::from("size mismatch"));
+                    match format {
+                        EvalFile::V1 => {return self.readv1(&l)},
+                        EvalFile::V2 => {return self.readv2(&l)},
+                        _ => {}
                     }
-                    self.weight = newtable;
-                    return Ok(());
                 },
                 Err(err) => {return Err(err.to_string())}
             }
@@ -59,10 +87,40 @@ impl Weight {
         Err("no weight".to_string())
     }
 
+    fn readv1(&mut self, line : &str) -> Result<(), String> {
+        let csv = line.split(",").collect::<Vec<_>>();
+        let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+        let wsz = self.weight.len();
+        let nsz = newtable.len();
+        if wsz != nsz {
+            return Err(String::from("size mismatch"));
+        }
+        if cfg!(feature="nnv2") {
+            self.fromv1(&newtable);
+            println!("self.fromv1(&newtable);");
+        } else {
+            self.weight = newtable;
+        }
+        Ok(())
+    }
+
+    fn readv2(&mut self, line : &str) -> Result<(), String> {
+        let csv = line.split(",").collect::<Vec<_>>();
+        let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+        let wsz = self.weight.len();
+        let nsz = newtable.len();
+        if wsz != nsz {
+            return Err(String::from("size mismatch"));
+        }
+        self.weight = newtable;
+        Ok(())
+    }
+
     pub fn write(&self, path : &str) {
         let sv = self.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let mut f = fs::File::create(path).unwrap();
-        f.write(format!("# {}-{}-{}\n", N_INPUT, N_HIDDEN, N_OUTPUT).as_bytes()).unwrap();
+        // f.write(format!("# {}-{}-{}\n", N_INPUT, N_HIDDEN, N_OUTPUT).as_bytes()).unwrap();
+        f.write(format!("{}\n", EvalFile::V1.to_str()).as_bytes()).unwrap();
         f.write(sv.join(",").as_bytes()).unwrap();
     }
 
@@ -72,7 +130,28 @@ impl Weight {
         }
     }
 
-    pub fn evaluate(&self, ban : &board::Board) -> f32 {
+    fn fromv1(&mut self, tbl : &Vec<f32>) {
+        // ban
+        for i in 0..N_HIDDEN {
+            let mut we = &mut self.weight[i * board::CELL_2D..(i + 1) * board::CELL_2D];
+            let mut tb = &tbl[i * (board::CELL_2D + 1 + 1)..(i + 1) * (board::CELL_2D + 1 + 1)];
+            for (w, t) in we.iter_mut().zip(tb.iter()) {
+                *w = *t;
+            }
+            let mut teb = &mut self.weight[
+                N_HIDDEN * board::CELL_2D + i..=N_HIDDEN * board::CELL_2D + N_HIDDEN * 2 + i];
+            // teban
+            teb[0] = tbl[i * (board::CELL_2D + 1 + 1) + board::CELL_2D];
+            // dc
+            teb[N_HIDDEN] = tbl[i * (board::CELL_2D + 1 + 1) + board::CELL_2D + 1];
+            // hidden
+            teb[N_HIDDEN * 2] = tbl[4 * (board::CELL_2D + 1 + 1) + i];
+        }
+        // dc
+        *self.weight.last_mut().unwrap() = *tbl.last().unwrap();
+    }
+
+    pub fn evaluatev1(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban;
@@ -94,7 +173,7 @@ impl Weight {
         sum
     }
 
-    pub fn evaluate_simd(&self, ban : &board::Board) -> f32 {
+    pub fn evaluatev1_simd(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban;
@@ -145,6 +224,29 @@ impl Weight {
             hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
             // hidsum += sumarr[0] + sumarr[2];
             hidsum += teban as f32 * w1[w1sz - 2];
+            sum += w2[i] / (f32::exp(-hidsum) + 1.0);
+        }
+        sum
+    }
+
+    pub fn evaluatev2(&self, ban : &board::Board) -> f32 {
+        let mut sum : f32;
+        let cells = &ban.cells;
+        let teban = ban.teban;
+        let ow = &self.weight;
+
+        sum = *ow.last().unwrap();
+
+        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let mut hidsum : f32 = dc[i];
+            for (idx, c)  in cells.iter().enumerate() {
+                hidsum += *c as f32 * w1[idx];
+            }
+            hidsum += teban as f32 * tbn[i];
             sum += w2[i] / (f32::exp(-hidsum) + 1.0);
         }
         sum
