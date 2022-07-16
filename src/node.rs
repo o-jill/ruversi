@@ -90,17 +90,17 @@ impl Node {
 
     fn evaluate(ban : &board::Board) -> f32 {
         unsafe {
-            if cfg!(feature="nnv2") {
-                if cfg!(feature = "nosimd") {
-                    WEIGHT.as_ref().unwrap().evaluatev2(ban)
-                } else {
-                    WEIGHT.as_ref().unwrap().evaluatev2_simd(ban)
-                }
-            } else {
+            if cfg!(feature="nnv1") {
                 if cfg!(feature = "nosimd") {
                     WEIGHT.as_ref().unwrap().evaluatev1(ban)
                 } else {
                     WEIGHT.as_ref().unwrap().evaluatev1_simd(ban)
+                }
+            } else {
+                if cfg!(feature = "nosimd") {
+                    WEIGHT.as_ref().unwrap().evaluatev2(ban)
+                } else {
+                    WEIGHT.as_ref().unwrap().evaluatev2_simd(ban)
                 }
             }
         }

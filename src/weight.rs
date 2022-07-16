@@ -96,11 +96,11 @@ impl Weight {
         if wsz != nsz {
             return Err(String::from("size mismatch"));
         }
-        if cfg!(feature="nnv2") {
-            self.fromv1(&newtable);
-            println!("self.fromv1(&newtable);");
-        } else {
+        if cfg!(feature="nnv1") {
             self.weight = newtable;
+        } else {
+            self.fromv1(&newtable);
+            // println!("self.fromv1(&newtable);");
         }
         Ok(())
     }
@@ -614,24 +614,24 @@ impl Weight {
         let teban = ban.teban;
         // forward
         let (hidden, hidsig, output) = 
-            if cfg!(feature="nnv2") {
-                if cfg!(feature="nosimd") {
-                    self.forwardv2(&ban)
-                } else {
-                    self.forwardv2_simd(&ban)
-                }
-            } else {
+            if cfg!(feature="nnv1") {
                 if cfg!(feature="nosimd") {
                     self.forwardv1(&ban)
                 } else {
                     self.forwardv1_simd(&ban)
                 }
+            } else {
+                if cfg!(feature="nosimd") {
+                    self.forwardv2(&ban)
+                } else {
+                    self.forwardv2_simd(&ban)
+                }
             };
         // backword
-        if cfg!(feature="nnv2") {
-            self.backwordv2(ban, winner, eta, &hidden, &hidsig, &output);
-        }else {
+        if cfg!(feature="nnv1") {
             self.backwordv1(ban, winner, eta, &hidden, &hidsig, &output);
+        } else {
+            self.backwordv2(ban, winner, eta, &hidden, &hidsig, &output);
         }
     }
 }
