@@ -579,14 +579,10 @@ impl Weight {
         for (i, h) in dhid.iter().enumerate() {
             let w1 = &mut ow.as_mut_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let heta = *h * eta;
-            if cfg!(feature="nnv2") {
-            // if cfg!(feature="nosimd") {
+            if cfg!(feature="nosimd") {
                 for (&c, w) in cells.iter().zip(w1.iter_mut()) {
                     *w -= c as f32 * heta;
                 }
-                let tbndc = &mut ow.as_mut_slice()[board::CELL_2D * N_HIDDEN ..];
-                tbndc[i] -= teban * heta;
-                tbndc[i + N_HIDDEN] -= heta;
             } else {
                 let heta4: std::arch::x86_64::__m128;
                 unsafe {
@@ -606,20 +602,10 @@ impl Weight {
                         std::arch::x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w4);
                     }
                 }
-                let tbndc = &mut ow.as_mut_slice()[board::CELL_2D * N_HIDDEN ..];
-                // tbndc[i] -= teban * heta;
-                unsafe {
-                    let x4 = std::arch::x86_64::_mm_load_ps(tbndc.as_mut_ptr());
-                    let heta4 = std::arch::x86_64::_mm_set1_ps(teban * heta);
-                    let y4 = std::arch::x86_64::_mm_sub_ps(x4, heta4);
-                    std::arch::x86_64::_mm_store_ps(tbndc.as_mut_ptr(), y4);
-                    // tbndc[i + N_HIDDEN] -= heta;
-                    let x4 = std::arch::x86_64::_mm_load_ps(tbndc[N_HIDDEN..].as_mut_ptr());
-                    let heta4 = std::arch::x86_64::_mm_set1_ps(heta);
-                    let y4 = std::arch::x86_64::_mm_sub_ps(x4, heta4);
-                    std::arch::x86_64::_mm_store_ps(tbndc[N_HIDDEN..].as_mut_ptr(), y4);
-                }
             }
+            let tbndc = &mut ow.as_mut_slice()[board::CELL_2D * N_HIDDEN ..];
+            tbndc[i] -= teban * heta;
+            tbndc[i + N_HIDDEN] -= heta;
         }
     }
 
@@ -629,8 +615,12 @@ impl Weight {
         // forward
         let (hidden, hidsig, output) = 
             if cfg!(feature="nnv2") {
-                self.forwardv2(&ban)
-            }else {
+                if cfg!(feature="nosimd") {
+                    self.forwardv2(&ban)
+                } else {
+                    self.forwardv2_simd(&ban)
+                }
+            } else {
                 if cfg!(feature="nosimd") {
                     self.forwardv1(&ban)
                 } else {
@@ -638,6 +628,10 @@ impl Weight {
                 }
             };
         // backword
-        self.backwordv1(ban, winner, eta, &hidden, &hidsig, &output);
+        if cfg!(feature="nnv2") {
+            self.backwordv2(ban, winner, eta, &hidden, &hidsig, &output);
+        }else {
+            self.backwordv1(ban, winner, eta, &hidden, &hidsig, &output);
+        }
     }
 }
