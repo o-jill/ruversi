@@ -1,6 +1,7 @@
 use super::*;
 use rand::Rng;
 use std::{fs, io::{BufReader, BufRead}};
+use std::arch::x86_64;
 
 /*
  * input: NUMCELL * NUMCELL + 1(teban) + 1
@@ -207,9 +208,9 @@ impl Weight {
             //     hidsum += *c as f32 * w1[idx];
             // }
             // let mut sum4 = f32x4::splat(0.0);
-            let mut sum4: std::arch::x86_64::__m128;
+            let mut sum4: x86_64::__m128;
             unsafe {
-                sum4 = std::arch::x86_64::_mm_setzero_ps();
+                sum4 = x86_64::_mm_setzero_ps();
             }
             for i in 0..board::CELL_2D / 4 {
                 // let x4 = f32x4::load(w1[i + 4], 4);
@@ -217,26 +218,26 @@ impl Weight {
                 // sum4 += x4 * y4;
                 let idx = i * 4;
                 unsafe {
-                    let x4 = std::arch::x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
-                    // let y4 = std::arch::x86_64::_mm_set_ps(
+                    let x4 = x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
+                    // let y4 = x86_64::_mm_set_ps(
                     //     cells[idx] as f32, cells[idx + 1] as f32,
                     //     cells[idx + 2] as f32, cells[idx + 3] as f32);
-                    let y4 = std::arch::x86_64::_mm_set_epi32(
+                    let y4 = x86_64::_mm_set_epi32(
                         cells[idx + 3] as i32, cells[idx + 2] as i32,
                         cells[idx + 1] as i32, cells[idx + 0] as i32);
-                    // let y4 = std::arch::x86_64::_mm_set_epi32(
+                    // let y4 = x86_64::_mm_set_epi32(
                     //     cells[idx] as i32, cells[idx + 1] as i32,
                     //     cells[idx + 2] as i32, cells[idx + 3] as i32);
-                    let y4 = std::arch::x86_64::_mm_cvtepi32_ps(y4);
-                    let mul = std::arch::x86_64::_mm_mul_ps(x4, y4);
-                    sum4 = std::arch::x86_64::_mm_add_ps(sum4, mul);
+                    let y4 = x86_64::_mm_cvtepi32_ps(y4);
+                    let mul = x86_64::_mm_mul_ps(x4, y4);
+                    sum4 = x86_64::_mm_add_ps(sum4, mul);
                 }
             }
             let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
             unsafe {
-                std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
-                // std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(),
-                //     std::arch::x86_64::_mm_hadd_ps(sum4, sum4));
+                x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
+                // x86_64::_mm_store_ps(sumarr.as_mut_ptr(),
+                //     x86_64::_mm_hadd_ps(sum4, sum4));
             }
             hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
             // hidsum += sumarr[0] + sumarr[2];
@@ -283,25 +284,25 @@ impl Weight {
         for i in 0..N_HIDDEN {
             let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = dc[i];
-            let mut sum4: std::arch::x86_64::__m128;
+            let mut sum4: x86_64::__m128;
             unsafe {
-                sum4 = std::arch::x86_64::_mm_setzero_ps();
+                sum4 = x86_64::_mm_setzero_ps();
             }
             for i in 0..board::CELL_2D / 4 {
                 let idx = i * 4;
                 unsafe {
-                    let x4 = std::arch::x86_64::_mm_load_ps(w1[idx..].as_ptr());
-                    let y4 = std::arch::x86_64::_mm_set_epi32(
+                    let x4 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                    let y4 = x86_64::_mm_set_epi32(
                         cells[idx + 3] as i32, cells[idx + 2] as i32,
                         cells[idx + 1] as i32, cells[idx + 0] as i32);
-                    let y4 = std::arch::x86_64::_mm_cvtepi32_ps(y4);
-                    let mul = std::arch::x86_64::_mm_mul_ps(x4, y4);
-                    sum4 = std::arch::x86_64::_mm_add_ps(sum4, mul);
+                    let y4 = x86_64::_mm_cvtepi32_ps(y4);
+                    let mul = x86_64::_mm_mul_ps(x4, y4);
+                    sum4 = x86_64::_mm_add_ps(sum4, mul);
                 }
             }
             let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
             unsafe {
-                std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
+                x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
             }
             hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
             hidsum += teban * tbn[i];
@@ -360,9 +361,9 @@ impl Weight {
             // let mut hidsum3 : f32 = 0.0;
             // let mut hidsum4 : f32 = 0.0;
             // let mut hidsum5 : f32 = 0.0;
-            let mut sum4: std::arch::x86_64::__m128;
+            let mut sum4: x86_64::__m128;
             unsafe {
-                sum4 = std::arch::x86_64::_mm_setzero_ps();
+                sum4 = x86_64::_mm_setzero_ps();
             }
             // for (idx, c)  in cells.iter().enumerate() {
             //     hidsum2 += *c as f32 * w1[idx];
@@ -377,23 +378,23 @@ impl Weight {
             for j in 0..board::CELL_2D / 4 {
                     let idx = j * 4;
                 unsafe {
-                    let x4 = std::arch::x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
+                    let x4 = x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
 
-                    let c4 = std::arch::x86_64::_mm_set_epi32(
+                    let c4 = x86_64::_mm_set_epi32(
                         cells[idx + 3] as i32, cells[idx + 2] as i32,
                         cells[idx + 1] as i32, cells[idx + 0] as i32);
-                    let c4 = std::arch::x86_64::_mm_cvtepi32_ps(c4);
+                    let c4 = x86_64::_mm_cvtepi32_ps(c4);
 
-                    let mul = std::arch::x86_64::_mm_mul_ps(x4, c4);
+                    let mul = x86_64::_mm_mul_ps(x4, c4);
 
-                    sum4 = std::arch::x86_64::_mm_add_ps(sum4, mul);
+                    sum4 = x86_64::_mm_add_ps(sum4, mul);
                 }
             }
             let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
             unsafe {
-                std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
-                // std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(),
-                //     std::arch::x86_64::_mm_hadd_ps(sum4, sum4));
+                x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
+                // x86_64::_mm_store_ps(sumarr.as_mut_ptr(),
+                //     x86_64::_mm_hadd_ps(sum4, sum4));
             }
             hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
             // if f32::abs(hidsum - hidsum2) > 0.001 {
@@ -444,12 +445,11 @@ impl Weight {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
-        let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban as f32;
         let ow = &self.weight;
 
-        sum = *ow.last().unwrap();
+        let mut sum = *ow.last().unwrap();
 
         let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
         let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
@@ -457,28 +457,48 @@ impl Weight {
         for i in 0..N_HIDDEN {
             let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = dc[i];
-            let mut sum4: std::arch::x86_64::__m128;
+            let mut sum4: x86_64::__m128;
             unsafe {
-                sum4 = std::arch::x86_64::_mm_setzero_ps();
+                sum4 = x86_64::_mm_setzero_ps();
             }
-            for j in 0..board::CELL_2D / 4 {
-                let idx = j * 4;
+            for j in 0..board::CELL_2D / 16 {
+                let idx = j * 16;
                 unsafe {
-                    let x4 = std::arch::x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                    let x41 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                    let x42 = x86_64::_mm_load_ps(w1[idx + 4..].as_ptr());
+                    let x43 = x86_64::_mm_load_ps(w1[idx + 8..].as_ptr());
+                    let x44 = x86_64::_mm_load_ps(w1[idx + 12..].as_ptr());
 
-                    let c4 = std::arch::x86_64::_mm_set_epi32(
-                        cells[idx + 3] as i32, cells[idx + 2] as i32,
-                        cells[idx + 1] as i32, cells[idx + 0] as i32);
-                    let c4 = std::arch::x86_64::_mm_cvtepi32_ps(c4);
+                    let c8 = x86_64::_mm_loadl_epi64(cells[idx..].as_ptr() as *const x86_64::__m128i);
+                    let zero = x86_64::_mm_setzero_si128();
+                    // to i16
+                    let c4l = x86_64::_mm_unpacklo_epi16(zero, c8);
+                    let c4h = x86_64::_mm_unpackhi_epi16(zero, c8);
+                    // to i32
+                    let c41 = x86_64::_mm_unpacklo_epi32(zero, c4l);
+                    let c42 = x86_64::_mm_unpackhi_epi32(zero, c4l);
+                    let c43 = x86_64::_mm_unpacklo_epi32(zero, c4h);
+                    let c44 = x86_64::_mm_unpackhi_epi32(zero, c4h);
+                    let f41 = x86_64::_mm_cvtepi32_ps(c41);
+                    let f42 = x86_64::_mm_cvtepi32_ps(c42);
+                    let f43 = x86_64::_mm_cvtepi32_ps(c43);
+                    let f44 = x86_64::_mm_cvtepi32_ps(c44);
 
-                    let mul = std::arch::x86_64::_mm_mul_ps(x4, c4);
+                    let mul1 = x86_64::_mm_mul_ps(x41, f41);
+                    let mul2 = x86_64::_mm_mul_ps(x42, f42);
+                    let mul3 = x86_64::_mm_mul_ps(x43, f43);
+                    let mul4 = x86_64::_mm_mul_ps(x44, f44);
 
-                    sum4 = std::arch::x86_64::_mm_add_ps(sum4, mul);
+                    let sum12 = x86_64::_mm_add_ps(mul1, mul2);
+                    let sum34 = x86_64::_mm_add_ps(mul3, mul4);
+                    let sum1234 = x86_64::_mm_add_ps(sum12, sum34);
+                    sum4 = x86_64::_mm_add_ps(sum4, sum1234);
                 }
             }
+
             let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
             unsafe {
-                std::arch::x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
+                x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
             }
             hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
             hidsum += teban * tbn[i];
@@ -530,22 +550,22 @@ impl Weight {
                     *w -= c as f32 * heta;
                 }
             } else {
-                let heta4: std::arch::x86_64::__m128;
+                let heta4: x86_64::__m128;
                 unsafe {
-                    heta4 = std::arch::x86_64::_mm_set1_ps(*h * eta);
+                    heta4 = x86_64::_mm_set1_ps(*h * eta);
                 }
                 for j in 0..board::CELL_2D / 4 {
                     let idx = j * 4;
                     unsafe {
-                        let y4 = std::arch::x86_64::_mm_set_epi32(
+                        let y4 = x86_64::_mm_set_epi32(
                             cells[idx + 3] as i32, cells[idx + 2] as i32,
                             cells[idx + 1] as i32, cells[idx + 0] as i32);
-                        let y4 = std::arch::x86_64::_mm_cvtepi32_ps(y4);
-                        let diff4 = std::arch::x86_64::_mm_mul_ps(heta4, y4);
+                        let y4 = x86_64::_mm_cvtepi32_ps(y4);
+                        let diff4 = x86_64::_mm_mul_ps(heta4, y4);
 
-                        let x4 = std::arch::x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
-                        let w4 = std::arch::x86_64::_mm_sub_ps(x4, diff4);
-                        std::arch::x86_64::_mm_storeu_ps(w1[idx..].as_mut_ptr(), w4);
+                        let x4 = x86_64::_mm_loadu_ps(w1[idx..].as_ptr());
+                        let w4 = x86_64::_mm_sub_ps(x4, diff4);
+                        x86_64::_mm_storeu_ps(w1[idx..].as_mut_ptr(), w4);
                     }
                 }
             }
@@ -584,22 +604,22 @@ impl Weight {
                     *w -= c as f32 * heta;
                 }
             } else {
-                let heta4: std::arch::x86_64::__m128;
+                let heta4: x86_64::__m128;
                 unsafe {
-                    heta4 = std::arch::x86_64::_mm_set1_ps(*h * eta);
+                    heta4 = x86_64::_mm_set1_ps(*h * eta);
                 }
                 for j in 0..board::CELL_2D / 4 {
                     let idx = j * 4;
                     unsafe {
-                        let y4 = std::arch::x86_64::_mm_set_epi32(
+                        let y4 = x86_64::_mm_set_epi32(
                             cells[idx + 3] as i32, cells[idx + 2] as i32,
                             cells[idx + 1] as i32, cells[idx + 0] as i32);
-                        let y4 = std::arch::x86_64::_mm_cvtepi32_ps(y4);
-                        let diff4 = std::arch::x86_64::_mm_mul_ps(heta4, y4);
+                        let y4 = x86_64::_mm_cvtepi32_ps(y4);
+                        let diff4 = x86_64::_mm_mul_ps(heta4, y4);
 
-                        let x4 = std::arch::x86_64::_mm_load_ps(w1[idx..].as_ptr());
-                        let w4 = std::arch::x86_64::_mm_sub_ps(x4, diff4);
-                        std::arch::x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w4);
+                        let x4 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                        let w4 = x86_64::_mm_sub_ps(x4, diff4);
+                        x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w4);
                     }
                 }
             }
