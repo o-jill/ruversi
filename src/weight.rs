@@ -288,16 +288,42 @@ impl Weight {
             unsafe {
                 sum4 = x86_64::_mm_setzero_ps();
             }
-            for i in 0..board::CELL_2D / 4 {
-                let idx = i * 4;
+            for j in 0..board::CELL_2D / 16 {
+                let idx = j * 16;
                 unsafe {
-                    let x4 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
-                    let y4 = x86_64::_mm_set_epi32(
-                        cells[idx + 3] as i32, cells[idx + 2] as i32,
-                        cells[idx + 1] as i32, cells[idx + 0] as i32);
-                    let y4 = x86_64::_mm_cvtepi32_ps(y4);
-                    let mul = x86_64::_mm_mul_ps(x4, y4);
-                    sum4 = x86_64::_mm_add_ps(sum4, mul);
+                    let x41 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                    let x42 = x86_64::_mm_load_ps(w1[idx + 4..].as_ptr());
+                    let x43 = x86_64::_mm_load_ps(w1[idx + 8..].as_ptr());
+                    let x44 = x86_64::_mm_load_ps(w1[idx + 12..].as_ptr());
+
+                    let c8 = x86_64::_mm_load_si128(cells[idx..].as_ptr() as *const x86_64::__m128i);
+                    let zero = x86_64::_mm_setzero_si128();
+                    // to i16
+                    let s16 = x86_64::_mm_cmpgt_epi8(zero, c8);
+                    let c4l = x86_64::_mm_unpacklo_epi8(c8, s16);
+                    let c4h = x86_64::_mm_unpackhi_epi8(c8, s16);
+                    // to i32
+                    let s4l = x86_64::_mm_cmpgt_epi16(zero, c4l);
+                    let s4h = x86_64::_mm_cmpgt_epi16(zero, c4h);
+                    let c41 = x86_64::_mm_unpacklo_epi16(c4l, s4l);
+                    let c42 = x86_64::_mm_unpackhi_epi16(c4l, s4l);
+                    let c43 = x86_64::_mm_unpacklo_epi16(c4h, s4h);
+                    let c44 = x86_64::_mm_unpackhi_epi16(c4h, s4h);
+
+                    let f41 = x86_64::_mm_cvtepi32_ps(c41);
+                    let f42 = x86_64::_mm_cvtepi32_ps(c42);
+                    let f43 = x86_64::_mm_cvtepi32_ps(c43);
+                    let f44 = x86_64::_mm_cvtepi32_ps(c44);
+
+                    let mul1 = x86_64::_mm_mul_ps(x41, f41);
+                    let mul2 = x86_64::_mm_mul_ps(x42, f42);
+                    let mul3 = x86_64::_mm_mul_ps(x43, f43);
+                    let mul4 = x86_64::_mm_mul_ps(x44, f44);
+
+                    let sum12 = x86_64::_mm_add_ps(mul1, mul2);
+                    let sum34 = x86_64::_mm_add_ps(mul3, mul4);
+                    let sum1234 = x86_64::_mm_add_ps(sum12, sum34);
+                    sum4 = x86_64::_mm_add_ps(sum4, sum1234);
                 }
             }
             let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
@@ -469,16 +495,20 @@ impl Weight {
                     let x43 = x86_64::_mm_load_ps(w1[idx + 8..].as_ptr());
                     let x44 = x86_64::_mm_load_ps(w1[idx + 12..].as_ptr());
 
-                    let c8 = x86_64::_mm_loadl_epi64(cells[idx..].as_ptr() as *const x86_64::__m128i);
+                    let c8 = x86_64::_mm_load_si128(cells[idx..].as_ptr() as *const x86_64::__m128i);
                     let zero = x86_64::_mm_setzero_si128();
                     // to i16
-                    let c4l = x86_64::_mm_unpacklo_epi16(zero, c8);
-                    let c4h = x86_64::_mm_unpackhi_epi16(zero, c8);
+                    let s16 = x86_64::_mm_cmpgt_epi8(zero, c8);
+                    let c4l = x86_64::_mm_unpacklo_epi8(c8, s16);
+                    let c4h = x86_64::_mm_unpackhi_epi8(c8, s16);
                     // to i32
-                    let c41 = x86_64::_mm_unpacklo_epi32(zero, c4l);
-                    let c42 = x86_64::_mm_unpackhi_epi32(zero, c4l);
-                    let c43 = x86_64::_mm_unpacklo_epi32(zero, c4h);
-                    let c44 = x86_64::_mm_unpackhi_epi32(zero, c4h);
+                    let s4l = x86_64::_mm_cmpgt_epi16(zero, c4l);
+                    let s4h = x86_64::_mm_cmpgt_epi16(zero, c4h);
+                    let c41 = x86_64::_mm_unpacklo_epi16(c4l, s4l);
+                    let c42 = x86_64::_mm_unpackhi_epi16(c4l, s4l);
+                    let c43 = x86_64::_mm_unpacklo_epi16(c4h, s4h);
+                    let c44 = x86_64::_mm_unpackhi_epi16(c4h, s4h);
+
                     let f41 = x86_64::_mm_cvtepi32_ps(c41);
                     let f42 = x86_64::_mm_cvtepi32_ps(c42);
                     let f43 = x86_64::_mm_cvtepi32_ps(c43);
