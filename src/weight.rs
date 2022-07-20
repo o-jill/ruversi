@@ -638,18 +638,45 @@ impl Weight {
                 unsafe {
                     heta4 = x86_64::_mm_set1_ps(*h * eta);
                 }
-                for j in 0..board::CELL_2D / 4 {
-                    let idx = j * 4;
+                for j in 0..board::CELL_2D / 16 {
+                    let idx = j * 16;
                     unsafe {
-                        let y4 = x86_64::_mm_set_epi32(
-                            cells[idx + 3] as i32, cells[idx + 2] as i32,
-                            cells[idx + 1] as i32, cells[idx + 0] as i32);
-                        let y4 = x86_64::_mm_cvtepi32_ps(y4);
-                        let diff4 = x86_64::_mm_mul_ps(heta4, y4);
+                        let c8 = x86_64::_mm_load_si128(cells[idx..].as_ptr() as *const x86_64::__m128i);
+                        let zero = x86_64::_mm_setzero_si128();
+                        // to i16
+                        let s16 = x86_64::_mm_cmpgt_epi8(zero, c8);
+                        let c4l = x86_64::_mm_unpacklo_epi8(c8, s16);
+                        let c4h = x86_64::_mm_unpackhi_epi8(c8, s16);
+                        // to i32
+                        let s4l = x86_64::_mm_cmpgt_epi16(zero, c4l);
+                        let s4h = x86_64::_mm_cmpgt_epi16(zero, c4h);
+                        let c41 = x86_64::_mm_unpacklo_epi16(c4l, s4l);
+                        let c42 = x86_64::_mm_unpackhi_epi16(c4l, s4l);
+                        let c43 = x86_64::_mm_unpacklo_epi16(c4h, s4h);
+                        let c44 = x86_64::_mm_unpackhi_epi16(c4h, s4h);
 
-                        let x4 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
-                        let w4 = x86_64::_mm_sub_ps(x4, diff4);
-                        x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w4);
+                        let f41 = x86_64::_mm_cvtepi32_ps(c41);
+                        let f42 = x86_64::_mm_cvtepi32_ps(c42);
+                        let f43 = x86_64::_mm_cvtepi32_ps(c43);
+                        let f44 = x86_64::_mm_cvtepi32_ps(c44);
+
+                        let diff41 = x86_64::_mm_mul_ps(heta4, f41);
+                        let diff42 = x86_64::_mm_mul_ps(heta4, f42);
+                        let diff43 = x86_64::_mm_mul_ps(heta4, f43);
+                        let diff44 = x86_64::_mm_mul_ps(heta4, f44);
+
+                        let x41 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                        let x42 = x86_64::_mm_load_ps(w1[idx + 4..].as_ptr());
+                        let x43 = x86_64::_mm_load_ps(w1[idx + 8..].as_ptr());
+                        let x44 = x86_64::_mm_load_ps(w1[idx + 12..].as_ptr());
+                        let w41 = x86_64::_mm_sub_ps(x41, diff41);
+                        let w42 = x86_64::_mm_sub_ps(x42, diff42);
+                        let w43 = x86_64::_mm_sub_ps(x43, diff43);
+                        let w44 = x86_64::_mm_sub_ps(x44, diff44);
+                        x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w41);
+                        x86_64::_mm_store_ps(w1[idx + 4..].as_mut_ptr(), w42);
+                        x86_64::_mm_store_ps(w1[idx + 8..].as_mut_ptr(), w43);
+                        x86_64::_mm_store_ps(w1[idx + 12..].as_mut_ptr(), w44);
                     }
                 }
             }
