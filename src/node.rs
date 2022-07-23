@@ -100,7 +100,8 @@ impl Node {
                 if cfg!(feature = "nosimd") {
                     WEIGHT.as_ref().unwrap().evaluatev2(ban)
                 } else {
-                    WEIGHT.as_ref().unwrap().evaluatev2_simd(ban)
+                    // WEIGHT.as_ref().unwrap().evaluatev2_simd(ban)
+                    WEIGHT.as_ref().unwrap().evaluatev2_simd2(ban)
                 }
             }
         }
