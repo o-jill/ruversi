@@ -533,10 +533,10 @@ impl Weight {
 
                 x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
             }
-            for n in 0..4 {
-                sum += sumarr[n];
-            }
-            // sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
+            // for n in 0..4 {
+            //     sum += sumarr[n];
+            // }
+            sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
         }
         sum
     }
