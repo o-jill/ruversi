@@ -175,12 +175,12 @@ impl Weight {
         let teban = ban.teban as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
-        let w2 = &ow.as_slice()[w1sz * 4..];
+        let w2 = &ow[w1sz * 4..];
 
         sum = *ow.last().unwrap();
 
         for i in 0..N_HIDDEN {
-            let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
+            let w1 = &ow[i * w1sz .. (i + 1) * w1sz];
             let mut hidsum : f32 = *w1.last().unwrap();
             for (&w, &c) in w1.iter().zip(cells.iter()) {
                 hidsum += w * c as f32;
@@ -197,12 +197,12 @@ impl Weight {
         let teban = ban.teban as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
-        let w2 = &ow.as_slice()[w1sz * 4..];
+        let w2 = &ow[w1sz * 4..];
 
         sum = *ow.last().unwrap();
 
         for i in 0..N_HIDDEN {
-            let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
+            let w1 = &ow[i * w1sz .. (i + 1) * w1sz];
             let mut hidsum : f32 = *w1.last().unwrap();
             // for (idx, c)  in cells.iter().enumerate() {
             //     hidsum += *c as f32 * w1[idx];
@@ -255,11 +255,11 @@ impl Weight {
 
         sum = *ow.last().unwrap();
 
-        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
-        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
-        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        let tbn = &ow[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow[(board::CELL_2D + 2) * N_HIDDEN ..];
         for i in 0..N_HIDDEN {
-            let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = dc[i];
             for (idx, c)  in cells.iter().enumerate() {
                 hidsum += *c as f32 * w1[idx];
@@ -278,11 +278,11 @@ impl Weight {
 
         sum = *ow.last().unwrap();
 
-        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
-        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
-        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        let tbn = &ow[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow[(board::CELL_2D + 2) * N_HIDDEN ..];
         for i in 0..N_HIDDEN {
-            let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = dc[i];
             let mut sum4: x86_64::__m128;
             unsafe {
@@ -425,9 +425,9 @@ impl Weight {
 
         sum = *ow.last().unwrap();
 
-        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
-        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
-        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        let tbn = &ow[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow[(board::CELL_2D + 2) * N_HIDDEN ..];
 
         let mut hidsum : [f32 ; 4] = [0.0 ; 4];
         let mut emx : [f32 ; 4] = [0.0 ; 4];
@@ -439,7 +439,7 @@ impl Weight {
 
             for n in 0..4 {
                 let res4 = sum44[n * 4..].as_mut_ptr();
-                let w1 = &ow.as_slice()[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
+                let w1 = &ow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
                 // let mut hidsum : f32 = dc[i];
                 let mut sum4: x86_64::__m128;
                 unsafe {
@@ -551,12 +551,12 @@ impl Weight {
         let teban = ban.teban as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
-        let w2 = &ow.as_slice()[w1sz * 4..];
+        let w2 = &ow[w1sz * 4..];
 
         sum = *ow.last().unwrap();
 
         for i in 0..N_HIDDEN {
-            let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
+            let w1 = &ow[i * w1sz .. (i + 1) * w1sz];
             let mut hidsum : f32 = *w1.last().unwrap();
             for (&w, &c) in w1.iter().zip(cells.iter()) {
                 hidsum += w * c as f32;
@@ -580,12 +580,12 @@ impl Weight {
         let teban = ban.teban as f32;
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &self.weight;
-        let w2 = &ow.as_slice()[w1sz * 4..];
+        let w2 = &ow[w1sz * 4..];
 
         sum = *ow.last().unwrap();
 
         for i in 0..N_HIDDEN {
-            let w1 = &ow.as_slice()[i * w1sz .. (i + 1) * w1sz];
+            let w1 = &ow[i * w1sz .. (i + 1) * w1sz];
             let mut hidsum : f32 = *w1.last().unwrap();
             // let mut hidsum2 : f32 = 0.0;//*w1.last().unwrap();
             // let mut hidsum3 : f32 = 0.0;
@@ -652,11 +652,11 @@ impl Weight {
 
         sum = *ow.last().unwrap();
 
-        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
-        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
-        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        let tbn = &ow[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow[(board::CELL_2D + 2) * N_HIDDEN ..];
         for i in 0..N_HIDDEN {
-            let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = dc[i];
             for (&w, &c) in w1.iter().zip(cells.iter()) {
                 hidsum += w * c as f32;
@@ -681,11 +681,11 @@ impl Weight {
 
         let mut sum = *ow.last().unwrap();
 
-        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
-        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
-        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        let tbn = &ow[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow[(board::CELL_2D + 2) * N_HIDDEN ..];
         for i in 0..N_HIDDEN {
-            let w1 = &ow.as_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = dc[i];
             let mut sum4: x86_64::__m128;
             unsafe {
@@ -756,9 +756,9 @@ impl Weight {
 
         sum = *ow.last().unwrap();
 
-        let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
-        let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
-        let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+        let tbn = &ow[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
+        let dc = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
+        let w2 = &ow[(board::CELL_2D + 2) * N_HIDDEN ..];
 
         let mut emx : [f32 ; 4] = [0.0 ; 4];
         let mut sumarr : [f32 ; 4] = [0.0 ; 4];
@@ -769,7 +769,7 @@ impl Weight {
 
             for n in 0..4 {
                 let res4 = sum44[n * 4..].as_mut_ptr();
-                let w1 = &ow.as_slice()[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
+                let w1 = &ow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
                 // let mut hidsum : f32 = dc[i];
                 let mut sum4: x86_64::__m128;
                 unsafe {
@@ -891,7 +891,7 @@ impl Weight {
         let ow = &mut self.weight;
         // back to hidden
         let diff : f32 = output[0] - 10.0 * winner as f32;
-        let w2 = &mut ow.as_mut_slice()[w1sz * 4..];
+        let w2 = &mut ow[w1sz * 4..];
         for i in 0..N_HIDDEN {
             w2[i] -= hidsig[i] * diff * eta;
         }
@@ -905,7 +905,7 @@ impl Weight {
         }
         // back to input
         for (i, h) in dhid.iter().enumerate() {
-            let w1 = &mut ow.as_mut_slice()[i * w1sz .. (i + 1) * w1sz];
+            let w1 = &mut ow[i * w1sz .. (i + 1) * w1sz];
             let heta = *h * eta;
             if cfg!(feature="nosimd") {
                 for (&c, w) in cells.iter().zip(w1.iter_mut()) {
@@ -945,11 +945,27 @@ impl Weight {
         let ow = &mut self.weight;
         // back to hidden
         let diff : f32 = output[0] - 10.0 * winner as f32;
-        let w2 = &mut ow.as_mut_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
-        for i in 0..N_HIDDEN {
-            w2[i] -= hidsig[i] * diff * eta;
-        }
-        w2[N_HIDDEN] -= diff * eta;
+        let w2 = &mut ow[(board::CELL_2D + 2) * N_HIDDEN ..];
+        let deta = diff * eta;
+        // if cfg!(feature="nosimd") {
+            for i in 0..N_HIDDEN {
+                w2[i] -= hidsig[i] * deta;
+            }
+        // } else {
+        // slow for N_HIDDEN:4
+        //     for i in 0..N_HIDDEN / 4 {
+        //         let hidx = i * 4;
+        //         unsafe {
+        //             let w4 = x86_64::_mm_load_ps(w2[hidx..].as_ptr());
+        //             let h4 = x86_64::_mm_load_ps(w2[hidx..].as_ptr());
+        //             let deta4 = x86_64::_mm_set1_ps(deta);
+        //             let hdeta = x86_64::_mm_mul_ps(deta4, h4);
+        //             let y4 = x86_64::_mm_sub_ps(w4, hdeta);
+        //             x86_64::_mm_storeu_ps(w2[hidx..].as_mut_ptr(), y4);
+        //         }
+        //     }
+        // }
+        w2[N_HIDDEN] -= deta;
 
         let mut dhid = [0.0 as f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
@@ -959,7 +975,7 @@ impl Weight {
         }
         // back to input
         for (i, h) in dhid.iter().enumerate() {
-            let w1 = &mut ow.as_mut_slice()[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let heta = *h * eta;
             if cfg!(feature="nosimd") {
                 for (&c, w) in cells.iter().zip(w1.iter_mut()) {
@@ -1012,7 +1028,7 @@ impl Weight {
                     }
                 }
             }
-            let tbndc = &mut ow.as_mut_slice()[board::CELL_2D * N_HIDDEN ..];
+            let tbndc = &mut ow[board::CELL_2D * N_HIDDEN ..];
             tbndc[i] -= teban * heta;
             tbndc[i + N_HIDDEN] -= heta;
         }
