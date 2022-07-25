@@ -151,12 +151,12 @@ impl Weight {
     fn fromv1(&mut self, tbl : &Vec<f32>) {
         // ban
         for i in 0..N_HIDDEN {
-            let mut we = &mut self.weight[i * board::CELL_2D..(i + 1) * board::CELL_2D];
-            let mut tb = &tbl[i * (board::CELL_2D + 1 + 1)..(i + 1) * (board::CELL_2D + 1 + 1)];
+            let we = &mut self.weight[i * board::CELL_2D..(i + 1) * board::CELL_2D];
+            let tb = &tbl[i * (board::CELL_2D + 1 + 1)..(i + 1) * (board::CELL_2D + 1 + 1)];
             for (w, t) in we.iter_mut().zip(tb.iter()) {
                 *w = *t;
             }
-            let mut teb = &mut self.weight[
+            let teb = &mut self.weight[
                 N_HIDDEN * board::CELL_2D + i..=N_HIDDEN * board::CELL_2D + N_HIDDEN * 2 + i];
             // teban
             teb[0] = tbl[i * (board::CELL_2D + 1 + 1) + board::CELL_2D];
@@ -337,6 +337,9 @@ impl Weight {
         sum
     }
 
+    /**
+     * exp(-x)
+     */
     fn expmx_ps( x : *const f32, y : *mut f32) {
         let exp_hi : f32 = 88.3762626647949;
         let exp_lo : f32 = -exp_hi;
@@ -352,8 +355,6 @@ impl Weight {
         let cephes_exp_p4 : f32 = 1.6666665459E-1;
         let cephes_exp_p5 : f32 = 5.0000001201E-1;
         unsafe {
-            let mut tmp = x86_64::_mm_setzero_ps();
-
             let x4 = x86_64::_mm_load_ps(x);
             // clip x
             let max4 = x86_64::_mm_set1_ps(exp_hi);
@@ -888,8 +889,6 @@ impl Weight {
     }
 
     fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
-        let cells = &ban.cells;
-        let teban = ban.teban;
         // forward
         let (hidden, hidsig, output) = 
             if cfg!(feature="nnv1") {
