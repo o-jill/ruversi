@@ -428,6 +428,11 @@ impl Weight {
         let tbn = &ow.as_slice()[board::CELL_2D * N_HIDDEN .. board::CELL_2D * N_HIDDEN + N_HIDDEN];
         let dc = &ow.as_slice()[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
         let w2 = &ow.as_slice()[(board::CELL_2D + 2) * N_HIDDEN ..];
+
+        let mut hidsum : [f32 ; 4] = [0.0 ; 4];
+        let mut emx : [f32 ; 4] = [0.0 ; 4];
+        let mut sumarr : [f32 ; 4] = [0.0 ; 4];
+
         for i in 0..N_HIDDEN / 4 {
             let hidx = i * 4;
             let mut sum44 : [f32 ; 4 * 4] = [0.0 ; 4 * 4];
@@ -483,7 +488,6 @@ impl Weight {
                 }
             }
 
-            let mut hidsum : [f32 ; 4] = [0.0 ; 4];
             unsafe {
                 let x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
                 let x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
@@ -512,9 +516,7 @@ impl Weight {
                 let h1234 = x86_64::_mm_add_ps(h1234, dc4);
                 x86_64::_mm_store_ps(hidsum.as_mut_ptr(), h1234);
             }
-            let mut emx : [f32 ; 4] = [0.0 ; 4];
             Weight::expmx_ps(hidsum.as_ptr(), emx.as_mut_ptr());
-            let mut sumarr : [f32 ; 4] = [0.0 ; 4];
             unsafe {
                 let emx4 = x86_64::_mm_load_ps(emx.as_ptr());
                 let one = x86_64::_mm_set1_ps(1.0);
