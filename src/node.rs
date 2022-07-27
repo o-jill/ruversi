@@ -107,6 +107,21 @@ impl Node {
         }
     }
 
+    fn evalwtt(ban : &board::Board, tt : &mut transptable::TranspositionTable) -> f32 {
+        let id = if cfg!(feature="nosimd") {ban.to_id()} else {ban.to_id_simd()};
+        match tt.check(&id) {
+            Some(hyoka) => {
+                // println!("hit!!{:?}", id);
+                hyoka
+            },
+            None => {
+                let hyoka = Node::evaluate(ban);
+                tt.append(&id, hyoka);
+                hyoka
+            }
+        }
+    }
+
     pub fn think(ban : &board::Board, mut depth : usize) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth);
         if depth == 0 {
@@ -122,6 +137,7 @@ impl Node {
         if moves.is_none() {
             return None;
         }
+
         let mut moves = moves.unwrap();
         if moves.len() == 0 {  // pass
             moves.push((0, 0));
@@ -214,8 +230,8 @@ impl Node {
         let mut depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
-            // return Some(Node::evaluate(&ban));
             return Some(Node::evaluate(&ban));
+            // return Some(Node::evalwtt(&ban));
         }
         if ban.is_passpass() {
             node.kyokumen = 1;
@@ -278,6 +294,7 @@ impl Node {
         if moves.is_none() {
             return None;
         }
+        let mut tt = transptable::TranspositionTable::new();
         let mut moves = moves.unwrap();
         if moves.len() == 0 {  // pass
             moves.push((0, 0));
@@ -300,6 +317,7 @@ impl Node {
                 let pb = SORT_PRI[ib];
                 pa.partial_cmp(&pb).unwrap()
             });
+            let mut tt = transptable::TranspositionTable::new();
             let teban = ban2.teban;
             let mut node2 = node::Node::new(0, 0, depth);
             let mut alpha : f32 = -100000.0;
@@ -310,6 +328,8 @@ impl Node {
                 let newban = ban2.r#move(x, y).unwrap();
                 let idx = node2.child.len();
                 node2.child.push(Node::new(x, y, depth - 1));
+                // let val = Node::think_internal_ab_tt(
+                //     &mut node2.child[idx], &newban, alpha, beta, &mut tt);
                 let val = Node::think_internal_ab(
                     &mut node2.child[idx], &newban, alpha, beta);
 
@@ -335,6 +355,7 @@ impl Node {
                     node2.child[idx].release();
                 }
             }
+            // tt.dumpsz();
             tx.send(node2).unwrap();
             // return Some(node.best.as_ref().unwrap().hyoka);
         });
@@ -355,6 +376,8 @@ impl Node {
             let newban = ban.r#move(x, y).unwrap();
             let idx = node.child.len();
             node.child.push(Node::new(x, y, depth - 1));
+            // let val = Node::think_internal_ab_tt(
+            //     &mut node.child[idx], &newban, alpha, beta, &mut tt);
             let val = Node::think_internal_ab(
                 &mut node.child[idx], &newban, alpha, beta);
 
@@ -381,6 +404,7 @@ impl Node {
             }
         }
         sub.join().unwrap();
+        // tt.dumpsz();
         let mut subresult = rx.recv().unwrap();
         if subresult.best.is_none() ||
             node.best.as_ref().unwrap().hyoka * teban as f32
@@ -392,12 +416,80 @@ impl Node {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
+    pub fn think_internal_ab_tt(node:&mut Node, ban : &board::Board, alpha : f32, beta : f32,
+            tt : &mut transptable::TranspositionTable) -> Option<f32> {
+        let mut newalpha = alpha;
+        let mut depth = node.depth;
+        if depth == 0 {
+            node.kyokumen = 1;
+            return Some(Node::evalwtt(&ban, tt));
+        }
+        if ban.is_passpass() {
+            node.kyokumen = 1;
+            return Some(ban.count()  as f32 * 10.0);
+        }
+        let teban = ban.teban;
+        // let sum = 0;
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            node.kyokumen = 1;
+            return Some(ban.count()  as f32 * 10.0);
+        }
+        let mut moves = moves.unwrap();
+        if moves.len() == 0 {  // pass
+            moves.push((0, 0));
+            depth += 1;
+        } else {
+            moves.sort_by(|a, b| {
+                let ia = a.0 + a.1 * 8 - 9;
+                let ib = b.0 + b.1 * 8 - 9;
+                let pa = SORT_PRI[ia];
+                let pb = SORT_PRI[ib];
+                pa.partial_cmp(&pb).unwrap()
+            });
+        }
+
+        for mv in moves {
+            let x = mv.0;
+            let y = mv.1;
+            let newban = ban.r#move(x, y).unwrap();
+            let idx = node.child.len();
+            node.child.push(Node::new(x, y, depth - 1));
+            let val = Node::think_internal_ab_tt(
+                &mut node.child[idx], &newban, -beta, -alpha, tt);
+            let mut ch = &mut node.child[idx];
+            ch.hyoka = val;
+            node.kyokumen += ch.kyokumen;
+            let best = node.best.as_ref();
+            let val = val.unwrap();
+            if newalpha < -val {
+                newalpha = -val;
+            }
+            if best.is_none() {
+                node.best = Some(Best::new(val, x, y, teban));
+                continue;
+            }
+            let fteban = teban as f32;
+            if best.unwrap().hyoka * fteban < val * fteban {
+                node.best = Some(Best::new(val, x, y, teban));
+                continue;
+            }
+            if newalpha >= beta {
+                // cut
+                return Some(node.best.as_ref().unwrap().hyoka);
+            }
+            node.child[idx].release();
+        }
+        Some(node.best.as_ref().unwrap().hyoka)
+    }
+
     pub fn think_internal_ab(node:&mut Node, ban : &board::Board, alpha : f32, beta : f32) -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
-            // return Some(Node::evaluate(&ban));
             return Some(Node::evaluate(&ban));
         }
         if ban.is_passpass() {
@@ -534,8 +626,8 @@ impl Node {
         if depth == 0 {
             println!("depth zero");
             node.kyokumen = 1;
-            // return Some(Node::evaluate(&ban));
             return Some(Node::evaluate(&ban));
+            // return Some(Node::evalwtt(&ban));
         }
         if ban.is_passpass() {
             println!("pass pass");

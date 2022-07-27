@@ -12,6 +12,7 @@ mod myoption;
 mod node;
 mod kifu;
 mod trainer;
+mod transptable;
 mod weight;
 
 
