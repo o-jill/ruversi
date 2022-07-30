@@ -756,14 +756,14 @@ impl Weight {
                 let tbn4 = x86_64::_mm_mul_ps(wtbn, tbn);
                 let h1234 = x86_64::_mm_add_ps(h1234, tbn4);
                 // fixed stones
-                // let wfsb4 = x86_64::_mm_load_ps(wfs[hidx..].as_ptr());
-                // let fsb = x86_64::_mm_set1_ps(fs.0 as f32);
-                // let fsb4 = x86_64::_mm_mul_ps(wfsb4, fsb);
-                // let wfsw4 = x86_64::_mm_load_ps(wfs[hidx + N_HIDDEN..].as_ptr());
-                // let fsw = x86_64::_mm_set1_ps(fs.1 as f32);
-                // let fsw4 = x86_64::_mm_mul_ps(wfsw4, fsw);
-                // let fsbw = x86_64::_mm_add_ps(fsb4, fsw4);
-                // let h1234 = x86_64::_mm_add_ps(h1234, fsbw);
+                let wfsb4 = x86_64::_mm_load_ps(wfs[hidx..].as_ptr());
+                let fsb = x86_64::_mm_set1_ps(fs.0 as f32);
+                let fsb4 = x86_64::_mm_mul_ps(wfsb4, fsb);
+                let wfsw4 = x86_64::_mm_load_ps(wfs[hidx + N_HIDDEN..].as_ptr());
+                let fsw = x86_64::_mm_set1_ps(fs.1 as f32);
+                let fsw4 = x86_64::_mm_mul_ps(wfsw4, fsw);
+                let fsbw = x86_64::_mm_add_ps(fsb4, fsw4);
+                let h1234 = x86_64::_mm_add_ps(h1234, fsbw);
                 // dc
                 let wdc4 = x86_64::_mm_load_ps(wdc[hidx..].as_ptr());
                 let h1234 = x86_64::_mm_add_ps(h1234, wdc4);
