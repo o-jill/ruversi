@@ -160,24 +160,24 @@ impl Weight {
         f.write(sv.join(",").as_bytes()).unwrap();
     }
     pub fn writev1(&self, path : &str) {
-        let mut f = fs::File::create(path).unwrap();
+        let f = fs::File::create(path).unwrap();
         Weight::write(f, &self.weight, &EvalFile::V1);
     }
 
     pub fn writev2(&self, path : &str) {
-        let mut f = fs::File::create(path).unwrap();
+        let f = fs::File::create(path).unwrap();
         Weight::write(f, &self.weight, &EvalFile::V2);
     }
 
     pub fn writev3(&self, path : &str) {
-        let mut f = fs::File::create(path).unwrap();
+        let f = fs::File::create(path).unwrap();
         Weight::write(f, &self.weight, &EvalFile::V3);
     }
 
     pub fn writev1asv2(&self, path : &str) {
         let mut w = Weight::new();
         w.fromv1tov2(&self.weight);
-        let mut f = fs::File::create(path).unwrap();
+        let f = fs::File::create(path).unwrap();
         Weight::write(f, &self.weight, &EvalFile::V2);
     }
 
