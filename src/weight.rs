@@ -177,10 +177,8 @@ impl Weight {
     pub fn writev1asv2(&self, path : &str) {
         let mut w = Weight::new();
         w.fromv1tov2(&self.weight);
-        let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let mut f = fs::File::create(path).unwrap();
-        f.write(format!("{}\n", EvalFile::V2.to_str()).as_bytes()).unwrap();
-        f.write(sv.join(",").as_bytes()).unwrap();
+        Weight::write(f, &self.weight, &EvalFile::V2);
     }
 
     pub fn copy(&mut self, src : &Weight) {
