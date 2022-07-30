@@ -177,8 +177,10 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
     unsafe {
         if cfg!(feature="nnv1") {
             node::WEIGHT.as_ref().unwrap().writev1asv2("./kifu/newevaltable.txt");
+        } else if cfg!(feature="nnv2") {
+            node::WEIGHT.as_ref().unwrap().writev2asv3("./kifu/newevaltable.txt");
         } else {
-            node::WEIGHT.as_ref().unwrap().writev2("./kifu/newevaltable.txt");
+            node::WEIGHT.as_ref().unwrap().writev3("./kifu/newevaltable.txt");
         }
     }
 

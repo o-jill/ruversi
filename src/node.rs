@@ -96,12 +96,17 @@ impl Node {
                 } else {
                     WEIGHT.as_ref().unwrap().evaluatev1_simd(ban)
                 }
-            } else {
+            } else if cfg!(feature="nnv2") {
                 if cfg!(feature = "nosimd") {
                     WEIGHT.as_ref().unwrap().evaluatev2(ban)
                 } else {
-                    // WEIGHT.as_ref().unwrap().evaluatev2_simd(ban)
                     WEIGHT.as_ref().unwrap().evaluatev2_simd2(ban)
+                }
+            } else {
+                if cfg!(feature = "nosimd") {
+                    WEIGHT.as_ref().unwrap().evaluatev3(ban)
+                } else {
+                    WEIGHT.as_ref().unwrap().evaluatev3_simd(ban)
                 }
             }
         }
@@ -155,12 +160,15 @@ impl Node {
                 thread::spawn(move || {
             let mut node2 = node::Node::new(0, 0, depth);
             let teban = ban2.teban;
+            let mut tt = transptable::TranspositionTable::new();
             for mv in moves1 {
                 let x = mv.0;
                 let y = mv.1;
                 let newban = ban2.r#move(x, y).unwrap();
                 let idx = node2.child.len();
                 node2.child.push(Node::new(x, y, depth - 1));
+                // let val = Node::think_internal_tt(
+                //     &mut node2.child[idx], &newban, &mut tt);
                 let val = Node::think_internal(
                     &mut node2.child[idx], &newban);
 
@@ -185,6 +193,7 @@ impl Node {
             // return Some(node.best.as_ref().unwrap().hyoka);
         });
 
+        let mut tt = transptable::TranspositionTable::new();
         let teban = ban.teban;
         for mv in moves2 {
             let x = mv.0;
@@ -192,6 +201,8 @@ impl Node {
             let newban = ban.r#move(x, y).unwrap();
             let idx = node.child.len();
             node.child.push(Node::new(x, y, depth - 1));
+            // let val = Node::think_internal_tt(
+            //     &mut node.child[idx], &newban, &mut tt);
             let val = Node::think_internal(
                 &mut node.child[idx], &newban);
 
@@ -231,7 +242,6 @@ impl Node {
         if depth == 0 {
             node.kyokumen = 1;
             return Some(Node::evaluate(&ban));
-            // return Some(Node::evalwtt(&ban));
         }
         if ban.is_passpass() {
             node.kyokumen = 1;
@@ -260,6 +270,59 @@ impl Node {
             node.child.push(Node::new(x, y, depth - 1));
             let val = Node::think_internal(
                 &mut node.child[idx], &newban);
+
+            let mut ch = &mut node.child[idx];
+            ch.hyoka = val;
+            node.kyokumen += ch.kyokumen;
+            let best = node.best.as_ref();
+            let val = val.unwrap();
+            let fteban = teban as f32;
+            if best.is_none() {
+                node.best = Some(Best::new(val, x, y, teban));
+            } else if best.unwrap().hyoka * fteban < val * fteban {
+                node.best = Some(Best::new(val, x, y, teban));
+            } else {
+                // node.child[node.child.len() - 1].as_ref().unwrap().release();
+                node.child[idx].release();
+            }
+        }
+        Some(node.best.as_ref().unwrap().hyoka)
+    }
+
+    pub fn think_internal_tt(node:&mut Node, ban : &board::Board,
+        tt : &mut transptable::TranspositionTable) -> Option<f32> {
+        let mut depth = node.depth;
+        if depth == 0 {
+            node.kyokumen = 1;
+            return Some(Node::evalwtt(&ban, tt));
+        }
+        if ban.is_passpass() {
+            node.kyokumen = 1;
+            return Some(ban.count()  as f32 * 10.0);
+        }
+        let teban = ban.teban;
+        // let sum = 0;
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            node.kyokumen = 1;
+            return Some(ban.count()  as f32 * 10.0);
+        }
+        let mut moves = moves.unwrap();
+        if moves.len() == 0 {  // pass
+            moves.push((0, 0));
+            depth += 1;
+        }
+
+        for mv in moves {
+            let x = mv.0;
+            let y = mv.1;
+            let newban = ban.r#move(x, y).unwrap();
+            let idx = node.child.len();
+            node.child.push(Node::new(x, y, depth - 1));
+            let val = Node::think_internal_tt(
+                &mut node.child[idx], &newban, tt);
 
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;
@@ -376,10 +439,10 @@ impl Node {
             let newban = ban.r#move(x, y).unwrap();
             let idx = node.child.len();
             node.child.push(Node::new(x, y, depth - 1));
-            // let val = Node::think_internal_ab_tt(
-            //     &mut node.child[idx], &newban, alpha, beta, &mut tt);
-            let val = Node::think_internal_ab(
-                &mut node.child[idx], &newban, alpha, beta);
+            let val = Node::think_internal_ab_tt(
+                &mut node.child[idx], &newban, alpha, beta, &mut tt);
+            // let val = Node::think_internal_ab(
+            //     &mut node.child[idx], &newban, alpha, beta);
 
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;

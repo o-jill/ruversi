@@ -13,4 +13,5 @@ once_cell = "1.12"
 default = []
 nosimd = []
 nnv1 = []
-# nnv2 = []
+nnv2 = []
+# nnv3 = []
