@@ -154,31 +154,31 @@ impl Weight {
         Ok(())
     }
 
-    fn write(f : File, w : &Vec<f32>, ver : &EvalFile) {
+    fn write(f : &mut File, w : &Vec<f32>, ver : &EvalFile) {
         let sv = w.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         f.write(format!("{}\n", ver.to_str()).as_bytes()).unwrap();
         f.write(sv.join(",").as_bytes()).unwrap();
     }
     pub fn writev1(&self, path : &str) {
-        let f = fs::File::create(path).unwrap();
-        Weight::write(f, &self.weight, &EvalFile::V1);
+        let mut f = fs::File::create(path).unwrap();
+        Weight::write(&mut f, &self.weight, &EvalFile::V1);
     }
 
     pub fn writev2(&self, path : &str) {
-        let f = fs::File::create(path).unwrap();
-        Weight::write(f, &self.weight, &EvalFile::V2);
+        let mut f = fs::File::create(path).unwrap();
+        Weight::write(&mut f, &self.weight, &EvalFile::V2);
     }
 
     pub fn writev3(&self, path : &str) {
-        let f = fs::File::create(path).unwrap();
-        Weight::write(f, &self.weight, &EvalFile::V3);
+        let mut f = fs::File::create(path).unwrap();
+        Weight::write(&mut f, &self.weight, &EvalFile::V3);
     }
 
     pub fn writev1asv2(&self, path : &str) {
         let mut w = Weight::new();
         w.fromv1tov2(&self.weight);
-        let f = fs::File::create(path).unwrap();
-        Weight::write(f, &self.weight, &EvalFile::V2);
+        let mut f = fs::File::create(path).unwrap();
+        Weight::write(&mut f, &self.weight, &EvalFile::V2);
     }
 
     pub fn copy(&mut self, src : &Weight) {
