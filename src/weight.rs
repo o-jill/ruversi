@@ -181,6 +181,13 @@ impl Weight {
         Weight::write(&mut f, &self.weight, &EvalFile::V2);
     }
 
+    pub fn writev2asv3(&self, path : &str) {
+        let mut w = Weight::new();
+        w.fromv2tov3(&self.weight);
+        let mut f = fs::File::create(path).unwrap();
+        Weight::write(&mut f, &self.weight, &EvalFile::V2);
+    }
+
     pub fn copy(&mut self, src : &Weight) {
         for (d, s) in self.weight.iter_mut().zip(src.weight.iter()) {
             *d = *s;
