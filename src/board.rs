@@ -553,6 +553,317 @@ impl Board {
         }
         b
     }
+
+    pub fn fixedstones(&self) -> (i8, i8) {
+        let mut count = [0 ; 3];
+        let mut fcells = [0;CELL_2D];
+    
+        // 四隅と辺
+        let c = self.at(0, 0);
+        if c != BLANK {
+            fcells[0] = c;
+            count[(c + 1) as usize] += 1;
+            for i in 1..7 {  // →
+                if self.at(i, 0) != c {
+                    break;
+                }
+                fcells[i] = c;
+                count[(c + 1) as usize] += 1;
+            }
+            for i in 1..7 {  // ↓
+                if self.at(0, i) != c {
+                    break;
+                }
+                fcells[i * 8] = c;
+                count[(c + 1) as usize] += 1;
+            }
+        }
+        let c = self.at(7, 0);
+        if c != BLANK {
+            fcells[7] = c;
+            count[(c + 1) as usize] += 1;
+            for i in (1..7).rev() {  // ←
+                if self.at(i, 0) != c {
+                    break;
+                }
+                if fcells[i] != BLANK {
+                    continue;
+                }
+                fcells[i] = c;
+                count[(c + 1) as usize] += 1;
+            }
+            for i in 1..7 {  // ↓
+                if self.at(7, i) != c {
+                    break;
+                }
+                if fcells[7 + i * 8] != BLANK {
+                    continue;
+                }
+                fcells[7 + i * 8] = c;
+                count[(c + 1) as usize] += 1;
+            }
+        }
+        let c = self.at(0, 7);
+        if c != BLANK {
+            fcells[7 * 8] = c;
+            count[(c + 1) as usize] += 1;
+            for i in 1..7 {  // →
+                if self.at(i, 7) != c {
+                    break;
+                }
+                if fcells[i + 7 * 8] != BLANK {
+                    continue;
+                }
+                fcells[i + 7 * 8] = c;
+                count[(c + 1) as usize] += 1;
+            }
+            for i in (1..7).rev() {  // ↑
+                if self.at(0, i) != c {
+                    break;
+                }
+                if fcells[i * 8] != BLANK {
+                    continue;
+                }
+                fcells[i * 8] = c;
+                count[(c + 1) as usize] += 1;
+            }
+        }
+        let c = self.at(7, 7);
+        if c != BLANK {
+            fcells[7 + 7 * 8] = c;
+            count[(c + 1) as usize] += 1;
+            for i in (1..7).rev() {  // ↑
+                if self.at(7, i) != c {
+                    break;
+                }
+                if fcells[7 + i * 8] != BLANK {
+                    continue;
+                }
+                fcells[7 + i * 8] = c;
+                count[(c + 1) as usize] += 1;
+            }
+            for i in (1..7).rev() {  // ←
+                if self.at(i, 7) != c {
+                    break;
+                }
+                if fcells[i + 7 * 8] != BLANK {
+                    continue;
+                }
+                fcells[i + 7 * 8] = c;
+                count[(c + 1) as usize] += 1;
+            }
+        }
+        if count[0] < 4 && count[2] < 4 {
+            // println!("fc:{:?}", fcells);
+            return (count[2], count[0]);
+        }
+        // 中身
+        // こんな感じなら確定石
+        // xx?  x??
+        // x@?  x@?
+        // x??  xx?
+        for x in 1..7 {
+            let mut cnt = 0;
+            let xh = x - 1;
+            for y in 1..7 {
+                let c = self.at(x, y);
+                if c == BLANK {
+                    break;
+                }
+                if fcells[x + y * 8] != BLANK {
+                    continue;
+                }
+                // 左3つ fcells[] == @
+                let fc = &fcells[xh..];
+                if fc[(y - 1) * 8] != c || fc[y * 8] != c || fc[(y + 1) * 8] != c {
+                    break;
+                }
+                // 上 fcells[] == @
+                if fcells[x + y * 8 - 8] == c {
+                    fcells[x + y * 8] = c;
+                    count[(c + 1) as usize] += 1;
+                    cnt += 1;
+                }
+            }
+            for y in (1..7).rev() {
+                let c = self.at(x, y);
+                if c == BLANK {
+                    break;
+                }
+                if fcells[x + y * 8] != BLANK {
+                    continue;
+                }
+                // 左3つ fcells[] == @
+                let fc = &fcells[xh..];
+                if fc[(y - 1) * 8] != c || fc[y * 8] != c || fc[(y + 1) * 8] != c {
+                    break;
+                }
+                // 下 fcells[] == @
+                if fcells[x + y * 8 + 8] == c {
+                    fcells[x + y * 8] = c;
+                    count[(c + 1) as usize] += 1;
+                    cnt += 1;
+                }
+            }
+            if cnt == 0 { break;}
+        }
+        // xxx  xxx
+        // x@?  ?@x
+        // ???  ???
+        for y in 1..7 {
+            let mut cnt = 0;
+            let yu = y - 1;
+            for x in 1..7 {
+                let c = self.at(x, y);
+                if c == BLANK {
+                    break;
+                }
+                if fcells[x + y * 8] != BLANK {
+                    continue;
+                }
+                // 上3つ fcells[] == @
+                let fc = &fcells[yu * 8..];
+                if fc[x - 1] != c || fc[x] != c || fc[x + 1] != c {
+                    break;
+                }
+                // 左 fcells[] == @
+                if fcells[x - 1 + y * 8] == c {
+                    fcells[x + y * 8] = c;
+                    count[(c + 1) as usize] += 1;
+                    cnt += 1;
+                }
+            }
+            for x in (1..7).rev() {
+                let c = self.at(x, y);
+                if c == BLANK {
+                    continue;
+                }
+                if fcells[x + y * 8] != BLANK {
+                    continue;
+                }
+                // 上3つ fcells[] == @
+                let fc = &fcells[yu * 8..];
+                if fc[x - 1] != c || fc[x] != c || fc[x + 1] != c {
+                    continue;
+                }
+                // 右 fcells[] == @
+                if fcells[x + 1 + y * 8] == c {
+                    fcells[x + y * 8] = c;
+                    count[(c + 1) as usize] += 1;
+                    cnt += 1;
+                } 
+            }
+            if cnt == 0 { break;}
+        }
+        //
+        // ?xx  ??x
+        // ?@x  ?@x
+        // ??x  ?xx
+        for x in (1..7).rev() {
+            let mut cnt = 0;
+            let xm = x + 1;
+            for y in 1..7 {
+                let c = self.at(x, y);
+                if c == BLANK {
+                    break;
+                }
+                if fcells[x + y * 8] != BLANK {
+                    continue;
+                }
+                // 右3つ fcells[] == @
+                let fc = &fcells[xm..];
+                if fc[(y - 1) * 8] != c || fc[y * 8] != c || fc[(y + 1) * 8] != c {
+                    break;
+                }
+                // 上 fcells[] == @
+                if fcells[x + y * 8 - 8] == c {
+                    fcells[x + y * 8] = c;
+                    count[(c + 1) as usize] += 1;
+                    cnt += 1;
+                }
+            }
+            for y in (1..7).rev() {
+                let c = self.at(x, y);
+                if c == BLANK {
+                    break;
+                }
+                if fcells[x + y * 8] != BLANK {
+                    continue;
+                }
+                // 右3つ fcells[] == @
+                let fc = &fcells[xm..];
+                if fc[(y - 1) * 8] != c || fc[y * 8] != c || fc[(y + 1) * 8] != c {
+                    break;
+                }
+                // 下 fcells[] == @
+                if fcells[x + y * 8 + 8] == c {
+                    fcells[x + y * 8] = c;
+                    count[(c + 1) as usize] += 1;
+                    cnt += 1;
+                }
+            }
+            if cnt == 0 { break;}
+        }
+        // ???  ???
+        // ?@x  x@?
+        // xxx  xxx
+        for y in (1..7).rev() {
+            let mut cnt = 0;
+            let ys = y + 1;
+            for x in 1..7 {
+                let c = self.at(x, y);
+                if c == BLANK {
+                    break;
+                }
+                if fcells[x + y * 8] != BLANK {
+                    continue;
+                }
+                // 下3つ fcells[] == @
+                let fc = &fcells[ys * 8..];
+                if fc[x - 1] != c || fc[x] != c || fc[x + 1] != c {
+                    break;
+                }
+                // 左 fcells[] == @
+                if fcells[x - 1 + y * 8] == c {
+                    fcells[x + y * 8] = c;
+                    count[(c + 1) as usize] += 1;
+                    cnt += 1;
+                }
+            }
+            for x in (1..7).rev() {
+                let c = self.at(x, y);
+                if c == BLANK {
+                    break;
+                }
+                if fcells[x + y * 8] != BLANK {
+                    continue;
+                }
+                // 下3つ fcells[] == @
+                let fc = &fcells[ys * 8..];
+                if fc[x - 1] != c || fc[x] != c || fc[x + 1] != c {
+                    break;
+                }
+                // 右 fcells[] == @
+                if fcells[x + 1 + y * 8] == c {
+                    fcells[x + y * 8] = c;
+                    count[(c + 1) as usize] += 1;
+                    cnt += 1;
+                } 
+            }
+            if cnt == 0 { break;}
+        }
+        //
+        // xは@と同じ色の確定石
+        // println!("fc:{:?}, {:?}", fcells, count);
+        // println!("fc:{:?}", count);
+        // for i in 0..8 {
+        //     for j in 0..8 {
+        //         print!("{},", fcells[i * 8 + j]);
+        //     }
+        //     println!("");
+        // }
+        (count[2], count[0])
+    }
 }
 
 #[test]
@@ -572,12 +883,16 @@ fn testbrd() {
             BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,].iter()) {
         assert_eq!(*i, *c);
     }
+    assert_eq!(b.fixedstones(), (0, 0));
+    assert_eq!(b.count(), 0);
     let b = Board::from("H/H/H/H/H/H/H/H b").unwrap();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);
     for i in b.cells.iter() {
         assert_eq!(*i, SENTE);
     }
+    assert_eq!(b.fixedstones(), (64, 0));
+    assert_eq!(b.count(), 64);
     let mut b = Board::from("h/h/h/h/h/h/h/h w").unwrap();
     assert_eq!(b.teban, GOTE);
     assert_eq!(b.pass, 0);
@@ -594,8 +909,14 @@ fn testbrd() {
     assert_eq!(b.pass, 2);
     assert!(b.is_passpass());
     assert!(b.is_full());
+    assert_eq!(b.fixedstones(), (0, 64));
+    assert_eq!(b.count(), -64);
     let b = Board::from("1Fa/Bf/AaAe/AbAd/AcAc/AdAb/AeAa/h w").unwrap();
     assert!(b.checkreverse(0, 0));
+    assert_eq!(b.fixedstones(), (0, 15));
+    assert_eq!(b.count(),
+      6 + 2 + 2 + 2 + 2 + 2 + 2 -
+      (1 + 6 + 1 + 5 + 2 + 4 + 3 + 3 + 4 + 2 + 5 + 1 + 8));
     let b = b.r#move(1, 1);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -604,8 +925,53 @@ fn testbrd() {
     // b.put();
     let b = b.rotate180();
     // b.put();
+    assert_eq!(b.fixedstones(), (0, 15));
     let b = b.r#move(8, 8);
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_str(), "h/h/h/h/h/h/h/h b");
+    assert_eq!(b.fixedstones(), (0, 64));
+    assert_eq!(b.count(), -64);
+    let b = Board::from("H/G1/F2/E3/D4/C5/B6/A7 w").unwrap();
+    assert_eq!(b.fixedstones(), (36, 0));
+    let b = b.rotate180();
+    assert_eq!(b.fixedstones(), (36, 0));
+    let b = Board::from("h/1g/2f/3e/4d/5c/6b/7a w").unwrap();
+    assert_eq!(b.fixedstones(), (0, 36));
+    let b = b.rotate180();
+    assert_eq!(b.fixedstones(), (0, 36));
+    let b = Board::from("H/8/8/8/8/8/8/8 b").unwrap();
+    assert_eq!(b.fixedstones(), (8, 0));
+    let b = b.rotate180();
+    assert_eq!(b.fixedstones(), (8, 0));
+    let b = Board::from("a7/a7/a7/a7/a7/a7/a7/a7 b").unwrap();
+    assert_eq!(b.fixedstones(), (0, 8));
+    let b = b.rotate180();
+    assert_eq!(b.fixedstones(), (0, 8));
+    let b = Board::from("dD/dD/dD/dD/dD/dD/dD/dD b").unwrap();
+    assert_eq!(b.fixedstones(), (32, 32));
+    let b = b.rotate180();
+    assert_eq!(b.fixedstones(), (32, 32));
+    let b = Board::from("h/h/h/h/H/H/H/H b").unwrap();
+    assert_eq!(b.fixedstones(), (32, 32));
+    let b = b.rotate180();
+    assert_eq!(b.fixedstones(), (32, 32));
+    let b = Board::from("h/h/8/8/8/8/H/H b").unwrap();
+    assert_eq!(b.fixedstones(), (16, 16));
+    let b = b.rotate180();
+    assert_eq!(b.fixedstones(), (16, 16));
+    let b = Board::from("b4B/b4B/b4B/b4B/b4B/b4B/b4B/b4B w").unwrap();
+    assert_eq!(b.fixedstones(), (16, 16));
+    let b = b.rotate180();
+    assert_eq!(b.fixedstones(), (16, 16));
+    // difficult to count correctly
+    // let b = Board::from("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap();
+    // assert_eq!(b.fixedstones(), (34, 1));
+    // let b = b.rotate180();
+    // assert_eq!(b.fixedstones(), (34, 1));
+    // difficult to count correctly
+    // let b = Board::from("H/aG/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap();
+    // assert_eq!(b.fixedstones(), (31, 1));
+    // let b = b.rotate180();
+    // assert_eq!(b.fixedstones(), (31, 1));
 }
