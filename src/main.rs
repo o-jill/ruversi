@@ -19,6 +19,7 @@ mod weight;
 /// global settings.
 static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::OnceCell::new();
 
+#[allow(dead_code)]
 fn trial() {
     let files = std::fs::read_dir("./kifu/").unwrap();
     let files = files.filter_map(|entry| {

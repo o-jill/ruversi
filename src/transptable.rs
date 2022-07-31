@@ -77,6 +77,7 @@ impl TranspositionTable {
         // println!("tt.append size:{}, {:?}", n, id);
     }
 
+    #[allow(dead_code)]
     pub fn dumpsz(&self) {
         for i in 0.. 256 {
             print!("{}:{},", i, self.list[i].len());

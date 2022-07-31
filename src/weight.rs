@@ -126,7 +126,6 @@ impl Weight {
     fn readv2(&mut self, line : &str) -> Result<(), String> {
         let csv = line.split(",").collect::<Vec<_>>();
         let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
-        let wsz = self.weight.len();
         let nsz = newtable.len();
         if WSZV2 != nsz {
             return Err(String::from("size mismatch"));
@@ -144,7 +143,6 @@ impl Weight {
     fn readv3(&mut self, line : &str) -> Result<(), String> {
         let csv = line.split(",").collect::<Vec<_>>();
         let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
-        let wsz = self.weight.len();
         let nsz = newtable.len();
         if WSZV3 != nsz {
             return Err(String::from("size mismatch"));
@@ -159,11 +157,14 @@ impl Weight {
         f.write(format!("{}\n", ver.to_str()).as_bytes()).unwrap();
         f.write(sv.join(",").as_bytes()).unwrap();
     }
+
+    #[allow(dead_code)]
     pub fn writev1(&self, path : &str) {
         let mut f = fs::File::create(path).unwrap();
         Weight::write(&mut f, &self.weight, &EvalFile::V1);
     }
 
+    #[allow(dead_code)]
     pub fn writev2(&self, path : &str) {
         let mut f = fs::File::create(path).unwrap();
         Weight::write(&mut f, &self.weight, &EvalFile::V2);
