@@ -43,5 +43,10 @@ NO Warranty.
 * nosimd  
   stop using simd instructions(SSE) for evaluation.  
   SSE floating-point SIMD instructions will be used when no features are specified.  
+* nnv1  
+  evaluate with neural network version 1.  
+* nnv2  
+  evaluate with neural network version 2.  
+* (reserved)nnv3  
 
 ---
