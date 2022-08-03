@@ -8,31 +8,119 @@
 //     unsafe {MLOCK = Some(Mutex::new(TranspositionTable::new()))};
 // }
 
+#[derive(Clone)]
 struct TTEntry {
+    pub id : [u8 ; 16],
+    pub hyoka : f32,
+    pub hit : u32,  // ~ 4G leaves
+}
+
+impl TTEntry {
+    pub fn new(i : &[u8 ; 16], hy : f32, hi : u32) -> TTEntry {
+        TTEntry {
+            id : *i,
+            hyoka : hy,
+            hit : hi,
+        }
+    }
+}
+
+pub struct TranspositionTable {
+    list : Vec<TTEntry>,
+    sz : usize,
+    nhit : usize,
+    nmiss : usize,
+}
+
+const MAXSIZE : usize = 1024 * 1024;
+const ENTRYSIZE : usize = 1024 * 16;
+
+impl TranspositionTable {
+    pub fn new() -> TranspositionTable {
+        TranspositionTable {
+            list : vec![TTEntry::new(&[0 ; 16], -9999.9, 0); ENTRYSIZE],
+            sz : 0,
+            nhit : 0,
+            nmiss : 0,
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn clear(&mut self) {
+        for l in self.list.iter_mut() {
+            l.hit = 0;
+        }
+        self.sz = 0;
+        self.nhit = 0;
+        self.nmiss = 0;
+    }
+
+    pub fn check_or_append<F>(&mut self, id : &[u8 ; 16], mut f : F) -> f32 where
+            F : FnMut() -> f32 {
+        let ttl = &mut self.list;
+        for i in 0..self.sz {
+            if ttl[i].id.cmp(id).is_eq() {
+                self.nhit += 1;
+                ttl[i].hit += 1;
+                let ret = ttl[i].hyoka;
+                for j in (0 .. i).rev() {
+                    if ttl[j].hit < ttl[j + 1].hit {
+                        ttl.swap(j, j + 1);
+                    } else {
+                        break;
+                    }
+                }
+                return ret;
+            }
+        }
+        let hyoka = f();
+        self.nmiss += 1;
+        if self.sz < ENTRYSIZE {
+            self.sz += 1;
+        }
+        let idx = self.sz - 1;
+        ttl[idx].id = *id;
+        ttl[idx].hyoka = hyoka;
+        ttl[idx].hit = 1;
+        // ttl[self.sz - 1] = TTEntry::new(id, hyoka, 1);
+        // self.dumpsz();
+        hyoka
+    }
+
+    #[allow(dead_code)]
+    pub fn dumpsz(&self) {
+        for i in 0 .. 100 {
+        // for i in 0 .. ENTRYSIZE {
+                print!("{},", self.list[i].hit);
+        }
+        println!("hit,{},miss,{}", self.nhit, self.nmiss);
+    }
+}
+
+struct TTEntryv1 {
     pub id : [u8 ; 16],
     pub hyoka : f32,
 }
 
-impl TTEntry {
-    pub fn new(i : &[u8 ; 16], h : f32) -> TTEntry {
-        TTEntry {
+impl TTEntryv1 {
+    pub fn new(i : &[u8 ; 16], h : f32) -> TTEntryv1 {
+        TTEntryv1 {
             id : *i,
             hyoka : h,
         }
     }
 }
 
-pub struct TranspositionTable {
-    list : Vec< Vec<TTEntry> >,
+pub struct TranspositionTablev2 {
+    list : Vec< Vec<TTEntryv1> >,
     nhit : usize,
     nmiss : usize,
 }
 
-const MAXSIZE : usize = 1024 * 1024;
-
-impl TranspositionTable {
-    pub fn new() -> TranspositionTable {
-        let mut ret = TranspositionTable {
+#[allow(dead_code)]
+impl TranspositionTablev2 {
+    pub fn new() -> TranspositionTablev2 {
+        let mut ret = TranspositionTablev2 {
             list : Vec::with_capacity(256),
             nhit : 0,
             nmiss : 0,
@@ -85,7 +173,7 @@ impl TranspositionTable {
                     // ttl.remove(0);
                     ttl.pop();
                 }
-                ttl.insert(t, TTEntry::new(id, hyoka));
+                ttl.insert(t, TTEntryv1::new(id, hyoka));
                 self.nmiss += 1;
                 hyoka
             }
@@ -111,7 +199,7 @@ impl TranspositionTable {
                     ttl.remove(0);
                     // ttl.pop();
                 }
-                ttl.push(TTEntry::new(id, hyoka));
+                ttl.push(TTEntryv1::new(id, hyoka));
                 self.nmiss += 1;
                 hyoka
             }
@@ -135,7 +223,7 @@ impl TranspositionTable {
             Ok(t) => t,
             Err(_) => ttl.len(),
         };
-        ttl.insert(idx, TTEntry::new(id, hyoka));
+        ttl.insert(idx, TTEntryv1::new(id, hyoka));
         // println!("tt.append size:{}, {:?}", n, id);
     }
 
@@ -150,7 +238,7 @@ impl TranspositionTable {
 
 #[allow(dead_code)]
 pub struct TranspositionTablev1 {
-    list : Vec<TTEntry>,
+    list : Vec<TTEntryv1>,
 }
 
 impl TranspositionTablev1 {
@@ -198,7 +286,7 @@ impl TranspositionTablev1 {
                     // ttl.remove(0);
                     ttl.pop();
                 }
-                ttl.insert(t, TTEntry::new(id, hyoka));
+                ttl.insert(t, TTEntryv1::new(id, hyoka));
                 hyoka
             }
         }
@@ -221,7 +309,7 @@ impl TranspositionTablev1 {
             Ok(t) => t,
             Err(_) => ttl.len(),
         };
-        ttl.insert(idx, TTEntry::new(id, hyoka));
+        ttl.insert(idx, TTEntryv1::new(id, hyoka));
         // println!("tt.append size:{}, {:?}", n, id);
     }
 }
