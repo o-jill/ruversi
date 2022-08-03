@@ -114,17 +114,7 @@ impl Node {
 
     fn evalwtt(ban : &board::Board, tt : &mut transptable::TranspositionTable) -> f32 {
         let id = if cfg!(feature="nosimd") {ban.to_id()} else {ban.to_id_simd()};
-        match tt.check(&id) {
-            Some(hyoka) => {
-                // println!("hit!!{:?}", id);
-                hyoka
-            },
-            None => {
-                let hyoka = Node::evaluate(ban);
-                tt.append(&id, hyoka);
-                hyoka
-            }
-        }
+        tt.check_or_append(&id, || Node::evaluate(ban))
     }
 
     pub fn think(ban : &board::Board, mut depth : usize) -> Option<(f32,Node)> {
