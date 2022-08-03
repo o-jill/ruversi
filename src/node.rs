@@ -167,11 +167,13 @@ impl Node {
                 let newban = ban2.r#move(x, y).unwrap();
                 let idx = node2.child.len();
                 node2.child.push(Node::new(x, y, depth - 1));
-                // let val = Node::think_internal_tt(
-                //     &mut node2.child[idx], &newban, &mut tt);
-                let val = Node::think_internal(
-                    &mut node2.child[idx], &newban);
-
+                let val = if cfg!(feature="withtt") {
+                        Node::think_internal_tt(
+                            &mut node2.child[idx], &newban, &mut tt)
+                    } else {
+                        Node::think_internal(
+                            &mut node2.child[idx], &newban)
+                    };
                 let mut ch = &mut node2.child[idx];
                 ch.hyoka = val;
                 node2.kyokumen += ch.kyokumen;
@@ -201,10 +203,13 @@ impl Node {
             let newban = ban.r#move(x, y).unwrap();
             let idx = node.child.len();
             node.child.push(Node::new(x, y, depth - 1));
-            // let val = Node::think_internal_tt(
-            //     &mut node.child[idx], &newban, &mut tt);
-            let val = Node::think_internal(
-                &mut node.child[idx], &newban);
+            let val = if cfg!(feature="withtt") {
+                    Node::think_internal_tt(
+                        &mut node.child[idx], &newban, &mut tt)
+                } else {
+                    Node::think_internal(
+                        &mut node.child[idx], &newban)
+                };
 
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;
@@ -391,10 +396,13 @@ impl Node {
                 let newban = ban2.r#move(x, y).unwrap();
                 let idx = node2.child.len();
                 node2.child.push(Node::new(x, y, depth - 1));
-                // let val = Node::think_internal_ab_tt(
-                //     &mut node2.child[idx], &newban, alpha, beta, &mut tt);
-                let val = Node::think_internal_ab(
-                    &mut node2.child[idx], &newban, alpha, beta);
+                let val = if cfg!(feature="withtt") {
+                        Node::think_internal_ab_tt(
+                            &mut node2.child[idx], &newban, alpha, beta, &mut tt)
+                    } else {
+                        Node::think_internal_ab(
+                            &mut node2.child[idx], &newban, alpha, beta)
+                    };
 
                 let mut ch = &mut node2.child[idx];
                 ch.hyoka = val;
@@ -439,10 +447,13 @@ impl Node {
             let newban = ban.r#move(x, y).unwrap();
             let idx = node.child.len();
             node.child.push(Node::new(x, y, depth - 1));
-            let val = Node::think_internal_ab_tt(
-                &mut node.child[idx], &newban, alpha, beta, &mut tt);
-            // let val = Node::think_internal_ab(
-            //     &mut node.child[idx], &newban, alpha, beta);
+            let val = if cfg!(feature="withtt") {
+                    Node::think_internal_ab_tt(
+                        &mut node.child[idx], &newban, alpha, beta, &mut tt)
+                } else {
+                    Node::think_internal_ab(
+                        &mut node.child[idx], &newban, alpha, beta)
+                };
 
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;
