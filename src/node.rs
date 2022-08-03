@@ -43,6 +43,7 @@ impl Best {
             board::STR_GOTE.chars().nth(self.x).unwrap(), self.y)
     }
 
+    #[allow(dead_code)]
     pub fn to_str(&self) -> String {
         format!("h:{} {}", self.hyoka, self.pos())
     }
@@ -221,6 +222,7 @@ impl Node {
             }
         }
         sub.join().unwrap();
+        // tt.dumpsz();
         let mut subresult = rx.recv().unwrap();
         if subresult.best.is_none() ||
             node.best.as_ref().unwrap().hyoka * teban as f32

@@ -15,6 +15,7 @@ impl Trainer {
         }
     }
 
+    #[allow(dead_code)]
     pub fn learn_win(&self, files : &mut Vec<String>) {
         let mut rng = rand::thread_rng();
         for i in 0..self.repeat {
@@ -37,6 +38,7 @@ impl Trainer {
         println!("Done.");
     }
 
+    #[allow(dead_code)]
     pub fn run4win(&self, kifu: &kifu::Kifu, weight: &mut weight::Weight) -> Result<(), String> {
         let winner = kifu.winner();
         if winner.is_none() {
@@ -51,6 +53,7 @@ impl Trainer {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn learn_stones(&self, files : &mut Vec<String>) {
         let mut rng = rand::thread_rng();
         for i in 0..self.repeat {

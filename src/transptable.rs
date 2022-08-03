@@ -1,6 +1,6 @@
 // use super::*;
 
-use std::sync::Mutex;
+// use std::sync::Mutex;
 
 // static mut MLOCK : Option<Mutex<TranspositionTable>> = None;
 
@@ -41,6 +41,7 @@ impl TranspositionTable {
         ret
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         for l in self.list.iter_mut() {
             l.clear();
@@ -49,6 +50,7 @@ impl TranspositionTable {
         self.nmiss = 0;
     }
 
+    #[allow(dead_code)]
     pub fn check(&self, id : &[u8 ; 16]) -> Option<f32> {
         let lid = id[4] as usize;
         let ttl = &self.list[lid];
@@ -116,6 +118,7 @@ impl TranspositionTable {
         }
     }
 
+    #[allow(dead_code)]
     pub fn append(&mut self, id : &[u8 ; 16], hyoka : f32) {
         let lid = id[4] as usize;
         let ttl = &mut self.list[lid];
@@ -138,27 +141,32 @@ impl TranspositionTable {
 
     #[allow(dead_code)]
     pub fn dumpsz(&self) {
-        for i in 0.. 256 {
-            print!("{}:{},", i, self.list[i].len());
-        }
+        // for i in 0.. 256 {
+        //     print!("{}:{},", i, self.list[i].len());
+        // }
+        println!("hit,{},miss,{}", self.nhit, self.nmiss);
     }
 }
 
+#[allow(dead_code)]
 pub struct TranspositionTablev1 {
     list : Vec<TTEntry>,
 }
 
 impl TranspositionTablev1 {
+    #[allow(dead_code)]
     pub fn new() -> TranspositionTablev1 {
         TranspositionTablev1 {
             list : Vec::with_capacity(MAXSIZE)
         }
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         self.list.clear();
     }
 
+    #[allow(dead_code)]
     pub fn check(&self, id : &[u8 ; 16]) -> Option<f32> {
         let ttl = &self.list;
         let item = ttl.binary_search_by(|a| {
@@ -196,6 +204,7 @@ impl TranspositionTablev1 {
         }
     }
 
+    #[allow(dead_code)]
     pub fn append(&mut self, id : &[u8 ; 16], hyoka : f32) {
         let ttl = &mut self.list;
 
