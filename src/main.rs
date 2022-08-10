@@ -3,6 +3,7 @@ use std::io::Write;
 use std::time::{Duration, Instant};
 use std::thread;
 use std::sync::mpsc;
+use rand::Rng;
 
 mod board;
 mod extractrfen;
@@ -288,6 +289,23 @@ fn readeval(path: &str) {
     }
 }
 
+fn play(turnh: i8) {
+    // prepare game
+    let mut g = game::Game::new();
+    // play
+    let think = MYOPT.get().unwrap().think.as_str();
+    g.start_against_stdin(
+    match think {
+        "" | "ab" => {
+            node::Node::think_ab
+        },
+        "all" => {
+            node::Node::think
+        },
+        _ => { panic!("unknown thinking method.") }
+    }, 7, turnh).unwrap();
+}
+
 fn main() {
     println!("Hello, reversi world!");
 
@@ -326,6 +344,16 @@ fn main() {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         duel(ev1, ev2);
+    }
+    if mode == "play" {
+        let turn = MYOPT.get().unwrap().turn;
+        play(
+            if turn == board::NONE {
+                let mut rng = rand::thread_rng();
+                if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
+            } else {
+                turn
+            });
     }
     if mode == "rfen" {
         let rfen = &MYOPT.get().unwrap().rfen;

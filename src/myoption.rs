@@ -1,3 +1,5 @@
+use super::*;
+
 /// Options specified in command line args.
 /// See 'options:' section in Readme.md.
 #[derive(Debug)]
@@ -5,11 +7,12 @@ pub struct MyOption {
     pub n : Option<usize>,
     pub repeat : Option<usize>,
     pub eta : Option<f32>,
-    pub mode : String,  // "", "genkifu", "learn" "duel" "rfen"
+    pub mode : String,  // "", "genkifu", "learn", "duel", "rfen", "play", "playb", "playw"
     pub evaltable1 : String,
     pub evaltable2 : String,
     pub think : String,  // "all", "ab"
     pub rfen : String,
+    pub turn : i8,  // SENTE, GOTE
 }
 
 impl MyOption {
@@ -38,7 +41,8 @@ impl MyOption {
             evaltable1 : String::new(),
             evaltable2 : String::new(),
             think : String::new(),
-            rfen : String::new()
+            rfen : String::new(),
+            turn : board::NONE,
         };
         let mut old = String::new();
         for e in args {
@@ -48,6 +52,14 @@ impl MyOption {
                 opt.mode = "learn".to_string();
             } else if e == "--duel" {
                 opt.mode = "duel".to_string();
+            } else if e == "--play" {
+                opt.mode = "play".to_string();
+            } else if e == "--playb" {
+                opt.mode = "play".to_string();
+                opt.turn = board::SENTE;
+            } else if e == "--playw" {
+                opt.mode = "play".to_string();
+                opt.turn = board::GOTE;
             } else if e == "--rfen" {
                 opt.mode = "rfen".to_string();
                 old = e;
