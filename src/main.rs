@@ -306,6 +306,23 @@ fn play(turnh: i8) {
     }, 7, turnh).unwrap();
 }
 
+fn edax(turnh: i8) {
+    // prepare game
+    let mut g = game::Game::new();
+    // play
+    let think = MYOPT.get().unwrap().think.as_str();
+    g.start_against_edax(
+    match think {
+        "" | "ab" => {
+            node::Node::think_ab
+        },
+        "all" => {
+            node::Node::think
+        },
+        _ => { panic!("unknown thinking method.") }
+    }, 7, turnh).unwrap();
+}
+
 fn main() {
     println!("Hello, reversi world!");
 
@@ -357,7 +374,16 @@ fn main() {
                     } else {
                         turn
                     });
-                },
+            },
+            myoption::Opponent::Edax => {
+                edax(
+                    if turn == board::NONE {
+                        let mut rng = rand::thread_rng();
+                        if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
+                    } else {
+                        turn
+                    });
+            },
             _ => {panic!("{:?} is not supported yet.", opp)},
         }
     }
