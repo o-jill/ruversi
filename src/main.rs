@@ -331,31 +331,37 @@ fn main() {
     }
 
     let mode = &MYOPT.get().unwrap().mode;
-    if mode.is_empty() || mode == "genkifu" {
+    if *mode == myoption::Mode::None || *mode == myoption::Mode::GenKifu {
         let n = MYOPT.get().unwrap().n;
         gen_kifu(n);
     }
-    if mode.is_empty() || mode == "learn" {
+    if *mode == myoption::Mode::None || *mode == myoption::Mode::Learn {
         let repeat = MYOPT.get().unwrap().repeat;
         let eta = MYOPT.get().unwrap().eta;
         training(repeat, eta);
     }
-    if mode == "duel" {
+    if *mode == myoption::Mode::Duel {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         duel(ev1, ev2);
     }
-    if mode == "play" {
+    if *mode == myoption::Mode::Play {
         let turn = MYOPT.get().unwrap().turn;
-        play(
-            if turn == board::NONE {
-                let mut rng = rand::thread_rng();
-                if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
-            } else {
-                turn
-            });
+        let opp = &MYOPT.get().unwrap().opponent;
+        match opp{
+            myoption::Opponent::CUI => {
+                play(
+                    if turn == board::NONE {
+                        let mut rng = rand::thread_rng();
+                        if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
+                    } else {
+                        turn
+                    });
+                },
+            _ => {panic!("{:?} is not supported yet.", opp)},
+        }
     }
-    if mode == "rfen" {
+    if *mode == myoption::Mode::RFEN {
         let rfen = &MYOPT.get().unwrap().rfen;
         verbose(rfen);
     }
