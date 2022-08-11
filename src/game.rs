@@ -77,7 +77,6 @@ impl Game {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
-                    break;
                 } else {
                     loop {
                         print!("your turn[a1 ~ h8]:");
