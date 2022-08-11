@@ -161,13 +161,12 @@ impl Game {
                     x = 0;
                     y = 0;
                 } else {
-                    // put board to a file
                     {
+                        // println!("put board to a file...");
                         let mut f = File::create("/tmp/test.obf").unwrap();
                         f.write(self.ban.to_obf().as_bytes()).unwrap();
                         f.write("\n".as_bytes()).unwrap();
                         f.flush().unwrap();
-                        println!("put board to a file...");
                     }
                     // launch edax
                     let cd = "../../edax-reversi/";
