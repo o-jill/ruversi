@@ -177,7 +177,8 @@ impl Game {
                     let cmd = match std::process::Command::new(edaxpath)
                         .arg("--solve").arg(tmpobf).current_dir(cd)
                         .arg("--eval-file").arg(evfile)
-                        .stdout(std::process::Stdio::piped()).spawn() {
+                        .stdout(std::process::Stdio::piped())
+                        .stderr(std::process::Stdio::null()).spawn() {
                         Err(msg) => panic!("error running edax... [{}]", msg),
                         Ok(prcs) => prcs,
                     };
