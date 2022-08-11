@@ -16,7 +16,7 @@ NO Warranty.
 * --playw  
   play a game agaist you. your turn is white(GOTE).  
 * --Edax  
-  [not yet]play against Edax instead of you.  
+  play against Edax instead of you. please use with --play(bw).  
 * --duel  
   play games from some situations with evaltable1 and 2.  
 * --evaltable1 \<path>  
