@@ -121,6 +121,25 @@ impl Board {
         }
     }
 
+    // othello board file format
+    // init:
+    // ---------------------------XO------OX--------------------------- X
+    //
+    pub fn to_obf(&self) -> String {
+        let ban = self.cells.iter().map(|&c| {
+            match c {
+                SENTE => "X".to_string(),
+                GOTE => "O".to_string(),
+                _ => "-".to_string(),
+            }
+        }).collect::<Vec<String>>().join("");
+        ban + match self.teban {
+            SENTE => " X",
+            GOTE => " O",
+            _ => " -",
+        }
+    }
+
     pub fn to_id(&self)-> [u8 ; 16] {
         let mut res : [u8 ; 16] = [0 ; 16];
         let tbn : u8 = if self.teban == SENTE { 0x00 } else { 0x80 };
@@ -885,6 +904,9 @@ fn testbrd() {
     }
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 0);
+    assert_eq!(b.to_str(), "8/8/8/3Aa3/3aA3/8/8/8 b");
+    assert_eq!(b.to_obf(),
+        "---------------------------XO------OX--------------------------- X");
     let b = Board::from("H/H/H/H/H/H/H/H b").unwrap();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);
@@ -893,17 +915,23 @@ fn testbrd() {
     }
     assert_eq!(b.fixedstones(), (64, 0));
     assert_eq!(b.count(), 64);
+    assert_eq!(b.to_obf(),
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X");
     let mut b = Board::from("h/h/h/h/h/h/h/h w").unwrap();
     assert_eq!(b.teban, GOTE);
     assert_eq!(b.pass, 0);
     for i in b.cells.iter() {
         assert_eq!(*i, GOTE);
     }
+    assert_eq!(b.to_obf(),
+        "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO O");
     b.pass();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 1);
     assert!(!b.is_passpass());
     assert!(b.is_full());
+    assert_eq!(b.to_obf(),
+        "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO X");
     b.pass();
     assert_eq!(b.teban, GOTE);
     assert_eq!(b.pass, 2);
@@ -911,12 +939,16 @@ fn testbrd() {
     assert!(b.is_full());
     assert_eq!(b.fixedstones(), (0, 64));
     assert_eq!(b.count(), -64);
+    assert_eq!(b.to_obf(),
+        "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO O");
     let b = Board::from("1Fa/Bf/AaAe/AbAd/AcAc/AdAb/AeAa/h w").unwrap();
     assert!(b.checkreverse(0, 0));
     assert_eq!(b.fixedstones(), (0, 15));
     assert_eq!(b.count(),
       6 + 2 + 2 + 2 + 2 + 2 + 2 -
       (1 + 6 + 1 + 5 + 2 + 4 + 3 + 3 + 4 + 2 + 5 + 1 + 8));
+    assert_eq!(b.to_obf(),
+      "-XXXXXXOXXOOOOOOXOXOOOOOXOOXOOOOXOOOXOOOXOOOOXOOXOOOOOXOOOOOOOOO O");
     let b = b.r#move(1, 1);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -933,36 +965,64 @@ fn testbrd() {
     assert_eq!(b.fixedstones(), (0, 64));
     assert_eq!(b.count(), -64);
     let b = Board::from("H/G1/F2/E3/D4/C5/B6/A7 w").unwrap();
+    assert_eq!(b.to_obf(),
+        "XXXXXXXXXXXXXXX-XXXXXX--XXXXX---XXXX----XXX-----XX------X------- O");
     assert_eq!(b.fixedstones(), (36, 0));
     let b = b.rotate180();
     assert_eq!(b.fixedstones(), (36, 0));
     let b = Board::from("h/1g/2f/3e/4d/5c/6b/7a w").unwrap();
+    assert_eq!(b.to_obf(),
+        "OOOOOOOO-OOOOOOO--OOOOOO---OOOOO----OOOO-----OOO------OO-------O O");
     assert_eq!(b.fixedstones(), (0, 36));
     let b = b.rotate180();
     assert_eq!(b.fixedstones(), (0, 36));
     let b = Board::from("H/8/8/8/8/8/8/8 b").unwrap();
+    assert_eq!(b.to_obf(),
+        "XXXXXXXX-------------------------------------------------------- X");
     assert_eq!(b.fixedstones(), (8, 0));
     let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "--------------------------------------------------------XXXXXXXX X");
     assert_eq!(b.fixedstones(), (8, 0));
     let b = Board::from("a7/a7/a7/a7/a7/a7/a7/a7 b").unwrap();
+    assert_eq!(b.to_obf(),
+        "O-------O-------O-------O-------O-------O-------O-------O------- X");
     assert_eq!(b.fixedstones(), (0, 8));
     let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "-------O-------O-------O-------O-------O-------O-------O-------O X");
     assert_eq!(b.fixedstones(), (0, 8));
     let b = Board::from("dD/dD/dD/dD/dD/dD/dD/dD b").unwrap();
+    assert_eq!(b.to_obf(),
+        "OOOOXXXXOOOOXXXXOOOOXXXXOOOOXXXXOOOOXXXXOOOOXXXXOOOOXXXXOOOOXXXX X");
     assert_eq!(b.fixedstones(), (32, 32));
     let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "XXXXOOOOXXXXOOOOXXXXOOOOXXXXOOOOXXXXOOOOXXXXOOOOXXXXOOOOXXXXOOOO X");
     assert_eq!(b.fixedstones(), (32, 32));
     let b = Board::from("h/h/h/h/H/H/H/H b").unwrap();
+    assert_eq!(b.to_obf(),
+        "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X");
     assert_eq!(b.fixedstones(), (32, 32));
     let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO X");
     assert_eq!(b.fixedstones(), (32, 32));
     let b = Board::from("h/h/8/8/8/8/H/H b").unwrap();
+    assert_eq!(b.to_obf(),
+        "OOOOOOOOOOOOOOOO--------------------------------XXXXXXXXXXXXXXXX X");
     assert_eq!(b.fixedstones(), (16, 16));
     let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "XXXXXXXXXXXXXXXX--------------------------------OOOOOOOOOOOOOOOO X");
     assert_eq!(b.fixedstones(), (16, 16));
     let b = Board::from("b4B/b4B/b4B/b4B/b4B/b4B/b4B/b4B w").unwrap();
+    assert_eq!(b.to_obf(),
+        "OO----XXOO----XXOO----XXOO----XXOO----XXOO----XXOO----XXOO----XX O");
     assert_eq!(b.fixedstones(), (16, 16));
     let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "XX----OOXX----OOXX----OOXX----OOXX----OOXX----OOXX----OOXX----OO O");
     assert_eq!(b.fixedstones(), (16, 16));
     // difficult to count correctly
     // let b = Board::from("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap();
