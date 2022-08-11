@@ -9,6 +9,12 @@ CC0. in other words, Public domain.
 NO Warranty.  
 
 # Command options  
+* --play
+  play a game agaist you. turn is random.  
+* --playb
+  play a game agaist you. your turn is black(SENTE).  
+* --playw
+  play a game agaist you. your turn is white(GOTE).  
 * --duel  
   play games from some situations with evaltable1 and 2.  
 * --evaltable1 \<path>  
