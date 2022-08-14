@@ -1146,6 +1146,9 @@ fn testbitbrd() {
     assert_eq!(b.to_obf(),
         "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO O");
     let b = BitBoard::from("1Fa/Bf/AaAe/AbAd/AcAc/AdAb/AeAa/h w").unwrap();
+    // b.put();
+    assert_eq!(b.black, 0x7EC0A09088848200);
+    assert_eq!(b.white, 0x013f5f6f777b7dff);
     assert!(b.checkreverse(0, 0));
     assert_eq!(b.fixedstones(), (0, 15));
     assert_eq!(b.count(),
