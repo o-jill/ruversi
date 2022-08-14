@@ -6,6 +6,7 @@ use std::sync::mpsc;
 use rand::Rng;
 
 mod board;
+mod bitboard;
 mod extractrfen;
 mod game;
 mod initialpos;
