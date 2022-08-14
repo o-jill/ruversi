@@ -302,18 +302,19 @@ impl BitBoard {
         }
 
         let color = self.teban;
-        let mut mine = &mut if color == SENTE {self.black} else {self.white};
-        let mut oppo = &mut if color == SENTE {self.white} else {self.black};
+        let mut mine = if color == SENTE {self.black} else {self.white};
+        let mut oppo = if color == SENTE {self.white} else {self.black};
 
+        let pos = MSB_CELL >> BitBoard::index(x, y);
         // 左
-        let mut bit : u64 = MSB_CELL >> BitBoard::index(x - 1, y);
+        let mut bit : u64 = pos << 1;
         let mut rev : u64 = 0;
         for _i in 0..x {
-            if (*mine & bit) != 0 {
-                *oppo &= !rev;
-                *mine |= rev;
+            if (mine & bit) != 0 {
+                oppo &= !rev;
+                mine |= rev;
                 break;
-            } else if (*oppo & bit) != 0 {
+            } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
@@ -322,14 +323,14 @@ impl BitBoard {
         }
 
         // 右
-        let mut bit : u64 = MSB_CELL >> BitBoard::index(x + 1, y);
+        let mut bit : u64 = pos >> 1;
         let mut rev : u64 = 0;
         for _i in x..NUMCELL {
-            if (*mine & bit) != 0 {
-                *oppo &= !rev;
-                *mine |= rev;
+            if (mine & bit) != 0 {
+                oppo &= !rev;
+                mine |= rev;
                 break;
-            } else if (*oppo & bit) != 0 {
+            } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
@@ -338,14 +339,14 @@ impl BitBoard {
         }
 
         // 上
-        let mut bit : u64 = MSB_CELL >> BitBoard::index(x, y - 1);
+        let mut bit : u64 = pos << NUMCELL;
         let mut rev : u64 = 0;
         for _i in 0..y {
-            if (*mine & bit) != 0 {
-                *oppo &= !rev;
-                *mine |= rev;
+            if (mine & bit) != 0 {
+                oppo &= !rev;
+                mine |= rev;
                 break;
-            } else if (*oppo & bit) != 0 {
+            } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
@@ -354,14 +355,14 @@ impl BitBoard {
         }
 
         // 下
-        let mut bit : u64 = MSB_CELL >> BitBoard::index(x, y + 1);
+        let mut bit : u64 = pos >> NUMCELL;
         let mut rev : u64 = 0;
         for _i in y..NUMCELL {
-            if (*mine & bit) != 0 {
-                *oppo &= !rev;
-                *mine |= rev;
+            if (mine & bit) != 0 {
+                oppo &= !rev;
+                mine |= rev;
                 break;
-            } else if (*oppo & bit) != 0 {
+            } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
@@ -370,17 +371,17 @@ impl BitBoard {
         }
 
         // 左上
-        let mut bit : u64 = MSB_CELL >> BitBoard::index(x - 1, y - 1);
+        let mut bit : u64 = pos << (NUMCELL + 1);
         let mut rev : u64 = 0;
         for i in 1..NUMCELL {
             if x < i || y < i {
                 break;
             }
-            if (*mine & bit) != 0 {
-                *oppo &= !rev;
-                *mine |= rev;
+            if (mine & bit) != 0 {
+                oppo &= !rev;
+                mine |= rev;
                 break;
-            } else if (*oppo & bit) != 0 {
+            } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
@@ -389,17 +390,17 @@ impl BitBoard {
         }
 
         // 右上
-        let mut bit : u64 = MSB_CELL >> BitBoard::index(x + 1, y - 1);
+        let mut bit : u64 = pos << (NUMCELL - 1);
         let mut rev : u64 = 0;
         for i in 1..NUMCELL {
             if x + i >= NUMCELL || y < i {
                 break;
             }
-            if (*mine & bit) != 0 {
-                *oppo &= !rev;
-                *mine |= rev;
+            if (mine & bit) != 0 {
+                oppo &= !rev;
+                mine |= rev;
                 break;
-            } else if (*oppo & bit) != 0 {
+            } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
@@ -408,17 +409,17 @@ impl BitBoard {
         }
 
         // 右下
-        let mut bit : u64 = MSB_CELL >> BitBoard::index(x + 1, y + 1);
+        let mut bit : u64 = pos >> (NUMCELL + 1);
         let mut rev : u64 = 0;
         for i in 1..NUMCELL {
             if x + i >= NUMCELL || y + i >= NUMCELL {
                 break;
             }
-            if (*mine & bit) != 0 {
-                *oppo &= !rev;
-                *mine |= rev;
+            if (mine & bit) != 0 {
+                oppo &= !rev;
+                mine |= rev;
                 break;
-            } else if (*oppo & bit) != 0 {
+            } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
@@ -427,22 +428,30 @@ impl BitBoard {
         }
 
         // 左下
-        let mut bit : u64 = MSB_CELL >> BitBoard::index(x + 1, y + 1);
+        let mut bit : u64 = pos >> (NUMCELL - 1);
         let mut rev : u64 = 0;
         for i in 1..NUMCELL {
             if x < i || y + i >= NUMCELL {
                 break;
             }
-            if (*mine & bit) != 0 {
-                *oppo &= !rev;
-                *mine |= rev;
+            if (mine & bit) != 0 {
+                oppo &= !rev;
+                mine |= rev;
                 break;
-            } else if (*oppo & bit) != 0 {
+            } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
             bit >>= 7;
+        }
+
+        if color == SENTE {
+            self.black = mine;
+            self.white = oppo;
+        } else {
+            self.white = mine;
+            self.black = oppo;
         }
     }
 
@@ -1159,6 +1168,8 @@ fn testbitbrd() {
     let b = b.r#move(1, 1);
     assert!(b.is_ok());
     let b = b.unwrap();
+    assert_eq!(b.black, 0x0);
+    assert_eq!(b.white, 0xffffffffffffffff);
     assert_eq!(b.to_str(), "h/h/h/h/h/h/h/h b");
     let b = BitBoard::from("1Fa/Bf/AaAe/AbAd/AcAc/AdAb/AeAa/h w").unwrap();
     // b.put();
