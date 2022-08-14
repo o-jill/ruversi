@@ -840,28 +840,21 @@ impl BitBoard {
                 if fcb | fcw {
                     continue;
                 }
+                // 左3つ fcells[] == @
+                // 上 fcells[] == @
+                let wbit = 0xC080800000000000 >> BitBoard::index(x - 1, y - 1);
                 if cb {
-                    // 左3つ fcells[] == @
-                    let wbit = 0x8080800000000000 >> BitBoard::index(x - 1, y - 1);
                     if fcellsb & wbit != wbit {
                         break;
                     }
-                    // 上 fcells[] == @
-                    let wbit = 0x4000000000000000 >> BitBoard::index(x - 1, y - 1);
-                    if fcellsb & wbit != 0 {
-                        fcellsb |= bit;
-                        cnt += 1;
-                    }
+                    fcellsb |= bit;
+                    cnt += 1;
                 } else if cw {
-                    let wbit = 0x8080800000000000 >> BitBoard::index(x - 1, y - 1);
                     if fcellsw & wbit != wbit {
                         break;
                     }
-                    let wbit = 0x4000000000000000 >> BitBoard::index(x - 1, y - 1);
-                    if fcellsw & wbit != 0 {
-                        fcellsw |= bit;
-                        cnt += 1;
-                    }
+                    fcellsw |= bit;
+                    cnt += 1;
                 }
             }
             for y in (1..7).rev() {
@@ -876,28 +869,21 @@ impl BitBoard {
                 if fcb | fcw {
                     continue;
                 }
+                // 左3つ fcells[] == @
+                // 下 fcells[] == @
+                let wbit = 0x8080C00000000000 >> BitBoard::index(x - 1, y - 1);
                 if cb {
-                    // 左3つ fcells[] == @
-                    let wbit = 0x8080800000000000 >> BitBoard::index(x - 1, y - 1);
                     if fcellsb & wbit != wbit {
                         break;
                     }
-                    // 下 fcells[] == @
-                    let wbit = 0x0000400000000000 >> BitBoard::index(x - 1, y - 1);
-                    if fcellsb & wbit != 0 {
-                        fcellsb |= bit;
-                        cnt += 1;
-                    }
+                    fcellsb |= bit;
+                    cnt += 1;
                 } else if cw {
-                    let wbit = 0x8080800000000000 >> BitBoard::index(x - 1, y - 1);
                     if fcellsw & wbit != wbit {
                         break;
                     }
-                    let wbit = 0x0000400000000000 >> BitBoard::index(x - 1, y - 1);
-                    if fcellsw & wbit != 0 {
-                        fcellsw |= bit;
-                        cnt += 1;
-                    }
+                    fcellsw |= bit;
+                    cnt += 1;
                 }
             }
             if cnt == 0 {break;}
@@ -919,28 +905,21 @@ impl BitBoard {
                 if fcb | fcw {
                     continue;
                 }
+                // 上3つ fcells[] == @
+                // 左 fcells[] == @
+                let wbit = 0xE080000000000000 >> BitBoard::index(x - 1, y - 1);
                 if cb {
-                    // 上3つ fcells[] == @
-                    let wbit = 0xE000000000000000 >> BitBoard::index(x - 1, y - 1);
                     if fcellsb & wbit != wbit {
                         break;
                     }
-                    // 左 fcells[] == @
-                    let wbit = 0x8000000000000000 >> BitBoard::index(x - 1, y);
-                    if fcellsb & wbit != 0 {
-                        fcellsb |= bit;
-                        cnt += 1;
-                    }
+                    fcellsb |= bit;
+                    cnt += 1;
                 } else if cw {
-                    let wbit = 0xE000000000000000 >> BitBoard::index(x - 1, y - 1);
                     if fcellsw & wbit != wbit {
                         break;
                     }
-                    let wbit = 0x8000000000000000 >> BitBoard::index(x - 1, y);
-                    if fcellsw & wbit != 0 {
-                        fcellsw |= bit;
-                        cnt += 1;
-                    }
+                    fcellsw |= bit;
+                    cnt += 1;
                 }
             }
             for x in (1..7).rev() {
@@ -955,28 +934,21 @@ impl BitBoard {
                 if fcb | fcw {
                     continue;
                 }
+                // 上3つ fcells[] == @
+                // 右 fcells[] == @
+                let wbit = 0xE020000000000000 >> BitBoard::index(x - 1, y - 1);
                 if cb {
-                    // 上3つ fcells[] == @
-                    let wbit = 0xE000000000000000 >> BitBoard::index(x - 1, y - 1);
                     if fcellsb & wbit != wbit {
                         break;
                     }
-                    // 右 fcells[] == @
-                    let wbit = 0x4000000000000000 >> BitBoard::index(x, y);
-                    if fcellsb & wbit != 0 {
-                        fcellsb |= bit;
-                        cnt += 1;
-                    }
+                    fcellsb |= bit;
+                    cnt += 1;
                 } else if cw {
-                    let wbit = 0xE000000000000000 >> BitBoard::index(x - 1, y - 1);
                     if fcellsw & wbit != wbit {
                         break;
                     }
-                    let wbit = 0x4000000000000000 >> BitBoard::index(x, y);
-                    if fcellsw & wbit != 0 {
-                        fcellsw |= bit;
-                        cnt += 1;
-                    }
+                    fcellsw |= bit;
+                    cnt += 1;
                 }
             }
             if cnt == 0 {break;}
@@ -987,7 +959,6 @@ impl BitBoard {
         // ??x  ?xx
         for x in (1..7).rev() {
             let mut cnt = 0;
-            let xm = x + 1;
             for y in 1..7 {
                 let bit : u64 = MSB_CELL >> BitBoard::index(x, y);
                 let cb = (bit & black) != 0;
@@ -1000,28 +971,21 @@ impl BitBoard {
                 if fcb | fcw {
                     continue;
                 }
+                // 右3つ fcells[] == @
+                // 上 fcells[] == @
+                let wbit = 0x6020200000000000 >> BitBoard::index(x - 1, y - 1);
                 if cb {
-                    // 右3つ fcells[] == @
-                    let wbit = 0x4040400000000000 >> BitBoard::index(x, y - 1);
                     if fcellsb & wbit != wbit {
                         break;
                     }
-                    // 上 fcells[] == @
-                    let wbit = 0x4000000000000000 >> BitBoard::index(x, y - 1);
-                    if fcellsb & wbit != 0 {
-                        fcellsb |= bit;
-                        cnt += 1;
-                    }
+                    fcellsb |= bit;
+                    cnt += 1;
                 } else if cw {
-                    let wbit = 0x4040400000000000 >> BitBoard::index(x, y - 1);
                     if fcellsw & wbit != wbit {
                         break;
                     }
-                    let wbit = 0x4000000000000000 >> BitBoard::index(x, y - 1);
-                    if fcellsw & wbit != 0 {
-                        fcellsw |= bit;
-                        cnt += 1;
-                    }
+                    fcellsw |= bit;
+                    cnt += 1;
                 }
             }
             for y in (1..7).rev() {
@@ -1036,28 +1000,21 @@ impl BitBoard {
                 if fcb | fcw {
                     continue;
                 }
+                // 右3つ fcells[] == @
+                // 下 fcells[] == @
+                let wbit = 0x2020600000000000 >> BitBoard::index(x - 1, y - 1);
                 if cb {
-                    // 右3つ fcells[] == @
-                    let wbit = 0x4040400000000000 >> BitBoard::index(x, y - 1);
                     if fcellsb & wbit != wbit {
                         break;
                     }
-                    // 下 fcells[] == @
-                    let wbit = 0x0040000000000000 >> BitBoard::index(x, y);
-                    if fcellsb & wbit != 0 {
-                        fcellsb |= bit;
-                        cnt += 1;
-                    }
+                    fcellsb |= bit;
+                    cnt += 1;
                 } else if cw {
-                    let wbit = 0x4040400000000000 >> BitBoard::index(x, y - 1);
                     if fcellsw & wbit != wbit {
                         break;
                     }
-                    let wbit = 0x0040000000000000 >> BitBoard::index(x, y);
-                    if fcellsw & wbit != 0 {
-                        fcellsw |= bit;
-                        cnt += 1;
-                    }
+                    fcellsw |= bit;
+                    cnt += 1;
                 }
             }
             if cnt == 0 {break;}
@@ -1080,28 +1037,21 @@ impl BitBoard {
                 if fcb | fcw {
                     continue;
                 }
+                // 下3つ fcells[] == @
+                // 左 fcells[] == @
+                let wbit = 0x0080E00000000000 >> BitBoard::index(x - 1, y - 1);
                 if cb {
-                    // 下3つ fcells[] == @
-                    let wbit = 0x00E0000000000000 >> BitBoard::index(x - 1, y);
                     if fcellsb & wbit != wbit {
                         break;
                     }
-                    // 左 fcells[] == @
-                    let wbit = 0x8000000000000000 >> BitBoard::index(x - 1, y);
-                    if fcellsb & wbit != 0 {
-                        fcellsb |= bit;
-                        cnt += 1;
-                    }
+                    fcellsb |= bit;
+                    cnt += 1;
                 } else if cw {
-                    let wbit = 0x00E0000000000000 >> BitBoard::index(x - 1, y);
                     if fcellsw & wbit != wbit {
                         break;
                     }
-                    let wbit = 0x8000000000000000 >> BitBoard::index(x - 1, y);
-                    if fcellsw & wbit != 0 {
-                        fcellsw |= bit;
-                        cnt += 1;
-                    }
+                    fcellsw |= bit;
+                    cnt += 1;
                 }
             }
             for x in (1..7).rev() {
@@ -1116,28 +1066,21 @@ impl BitBoard {
                 if fcb | fcw {
                     continue;
                 }
+                // 下3つ fcells[] == @
+                // 右 fcells[] == @
+                let wbit = 0x0020E00000000000 >> BitBoard::index(x - 1, y - 1);
                 if cb {
-                    // 下3つ fcells[] == @
-                    let wbit = 0x00E0000000000000 >> BitBoard::index(x - 1, y);
                     if fcellsb & wbit != wbit {
                         break;
                     }
-                    // 右 fcells[] == @
-                    let wbit = 0x4000000000000000 >> BitBoard::index(x, y);
-                    if fcellsb & wbit != 0 {
-                        fcellsb |= bit;
-                        cnt += 1;
-                    }
+                    fcellsb |= bit;
+                    cnt += 1;
                 } else if cw {
-                    let wbit = 0x00E0000000000000 >> BitBoard::index(x - 1, y);
                     if fcellsw & wbit != wbit {
                         break;
                     }
-                    let wbit = 0x4000000000000000 >> BitBoard::index(x, y);
-                    if fcellsw & wbit != 0 {
-                        fcellsw |= bit;
-                        cnt += 1;
-                    }
+                    fcellsw |= bit;
+                    cnt += 1;
                 }
             }
             if cnt == 0 {break;}
