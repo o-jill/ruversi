@@ -71,7 +71,7 @@ impl BitBoard {
                     }
                 },
                 '1'..='8' => {
-                    let n = ch as i32 + 1 - '0' as i32;
+                    let n = ch as i32 - '0' as i32;
                     bit >>= n;
                 },
                 '/' => {},
