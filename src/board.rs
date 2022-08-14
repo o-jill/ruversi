@@ -724,7 +724,7 @@ impl Board {
                     cnt += 1;
                 }
             }
-            if cnt == 0 { break;}
+            if cnt == 0 {break;}
         }
         // xxx  xxx
         // x@?  ?@x
@@ -772,7 +772,7 @@ impl Board {
                     cnt += 1;
                 } 
             }
-            if cnt == 0 { break;}
+            if cnt == 0 {break;}
         }
         //
         // ?xx  ??x
@@ -821,7 +821,7 @@ impl Board {
                     cnt += 1;
                 }
             }
-            if cnt == 0 { break;}
+            if cnt == 0 {break;}
         }
         // ???  ???
         // ?@x  x@?
@@ -869,7 +869,7 @@ impl Board {
                     cnt += 1;
                 } 
             }
-            if cnt == 0 { break;}
+            if cnt == 0 {break;}
         }
         //
         // xは@と同じ色の確定石
