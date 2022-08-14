@@ -16,3 +16,4 @@ nnv1 = []
 nnv2 = []
 # nnv3 = []
 withtt = []  # use transposition table
+bitboard = []

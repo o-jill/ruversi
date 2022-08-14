@@ -12,6 +12,7 @@ mod game;
 mod initialpos;
 mod myoption;
 mod node;
+mod nodebb;
 mod kifu;
 mod trainer;
 mod transptable;
@@ -127,24 +128,43 @@ fn gen_kifu(n : Option<usize>) {
     };
 
     for (idx, &rfen) in rfentbl.iter().enumerate() {
-        // prepare game
-        let mut g = game::Game::from(rfen);
-        // play
-        let think = MYOPT.get().unwrap().think.as_str();
-        match think {
-            "" | "ab" => {
-                g.start(node::Node::think_ab, 7).unwrap()
-            },
-            "all" => {
-                g.start(node::Node::think, 7).unwrap()
-            },
-            _ => { panic!("unknown thinking method.") }
+        let kifutxt;
+        if cfg!(feature="bitboard") {
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            // play
+            let think = MYOPT.get().unwrap().think.as_str();
+            match think {
+                "" | "ab" => {
+                    g.start(nodebb::NodeBB::think_ab, 7).unwrap()
+                },
+                "all" => {
+                    g.start(nodebb::NodeBB::think, 7).unwrap()
+                },
+                _ => { panic!("unknown thinking method.") }
+            }
+            kifutxt = g.kifu.to_str()
+        } else {
+            // prepare game
+            let mut g = game::Game::from(rfen);
+            // play
+            let think = MYOPT.get().unwrap().think.as_str();
+            match think {
+                "" | "ab" => {
+                    g.start(node::Node::think_ab, 7).unwrap()
+                },
+                "all" => {
+                    g.start(node::Node::think, 7).unwrap()
+                },
+                _ => { panic!("unknown thinking method.") }
+            }
+            kifutxt = g.kifu.to_str()
         }
-        ;
+
         // store kifu
         let kifuname = format!("./kifu/kifu{}{:06}.txt", grp, idx);
         let mut f = File::create(kifuname).unwrap();
-        let content = format!("{}{}", kifu::HEADER, g.kifu.to_str());
+        let content = format!("{}{}", kifu::HEADER, kifutxt);
         f.write(content.as_bytes()).unwrap();
     }
 }
@@ -282,10 +302,19 @@ fn duel(ev1 : &str, ev2 : &str) {
 
 fn readeval(path: &str) {
     println!("read eval table: {}", path);
-    unsafe {
-        match node::WEIGHT.as_mut().unwrap().read(path) {
-            Err(msg) => {println!("{}", msg)},
-            _ => {}
+    if cfg!(feature="bitboard") {
+        unsafe {
+            match nodebb::WEIGHT.as_mut().unwrap().read(path) {
+                Err(msg) => {println!("{}", msg)},
+                _ => {}
+            }
+        }
+    } else {
+        unsafe {
+            match node::WEIGHT.as_mut().unwrap().read(path) {
+                Err(msg) => {println!("{}", msg)},
+                _ => {}
+            }
         }
     }
 }
@@ -331,7 +360,11 @@ fn main() {
         .set(myoption::MyOption::new(std::env::args().collect()))
         .unwrap();
 
-    node::init_weight();
+    if cfg!(feature="bitboard") {
+        nodebb::init_weight();
+    } else {
+        node::init_weight();
+    }
 
     // trial();
 

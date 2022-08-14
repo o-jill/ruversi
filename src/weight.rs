@@ -658,6 +658,39 @@ impl Weight {
         sum
     }
 
+    pub fn evaluatev3bb(&self, ban : &bitboard::BitBoard) -> f32 {
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+        let ow = &self.weight;
+
+        let fs = ban.fixedstones();
+
+        let mut sum = *ow.last().unwrap();
+
+        let wtbn = &ow[board::CELL_2D * N_HIDDEN .. (board::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let mut hidsum : f32 = wdc[i];
+            let mut bit = bitboard::MSB_CELL;
+            for i in 0..bitboard::NUMCELL {
+                hidsum +=
+                    if (bit & black) != 0 {w1[i]}
+                    else if (bit & white) != 0 {-w1[i]}
+                    else {0.0};
+                bit >>= 1;
+            }
+            hidsum += teban * wtbn[i];
+            hidsum += wfs[i] * fs.0 as f32;
+            hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
+            sum += wh[i] / (f32::exp(-hidsum) + 1.0);
+        }
+        sum
+    }
+
     pub fn evaluatev3_simd(&self, ban : &board::Board) -> f32 {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -716,6 +749,184 @@ impl Weight {
                         let f42 = x86_64::_mm_cvtepi32_ps(c42);
                         let f43 = x86_64::_mm_cvtepi32_ps(c43);
                         let f44 = x86_64::_mm_cvtepi32_ps(c44);
+
+                        let mul1 = x86_64::_mm_mul_ps(x41, f41);
+                        let mul2 = x86_64::_mm_mul_ps(x42, f42);
+                        let mul3 = x86_64::_mm_mul_ps(x43, f43);
+                        let mul4 = x86_64::_mm_mul_ps(x44, f44);
+
+                        let sum12 = x86_64::_mm_add_ps(mul1, mul2);
+                        let sum34 = x86_64::_mm_add_ps(mul3, mul4);
+                        let sum1234 = x86_64::_mm_add_ps(sum12, sum34);
+                        sum4 = x86_64::_mm_add_ps(sum4, sum1234);
+                    }
+                }
+                unsafe {
+                    x86_64::_mm_store_ps(res4, sum4);
+                }
+            }
+
+            unsafe {
+                let x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
+                let x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
+                let x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
+                let x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
+                // _mm_transpose_ps
+                let tmp0   = x86_64::_mm_shuffle_ps(x1, x2, 0x44);
+                let tmp2   = x86_64::_mm_shuffle_ps(x1, x2, 0xEE);
+                let tmp1   = x86_64::_mm_shuffle_ps(x3, x4, 0x44);
+                let tmp3   = x86_64::_mm_shuffle_ps(x3, x4, 0xEE);
+                let h1 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0x88);
+                let h2 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0xDD);
+                let h3 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0x88);
+                let h4 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0xDD);
+
+                let h12 = x86_64::_mm_add_ps(h1, h2);
+                let h34 = x86_64::_mm_add_ps(h3, h4);
+                let h1234 = x86_64::_mm_add_ps(h12, h34);
+                // teban
+                let wtbn = x86_64::_mm_load_ps(wtbn[hidx..].as_ptr());
+                let tbn = x86_64::_mm_set1_ps(teban);
+                let tbn4 = x86_64::_mm_mul_ps(wtbn, tbn);
+                let h1234 = x86_64::_mm_add_ps(h1234, tbn4);
+                // fixed stones
+                let wfsb4 = x86_64::_mm_load_ps(wfs[hidx..].as_ptr());
+                let fsb = x86_64::_mm_set1_ps(fs.0 as f32);
+                let fsb4 = x86_64::_mm_mul_ps(wfsb4, fsb);
+                let wfsw4 = x86_64::_mm_load_ps(wfs[hidx + N_HIDDEN..].as_ptr());
+                let fsw = x86_64::_mm_set1_ps(fs.1 as f32);
+                let fsw4 = x86_64::_mm_mul_ps(wfsw4, fsw);
+                let fsbw = x86_64::_mm_add_ps(fsb4, fsw4);
+                let h1234 = x86_64::_mm_add_ps(h1234, fsbw);
+                // dc
+                let wdc4 = x86_64::_mm_load_ps(wdc[hidx..].as_ptr());
+                let h1234 = x86_64::_mm_add_ps(h1234, wdc4);
+                x86_64::_mm_store_ps(hidsum.as_mut_ptr(), h1234);
+            }
+            Weight::expmx_ps(hidsum.as_ptr(), emx.as_mut_ptr());
+            unsafe {
+                let emx4 = x86_64::_mm_load_ps(emx.as_ptr());
+                let one = x86_64::_mm_set1_ps(1.0);
+                let hsp14 = x86_64::_mm_add_ps(emx4, one);
+                let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
+
+                let y4 = x86_64::_mm_div_ps(wh4, hsp14);
+                // let rhsp14 = x86_64::_mm_rcp_ps(hsp14);
+                // let two = x86_64::_mm_set1_ps(2.0);
+                // let x2 = x86_64::_mm_mul_ps(rhsp14, hsp14);
+                // let x3 = x86_64::_mm_sub_ps(two, x2);
+                // let x4 = x86_64::_mm_mul_ps(rhsp14, x3);
+                // let y4 = x86_64::_mm_mul_ps(w24, x4);
+
+                x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
+            }
+            // for n in 0..N {
+            //     sum += sumarr[n];
+            // }
+            sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
+        }
+        sum
+    }
+
+    pub fn evaluatev3bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+        let ow = &self.weight;
+
+        let fs = ban.fixedstones();
+
+        let mut sum = *ow.last().unwrap();
+
+        let wtbn = &ow[board::CELL_2D * N_HIDDEN .. (board::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+
+        const N : usize = 4;
+        let mut hidsum : [f32 ; N] = [0.0 ; N];
+        let mut emx : [f32 ; N] = [0.0 ; N];
+        let mut sumarr : [f32 ; N] = [0.0 ; N];
+
+        for i in 0..N_HIDDEN / N {
+            let hidx = i * N;
+            let mut sum44 : [f32 ; N * N] = [0.0 ; N * N];
+
+            for n in 0..N {
+                let res4 = sum44[n * N..].as_mut_ptr();
+                let w1 = &ow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
+                // let mut hidsum : f32 = dc[i];
+                let mut sum4: x86_64::__m128;
+                unsafe {
+                    sum4 = x86_64::_mm_setzero_ps();
+                }
+                const M : usize = 16;
+                let mut bit4 = 0xF000000000000000;
+                for j in 0..board::CELL_2D / M {
+                    let idx = j * M;
+                    let shift = 60 - j * 16;
+                    unsafe {
+                        let x41 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                        let x42 = x86_64::_mm_load_ps(w1[idx + 4..].as_ptr());
+                        let x43 = x86_64::_mm_load_ps(w1[idx + 8..].as_ptr());
+                        let x44 = x86_64::_mm_load_ps(w1[idx + 12..].as_ptr());
+
+                        let b4 = (bit4 & black) >> shift;
+                        let b3221 = ((b4 << 30) | (b4 >> 3)) & 0x0000000100000001;
+                        let b3222 = ((b4 << 32) | (b4 >> 1)) & 0x0000000100000001;
+                        let b324 = x86_64::_mm_set_epi64x(b3222 as i64, b3221 as i64);
+                        let w4 = (bit4 & white) >> shift;
+                        let w3221 = ((w4 << 30) | (w4 >> 3)) & 0x0000000100000001;
+                        let w3222 = ((w4 << 32) | (w4 >> 1)) & 0x0000000100000001;
+                        let w324 = x86_64::_mm_set_epi64x(w3222 as i64, w3221 as i64);
+                        // b-w i32 x 4
+                        let c4 = x86_64::_mm_sub_epi32(b324, w324);
+                        // to f32 x 4
+                        let f41 = x86_64::_mm_cvtepi32_ps(c4);
+                        bit4 >>= 4;
+
+                        let b4 = (bit4 & black) >> (shift - 4);
+                        let b3221 = ((b4 << 30) | (b4 >> 3)) & 0x0000000100000001;
+                        let b3222 = ((b4 << 32) | (b4 >> 1)) & 0x0000000100000001;
+                        let b324 = x86_64::_mm_set_epi64x(b3222 as i64, b3221 as i64);
+                        let w4 = (bit4 & white) >> (shift - 4);
+                        let w3221 = ((w4 << 30) | (w4 >> 3)) & 0x0000000100000001;
+                        let w3222 = ((w4 << 32) | (w4 >> 1)) & 0x0000000100000001;
+                        let w324 = x86_64::_mm_set_epi64x(w3222 as i64, w3221 as i64);
+                        // b-w i32 x 4
+                        let c4 = x86_64::_mm_sub_epi32(b324, w324);
+                        // to f32 x 4
+                        let f42 = x86_64::_mm_cvtepi32_ps(c4);
+                        bit4 >>= 4;
+                        // i16
+
+                        let b4 = (bit4 & black) >> (shift - 8);
+                        let b3221 = ((b4 << 30) | (b4 >> 3)) & 0x0000000100000001;
+                        let b3222 = ((b4 << 32) | (b4 >> 1)) & 0x0000000100000001;
+                        let b324 = x86_64::_mm_set_epi64x(b3222 as i64, b3221 as i64);
+                        let w4 = (bit4 & white) >> (shift - 8);
+                        let w3221 = ((w4 << 30) | (w4 >> 3)) & 0x0000000100000001;
+                        let w3222 = ((w4 << 32) | (w4 >> 1)) & 0x0000000100000001;
+                        let w324 = x86_64::_mm_set_epi64x(w3222 as i64, w3221 as i64);
+                        // b-w i32 x 4
+                        let c4 = x86_64::_mm_sub_epi32(b324, w324);
+                        // to f32 x 4
+                        let f43 = x86_64::_mm_cvtepi32_ps(c4);
+                        bit4 >>= 4;
+
+                        let b4 = (bit4 & black) >> (shift - 12);
+                        let b3221 = ((b4 << 30) | (b4 >> 3)) & 0x0000000100000001;
+                        let b3222 = ((b4 << 32) | (b4 >> 1)) & 0x0000000100000001;
+                        let b324 = x86_64::_mm_set_epi64x(b3222 as i64, b3221 as i64);
+                        let w4 = (bit4 & white) >> (shift - 12);
+                        let w3221 = ((w4 << 30) | (w4 >> 3)) & 0x0000000100000001;
+                        let w3222 = ((w4 << 32) | (w4 >> 1)) & 0x0000000100000001;
+                        let w324 = x86_64::_mm_set_epi64x(w3222 as i64, w3221 as i64);
+                        // b-w i32 x 4
+                        let c4 = x86_64::_mm_sub_epi32(b324, w324);
+                        // to f32 x 4
+                        let f44 = x86_64::_mm_cvtepi32_ps(c4);
+                        bit4 >>= 4;
 
                         let mul1 = x86_64::_mm_mul_ps(x41, f41);
                         let mul2 = x86_64::_mm_mul_ps(x42, f42);

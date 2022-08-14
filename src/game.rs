@@ -3,9 +3,74 @@ use super::*;
 use std::fs::File;
 use std::io::{self, Write};
 
+pub struct GameBB {
+    ban : bitboard::BitBoard,
+    pub kifu : kifu::Kifu,
+}
+
 pub struct Game {
     ban : board::Board,
     pub kifu : kifu::Kifu,
+}
+
+impl GameBB {
+    pub fn new() -> GameBB {
+        GameBB {
+            ban : bitboard::BitBoard::new(),
+            kifu : kifu::Kifu::new(),
+        }
+    }
+
+    pub fn from(rfen : &str) -> GameBB {
+        GameBB {
+            ban: bitboard::BitBoard::from(rfen).unwrap(),
+            kifu: kifu::Kifu::new()
+        }
+    }
+
+    pub fn start(&mut self, f : fn(&bitboard::BitBoard, usize) -> Option<(f32, nodebb::NodeBB)>, depth : usize)
+            -> Result<(), String> {
+        loop {
+            // show
+            // self.ban.put();
+            println!("{}", self.ban.to_str());
+            // think
+            let st = Instant::now();
+            let (val, node) = f(&self.ban, depth).unwrap();
+            // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
+            // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
+            let ft = st.elapsed();
+            println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+            let best = node.best.unwrap();
+            let x = best.x;
+            let y = best.y;
+            // apply move
+            let ban = self.ban.r#move(x, y).unwrap();
+            let rfen = self.ban.to_str();
+            let teban = self.ban.teban;
+            self.ban = ban;
+
+            // save to kifu
+            self.kifu.append(x, y, teban, rfen);
+
+            // check finished
+            if self.ban.is_passpass() {
+                break;
+            }
+            if self.ban.is_full() {
+                let rfen = self.ban.to_str();
+                let teban = self.ban.teban;
+                self.kifu.append(0, 0, teban, rfen);
+                break;
+            }
+        }
+        // check who won
+        self.kifu.winneris(self.ban.count());
+        println!("{}", self.kifu.to_str());
+        // show
+        self.ban.put();
+        Ok(())
+    }
 }
 
 impl Game {
