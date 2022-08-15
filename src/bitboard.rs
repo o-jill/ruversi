@@ -306,6 +306,11 @@ impl BitBoard {
         let mut oppo = if color == SENTE {self.white} else {self.black};
 
         let pos = MSB_CELL >> BitBoard::index(x, y);
+
+        let mask = !pos;
+        mine |= pos;
+        oppo &= mask;
+
         // 左
         let mut bit : u64 = pos << 1;
         let mut rev : u64 = 0;
@@ -612,7 +617,7 @@ impl BitBoard {
             return Err("stone exists.");
         }
         let mut ban = self.clone();
-        ban.set(xc, yc);
+        // ban.set(xc, yc);
         ban.reverse(xc, yc);
         ban.flipturn();
         ban.resetpass();
@@ -668,6 +673,7 @@ impl BitBoard {
     }
 
     pub fn fixedstones(&self) -> (i8, i8) {
+        // return (0, 0);  // この関数が遅いのかを見極める用
         let mut count = 0;
         let mut fcellsb : u64 = 0;
         let mut fcellsw : u64 = 0;
