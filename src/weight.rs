@@ -678,9 +678,14 @@ impl Weight {
             for y in 0..bitboard::NUMCELL {
                 let mut bit = bitboard::LSB_CELL << y;
                 for x in 0..bitboard::NUMCELL {
+                    let w = w1[x + y * bitboard::NUMCELL];
+                    // let idx = x * bitboard::NUMCELL + y;
+                    // let diff = ((bit & black) >> idx) as i32 - ((bit & white) >> idx) as i32;
+                    // hidsum += diff as f32 * w;
+                    // hidsum += w * ban.at(x, y) as f32;
                     hidsum +=
-                        if (bit & black) != 0 {w1[x + y * bitboard::NUMCELL]}
-                        else if (bit & white) != 0 {-w1[x + y * bitboard::NUMCELL]}
+                        if (bit & black) != 0 {w}
+                        else if (bit & white) != 0 {-w}
                         else {0.0};
                     bit <<= bitboard::NUMCELL;
                 }
@@ -831,7 +836,6 @@ impl Weight {
     }
 
     pub fn evaluatev3bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
-panic!("not yet!!");
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
@@ -864,89 +868,43 @@ panic!("not yet!!");
                     sum4 = x86_64::_mm_setzero_ps();
                 }
                 const M : usize = 16;
-                let mut bit4 = 0xF000000000000000;
+                let mut bit8 : u64 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let shift = 60 - j * 16;
                     unsafe {
                         let x41 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
                         let x42 = x86_64::_mm_load_ps(w1[idx + 4..].as_ptr());
                         let x43 = x86_64::_mm_load_ps(w1[idx + 8..].as_ptr());
                         let x44 = x86_64::_mm_load_ps(w1[idx + 12..].as_ptr());
 
-                        let b4 = (bit4 & black) >> shift;
-                        let b3221 = (b4 << 30) | (b4 >> 3);
-                        let b3222 = (b4 << 32) | (b4 >> 1);
-                        // let b3221 = ((b4 << 30) | (b4 >> 3)) & 0x0000000100000001;
-                        // let b3222 = ((b4 << 32) | (b4 >> 1)) & 0x0000000100000001;
-                        let b324 = x86_64::_mm_set_epi64x(b3222 as i64, b3221 as i64);
-                        let i32mask = x86_64::_mm_set1_epi32(1);
-                        let b324 = x86_64::_mm_and_si128(b324, i32mask);
-                        let w4 = (bit4 & white) >> shift;
-                        let w3221 = (w4 << 30) | (w4 >> 3);
-                        let w3222 = (w4 << 32) | (w4 >> 1);
-                        // let w3221 = ((w4 << 30) | (w4 >> 3)) & 0x0000000100000001;
-                        // let w3222 = ((w4 << 32) | (w4 >> 1)) & 0x0000000100000001;
-                        let w324 = x86_64::_mm_set_epi64x(w3222 as i64, w3221 as i64);
-                        let w324 = x86_64::_mm_and_si128(w324, i32mask);
-                        // b-w i32 x 4
-                        let c4 = x86_64::_mm_sub_epi32(b324, w324);
-                        // to f32 x 4
-                        let f41 = x86_64::_mm_cvtepi32_ps(c4);
-                        bit4 >>= 4;
+                        let b81 = (bit8 & black) >> 2 * j;
+                        let w81 = (bit8 & white) >> 2 * j;
+                        bit8 <<= 1;
+                        let b82 = (bit8 & black) >> 2 * j + 1;
+                        let w82 = (bit8 & white) >> 2 * j + 1;
+                        bit8 <<= 1;
+                        let b08 = x86_64::_mm_set_epi64x(b82 as i64, b81 as i64);
+                        let w08 = x86_64::_mm_set_epi64x(w82 as i64, w81 as i64);
+                        let c08 = x86_64::_mm_sub_epi8(b08, w08);
 
-                        let b4 = (bit4 & black) >> (shift - 4);
-                        let b3221 = (b4 << 30) | (b4 >> 3);
-                        let b3222 = (b4 << 32) | (b4 >> 1);
-                        // let b3221 = ((b4 << 30) | (b4 >> 3)) & 0x0000000100000001;
-                        // let b3222 = ((b4 << 32) | (b4 >> 1)) & 0x0000000100000001;
-                        let b324 = x86_64::_mm_set_epi64x(b3222 as i64, b3221 as i64);
-                        let b324 = x86_64::_mm_and_si128(b324, i32mask);
-                        let w4 = (bit4 & white) >> (shift - 4);
-                        let w3221 = (w4 << 30) | (w4 >> 3);
-                        let w3222 = (w4 << 32) | (w4 >> 1);
-                        // let w3221 = ((w4 << 30) | (w4 >> 3)) & 0x0000000100000001;
-                        // let w3222 = ((w4 << 32) | (w4 >> 1)) & 0x0000000100000001;
-                        let w324 = x86_64::_mm_set_epi64x(w3222 as i64, w3221 as i64);
-                        let w324 = x86_64::_mm_and_si128(w324, i32mask);
-                        // b-w i32 x 4
-                        let c4 = x86_64::_mm_sub_epi32(b324, w324);
-                        // to f32 x 4
-                        let f42 = x86_64::_mm_cvtepi32_ps(c4);
-                        bit4 >>= 4;
-                        // i16
+                        let zero = x86_64::_mm_setzero_si128();
+                        // to i16
+                        let s16 = x86_64::_mm_cmpgt_epi8(zero, c08);
+                        let c4l = x86_64::_mm_unpacklo_epi8(c08, s16);
+                        let c4h = x86_64::_mm_unpackhi_epi8(c08, s16);
 
-                        let b4 = (bit4 & black) >> (shift - 8);
-                        let b3221 = (b4 << 30) | (b4 >> 3);
-                        let b3222 = (b4 << 32) | (b4 >> 1);
-                        let b324 = x86_64::_mm_set_epi64x(b3222 as i64, b3221 as i64);
-                        let b324 = x86_64::_mm_and_si128(b324, i32mask);
-                        let w4 = (bit4 & white) >> (shift - 8);
-                        let w3221 = (w4 << 30) | (w4 >> 3);
-                        let w3222 = (w4 << 32) | (w4 >> 1);
-                        let w324 = x86_64::_mm_set_epi64x(w3222 as i64, w3221 as i64);
-                        let w324 = x86_64::_mm_and_si128(w324, i32mask);
-                        // b-w i32 x 4
-                        let c4 = x86_64::_mm_sub_epi32(b324, w324);
-                        // to f32 x 4
-                        let f43 = x86_64::_mm_cvtepi32_ps(c4);
-                        bit4 >>= 4;
+                        // to i32
+                        let s4l = x86_64::_mm_cmpgt_epi16(zero, c4l);
+                        let s4h = x86_64::_mm_cmpgt_epi16(zero, c4h);
+                        let c41 = x86_64::_mm_unpacklo_epi16(c4l, s4l);
+                        let c42 = x86_64::_mm_unpackhi_epi16(c4l, s4l);
+                        let c43 = x86_64::_mm_unpacklo_epi16(c4h, s4h);
+                        let c44 = x86_64::_mm_unpackhi_epi16(c4h, s4h);
 
-                        let b4 = (bit4 & black) >> (shift - 12);
-                        let b3221 = (b4 << 30) | (b4 >> 3);
-                        let b3222 = (b4 << 32) | (b4 >> 1);
-                        let b324 = x86_64::_mm_set_epi64x(b3222 as i64, b3221 as i64);
-                        let b324 = x86_64::_mm_and_si128(b324, i32mask);
-                        let w4 = (bit4 & white) >> (shift - 12);
-                        let w3221 = (w4 << 30) | (w4 >> 3);
-                        let w3222 = (w4 << 32) | (w4 >> 1);
-                        let w324 = x86_64::_mm_set_epi64x(w3222 as i64, w3221 as i64);
-                        let w324 = x86_64::_mm_and_si128(w324, i32mask);
-                        // b-w i32 x 4
-                        let c4 = x86_64::_mm_sub_epi32(b324, w324);
-                        // to f32 x 4
-                        let f44 = x86_64::_mm_cvtepi32_ps(c4);
-                        bit4 >>= 4;
+                        let f41 = x86_64::_mm_cvtepi32_ps(c41);
+                        let f42 = x86_64::_mm_cvtepi32_ps(c42);
+                        let f43 = x86_64::_mm_cvtepi32_ps(c43);
+                        let f44 = x86_64::_mm_cvtepi32_ps(c44);
 
                         let mul1 = x86_64::_mm_mul_ps(x41, f41);
                         let mul2 = x86_64::_mm_mul_ps(x42, f42);
