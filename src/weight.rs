@@ -668,20 +668,22 @@ impl Weight {
 
         let mut sum = *ow.last().unwrap();
 
-        let wtbn = &ow[board::CELL_2D * N_HIDDEN .. (board::CELL_2D + 1)* N_HIDDEN];
-        let wfs = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
-        let wdc = &ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
-        let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        let wtbn = &ow[bitboard::CELL_2D * N_HIDDEN .. (bitboard::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &ow[(bitboard::CELL_2D + 1) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &ow[(bitboard::CELL_2D + 1 + 2) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wh = &ow[(bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         for i in 0..N_HIDDEN {
-            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let w1 = &ow[i * bitboard::CELL_2D .. (i + 1) * bitboard::CELL_2D];
             let mut hidsum : f32 = wdc[i];
-            let mut bit = bitboard::MSB_CELL;
-            for i in 0..board::CELL_2D {
-                hidsum +=
-                    if (bit & black) != 0 {w1[i]}
-                    else if (bit & white) != 0 {-w1[i]}
-                    else {0.0};
-                bit >>= 1;
+            for y in 0..bitboard::NUMCELL {
+                let mut bit = bitboard::LSB_CELL << y;
+                for x in 0..bitboard::NUMCELL {
+                    hidsum +=
+                        if (bit & black) != 0 {w1[x + y * bitboard::NUMCELL]}
+                        else if (bit & white) != 0 {-w1[x + y * bitboard::NUMCELL]}
+                        else {0.0};
+                    bit <<= bitboard::NUMCELL;
+                }
             }
             hidsum += teban * wtbn[i];
             hidsum += wfs[i] * fs.0 as f32;
@@ -829,6 +831,7 @@ impl Weight {
     }
 
     pub fn evaluatev3bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
+panic!("not yet!!");
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
