@@ -91,7 +91,7 @@ impl NodeBB {
 
     fn evaluate(ban : &bitboard::BitBoard) -> f32 {
         unsafe {
-            if cfg!(feature = "nosimd") {
+            if cfg!(feature="nosimd") {
                 WEIGHT.as_ref().unwrap().evaluatev3bb(ban)
             } else {
                 WEIGHT.as_ref().unwrap().evaluatev3bb_simd(ban)

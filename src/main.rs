@@ -241,15 +241,37 @@ fn duel(ev1 : &str, ev2 : &str) {
     let mut draw = [0, 0];
     let mut lose = [0, 0];
     let mut total = 0;
+    let mut result;
+    let mut teban;
 
     for i in (1 + 4 + 12)..(1 + 4 + 12 + 56) {
         let rfen = initialpos::RFENTBL[i];
-        let mut g = game::Game::from(rfen);
-        g.start_with_2et(node::Node::think_ab, 7, &w1, &w2).unwrap();
-        let result = g.kifu.winner();
+        if cfg!(feature="bitboard") {
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            // play
+            let think = MYOPT.get().unwrap().think.as_str();
+            match think {
+                "" | "ab" => {
+                    g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w1, &w2).unwrap()
+                },
+                "all" => {
+                    g.start_with_2et(nodebb::NodeBB::think, 7, &w1, &w2).unwrap()
+                },
+                _ => { panic!("unknown thinking method.") }
+            }
+            let dresult = g.kifu.winner();
+            teban = g.kifu.nth(0).teban;
+            result = dresult.unwrap();
+        } else {
+            // prepare game
+            let mut g = game::Game::from(rfen);
+            g.start_with_2et(node::Node::think_ab, 7, &w1, &w2).unwrap();
+            let dresult = g.kifu.winner();
+            teban = g.kifu.nth(0).teban;
+            result = dresult.unwrap();
+        }
         total += 1;
-        let teban = g.kifu.nth(0).teban;
-        let result = result.unwrap();
         if teban == board::SENTE {
             match result {
                 kifu::SENTEWIN => {win[0] += 1;},
@@ -265,12 +287,32 @@ fn duel(ev1 : &str, ev2 : &str) {
                 _ => {}
             }
         }
-        let mut g = game::Game::from(rfen);
-        g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
-        let result = g.kifu.winner();
+        if cfg!(feature="bitboard") {
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            // play
+            let think = MYOPT.get().unwrap().think.as_str();
+            match think {
+                "" | "ab" => {
+                    g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
+                },
+                "all" => {
+                    g.start_with_2et(nodebb::NodeBB::think, 7, &w2, &w1).unwrap()
+                },
+                _ => { panic!("unknown thinking method.") }
+            }
+            let dresult = g.kifu.winner();
+            teban = g.kifu.nth(0).teban;
+            result = dresult.unwrap();
+        } else {
+            // prepare game
+            let mut g = game::Game::from(rfen);
+            g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
+            let dresult = g.kifu.winner();
+            teban = g.kifu.nth(0).teban;
+            result = dresult.unwrap();
+        }
         total += 1;
-        let teban = g.kifu.nth(1).teban;
-        let result = result.unwrap();
         if teban == board::SENTE {
             match result {
                 kifu::SENTEWIN => {win[0] += 1;},
@@ -303,6 +345,7 @@ fn duel(ev1 : &str, ev2 : &str) {
 fn readeval(path: &str) {
     println!("read eval table: {}", path);
     if cfg!(feature="bitboard") {
+        // println!("read weight for bitboard");
         unsafe {
             match nodebb::WEIGHT.as_mut().unwrap().read(path) {
                 Err(msg) => {println!("{}", msg)},
@@ -310,6 +353,7 @@ fn readeval(path: &str) {
             }
         }
     } else {
+        // println!("read weight for byteboard");
         unsafe {
             match node::WEIGHT.as_mut().unwrap().read(path) {
                 Err(msg) => {println!("{}", msg)},
