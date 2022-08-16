@@ -78,7 +78,8 @@ impl BitBoard {
                 },
                 '1'..='8' => {
                     let n = ch as i32 - '0' as i32;
-                    bit <<= n * NUMCELL as  i32;
+                    bit = bit.checked_shl((n * NUMCELL as i32) as u32).unwrap_or(0);
+                    // bit <<= n * NUMCELL as  i32;
                 },
                 '/' => {
                     y += 1;
