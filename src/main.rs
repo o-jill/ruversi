@@ -302,14 +302,14 @@ fn duel(ev1 : &str, ev2 : &str) {
                 _ => { panic!("unknown thinking method.") }
             }
             let dresult = g.kifu.winner();
-            teban = g.kifu.nth(0).teban;
+            teban = g.kifu.nth(1).teban;
             result = dresult.unwrap();
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
             g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
             let dresult = g.kifu.winner();
-            teban = g.kifu.nth(0).teban;
+            teban = g.kifu.nth(1).teban;
             result = dresult.unwrap();
         }
         total += 1;
