@@ -358,7 +358,7 @@ impl BitBoard {
         // 右
         let mut bit : u64 = pos << NUMCELL;
         let mut rev : u64 = 0;
-        for _i in y..NUMCELL {
+        for _i in x..NUMCELL {
             if (mine & bit) != 0 {
                 oppo &= !rev;
                 mine |= rev;
@@ -374,7 +374,7 @@ impl BitBoard {
         // 左
         let mut bit : u64 = pos >> NUMCELL;
         let mut rev : u64 = 0;
-        for _i in 0..y {
+        for _i in 0..x {
             if (mine & bit) != 0 {
                 oppo &= !rev;
                 mine |= rev;
@@ -510,7 +510,7 @@ impl BitBoard {
         // 右
         let mut bit : u64 = pos << NUMCELL;
         let mut rev : u64 = 0;
-        for _i in y..NUMCELL {
+        for _i in x..NUMCELL {
             if (mine & bit) != 0 {
                 if rev != 0 {return true;}
                 break;
@@ -525,7 +525,7 @@ impl BitBoard {
         // 左
         let mut bit : u64 = pos >> NUMCELL;
         let mut rev : u64 = 0;
-        for _i in 0..y {
+        for _i in 0..x {
             if (mine & bit) != 0 {
                 if rev != 0 {return true;}
                 break;
