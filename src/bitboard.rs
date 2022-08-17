@@ -1186,6 +1186,8 @@ fn testbitbrd() {
     assert_eq!(b.to_str(), "8/8/8/3Aa3/3aA3/8/8/8 b");
     assert_eq!(b.to_obf(),
         "---------------------------XO------OX--------------------------- X");
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![(5, 3), (6, 4), (3, 5), (4, 6)]));
     let b = BitBoard::from("H/H/H/H/H/H/H/H b").unwrap();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);
@@ -1195,6 +1197,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 64);
     assert_eq!(b.to_obf(),
         "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X");
+    assert!(b.genmove().is_none());
     let mut b = BitBoard::from("h/h/h/h/h/h/h/h w").unwrap();
     assert_eq!(b.teban, GOTE);
     assert_eq!(b.pass, 0);
@@ -1202,6 +1205,7 @@ fn testbitbrd() {
     assert_eq!(b.white, 0xffffffffffffffff);
     assert_eq!(b.to_obf(),
         "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO O");
+    assert!(b.genmove().is_none());
     b.pass();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 1);
@@ -1209,6 +1213,7 @@ fn testbitbrd() {
     assert!(b.is_full());
     assert_eq!(b.to_obf(),
         "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO X");
+    assert!(b.genmove().is_none());
     b.pass();
     assert_eq!(b.teban, GOTE);
     assert_eq!(b.pass, 2);
@@ -1248,6 +1253,63 @@ fn testbitbrd() {
     assert_eq!(b.to_str(), "h/h/h/h/h/h/h/h b");
     assert_eq!(b.fixedstones(), (0, 64));
     assert_eq!(b.count(), -64);
+    let b = BitBoard::from("Af1/Fb/EaAa/DaBa/CaCa/BaDa/AaEa/H b").unwrap();
+    // XOOOOOO-
+    // XXXXXXOO
+    // XXXXXOXO
+    // XXXXOXXO
+    // XXXOXXXO
+    // XXOXXXXO
+    // XOXXXXXO
+    // XXXXXXXX
+    // 10000000 01111110
+    // 22222200 00000022
+    // 44444040 00000404
+    // 88880880 00008008
+    // feee6ac0 0111953E
+
+    // 1110 1110 00010001
+    // 2202 2220 00200002
+    // 4044 4440 04000004
+    // 8888 8888 80000000
+    // FBDE FFF0 84210007   
+    b.put();
+    println!("b.black:0x{:016X}", b.black);
+    println!("b.white:0x{:016X}", b.white);
+    assert_eq!(b.black, 0x80FCFAF6EEDEBEFF);
+    assert_eq!(b.white, 0x7E03050911214100);
+    assert!(b.checkreverse(7, 0));
+    assert_eq!(b.fixedstones(), (15, 0));
+    assert_eq!(b.count(),
+      -(6 + 2 + 2 + 2 + 2 + 2 + 2) +
+      (1 + 6 + 1 + 5 + 2 + 4 + 3 + 3 + 4 + 2 + 5 + 1 + 8));
+    assert_eq!(b.to_obf(),
+      "XOOOOOO-XXXXXXOOXXXXXOXOXXXXOXXOXXXOXXXOXXOXXXXOXOXXXXXOXXXXXXXX X");
+    let b = b.r#move(8, 1);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    b.put();
+    assert_eq!(b.black, 0xffffffffffffffff);
+    assert_eq!(b.white, 0x0);
+    assert_eq!(b.to_str(), "H/H/H/H/H/H/H/H w");
+    let b = BitBoard::from("Af1/Fb/EaAa/DaBa/CaCa/BaDa/AaEa/H b").unwrap();
+    let b = b.rotate180();
+    // b.put();
+    assert_eq!(b.black, (0x80FCFAF6EEDEBEFF as u64).reverse_bits());
+    assert_eq!(b.white, (0x7E03050911214100 as u64).reverse_bits());
+    assert!(b.checkreverse(0, 7));
+    assert_eq!(b.fixedstones(), (15, 0));
+    assert_eq!(b.count(),
+      -(6 + 2 + 2 + 2 + 2 + 2 + 2) +
+      (1 + 6 + 1 + 5 + 2 + 4 + 3 + 3 + 4 + 2 + 5 + 1 + 8));
+    assert_eq!(b.to_obf(),
+      "XXXXXXXXOXXXXXOXOXXXXOXXOXXXOXXXOXXOXXXXOXOXXXXXOOXXXXXX-OOOOOOX X");
+    let b = b.r#move(1, 8);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.black, 0xffffffffffffffff);
+    assert_eq!(b.white, 0x0);
+    assert_eq!(b.to_str(), "H/H/H/H/H/H/H/H w");
     let b = BitBoard::from("H/G1/F2/E3/D4/C5/B6/A7 w").unwrap();
     assert_eq!(b.to_obf(),
         "XXXXXXXXXXXXXXX-XXXXXX--XXXXX---XXXX----XXX-----XX------X------- O");

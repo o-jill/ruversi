@@ -964,6 +964,33 @@ fn testbrd() {
     assert_eq!(b.to_str(), "h/h/h/h/h/h/h/h b");
     assert_eq!(b.fixedstones(), (0, 64));
     assert_eq!(b.count(), -64);
+    let b = Board::from("Af1/Fb/EaAa/DaBa/CaCa/BaDa/AaEa/H b").unwrap();
+    // b.put();
+    assert!(b.checkreverse(7, 0));
+    assert_eq!(b.fixedstones(), (15, 0));
+    assert_eq!(b.count(),
+      -(6 + 2 + 2 + 2 + 2 + 2 + 2) +
+      (1 + 6 + 1 + 5 + 2 + 4 + 3 + 3 + 4 + 2 + 5 + 1 + 8));
+    assert_eq!(b.to_obf(),
+      "XOOOOOO-XXXXXXOOXXXXXOXOXXXXOXXOXXXOXXXOXXOXXXXOXOXXXXXOXXXXXXXX X");
+    let b = b.r#move(8, 1);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_str(), "H/H/H/H/H/H/H/H w");
+    let b = Board::from("Af1/Fb/EaAa/DaBa/CaCa/BaDa/AaEa/H b").unwrap();
+    let b = b.rotate180();
+    // b.put();
+    assert!(b.checkreverse(0, 7));
+    assert_eq!(b.fixedstones(), (15, 0));
+    assert_eq!(b.count(),
+      -(6 + 2 + 2 + 2 + 2 + 2 + 2) +
+      (1 + 6 + 1 + 5 + 2 + 4 + 3 + 3 + 4 + 2 + 5 + 1 + 8));
+    assert_eq!(b.to_obf(),
+      "XXXXXXXXOXXXXXOXOXXXXOXXOXXXOXXXOXXOXXXXOXOXXXXXOOXXXXXX-OOOOOOX X");
+    let b = b.r#move(1, 8);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_str(), "H/H/H/H/H/H/H/H w");
     let b = Board::from("H/G1/F2/E3/D4/C5/B6/A7 w").unwrap();
     assert_eq!(b.to_obf(),
         "XXXXXXXXXXXXXXX-XXXXXX--XXXXX---XXXX----XXX-----XX------X------- O");
