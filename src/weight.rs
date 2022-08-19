@@ -1459,7 +1459,7 @@ impl Weight {
             let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = wdc[i];
             for y in 0..bitboard::NUMCELL {
-                let mut bit = bitboard::LSB_CELL << y;
+                let bit = bitboard::LSB_CELL << y;
                 for x in 0..bitboard::NUMCELL {
                     let w = w1[x + y * bitboard::NUMCELL];
                     let cb = (black & bit) != 0;
