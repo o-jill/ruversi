@@ -1592,7 +1592,7 @@ impl Weight {
         Ok(())
     }
 
-    fn backwordv1(&mut self,
+    fn backwardv1(&mut self,
             ban : &board::Board, winner : i8, eta : f32,
             hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN], output : &[f32 ; N_OUTPUT]) {
         let cells = &ban.cells;
@@ -1647,7 +1647,7 @@ impl Weight {
         }        
     }
 
-    fn backwordv2(&mut self,
+    fn backwardv2(&mut self,
         ban : &board::Board, winner : i8, eta : f32,
         hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN], output : &[f32 ; N_OUTPUT]) {
         let cells = &ban.cells;
@@ -1745,7 +1745,7 @@ impl Weight {
         }
     }
 
-    fn backwordv3(&mut self,
+    fn backwardv3(&mut self,
         ban : &board::Board, winner : i8, eta : f32,
         (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
         let cells = &ban.cells;
@@ -1847,7 +1847,7 @@ impl Weight {
         }
     }
 
-    fn backwordv3bb(&mut self,
+    fn backwardv3bb(&mut self,
         ban : &bitboard::BitBoard, winner : i8, eta : f32,
         (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
         let black = ban.black;
@@ -1976,8 +1976,8 @@ impl Weight {
                 } else {
                     self.forwardv1_simd(&ban)
                 };
-            // backword
-            self.backwordv1(ban, winner, eta, &hidden, &hidsig, &output);
+            // backward
+            self.backwardv1(ban, winner, eta, &hidden, &hidsig, &output);
         } else if cfg!(feature="nnv2") {
             // forward
             let (hidden, hidsig, output) =
@@ -1987,8 +1987,8 @@ impl Weight {
                     self.forwardv2_simd(&ban)
                     // self.forwardv2_simd2(&ban)
                 };
-            // backword
-            self.backwordv2(ban, winner, eta, &hidden, &hidsig, &output);
+            // backward
+            self.backwardv2(ban, winner, eta, &hidden, &hidsig, &output);
         } else {
             // forward
             let res = if cfg!(feature="nosimd") {
@@ -1996,8 +1996,8 @@ impl Weight {
                 } else {
                     self.forwardv3_simd(&ban)
                 };
-            // backword
-            self.backwordv3(ban, winner, eta, &res);
+            // backward
+            self.backwardv3(ban, winner, eta, &res);
         }
     }
 
@@ -2008,7 +2008,7 @@ impl Weight {
             } else {
                 self.forwardv3bb_simd(&ban)
             };
-        // backword
-        self.backwordv3bb(ban, winner, eta, &res);
+        // backward
+        self.backwardv3bb(ban, winner, eta, &res);
     }
 }
