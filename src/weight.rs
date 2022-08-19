@@ -1514,13 +1514,15 @@ impl Weight {
             let mut bit8 = 0x0101010101010101;
             for j in 0..board::CELL_2D / 16 {
                 let idx = j * 16;
+                let b81 = (bit8 & black) >> 2 * j;
+                let w81 = (bit8 & white) >> 2 * j;
+                bit8 <<= 1;
+                let b82 = (bit8 & black) >> 2 * j + 1;
+                let w82 = (bit8 & white) >> 2 * j + 1;
+                bit8 <<= 1;
+
                 unsafe {
-                    let b81 = (bit8 & black) >> 2 * j;
-                    let w81 = (bit8 & white) >> 2 * j;
-                    bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 2 * j + 1;
-                    let w82 = (bit8 & white) >> 2 * j + 1;
-                    bit8 <<= 1;
+                    x86_64::_mm_prefetch(w1[idx..].as_ptr() as *const i8, x86_64::_MM_HINT_T0);
 
                     let b16 = x86_64::_mm_set_epi64x(b82 as i64, b81 as i64);
                     let w16 = x86_64::_mm_set_epi64x(w82 as i64, w81 as i64);
@@ -1916,14 +1918,16 @@ impl Weight {
                 let mut bit8 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / 16 {
                     let idx = j * 16;
+                    let b81 = (bit8 & black) >> 2 * j;
+                    let w81 = (bit8 & white) >> 2 * j;
+                    bit8 <<= 1;
+                    let b82 = (bit8 & black) >> 2 * j + 1;
+                    let w82 = (bit8 & white) >> 2 * j + 1;
+                    bit8 <<= 1;
+
                     unsafe {
-                        let b81 = (bit8 & black) >> 2 * j;
-                        let w81 = (bit8 & white) >> 2 * j;
-                        bit8 <<= 1;
-                        let b82 = (bit8 & black) >> 2 * j + 1;
-                        let w82 = (bit8 & white) >> 2 * j + 1;
-                        bit8 <<= 1;
-    
+                        x86_64::_mm_prefetch(w1[idx..].as_ptr() as *const i8, x86_64::_MM_HINT_T0);
+
                         let b16 = x86_64::_mm_set_epi64x(b82 as i64, b81 as i64);
                         let w16 = x86_64::_mm_set_epi64x(w82 as i64, w81 as i64);
                         let c16 = x86_64::_mm_sub_epi8(b16, w16);
