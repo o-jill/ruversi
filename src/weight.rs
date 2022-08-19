@@ -1937,23 +1937,37 @@ impl Weight {
                         let f43 = x86_64::_mm_cvtepi32_ps(c43);
                         let f44 = x86_64::_mm_cvtepi32_ps(c44);
 
-                        let diff41 = x86_64::_mm_mul_ps(heta4, f41);
-                        let diff42 = x86_64::_mm_mul_ps(heta4, f42);
-                        let diff43 = x86_64::_mm_mul_ps(heta4, f43);
-                        let diff44 = x86_64::_mm_mul_ps(heta4, f44);
-
                         let x41 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
                         let x42 = x86_64::_mm_load_ps(w1[idx + 4..].as_ptr());
                         let x43 = x86_64::_mm_load_ps(w1[idx + 8..].as_ptr());
                         let x44 = x86_64::_mm_load_ps(w1[idx + 12..].as_ptr());
-                        let w41 = x86_64::_mm_sub_ps(x41, diff41);
-                        let w42 = x86_64::_mm_sub_ps(x42, diff42);
-                        let w43 = x86_64::_mm_sub_ps(x43, diff43);
-                        let w44 = x86_64::_mm_sub_ps(x44, diff44);
-                        x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w41);
-                        x86_64::_mm_store_ps(w1[idx + 4..].as_mut_ptr(), w42);
-                        x86_64::_mm_store_ps(w1[idx + 8..].as_mut_ptr(), w43);
-                        x86_64::_mm_store_ps(w1[idx + 12..].as_mut_ptr(), w44);
+
+                        if false {  // fma slow...
+                            let w41 = x86_64::_mm_fnmadd_ps(heta4, f41, x41);
+                            let w42 = x86_64::_mm_fnmadd_ps(heta4, f42, x42);
+                            let w43 = x86_64::_mm_fnmadd_ps(heta4, f43, x43);
+                            let w44 = x86_64::_mm_fnmadd_ps(heta4, f44, x44);
+
+                            x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w41);
+                            x86_64::_mm_store_ps(w1[idx + 4..].as_mut_ptr(), w42);
+                            x86_64::_mm_store_ps(w1[idx + 8..].as_mut_ptr(), w43);
+                            x86_64::_mm_store_ps(w1[idx + 12..].as_mut_ptr(), w44);
+                        } else {
+                            let diff41 = x86_64::_mm_mul_ps(heta4, f41);
+                            let diff42 = x86_64::_mm_mul_ps(heta4, f42);
+                            let diff43 = x86_64::_mm_mul_ps(heta4, f43);
+                            let diff44 = x86_64::_mm_mul_ps(heta4, f44);
+
+                            let w41 = x86_64::_mm_sub_ps(x41, diff41);
+                            let w42 = x86_64::_mm_sub_ps(x42, diff42);
+                            let w43 = x86_64::_mm_sub_ps(x43, diff43);
+                            let w44 = x86_64::_mm_sub_ps(x44, diff44);
+
+                            x86_64::_mm_store_ps(w1[idx..].as_mut_ptr(), w41);
+                            x86_64::_mm_store_ps(w1[idx + 4..].as_mut_ptr(), w42);
+                            x86_64::_mm_store_ps(w1[idx + 8..].as_mut_ptr(), w43);
+                            x86_64::_mm_store_ps(w1[idx + 12..].as_mut_ptr(), w44);
+                        }
                     }
                 }
             }
