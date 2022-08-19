@@ -1891,9 +1891,9 @@ impl Weight {
             let heta = *h * eta;
             if cfg!(feature="nosimd") {
                 for y in 0..bitboard::NUMCELL {
-                    let mut bit = bitboard::LSB_CELL << y;
+                    let bit = bitboard::LSB_CELL << y;
                     for x in 0..bitboard::NUMCELL {
-                        let w = w1[x + y * bitboard::NUMCELL];
+                        // let w = w1[x + y * bitboard::NUMCELL];
                         let cb = (black & bit) != 0;
                         let cw = (white & bit) != 0;
                         w1[x + y * bitboard::NUMCELL] -=
