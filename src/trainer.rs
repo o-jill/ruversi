@@ -92,7 +92,14 @@ impl Trainer {
                 let p = String::from(&path);
                 kifucache.push((p, kifu.copy()));
                 unsafe {
-                    self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                    match if cfg!(feature="bitboard") {
+                            self.run4stones(&kifu, &mut nodebb::WEIGHT.as_mut().unwrap())
+                        } else {
+                            self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap())
+                        } {
+                        Err(msg) => {panic!("{}", msg);},
+                        _ => {}
+                    }
                 }
             }
             println!("");
@@ -107,8 +114,16 @@ impl Trainer {
                 let (path, kifu) = kifucache.iter().nth(*idx).unwrap();
                 print!("{} / {} : {}\r", i, self.repeat, path);
                 unsafe {
-                    self.run4stones(
-                        &kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                    match if cfg!(feature="bitboard") {
+                        self.run4stones(
+                            &kifu, &mut nodebb::WEIGHT.as_mut().unwrap())
+                        } else {
+                            self.run4stones(
+                                &kifu, &mut node::WEIGHT.as_mut().unwrap())
+                        } {
+                        Err(msg) => {panic!("{}", msg);},
+                        _ => {}
+                    }
                 }
             }
             println!("");
