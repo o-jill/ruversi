@@ -871,18 +871,14 @@ impl Weight {
                 let mut bit8 : u64 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    unsafe {
-                        let x41 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
-                        let x42 = x86_64::_mm_load_ps(w1[idx + 4..].as_ptr());
-                        let x43 = x86_64::_mm_load_ps(w1[idx + 8..].as_ptr());
-                        let x44 = x86_64::_mm_load_ps(w1[idx + 12..].as_ptr());
+                    let b81 = (bit8 & black) >> 2 * j;
+                    let w81 = (bit8 & white) >> 2 * j;
+                    bit8 <<= 1;
+                    let b82 = (bit8 & black) >> 2 * j + 1;
+                    let w82 = (bit8 & white) >> 2 * j + 1;
+                    bit8 <<= 1;
 
-                        let b81 = (bit8 & black) >> 2 * j;
-                        let w81 = (bit8 & white) >> 2 * j;
-                        bit8 <<= 1;
-                        let b82 = (bit8 & black) >> 2 * j + 1;
-                        let w82 = (bit8 & white) >> 2 * j + 1;
-                        bit8 <<= 1;
+                    unsafe {
                         let b08 = x86_64::_mm_set_epi64x(b82 as i64, b81 as i64);
                         let w08 = x86_64::_mm_set_epi64x(w82 as i64, w81 as i64);
                         let c08 = x86_64::_mm_sub_epi8(b08, w08);
@@ -906,15 +902,27 @@ impl Weight {
                         let f43 = x86_64::_mm_cvtepi32_ps(c43);
                         let f44 = x86_64::_mm_cvtepi32_ps(c44);
 
-                        let mul1 = x86_64::_mm_mul_ps(x41, f41);
-                        let mul2 = x86_64::_mm_mul_ps(x42, f42);
-                        let mul3 = x86_64::_mm_mul_ps(x43, f43);
-                        let mul4 = x86_64::_mm_mul_ps(x44, f44);
+                        let x41 = x86_64::_mm_load_ps(w1[idx..].as_ptr());
+                        let x42 = x86_64::_mm_load_ps(w1[idx + 4..].as_ptr());
+                        let x43 = x86_64::_mm_load_ps(w1[idx + 8..].as_ptr());
+                        let x44 = x86_64::_mm_load_ps(w1[idx + 12..].as_ptr());
 
-                        let sum12 = x86_64::_mm_add_ps(mul1, mul2);
-                        let sum34 = x86_64::_mm_add_ps(mul3, mul4);
-                        let sum1234 = x86_64::_mm_add_ps(sum12, sum34);
-                        sum4 = x86_64::_mm_add_ps(sum4, sum1234);
+                        if true {  // fma
+                            sum4 = x86_64::_mm_fmadd_ps(x41, f41, sum4);
+                            sum4 = x86_64::_mm_fmadd_ps(x42, f42, sum4);
+                            sum4 = x86_64::_mm_fmadd_ps(x43, f43, sum4);
+                            sum4 = x86_64::_mm_fmadd_ps(x44, f44, sum4);
+                        } else {
+                            let mul1 = x86_64::_mm_mul_ps(x41, f41);
+                            let mul2 = x86_64::_mm_mul_ps(x42, f42);
+                            let mul3 = x86_64::_mm_mul_ps(x43, f43);
+                            let mul4 = x86_64::_mm_mul_ps(x44, f44);
+
+                            let sum12 = x86_64::_mm_add_ps(mul1, mul2);
+                            let sum34 = x86_64::_mm_add_ps(mul3, mul4);
+                            let sum1234 = x86_64::_mm_add_ps(sum12, sum34);
+                            sum4 = x86_64::_mm_add_ps(sum4, sum1234);
+                        }
                     }
                 }
                 unsafe {
