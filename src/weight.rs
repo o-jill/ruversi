@@ -579,22 +579,15 @@ impl Weight {
             }
 
             unsafe {
-                let x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
-                let x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
-                let x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
-                let x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
-                // _mm_transpose_ps
-                let tmp0   = x86_64::_mm_shuffle_ps(x1, x2, 0x44);
-                let tmp2   = x86_64::_mm_shuffle_ps(x1, x2, 0xEE);
-                let tmp1   = x86_64::_mm_shuffle_ps(x3, x4, 0x44);
-                let tmp3   = x86_64::_mm_shuffle_ps(x3, x4, 0xEE);
-                let h1 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0x88);
-                let h2 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0xDD);
-                let h3 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0x88);
-                let h4 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0xDD);
+                let mut x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
+                let mut x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
+                let mut x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
+                let mut x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
 
-                let h12 = x86_64::_mm_add_ps(h1, h2);
-                let h34 = x86_64::_mm_add_ps(h3, h4);
+                x86_64::_MM_TRANSPOSE4_PS(&mut x1, &mut x2, &mut x3, &mut x4);
+
+                let h12 = x86_64::_mm_add_ps(x1, x2);
+                let h34 = x86_64::_mm_add_ps(x3, x4);
                 let h1234 = x86_64::_mm_add_ps(h12, h34);
                 // teban
                 let wtbn = x86_64::_mm_load_ps(tbn[hidx..].as_ptr());
@@ -774,22 +767,15 @@ impl Weight {
             }
 
             unsafe {
-                let x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
-                let x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
-                let x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
-                let x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
-                // _mm_transpose_ps
-                let tmp0   = x86_64::_mm_shuffle_ps(x1, x2, 0x44);
-                let tmp2   = x86_64::_mm_shuffle_ps(x1, x2, 0xEE);
-                let tmp1   = x86_64::_mm_shuffle_ps(x3, x4, 0x44);
-                let tmp3   = x86_64::_mm_shuffle_ps(x3, x4, 0xEE);
-                let h1 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0x88);
-                let h2 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0xDD);
-                let h3 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0x88);
-                let h4 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0xDD);
+                let mut x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
+                let mut x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
+                let mut x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
+                let mut x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
 
-                let h12 = x86_64::_mm_add_ps(h1, h2);
-                let h34 = x86_64::_mm_add_ps(h3, h4);
+                x86_64::_MM_TRANSPOSE4_PS(&mut x1, &mut x2, &mut x3, &mut x4);
+
+                let h12 = x86_64::_mm_add_ps(x1, x2);
+                let h34 = x86_64::_mm_add_ps(x3, x4);
                 let h1234 = x86_64::_mm_add_ps(h12, h34);
                 // teban
                 let wtbn = x86_64::_mm_load_ps(wtbn[hidx..].as_ptr());
@@ -931,22 +917,15 @@ impl Weight {
             }
 
             unsafe {
-                let x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
-                let x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
-                let x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
-                let x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
-                // _mm_transpose_ps
-                let tmp0   = x86_64::_mm_shuffle_ps(x1, x2, 0x44);
-                let tmp2   = x86_64::_mm_shuffle_ps(x1, x2, 0xEE);
-                let tmp1   = x86_64::_mm_shuffle_ps(x3, x4, 0x44);
-                let tmp3   = x86_64::_mm_shuffle_ps(x3, x4, 0xEE);
-                let h1 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0x88);
-                let h2 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0xDD);
-                let h3 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0x88);
-                let h4 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0xDD);
+                let mut x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
+                let mut x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
+                let mut x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
+                let mut x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
 
-                let h12 = x86_64::_mm_add_ps(h1, h2);
-                let h34 = x86_64::_mm_add_ps(h3, h4);
+                x86_64::_MM_TRANSPOSE4_PS(&mut x1, &mut x2, &mut x3, &mut x4);
+
+                let h12 = x86_64::_mm_add_ps(x1, x2);
+                let h34 = x86_64::_mm_add_ps(x3, x4);
                 let h1234 = x86_64::_mm_add_ps(h12, h34);
                 // teban
                 let wtbn = x86_64::_mm_load_ps(wtbn[hidx..].as_ptr());
@@ -1024,71 +1003,132 @@ impl Weight {
                 unsafe {
                     sum8 = x86_64::_mm256_setzero_ps();
                 }
-                const M : usize = 16;
+                const M : usize = 32;
                 let mut bit8 : u64 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = (bit8 & black) >> 2 * j;
-                    let w81 = (bit8 & white) >> 2 * j;
+                    let b81 = (bit8 & black) >> 4 * j;
+                    let w81 = (bit8 & white) >> 4 * j;
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 2 * j + 1;
-                    let w82 = (bit8 & white) >> 2 * j + 1;
+                    let b82 = (bit8 & black) >> 4 * j + 1;
+                    let w82 = (bit8 & white) >> 4 * j + 1;
+                    bit8 <<= 1;
+                    let b83 = (bit8 & black) >> 4 * j + 2;
+                    let w83 = (bit8 & white) >> 4 * j + 2;
+                    bit8 <<= 1;
+                    let b84 = (bit8 & black) >> 4 * j + 3;
+                    let w84 = (bit8 & white) >> 4 * j + 3;
                     bit8 <<= 1;
 
                     unsafe {
-                        let b32 = x86_64::_mm256_set_epi64x(
-                            0, (b81 >> 32) as i64, 0, (b81 & 0xffffffff) as i64);
-                        let w32 = x86_64::_mm256_set_epi64x(
-                            0, (w81 >> 32) as i64, 0, (w81 & 0xffffffff) as i64);
-                        let c321 = x86_64::_mm256_sub_epi8(b16, w16);
-                        let b32 = x86_64::_mm256_set_epi64x(
-                            0, (b82 >> 32) as i64, 0, (b82 & 0xffffffff) as i64);
-                        let w32 = x86_64::_mm256_set_epi64x(
-                            0, (w82 >> 32) as i64, 0, (w82 & 0xffffffff) as i64);
-                        let c322 = x86_64::_mm256_sub_epi8(b16, w16);
+                        // // 0x0000000000000000000000007766554400000000000000000000000033221100
+                        // let b32 = x86_64::_mm256_set_epi64x(
+                        //     0, (b81 >> 32) as i64, 0, (b81 & 0xffffffff) as i64);
+                        // // 0x0000000000000000000000007766554400000000000000000000000033221100
+                        // let w32 = x86_64::_mm256_set_epi64x(
+                        //     0, (w81 >> 32) as i64, 0, (w81 & 0xffffffff) as i64);
+                        // let c321 = x86_64::_mm256_sub_epi8(b32, w32);
+                        // // 0x000000000000000000000000ffeeddcc000000000000000000000000bbaa9988
+                        // let b32 = x86_64::_mm256_set_epi64x(
+                        //     0, (b82 >> 32) as i64, 0, (b82 & 0xffffffff) as i64);
+                        // // 0x000000000000000000000000ffeeddcc000000000000000000000000bbaa9988
+                        // let w32 = x86_64::_mm256_set_epi64x(
+                        //     0, (w82 >> 32) as i64, 0, (w82 & 0xffffffff) as i64);
+                        // let c322 = x86_64::_mm256_sub_epi8(b32, w32);
 
-                        let zero = x86_64::_mm256_setzero_si256();
-                        // to i16
-                        let s321 = x86_64::_mm256_cmpgt_epi8(zero, c321);
-                        let c161 = x86_64::_mm256_unpacklo_epi8(c321, s321);
-                        let s322 = x86_64::_mm256_cmpgt_epi8(zero, c322);
-                        let c162 = x86_64::_mm256_unpacklo_epi8(c322, s322);
+                        // let zero = x86_64::_mm256_setzero_si256();
+                        // // to i16
+                        // // 0x0000000000000000777766665555444400000000000000003333222211110000
+                        // let s321 = x86_64::_mm256_cmpgt_epi8(zero, c321);
+                        // let c161 = x86_64::_mm256_unpacklo_epi8(c321, s321);
+                        // // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
+                        // let s322 = x86_64::_mm256_cmpgt_epi8(zero, c322);
+                        // let c162 = x86_64::_mm256_unpacklo_epi8(c322, s322);
 
-                        /* let b32 = x86_64::_mm256_set_epi64x(
+                        // 0x00000000ffeeddcc000000007766554400000000bbaa99880000000033221100
+                        let b32 = x86_64::_mm256_set_epi64x(
                             (b82 >> 32) as i64, (b81 >> 32) as i64,
                             (b82 & 0xffffffff) as i64, (b81 & 0xffffffff) as i64);
                         let w32 = x86_64::_mm256_set_epi64x(
                             (w82 >> 32) as i64, (w81 >> 32) as i64,
                             (w82 & 0xffffffff) as i64, (w81 & 0xffffffff) as i64);
-                        let c321 = x86_64::_mm256_sub_epi8(b16, w16);
-                some thing is wrong...
+                        let b322 = x86_64::_mm256_set_epi64x(
+                            (b84 >> 32) as i64, (b83 >> 32) as i64,
+                            (b84 & 0xffffffff) as i64, (b83 & 0xffffffff) as i64);
+                        let w322 = x86_64::_mm256_set_epi64x(
+                            (w84 >> 3) as i64, (w83 >> 32) as i64,
+                            (w84 & 0xffffffff) as i64, (w83 & 0xffffffff) as i64);
+                        let c321 = x86_64::_mm256_sub_epi8(b32, w32);
+                        let c322 = x86_64::_mm256_sub_epi8(b322, w322);
                         let zero = x86_64::_mm256_setzero_si256();
                         // to i16
                         let s321 = x86_64::_mm256_cmpgt_epi8(zero, c321);
+                        let s322 = x86_64::_mm256_cmpgt_epi8(zero, c322);
+                        // 0x0000000000000000777766665555444400000000000000003333222211110000
                         let c161 = x86_64::_mm256_unpacklo_epi8(c321, s321);
-                        let c162 = x86_64::_mm256_unpackhi_epi8(c321, s321);*/
+                        // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
+                        let c162 = x86_64::_mm256_unpackhi_epi8(c321, s321);
+                        // 0x0000000000000000777766665555444400000000000000003333222211110000
+                        let c163 = x86_64::_mm256_unpacklo_epi8(c322, s322);
+                        // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
+                        let c164 = x86_64::_mm256_unpackhi_epi8(c322, s322);
+
+                        // let eqq = x86_64::_mm256_sub_epi16(c161, c161z);
+                        // let mut buff : [u64 ; 4] = [0 ; 4];
+                        // x86_64::_mm256_store_si256(buff.as_mut_ptr() as *mut x86_64::__m256i, eqq);
+                        // for &bb in buff.iter() {
+                        //     if bb != 0 {
+                        //         panic!("buff : {:?}", buff);
+                        //     }
+                        // }
+                        // let eqq = x86_64::_mm256_sub_epi16(c162, c162z);
+                        // let mut buff : [u64 ; 4] = [0 ; 4];
+                        // x86_64::_mm256_store_si256(buff.as_mut_ptr() as *mut x86_64::__m256i, eqq);
+                        // for &bb in buff.iter() {
+                        //     if bb != 0 {
+                        //         panic!("buff : {:?}", buff);
+                        //     }
+                        // }
 
                         // to i32
+                        // 0x7777777766666666555555554444444433333333222222221111111100000000
                         let s161 = x86_64::_mm256_cmpgt_epi16(zero, c161);
                         let c81 = x86_64::_mm256_unpacklo_epi16(c161, s161);
+                        // 0xffffffffeeeeeeeeddddddddccccccccbbbbbbbbaaaaaaaa9999999988888888
                         let s162 = x86_64::_mm256_cmpgt_epi16(zero, c162);
                         let c82 = x86_64::_mm256_unpacklo_epi16(c162, s162);
+                        // 0x7777777766666666555555554444444433333333222222221111111100000000
+                        let s163 = x86_64::_mm256_cmpgt_epi16(zero, c163);
+                        let c83 = x86_64::_mm256_unpacklo_epi16(c163, s163);
+                        // 0xffffffffeeeeeeeeddddddddccccccccbbbbbbbbaaaaaaaa9999999988888888
+                        let s164 = x86_64::_mm256_cmpgt_epi16(zero, c164);
+                        let c84 = x86_64::_mm256_unpacklo_epi16(c164, s164);
 
                         let f81 = x86_64::_mm256_cvtepi32_ps(c81);
                         let f82 = x86_64::_mm256_cvtepi32_ps(c82);
+                        let f83 = x86_64::_mm256_cvtepi32_ps(c83);
+                        let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
                         let x81 = x86_64::_mm256_load_ps(w1[idx..].as_ptr());
                         let x82 = x86_64::_mm256_load_ps(w1[idx + 8..].as_ptr());
+                        let x83 = x86_64::_mm256_load_ps(w1[idx + 16..].as_ptr());
+                        let x84 = x86_64::_mm256_load_ps(w1[idx + 24..].as_ptr());
 
                         if true {  // fma
                             sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
                             sum8 = x86_64::_mm256_fmadd_ps(x82, f82, sum8);
+                            sum8 = x86_64::_mm256_fmadd_ps(x83, f83, sum8);
+                            sum8 = x86_64::_mm256_fmadd_ps(x84, f84, sum8);
                         } else {
                             let mul1 = x86_64::_mm256_mul_ps(x81, f81);
                             let mul2 = x86_64::_mm256_mul_ps(x82, f82);
+                            let mul3 = x86_64::_mm256_mul_ps(x83, f83);
+                            let mul4 = x86_64::_mm256_mul_ps(x84, f84);
 
                             let sum12 = x86_64::_mm256_add_ps(mul1, mul2);
-                            sum8 = x86_64::_mm256_hadd_ps(sum8, sum12);
+                            let sum34 = x86_64::_mm256_add_ps(mul3, mul4);
+                            let sum1234 = x86_64::_mm256_add_ps(sum12, sum34);
+                            sum8 = x86_64::_mm256_add_ps(sum8, sum1234);
                         }
                     }
                 }
@@ -1102,38 +1142,21 @@ impl Weight {
                 let x12 = x86_64::_mm_load_ps(sum48[4..].as_ptr());
                 let x21 = x86_64::_mm_load_ps(sum48[8..].as_ptr());
                 let x22 = x86_64::_mm_load_ps(sum48[12..].as_ptr());
-                // _mm_transpose_ps
-                let tmp0   = x86_64::_mm_shuffle_ps(x11, x12, 0x44);
-                let tmp2   = x86_64::_mm_shuffle_ps(x11, x12, 0xEE);
-                let tmp1   = x86_64::_mm_shuffle_ps(x21, x22, 0x44);
-                let tmp3   = x86_64::_mm_shuffle_ps(x21, x22, 0xEE);
-                let h1 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0x88);
-                let h2 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0xDD);
-                let h3 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0x88);
-                let h4 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0xDD);
-
-                let h12 = x86_64::_mm_add_ps(h1, h2);
-                let h34 = x86_64::_mm_add_ps(h3, h4);
-                let h1234 = x86_64::_mm_add_ps(h12, h34);
+                let mut x1 = x86_64::_mm_add_ps(x11, x12);
+                let mut x2 = x86_64::_mm_add_ps(x21, x22);
 
                 let x31 = x86_64::_mm_load_ps(sum48[16..].as_ptr());
                 let x32 = x86_64::_mm_load_ps(sum48[20..].as_ptr());
                 let x41 = x86_64::_mm_load_ps(sum48[24..].as_ptr());
                 let x42 = x86_64::_mm_load_ps(sum48[28..].as_ptr());
-                // _mm_transpose_ps
-                let tmp0   = x86_64::_mm_shuffle_ps(x31, x32, 0x44);
-                let tmp2   = x86_64::_mm_shuffle_ps(x31, x32, 0xEE);
-                let tmp1   = x86_64::_mm_shuffle_ps(x41, x42, 0x44);
-                let tmp3   = x86_64::_mm_shuffle_ps(x41, x42, 0xEE);
-                let h1 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0x88);
-                let h2 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0xDD);
-                let h3 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0x88);
-                let h4 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0xDD);
+                let mut x3 = x86_64::_mm_add_ps(x31, x32);
+                let mut x4 = x86_64::_mm_add_ps(x41, x42);
 
-                let h12 = x86_64::_mm_add_ps(h1, h2);
-                let h34 = x86_64::_mm_add_ps(h3, h4);
-                let h12342 = x86_64::_mm_add_ps(h12, h34);
-                let h1234 = x86_64::_mm_add_ps(h1234, h12342);
+                x86_64::_MM_TRANSPOSE4_PS(&mut x1, &mut x2, &mut x3, &mut x4);
+
+                let h12 = x86_64::_mm_add_ps(x1, x2);
+                let h34 = x86_64::_mm_add_ps(x3, x4);
+                let h1234 = x86_64::_mm_add_ps(h12, h34);
 
                 // teban
                 let wtbn = x86_64::_mm_load_ps(wtbn[hidx..].as_ptr());
@@ -1458,22 +1481,15 @@ impl Weight {
 
             let hidsum = hidden[hidx..hidx + 4].as_mut_ptr();
             unsafe {
-                let x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
-                let x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
-                let x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
-                let x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
-                // _mm_transpose_ps
-                let tmp0   = x86_64::_mm_shuffle_ps(x1, x2, 0x44);
-                let tmp2   = x86_64::_mm_shuffle_ps(x1, x2, 0xEE);
-                let tmp1   = x86_64::_mm_shuffle_ps(x3, x4, 0x44);
-                let tmp3   = x86_64::_mm_shuffle_ps(x3, x4, 0xEE);
-                let h1 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0x88);
-                let h2 = x86_64::_mm_shuffle_ps(tmp0, tmp1, 0xDD);
-                let h3 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0x88);
-                let h4 = x86_64::_mm_shuffle_ps(tmp2, tmp3, 0xDD);
+                let mut x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
+                let mut x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
+                let mut x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
+                let mut x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
 
-                let h12 = x86_64::_mm_add_ps(h1, h2);
-                let h34 = x86_64::_mm_add_ps(h3, h4);
+                x86_64::_MM_TRANSPOSE4_PS(&mut x1, &mut x2, &mut x3, &mut x4);
+
+                let h12 = x86_64::_mm_add_ps(x1, x2);
+                let h34 = x86_64::_mm_add_ps(x3, x4);
                 let h1234 = x86_64::_mm_add_ps(h12, h34);
                 // teban
                 let wtbn = x86_64::_mm_load_ps(tbn[hidx..].as_ptr());
