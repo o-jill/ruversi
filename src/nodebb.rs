@@ -94,6 +94,7 @@ impl NodeBB {
             if cfg!(feature="nosimd") {
                 WEIGHT.as_ref().unwrap().evaluatev3bb(ban)
             } else {
+                // WEIGHT.as_ref().unwrap().evaluatev3bb_simdavx(ban)
                 WEIGHT.as_ref().unwrap().evaluatev3bb_simd(ban)
             }
         }
