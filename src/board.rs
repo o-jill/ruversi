@@ -1051,6 +1051,149 @@ fn testbrd() {
     assert_eq!(b.to_obf(),
         "XX----OOXX----OOXX----OOXX----OOXX----OOXX----OOXX----OOXX----OO O");
     assert_eq!(b.fixedstones(), (16, 16));
+    let b = Board::from("1A6/A1eA/1a6/1a6/1a6/1a6/1a6/1A6 b").unwrap();
+    assert_eq!(b.to_obf(),
+        "-X------X-OOOOOX-O-------O-------O-------O-------O-------X------ X");
+    // b.put();
+    assert!(b.checkreverse(1, 1));
+    assert_eq!(b.fixedstones(), (0, 0));
+    assert_eq!(b.count(), 4 - 10);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
+    let b = b.r#move(2, 2);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_obf(),
+        "-X------XXXXXXXX-X-------X-------X-------X-------X-------X------ O");
+    assert_eq!(b.fixedstones(), (0, 0));
+    assert_eq!(b.count(), 15);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![]));
+    let b = Board::from("1A6/A1eA/1a6/1a6/1a6/1a6/1a6/1A6 b").unwrap();
+    let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "------X-------O-------O-------O-------O-------O-XOOOOO-X------X- X");
+    assert!(b.checkreverse(6, 6));
+    assert_eq!(b.fixedstones(), (0, 0));
+    assert_eq!(b.count(), 4 - 10);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
+    let b = b.r#move(7, 7);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_obf(),
+        "------X-------X-------X-------X-------X-------X-XXXXXXXX------X- O");
+    assert_eq!(b.fixedstones(), (0, 0));
+    assert_eq!(b.count(), 15);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![]));
+    let b = Board::from("2A5/2a5/Aa1dA/2a5/2a5/2a5/2a5/2A5 b").unwrap();
+    b.put();
+    assert_eq!(b.to_obf(),
+        "--X-------O-----XO-OOOOX--O-------O-------O-------O-------X----- X");
+    assert!(b.checkreverse(2, 2));
+    assert_eq!(b.fixedstones(), (0, 0));
+    assert_eq!(b.count(), 4 - 10);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![(3, 3)]));
+    let b = b.r#move(3, 3);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_obf(),
+        "--X-------X-----XXXXXXXX--X-------X-------X-------X-------X----- O");
+    assert_eq!(b.fixedstones(), (0, 0));
+    assert_eq!(b.count(), 15);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![]));
+    let b = Board::from("2A5/2a5/Aa1dA/2a5/2a5/2a5/2a5/2A5 b").unwrap();
+    let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "-----X-------O-------O-------O-------O--XOOOO-OX-----O-------X-- X");
+    assert!(b.checkreverse(5, 5));
+    assert_eq!(b.fixedstones(), (0, 0));
+    assert_eq!(b.count(), 4 - 10);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![(6, 6)]));
+    let b = b.r#move(6, 6);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_obf(),
+        "-----X-------X-------X-------X-------X--XXXXXXXX-----X-------X-- O");
+    assert_eq!(b.fixedstones(), (0, 0));
+    assert_eq!(b.count(), 15);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![]));
+    let b = Board::from("B6/A1eA/1b5/1a1a4/1a2a3/1a3a2/1a4a1/1A5A b").unwrap();
+    assert_eq!(b.to_obf(),
+        "XX------X-OOOOOX-OO------O-O-----O--O----O---O---O----O--X-----X X");
+    assert!(b.checkreverse(1, 1));
+    assert_eq!(b.fixedstones(), (4, 0));
+    assert_eq!(b.count(), 6 - 15);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
+    let b = b.r#move(2, 2);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_obf(),
+        "XX------XXXXXXXX-XX------X-X-----X--X----X---X---X----X--X-----X O");
+    assert_eq!(b.fixedstones(), (4, 0));
+    assert_eq!(b.count(), 22);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![]));
+    let b = Board::from("B6/A1eA/1b5/1a1a4/1a2a3/1a3a2/1a4a1/1A5A b").unwrap();
+    let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "X-----X--O----O---O---O----O--O-----O-O------OO-XOOOOO-X------XX X");
+    assert!(b.checkreverse(6, 6));
+    assert_eq!(b.fixedstones(), (4, 0));
+    assert_eq!(b.count(), 6 - 15);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
+    let b = b.r#move(7, 7);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_obf(),
+        "X-----X--X----X---X---X----X--X-----X-X------XX-XXXXXXXX------XX O");
+    assert_eq!(b.fixedstones(), (4, 0));
+    assert_eq!(b.count(), 22);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![]));
+    let b = Board::from("A1A1A3/1c4/Aa1dA/1c4/A1a1a3/2a2a2/2a3a1/2A4A b").unwrap();
+    assert_eq!(b.to_obf(),
+        "X-X-X----OOO----XO-OOOOX-OOO----X-O-O-----O--O----O---O---X----X X");
+    assert!(b.checkreverse(2, 2));
+    assert_eq!(b.fixedstones(), (2, 0));
+    assert_eq!(b.count(), 8 - 17);
+    let mv = b.genmove();
+    // b.put();
+    assert_eq!(mv, Some(vec![(3, 3), (6, 4), (4, 6)]));
+    let b = b.r#move(3, 3);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_obf(),
+        "X-X-X----XXX----XXXXXXXX-XXX----X-X-X-----X--X----X---X---X----X O");
+    assert_eq!(b.fixedstones(), (2, 0));
+    assert_eq!(b.count(), 26);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![]));
+    let b = Board::from("A1A1A3/1c4/Aa1dA/1c4/A1a1a3/2a2a2/2a3a1/2A4A b").unwrap();
+    let b = b.rotate180();
+    assert_eq!(b.to_obf(),
+        "X----X---O---O----O--O-----O-O-X----OOO-XOOOO-OX----OOO----X-X-X X");
+    assert!(b.checkreverse(5, 5));
+    assert_eq!(b.fixedstones(), (2, 0));
+    assert_eq!(b.count(), 8 - 17);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![(5, 3), (3, 5), (6, 6)]));
+    let b = b.r#move(6, 6);
+    assert!(b.is_ok());
+    let b = b.unwrap();
+    assert_eq!(b.to_obf(),
+        "X----X---X---X----X--X-----X-X-X----XXX-XXXXXXXX----XXX----X-X-X O");
+    assert_eq!(b.fixedstones(), (2, 0));
+    assert_eq!(b.count(), 26);
+    let mv = b.genmove();
+    assert_eq!(mv, Some(vec![]));
     // difficult to count correctly
     // let b = Board::from("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap();
     // assert_eq!(b.fixedstones(), (34, 1));
