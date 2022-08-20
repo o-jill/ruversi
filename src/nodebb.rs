@@ -93,8 +93,9 @@ impl NodeBB {
         unsafe {
             if cfg!(feature="nosimd") {
                 WEIGHT.as_ref().unwrap().evaluatev3bb(ban)
+            } else if cfg!(feature="avx") {
+                    WEIGHT.as_ref().unwrap().evaluatev3bb_simdavx(ban)
             } else {
-                // WEIGHT.as_ref().unwrap().evaluatev3bb_simdavx(ban)
                 WEIGHT.as_ref().unwrap().evaluatev3bb_simd(ban)
             }
         }
