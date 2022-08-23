@@ -4,6 +4,7 @@ use std::time::{Duration, Instant};
 use std::thread;
 use std::sync::mpsc;
 use rand::Rng;
+use rand::distributions::{Distribution, Uniform};
 
 mod board;
 mod bitboard;
@@ -24,6 +25,34 @@ static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::O
 
 #[allow(dead_code)]
 fn trial() {
+    if false {
+        let die = Uniform::from(-1..=1);
+        let mut rng = rand::thread_rng();
+        let mut cells : [i8 ; 64] = [0 ; 64];
+        for i in 0..50 {
+            for c in cells.iter_mut() {
+                *c = die.sample(&mut rng);
+            }
+            let tbn = die.sample(&mut rng);
+            let byb = board::Board::fromarray(cells, tbn);
+            let bib = bitboard::BitBoard::from(&byb.to_str()).unwrap();
+            let yres;
+            let ires;
+            unsafe {
+                // yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3(&byb);
+                yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3_simd(&byb);
+                // ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb(&bib);
+                ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb_simd(&bib);
+            }
+            if yres.2 != ires.2 {
+            println!("0: {:?} == {:?}", yres.0, ires.0);
+            println!("1: {:?} == {:?}", yres.1, ires.1);
+            println!("2: {:?} == {:?}", yres.2, ires.2);
+            println!("3: {:?} == {:?}", yres.3, ires.3);
+            }
+        }
+        panic!("stoppppppp!!!!");
+    }
     let files = std::fs::read_dir("./kifu/").unwrap();
     let files = files.filter_map(|entry| {
         entry.ok().and_then(|e|

@@ -81,6 +81,10 @@ impl Board {
         Ok(ret)
     }
 
+    pub fn fromarray(cells : [i8 ; CELL_2D], tbn : i8) -> Board {
+        Board { cells: cells.to_vec(), teban: tbn, pass: 0 }
+    }
+
     pub fn init() -> Board {
         Board::from("8/8/8/3Aa3/3aA3/8/8/8 b").unwrap()
     }
