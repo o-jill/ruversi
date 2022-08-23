@@ -36,19 +36,34 @@ fn trial() {
             let tbn = die.sample(&mut rng);
             let byb = board::Board::fromarray(cells, tbn);
             let bib = bitboard::BitBoard::from(&byb.to_str()).unwrap();
-            let yres;
-            let ires;
-            unsafe {
-                // yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3(&byb);
-                yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3_simd(&byb);
-                // ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb(&bib);
-                ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb_simd(&bib);
-            }
-            if yres.2 != ires.2 {
-            println!("0: {:?} == {:?}", yres.0, ires.0);
-            println!("1: {:?} == {:?}", yres.1, ires.1);
-            println!("2: {:?} == {:?}", yres.2, ires.2);
-            println!("3: {:?} == {:?}", yres.3, ires.3);
+            if true {
+                let yres;
+                let ires;
+                unsafe {
+                    // yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev3(&byb);
+                    yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev3_simd(&byb);
+                    // ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb(&bib);
+                    ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb_simdavx(&bib);
+                    // ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb_simd(&bib);
+                }
+                if yres != ires {
+                    println!("eval: {} == {}", yres, ires);
+                }
+            } else {
+                let yres;
+                let ires;
+                unsafe {
+                    // yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3(&byb);
+                    yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3_simd(&byb);
+                    // ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb(&bib);
+                    ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb_simd(&bib);
+                }
+                if yres.2 != ires.2 {
+                    println!("0: {:?} == {:?}", yres.0, ires.0);
+                    println!("1: {:?} == {:?}", yres.1, ires.1);
+                    println!("2: {:?} == {:?}", yres.2, ires.2);
+                    println!("3: {:?} == {:?}", yres.3, ires.3);
+                }
             }
         }
         panic!("stoppppppp!!!!");
