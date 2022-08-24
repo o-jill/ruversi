@@ -36,7 +36,7 @@ fn trial() {
             let tbn = die.sample(&mut rng);
             let byb = board::Board::fromarray(cells, tbn);
             let bib = bitboard::BitBoard::from(&byb.to_str()).unwrap();
-            if true {
+            if false {
                 let yres;
                 let ires;
                 unsafe {
@@ -53,10 +53,11 @@ fn trial() {
                 let yres;
                 let ires;
                 unsafe {
-                    // yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3(&byb);
-                    yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3_simd(&byb);
+                    yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3(&byb);
+                    // yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3_simd(&byb);
                     // ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb(&bib);
-                    ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb_simd(&bib);
+                    // ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb_simd(&bib);
+                    ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb_simdavx(&bib);
                 }
                 if yres.2 != ires.2 {
                     println!("0: {:?} == {:?}", yres.0, ires.0);
@@ -472,6 +473,8 @@ fn main() {
     } else {
         readeval(path);
     }
+
+    // trial();
 
     let mode = &MYOPT.get().unwrap().mode;
     if *mode == myoption::Mode::None || *mode == myoption::Mode::GenKifu {
