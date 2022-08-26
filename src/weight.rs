@@ -1804,95 +1804,34 @@ impl Weight {
                     bit8 <<= 1;
 
                     unsafe {
-                        // 0x0000000000000000000000007766554400000000000000000000000033221100
+                        // 0x00000000ffeeddcc000000007766554400000000bbaa99880000000033221100
                         let b32 = x86_64::_mm256_set_epi64x(
-                            0, (b81 >> 32) as i64, 0, (b81 & 0xffffffff) as i64);
-                        // 0x0000000000000000000000007766554400000000000000000000000033221100
+                            (b82 >> 32) as i64, (b81 >> 32) as i64,
+                            (b82 & 0xffffffff) as i64, (b81 & 0xffffffff) as i64);
                         let w32 = x86_64::_mm256_set_epi64x(
-                            0, (w81 >> 32) as i64, 0, (w81 & 0xffffffff) as i64);
+                            (w82 >> 32) as i64, (w81 >> 32) as i64,
+                            (w82 & 0xffffffff) as i64, (w81 & 0xffffffff) as i64);
+                        let b322 = x86_64::_mm256_set_epi64x(
+                            (b84 >> 32) as i64, (b83 >> 32) as i64,
+                            (b84 & 0xffffffff) as i64, (b83 & 0xffffffff) as i64);
+                        let w322 = x86_64::_mm256_set_epi64x(
+                            (w84 >> 32) as i64, (w83 >> 32) as i64,
+                            (w84 & 0xffffffff) as i64, (w83 & 0xffffffff) as i64);
                         let c321 = x86_64::_mm256_sub_epi8(b32, w32);
-                        // 0x000000000000000000000000ffeeddcc000000000000000000000000bbaa9988
-                        let b32 = x86_64::_mm256_set_epi64x(
-                            0, (b82 >> 32) as i64, 0, (b82 & 0xffffffff) as i64);
-                        // 0x000000000000000000000000ffeeddcc000000000000000000000000bbaa9988
-                        let w32 = x86_64::_mm256_set_epi64x(
-                            0, (w82 >> 32) as i64, 0, (w82 & 0xffffffff) as i64);
-                        let c322 = x86_64::_mm256_sub_epi8(b32, w32);
-                        // 0x0000000000000000000000007766554400000000000000000000000033221100
-                        let b32 = x86_64::_mm256_set_epi64x(
-                            0, (b83 >> 32) as i64, 0, (b83 & 0xffffffff) as i64);
-                        // 0x0000000000000000000000007766554400000000000000000000000033221100
-                        let w32 = x86_64::_mm256_set_epi64x(
-                            0, (w83 >> 32) as i64, 0, (w83 & 0xffffffff) as i64);
-                        let c323 = x86_64::_mm256_sub_epi8(b32, w32);
-                        // 0x000000000000000000000000ffeeddcc000000000000000000000000bbaa9988
-                        let b32 = x86_64::_mm256_set_epi64x(
-                            0, (b84 >> 32) as i64, 0, (b84 & 0xffffffff) as i64);
-                        // 0x000000000000000000000000ffeeddcc000000000000000000000000bbaa9988
-                        let w32 = x86_64::_mm256_set_epi64x(
-                            0, (w84 >> 32) as i64, 0, (w84 & 0xffffffff) as i64);
-                        let c324 = x86_64::_mm256_sub_epi8(b32, w32);
+                        let c322 = x86_64::_mm256_sub_epi8(b322, w322);
 
                         let zero = x86_64::_mm256_setzero_si256();
                         // to i16
-                        // 0x0000000000000000777766665555444400000000000000003333222211110000
                         let s321 = x86_64::_mm256_cmpgt_epi8(zero, c321);
+                        // 0x0000000000000000777766665555444400000000000000003333222211110000
                         let c161 = x86_64::_mm256_unpacklo_epi8(c321, s321);
                         // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
+                        let c162 = x86_64::_mm256_unpackhi_epi8(c321, s321);
                         let s322 = x86_64::_mm256_cmpgt_epi8(zero, c322);
-                        let c162 = x86_64::_mm256_unpacklo_epi8(c322, s322);
                         // 0x0000000000000000777766665555444400000000000000003333222211110000
-                        let s323 = x86_64::_mm256_cmpgt_epi8(zero, c323);
-                        let c163 = x86_64::_mm256_unpacklo_epi8(c323, s323);
+                        let c163 = x86_64::_mm256_unpacklo_epi8(c322, s322);
                         // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
-                        let s324 = x86_64::_mm256_cmpgt_epi8(zero, c324);
-                        let c164 = x86_64::_mm256_unpacklo_epi8(c324, s324);
-
-                        // 0x00000000ffeeddcc000000007766554400000000bbaa99880000000033221100
-                        // let b32 = x86_64::_mm256_set_epi64x(
-                        //     (b82 >> 32) as i64, (b81 >> 32) as i64,
-                        //     (b82 & 0xffffffff) as i64, (b81 & 0xffffffff) as i64);
-                        // let w32 = x86_64::_mm256_set_epi64x(
-                        //     (w82 >> 32) as i64, (w81 >> 32) as i64,
-                        //     (w82 & 0xffffffff) as i64, (w81 & 0xffffffff) as i64);
-                        // let b322 = x86_64::_mm256_set_epi64x(
-                        //     (b84 >> 32) as i64, (b83 >> 32) as i64,
-                        //     (b84 & 0xffffffff) as i64, (b83 & 0xffffffff) as i64);
-                        // let w322 = x86_64::_mm256_set_epi64x(
-                        //     (w84 >> 3) as i64, (w83 >> 32) as i64,
-                        //     (w84 & 0xffffffff) as i64, (w83 & 0xffffffff) as i64);
-                        // let c321 = x86_64::_mm256_sub_epi8(b32, w32);
-                        // let c322 = x86_64::_mm256_sub_epi8(b322, w322);
-
-                        // let zero = x86_64::_mm256_setzero_si256();
-                        // to i16
-                        // let s321 = x86_64::_mm256_cmpgt_epi8(zero, c321);
-                        // let s322 = x86_64::_mm256_cmpgt_epi8(zero, c322);
-                        // // 0x0000000000000000777766665555444400000000000000003333222211110000
-                        // let c161 = x86_64::_mm256_unpacklo_epi8(c321, s321);
-                        // // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
-                        // let c162 = x86_64::_mm256_unpackhi_epi8(c321, s321);
-                        // // 0x0000000000000000777766665555444400000000000000003333222211110000
-                        // let c163 = x86_64::_mm256_unpacklo_epi8(c322, s322);
-                        // // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
-                        // let c164 = x86_64::_mm256_unpackhi_epi8(c322, s322);
-
-                        // let eqq = x86_64::_mm256_sub_epi16(c161, c161z);
-                        // let mut buff : [u64 ; 4] = [0 ; 4];
-                        // x86_64::_mm256_store_si256(buff.as_mut_ptr() as *mut x86_64::__m256i, eqq);
-                        // for &bb in buff.iter() {
-                        //     if bb != 0 {
-                        //         panic!("buff : {:?}", buff);
-                        //     }
-                        // }
-                        // let eqq = x86_64::_mm256_sub_epi16(c162, c162z);
-                        // let mut buff : [u64 ; 4] = [0 ; 4];
-                        // x86_64::_mm256_store_si256(buff.as_mut_ptr() as *mut x86_64::__m256i, eqq);
-                        // for &bb in buff.iter() {
-                        //     if bb != 0 {
-                        //         panic!("buff : {:?}", buff);
-                        //     }
-                        // }
+                        let c164 = x86_64::_mm256_unpackhi_epi8(c322, s322);
 
                         // to i32
                         // 0x7777777766666666555555554444444433333333222222221111111100000000
