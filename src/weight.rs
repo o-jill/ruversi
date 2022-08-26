@@ -1069,10 +1069,10 @@ impl Weight {
                         let f83 = x86_64::_mm256_cvtepi32_ps(c83);
                         let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
-                        let x81 = x86_64::_mm256_load_ps(w1[idx..].as_ptr());
-                        let x82 = x86_64::_mm256_load_ps(w1[idx + 8..].as_ptr());
-                        let x83 = x86_64::_mm256_load_ps(w1[idx + 16..].as_ptr());
-                        let x84 = x86_64::_mm256_load_ps(w1[idx + 24..].as_ptr());
+                        let x81 = x86_64::_mm256_loadu_ps(w1[idx..].as_ptr());
+                        let x82 = x86_64::_mm256_loadu_ps(w1[idx + 8..].as_ptr());
+                        let x83 = x86_64::_mm256_loadu_ps(w1[idx + 16..].as_ptr());
+                        let x84 = x86_64::_mm256_loadu_ps(w1[idx + 24..].as_ptr());
 
                         if true {  // fma
                             sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
@@ -1093,7 +1093,7 @@ impl Weight {
                     }
                 }
                 unsafe {
-                    x86_64::_mm256_store_ps(res8, sum8);
+                    x86_64::_mm256_storeu_ps(res8, sum8);
                 }
             }
 
@@ -1913,10 +1913,10 @@ impl Weight {
                         let f83 = x86_64::_mm256_cvtepi32_ps(c83);
                         let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
-                        let x81 = x86_64::_mm256_load_ps(w1[idx..].as_ptr());
-                        let x82 = x86_64::_mm256_load_ps(w1[idx + 8..].as_ptr());
-                        let x83 = x86_64::_mm256_load_ps(w1[idx + 16..].as_ptr());
-                        let x84 = x86_64::_mm256_load_ps(w1[idx + 24..].as_ptr());
+                        let x81 = x86_64::_mm256_loadu_ps(w1[idx..].as_ptr());
+                        let x82 = x86_64::_mm256_loadu_ps(w1[idx + 8..].as_ptr());
+                        let x83 = x86_64::_mm256_loadu_ps(w1[idx + 16..].as_ptr());
+                        let x84 = x86_64::_mm256_loadu_ps(w1[idx + 24..].as_ptr());
 
                         if true {  // fma
                             sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
@@ -1937,7 +1937,7 @@ impl Weight {
                     }
                 }
                 unsafe {
-                    x86_64::_mm256_store_ps(res8, sum8);
+                    x86_64::_mm256_storeu_ps(res8, sum8);
                 }
             }
 
