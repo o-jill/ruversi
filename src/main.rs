@@ -29,7 +29,7 @@ fn trial() {
         let die = Uniform::from(-1..=1);
         let mut rng = rand::thread_rng();
         let mut cells : [i8 ; 64] = [0 ; 64];
-        for i in 0..50 {
+        for _i in 0..50 {
             for c in cells.iter_mut() {
                 *c = die.sample(&mut rng);
             }

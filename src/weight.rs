@@ -1753,7 +1753,6 @@ impl Weight {
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
-        let mut sigmo : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
         let black = ban.black;
         let white = ban.white;
