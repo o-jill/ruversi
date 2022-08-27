@@ -13,7 +13,7 @@ pub const STONE_SENTE : &str = "@@";
 pub const STONE_GOTE : &str = "[]";
 
 pub struct Board {
-    pub cells: Vec<i8>,
+    pub cells: [i8 ; CELL_2D],
     pub teban: i8,
     pub pass: i8,
 }
@@ -21,11 +21,10 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         let mut ret = Board {
-            cells : Vec::new(),
+            cells : [BLANK; CELL_2D],
             teban : SENTE,
             pass : 0,
         };
-        ret.cells.resize(8 * 8, BLANK);
         ret.cells[Board::index(3, 3)] = SENTE;
         ret.cells[Board::index(4, 4)] = SENTE;
         ret.cells[Board::index(3, 4)] = GOTE;
@@ -47,11 +46,10 @@ impl Board {
             _ => { return Err(format!("Invalid teban: {}", elem[1])); }
         }
         let mut ret = Board {
-            cells : Vec::new(),
+            cells : [BLANK; CELL_2D],
             teban : teban,
             pass : 0,
         };
-        ret.cells.resize(CELL_2D, BLANK);
         let mut idx = 0;
         for ch in elem[0].chars() {
             match ch {
@@ -82,7 +80,7 @@ impl Board {
     }
 
     pub fn fromarray(cells : [i8 ; CELL_2D], tbn : i8) -> Board {
-        Board { cells: cells.to_vec(), teban: tbn, pass: 0 }
+        Board { cells: cells, teban: tbn, pass: 0 }
     }
 
     pub fn init() -> Board {
@@ -226,7 +224,7 @@ impl Board {
     }
     pub fn clone(&self) -> Board {
         Board {
-            cells: self.cells.to_vec(), teban: self.teban , pass: self.pass
+            cells: self.cells, teban: self.teban , pass: self.pass
         }
     }
 
