@@ -16,12 +16,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
+    # - name: Build
+    #   run: cargo build --verbose
+    - name: cpu
+      run: cat /proc/cpuinfo
     - name: Run duel
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel
-      run: cargo run --release -- --duel --ev1 evaltable.txt --ev2 evaltable.txt.old | tee > log.txt
+      run: |
+        echo "RUSTFLAGS=\"-C target-cpu=native\"" >> $GITHUB_ENV
+        cargo run --release -- --duel --ev1 evaltable.txt --ev2 evaltable.txt.old | tee > log.txt
     - name: duel result
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel-result

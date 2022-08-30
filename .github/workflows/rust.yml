@@ -21,6 +21,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: cpu
+      run: cat /proc/cpuinfo
     - name: Build
       run: cargo build --verbose
     - name: Run tests
@@ -30,7 +32,9 @@ jobs:
     - name: Run
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaserun
-      run: cargo run --release -- --genkifu ${{ matrix.kifu }}
+      run: |
+        echo "RUSTFLAGS=\"-C target-cpu=native\"" >> $GITHUB_ENV
+        cargo run --release -- --genkifu ${{ matrix.kifu }}
     - name: Learn
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaselearn
