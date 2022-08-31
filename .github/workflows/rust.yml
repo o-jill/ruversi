@@ -33,7 +33,7 @@ jobs:
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaserun
       run: |
-        echo "RUSTFLAGS=\"-C target-cpu=native\"" >> $GITHUB_ENV
+        echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
         cargo run --release -- --genkifu ${{ matrix.kifu }}
     - name: Learn
       continue-on-error: true # とにかくログを保存するとこまで行きたい
