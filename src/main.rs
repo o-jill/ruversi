@@ -402,7 +402,7 @@ fn readeval(path: &str) {
         // println!("read weight for bitboard");
         unsafe {
             match nodebb::WEIGHT.as_mut().unwrap().read(path) {
-                Err(msg) => {println!("{}", msg)},
+                Err(msg) => {panic!("{}", msg)},
                 _ => {}
             }
         }
@@ -410,7 +410,7 @@ fn readeval(path: &str) {
         // println!("read weight for byteboard");
         unsafe {
             match node::WEIGHT.as_mut().unwrap().read(path) {
-                Err(msg) => {println!("{}", msg)},
+                Err(msg) => {panic!("{}", msg)},
                 _ => {}
             }
         }

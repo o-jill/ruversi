@@ -74,7 +74,10 @@ impl Weight {
 
     pub fn read(&mut self, path : &str) -> Result<(), String> {
         let mut format = EvalFile::Unknown;
-        let file = File::open(path).unwrap();
+        let file = File::open(path);
+        if file.is_err() {return Err(file.err().unwrap().to_string());}
+
+        let file = file.unwrap();
         let lines = BufReader::new(file);
         for line in lines.lines() {
             match line {
