@@ -159,7 +159,7 @@ fn verbose(rfen : &str) {
 }
 
 fn gen_kifu(n : Option<usize>) {
-    let ip = initialpos::InitialPos::read("initialpos.txt").unwrap();
+    let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     let rfentbl =
             ip.rfens(&["ZERO", "ONE", "TWO", "TREE", "FOUR", "FIVE", "SIX"]);
 
@@ -297,7 +297,7 @@ fn duel(ev1 : &str, ev2 : &str) {
     let mut result;
     let mut teban;
 
-    let ip = initialpos::InitialPos::read("initialpos.txt").unwrap();
+    let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     let rfentbl = &ip.at("THREE").unwrap().rfens;
     for rfen in rfentbl.iter() {
         if cfg!(feature="bitboard") {
@@ -471,9 +471,12 @@ fn main() {
     // read eval table
     let path = &MYOPT.get().unwrap().evaltable1;
     if path.is_empty() {
-        let path = "./evaltable.txt";
+        let path = "data/evaltable.txt";
         if std::path::Path::new(path).exists() {
             readeval(path);
+        } else {
+            println!("default eval table file was not found!!");
+            println!("random numbers are used as eval table.");
         }
     } else {
         readeval(path);

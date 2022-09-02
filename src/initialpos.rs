@@ -1,6 +1,8 @@
 use std::{fs::File, io::{BufReader, BufRead}};
 // use regex::Regex;
 
+pub const INITIALPOSFILE : &str = "data/initialpos.txt";
+
 pub struct RfenSet {
   tag: String,
   pub rfens: Vec<String>,
@@ -120,7 +122,8 @@ impl InitialPos {
 
 #[test]
 fn testinitpos() {
-    let ip = InitialPos::read("initialpos.txt");
+    let path = format!("{}/{}", env!("CARGO_MANIFEST_DIR"), INITIALPOSFILE);
+    let ip = InitialPos::read(&path);
     assert!(ip.is_ok());
     let ipos = ip.unwrap();
     let tags = ipos.tags();
