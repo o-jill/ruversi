@@ -159,20 +159,24 @@ fn verbose(rfen : &str) {
 }
 
 fn gen_kifu(n : Option<usize>) {
+    let ip = initialpos::InitialPos::read("initialpos.txt").unwrap();
+    let rfentbl =
+            ip.rfens(&["ZERO", "ONE", "TWO", "TREE", "FOUR", "FIVE", "SIX"]);
+
     let grp;
     let rfentbl = if n.is_none() {
         grp = 0;
-        initialpos::RFENTBL.to_vec()
+        &rfentbl
     } else {
         let n = n.unwrap();
         grp = n;
-        let sz = initialpos::RFENTBL.len();
+        let sz = rfentbl.len();
         let b = sz * n / 10;
         let e = sz * (n + 1) / 10;
-        initialpos::RFENTBL[b..e].to_vec()
+        &rfentbl[b..e]
     };
 
-    for (idx, &rfen) in rfentbl.iter().enumerate() {
+    for (idx, rfen) in rfentbl.iter().enumerate() {
         let kifutxt;
         if cfg!(feature="bitboard") {
             // prepare game
@@ -293,8 +297,9 @@ fn duel(ev1 : &str, ev2 : &str) {
     let mut result;
     let mut teban;
 
-    for i in (1 + 4 + 12)..(1 + 4 + 12 + 56) {
-        let rfen = initialpos::RFENTBL[i];
+    let ip = initialpos::InitialPos::read("initialpos.txt").unwrap();
+    let rfentbl = &ip.at("THREE").unwrap().rfens;
+    for rfen in rfentbl.iter() {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
