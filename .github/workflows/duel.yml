@@ -25,7 +25,7 @@ jobs:
       id: duel
       run: |
         echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release -- --duel --ev1 evaltable.txt --ev2 evaltable.txt.old | tee > log.txt
+        cargo run --release -- --duel --ev1 data/evaltable.txt --ev2 data/evaltable.txt.old | tee > log.txt
     - name: duel result
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel-result
