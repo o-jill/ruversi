@@ -161,7 +161,7 @@ fn verbose(rfen : &str) {
 fn gen_kifu(n : Option<usize>) {
     let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     let rfentbl =
-            ip.rfens(&["ZERO", "ONE", "TWO", "TREE", "FOUR", "FIVE", "SIX"]);
+            ip.rfens(&["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"]);
 
     let grp;
     let rfentbl = if n.is_none() {
