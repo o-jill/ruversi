@@ -418,37 +418,71 @@ fn readeval(path: &str) {
 }
 
 fn play(turnh: i8) {
-    // prepare game
-    let mut g = game::Game::new();
-    // play
-    let think = MYOPT.get().unwrap().think.as_str();
-    g.start_against_stdin(
-    match think {
-        "" | "ab" => {
-            node::Node::think_ab
-        },
-        "all" => {
-            node::Node::think
-        },
-        _ => { panic!("unknown thinking method.") }
-    }, 7, turnh).unwrap();
+    if cfg!(feature="bitboard") {
+        // prepare game
+        let mut g = game::GameBB::new();
+        // play
+        let think = MYOPT.get().unwrap().think.as_str();
+        g.start_against_stdin(
+            match think {
+                "" | "ab" => {
+                    nodebb::NodeBB::think_ab
+                },
+                "all" => {
+                    nodebb::NodeBB::think
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, 7, turnh).unwrap();
+    } else {
+        // prepare game
+        let mut g = game::Game::new();
+        // play
+        let think = MYOPT.get().unwrap().think.as_str();
+        g.start_against_stdin(
+            match think {
+                "" | "ab" => {
+                    node::Node::think_ab
+                },
+                "all" => {
+                    node::Node::think
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, 7, turnh).unwrap();
+        }
 }
 
 fn edax(turnh: i8) {
-    // prepare game
-    let mut g = game::Game::new();
-    // play
-    let think = MYOPT.get().unwrap().think.as_str();
-    g.start_against_edax(
-    match think {
-        "" | "ab" => {
-            node::Node::think_ab
-        },
-        "all" => {
-            node::Node::think
-        },
-        _ => { panic!("unknown thinking method.") }
-    }, 7, turnh).unwrap();
+    if cfg!(feature="bitboard") {
+        // prepare game
+        let mut g = game::GameBB::new();
+        // play
+        let think = MYOPT.get().unwrap().think.as_str();
+        g.start_against_edax(
+        match think {
+            "" | "ab" => {
+                nodebb::NodeBB::think_ab
+            },
+            "all" => {
+                nodebb::NodeBB::think
+            },
+            _ => { panic!("unknown thinking method.") }
+        }, 7, turnh).unwrap();
+    } else {
+        // prepare game
+        let mut g = game::Game::new();
+        // play
+        let think = MYOPT.get().unwrap().think.as_str();
+        g.start_against_edax(
+        match think {
+            "" | "ab" => {
+                node::Node::think_ab
+            },
+            "all" => {
+                node::Node::think
+            },
+            _ => { panic!("unknown thinking method.") }
+        }, 7, turnh).unwrap();
+    }
 }
 
 fn main() {
