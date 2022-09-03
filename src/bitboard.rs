@@ -280,6 +280,10 @@ impl BitBoard {
         }
     }
 
+    pub fn nblank(&self) -> u32 {
+        (self.black | self.white).count_zeros()
+    }
+
     fn index(x: usize, y: usize) -> usize {
         x * NUMCELL + y
     }

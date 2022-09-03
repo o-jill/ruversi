@@ -352,6 +352,14 @@ impl NodeBB {
             depth += 1;
             node.depth += 1;
         }
+        let yomikiri = 11;
+        let yose = 18;
+        let nblank = ban.nblank();
+        if nblank <= yomikiri {
+            depth = 1 + yomikiri as usize;
+        } else if nblank <= yose {
+            depth += 2;
+        }
         let n = moves.len();
         // let moves1 = &moves[0..n/2];
         let mut moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());

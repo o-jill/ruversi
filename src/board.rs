@@ -228,6 +228,14 @@ impl Board {
         }
     }
 
+    pub fn nblank(&self) -> u32 {
+        let mut n = 0;
+        for &c in self.cells.iter() {
+            if c == BLANK {n += 1;}
+        }
+        n
+    }
+
     fn index(x: usize, y: usize) -> usize {
         x + y * NUMCELL
     }
