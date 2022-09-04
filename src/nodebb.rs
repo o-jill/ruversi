@@ -352,7 +352,7 @@ impl NodeBB {
             depth += 1;
             node.depth += 1;
         }
-        let yomikiri = 11;
+        let yomikiri = 12;
         let yose = 18;
         let nblank = ban.nblank();
         if nblank <= yomikiri {
