@@ -226,13 +226,13 @@ impl NodeBB {
     pub fn think_internal(node:&mut NodeBB, ban : &bitboard::BitBoard)
             -> Option<f32> {
         let mut depth = node.depth;
+        if ban.nblank() == 0 || ban.is_passpass() {
+            node.kyokumen = 1;
+            return Some(ban.count()  as f32 * 10.0);
+        }
         if depth == 0 {
             node.kyokumen = 1;
             return Some(NodeBB::evaluate(&ban));
-        }
-        if ban.is_passpass() {
-            node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -356,7 +356,7 @@ impl NodeBB {
         let yose = 18;
         let nblank = ban.nblank();
         if nblank <= yomikiri {
-            depth = 1 + yomikiri as usize;
+            depth = yomikiri as usize;
         } else if nblank <= yose {
             depth += 2;
         }
@@ -485,13 +485,13 @@ impl NodeBB {
             tt : &mut transptable::TranspositionTable) -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;
+        if ban.nblank() == 0 || ban.is_passpass() {
+            node.kyokumen = 1;
+            return Some(ban.count()  as f32 * 10.0);
+        }
         if depth == 0 {
             node.kyokumen = 1;
             return Some(NodeBB::evalwtt(&ban, tt));
-        }
-        if ban.is_passpass() {
-            node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -554,13 +554,13 @@ impl NodeBB {
              -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;
+        if ban.nblank() == 0 || ban.is_passpass() {
+            node.kyokumen = 1;
+            return Some(ban.count()  as f32 * 10.0);
+        }
         if depth == 0 {
             node.kyokumen = 1;
             return Some(NodeBB::evaluate(&ban));
-        }
-        if ban.is_passpass() {
-            node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
         }
         let teban = ban.teban;
         // let sum = 0;
