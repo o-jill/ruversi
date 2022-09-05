@@ -543,10 +543,10 @@ impl NodeBB {
         let sub =
                 thread::spawn(move || {
             moves1.sort_by(|a, b| {
-                let ia1 = a.0 + a.1 * 8 - 9;
-                let ia2 = a.2 + a.3 * 8 - 9;
-                let ib1 = b.0 + b.1 * 8 - 9;
-                let ib2 = b.2 + b.3 * 8 - 9;
+                let ia1 = if a.0 == 0 { 0 } else { a.0 + a.1 * 8 - 9 };
+                let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
+                let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
+                let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
                 let pa = SORT_PRI[ia1] * 10 + SORT_PRI[ia2];
                 let pb = SORT_PRI[ib1] * 10 + SORT_PRI[ib2];
                 pa.partial_cmp(&pb).unwrap()
@@ -611,10 +611,10 @@ impl NodeBB {
         });
 
         moves2.sort_by(|a, b| {
-            let ia1 = a.0 + a.1 * 8 - 9;
-            let ia2 = a.2 + a.3 * 8 - 9;
-            let ib1 = b.0 + b.1 * 8 - 9;
-            let ib2 = b.2 + b.3 * 8 - 9;
+            let ia1 = if a.0 == 0 { 0 } else { a.0 + a.1 * 8 - 9 };
+            let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
+            let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
+            let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
             let pa = SORT_PRI[ia1] * 10 + SORT_PRI[ia2];
             let pb = SORT_PRI[ib1] * 10 + SORT_PRI[ib2];
             pa.partial_cmp(&pb).unwrap()
