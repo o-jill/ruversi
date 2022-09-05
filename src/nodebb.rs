@@ -531,6 +531,7 @@ impl NodeBB {
                 },
             }
         }
+        // println!("{:?}", moves);
 
         let n = moves.len();
         // let moves1 = &moves[0..n/2];
@@ -622,6 +623,7 @@ impl NodeBB {
         let mut beta : f32 = 100000.0;
         let teban = ban.teban;
         for mv in moves2 {
+            // println!("{:?}", mv);
             let x1 = mv.0;
             let y1 = mv.1;
             let x2 = mv.2;
@@ -629,13 +631,14 @@ impl NodeBB {
 
             let newban = ban.r#move(x1, y1).unwrap();
             let newban2 = newban.r#move(x2, y2).unwrap();
-
+            // println!("{}", newban2.to_str());
             let idx = node.child.len();
 
             node.child.push(NodeBB::new(x1, y1, depth - 1));
             let mut nd1 = node.child.last_mut().unwrap();
             nd1.child.push(NodeBB::new(x2, y2, depth - 2));
             let mut nd2 = nd1.child.last_mut().unwrap();
+            // println!("lets think! {}{} {}{}", nd1.x, nd1.y, nd2.x, nd2.y);
             let val = if cfg!(feature="withtt") {
                     NodeBB::think_internal_ab_tt(
                         &mut nd2, &newban2, alpha, beta, &mut tt)
@@ -756,6 +759,7 @@ impl NodeBB {
              -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;
+        // println!("d:{}",depth);
         if ban.nblank() == 0 || ban.is_passpass() {
             node.kyokumen = 1;
             return Some(ban.count()  as f32 * 10.0);
