@@ -571,6 +571,7 @@ impl NodeBB {
                 let mut nd1 = node2.child.last_mut().unwrap();
                 nd1.child.push(NodeBB::new(x2, y2, depth - 2));
                 let mut nd2 = nd1.child.last_mut().unwrap();
+
                 let val = if cfg!(feature="withtt") {
                         NodeBB::think_internal_ab_tt(
                             &mut nd2, &newban2, alpha, beta, &mut tt)
@@ -594,12 +595,12 @@ impl NodeBB {
                 }
                 if best.is_none() {
                     node2.best = Some(Best::new(val, x1, y1, teban));
-                    nd1.best = Some(Best::new(val, x2, y2, teban));
                     node2.hyoka = Some(val);
+                    nd1.best = Some(Best::new(val, x2, y2, teban));
                 } else if best.unwrap().hyoka * fteban < val * fteban {
                     node2.best = Some(Best::new(val, x1, y1, teban));
-                    nd1.best = Some(Best::new(val, x2, y2, teban));
                     node2.hyoka = Some(val);
+                    nd1.best = Some(Best::new(val, x2, y2, teban));
                 } else {
                     // node2.child[node.child.len() - 1].as_ref().unwrap().release();
                     node2.child[idx].release();
@@ -755,7 +756,7 @@ impl NodeBB {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn think_internal_ab(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32)
+    pub fn think_internal_ab(node : &mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32)
              -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;
