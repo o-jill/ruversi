@@ -307,7 +307,8 @@ fn duel(ev1 : &str, ev2 : &str) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w1, &w2).unwrap()
+                    g.start_with_2et(nodebb::NodeBB::think_ab_extract2, 7, &w1, &w2).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w1, &w2).unwrap()
                 },
                 "all" => {
                     g.start_with_2et(nodebb::NodeBB::think, 7, &w1, &w2).unwrap()
