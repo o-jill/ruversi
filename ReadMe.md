@@ -56,5 +56,9 @@ NO Warranty.
 * nnv2  
   evaluate with neural network version 2.  
 * (reserved)nnv3  
+* avx  
+  use AVX floating-point SIMD instructions.  
+* bitboard (default)  
+  use bitboard instead of byteboard.  
 
 ---
