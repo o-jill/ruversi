@@ -185,7 +185,10 @@ fn gen_kifu(n : Option<usize>) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.start(nodebb::NodeBB::think_ab, 7).unwrap()
+                    g.start(
+                        nodebb::NodeBB::think_ab_extract2,
+                        // nodebb::NodeBB::think_ab
+                        7).unwrap()
                 },
                 "all" => {
                     g.start(nodebb::NodeBB::think, 7).unwrap()
@@ -307,8 +310,10 @@ fn duel(ev1 : &str, ev2 : &str) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.start_with_2et(nodebb::NodeBB::think_ab_extract2, 7, &w1, &w2).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w1, &w2).unwrap()
+                    g.start_with_2et(
+                        nodebb::NodeBB::think_ab_extract2,
+                        // nodebb::NodeBB::think_ab,
+                        7, &w1, &w2).unwrap()
                 },
                 "all" => {
                     g.start_with_2et(nodebb::NodeBB::think, 7, &w1, &w2).unwrap()
@@ -349,7 +354,8 @@ fn duel(ev1 : &str, ev2 : &str) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
+                    g.start_with_2et(nodebb::NodeBB::think_ab_extract2, 7, &w1, &w2).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
                 },
                 "all" => {
                     g.start_with_2et(nodebb::NodeBB::think, 7, &w2, &w1).unwrap()
@@ -427,7 +433,8 @@ fn play(turnh: i8) {
         g.start_against_stdin(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::think_ab
+                    nodebb::NodeBB::think_ab_extract2
+                    // nodebb::NodeBB::think_ab
                 },
                 "all" => {
                     nodebb::NodeBB::think
@@ -461,7 +468,8 @@ fn edax(turnh: i8) {
         g.start_against_edax(
         match think {
             "" | "ab" => {
-                nodebb::NodeBB::think_ab
+                nodebb::NodeBB::think_ab_extract2
+                // nodebb::NodeBB::think_ab
             },
             "all" => {
                 nodebb::NodeBB::think
