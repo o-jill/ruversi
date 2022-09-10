@@ -490,6 +490,212 @@ impl Node {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
+    pub fn think_ab_extract2(ban : &board::Board, mut depth : usize)
+            -> Option<(f32, Node)> {
+        let mut node = Node::new(0, 0, depth);
+        if depth == 0 {
+            return None;
+        }
+        if ban.is_passpass() {
+            return None;
+        }
+        // let sum = 0;
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            return None;
+        }
+        let mut tt = transptable::TranspositionTable::new();
+        let mut moves1 = moves.unwrap();
+        if moves1.len() == 0 {  // pass
+            moves1.push((0, 0));
+            depth += 1;
+            node.depth += 1;
+        }
+        let yomikiri = 12;
+        let yose = 18;
+        let nblank = ban.nblank();
+        if nblank <= yomikiri {
+            depth = yomikiri as usize;
+        } else if nblank <= yose {
+            depth += 2;
+        }
+
+        let mut moves = Vec::new();
+        for &(a, b) in moves1.iter() {
+            let ban = ban.r#move(a, b).unwrap();
+            match ban.genmove() {
+                None => {
+                    moves.push((a, b, 0, 0));
+                },
+                Some(mvs) => {
+                    if mvs.is_empty() {
+                        moves.push((a, b, 0, 0));
+                    } else {
+                        for &(c, d) in mvs.iter() {
+                            moves.push((a, b, c, d));
+                        }
+                    }
+                },
+            }
+        }
+
+        let n = moves.len();
+        let mut moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());
+        let mut moves2 = Vec::from_iter(moves[n/2..].iter().cloned());
+        let ban2 = ban.clone();
+        let (tx, rx) = mpsc::channel();
+
+        let sub =
+                thread::spawn(move || {
+            moves1.sort_by(|a, b| {
+                let ia1 = if a.0 == 0 { 0 } else { a.0 + a.1 * 8 - 9 };
+                let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
+                let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
+                let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
+                let pa = SORT_PRI[ia1] * 10 + SORT_PRI[ia2];
+                let pb = SORT_PRI[ib1] * 10 + SORT_PRI[ib2];
+                pa.partial_cmp(&pb).unwrap()
+            });
+            let mut tt = transptable::TranspositionTable::new();
+            let teban = ban2.teban;
+            let mut node2 = Node::new(0, 0, depth);
+            let mut alpha : f32 = -100000.0;
+            let mut beta : f32 = 100000.0;
+            for mv in moves1 {
+                let x1 = mv.0;
+                let y1 = mv.1;
+                let x2 = mv.2;
+                let y2 = mv.3;
+
+                let newban = ban2.r#move(x1, y1).unwrap();
+                let newban2 = newban.r#move(x2, y2).unwrap();
+
+                let m = node2.child.iter_mut().find(|a| a.x == x1 && a.y == y1);
+                let mut nd1 =
+                    if m.is_none() {
+                        node2.child.push(Node::new(x1, y1, depth - 1));
+                        node2.child.last_mut().unwrap()
+                    } else {
+                        m.unwrap()
+                    };
+                nd1.child.push(Node::new(x2, y2, depth - 2));
+                let mut nd2 = nd1.child.last_mut().unwrap();
+
+                let val = if cfg!(feature="withtt") {
+                        Node::think_internal_ab_tt(
+                            &mut nd2,
+                            &newban2, alpha, beta, &mut tt)
+                    } else {
+                        Node::think_internal_ab(
+                            &mut nd2,
+                            &newban2, alpha, beta)
+                    };
+
+                nd1.hyoka = val;
+                node2.kyokumen += nd2.kyokumen;
+                let best = node2.best.as_ref();
+                let val = val.unwrap();
+                let fteban = teban as f32;
+                if teban == board::SENTE && alpha < val {
+                    alpha = val;
+                } else if teban == board::GOTE && beta > val {
+                    beta = val;
+                }
+                if best.is_none() {
+                    node2.best = Some(Best::new(val, x1, y1, teban));
+                    node2.hyoka = Some(val);
+                    nd1.best = Some(Best::new(val, x2, y2, teban));
+                } else if best.unwrap().hyoka * fteban < val * fteban {
+                    node2.best = Some(Best::new(val, x1, y1, teban));
+                    node2.hyoka = Some(val);
+                    nd1.best = Some(Best::new(val, x2, y2, teban));
+                } else {
+                    nd2.release();
+                }
+            }
+            // tt.dumpsz();
+            tx.send(node2).unwrap();
+            // return Some(node.best.as_ref().unwrap().hyoka);
+        });
+
+        moves2.sort_by(|a, b| {
+            let ia1 = if a.0 == 0 { 0 } else { a.0 + a.1 * 8 - 9 };
+            let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
+            let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
+            let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
+            let pa = SORT_PRI[ia1] * 10 + SORT_PRI[ia2];
+            let pb = SORT_PRI[ib1] * 10 + SORT_PRI[ib2];
+            pa.partial_cmp(&pb).unwrap()
+        });
+        let mut alpha : f32 = -100000.0;
+        let mut beta : f32 = 100000.0;
+        let teban = ban.teban;
+        for mv in moves2 {
+            let x1 = mv.0;
+            let y1 = mv.1;
+            let x2 = mv.2;
+            let y2 = mv.3;
+
+            let newban = ban.r#move(x1, y1).unwrap();
+            let newban2 = newban.r#move(x2, y2).unwrap();
+
+            let m = node.child.iter_mut().find(|a| a.x == x1 && a.y == y1);
+            let mut nd1;
+            if m.is_none() {
+                node.child.push(Node::new(x1, y1, depth - 1));
+                nd1 = node.child.last_mut().unwrap();
+            } else {
+                nd1 = m.unwrap();
+            }
+            nd1.child.push(Node::new(x2, y2, depth - 2));
+            let mut nd2 = nd1.child.last_mut().unwrap();
+            let val = if cfg!(feature="withtt") {
+                    Node::think_internal_ab_tt(
+                        &mut nd2, &newban2, alpha, beta, &mut tt)
+                } else {
+                    Node::think_internal_ab(
+                        &mut nd2, &newban2, alpha, beta)
+                };
+
+            nd1.hyoka = val;
+            node.kyokumen += nd2.kyokumen;
+            let best = node.best.as_ref();
+            let val = val.unwrap();
+            let fteban = teban as f32;
+            if teban == board::SENTE && alpha < val {
+                alpha = val;
+            } else if teban == board::GOTE && beta > val {
+                beta = val;
+            }
+            if best.is_none() {
+                node.best = Some(Best::new(val, x1, y1, teban));
+                node.hyoka = Some(val);
+                nd1.best = Some(Best::new(val, x2, y2, -teban));
+            } else if best.unwrap().hyoka * fteban < val * fteban {
+                node.best = Some(Best::new(val, x1, y1, teban));
+                node.hyoka = Some(val);
+                nd1.best = Some(Best::new(val, x2, y2, -teban));
+            } else {
+                nd2.release();
+            }
+        }
+        sub.join().unwrap();
+        // tt.dumpsz();
+        let mut subresult = rx.recv().unwrap();
+        if subresult.best.is_none() ||
+            node.best.as_ref().unwrap().hyoka * teban as f32
+                > subresult.best.as_ref().unwrap().hyoka * teban as f32 {
+            node.kyokumen += subresult.kyokumen;
+            // println!("node:{}", node.dump());
+            return Some((node.best.as_ref().unwrap().hyoka, node));
+        }
+        subresult.kyokumen += node.kyokumen;
+        // println!("subresult:{}", subresult.dump());
+        Some((subresult.best.as_ref().unwrap().hyoka, subresult))
+    }
+
     pub fn think_internal_ab_tt(node:&mut Node, ban : &board::Board, alpha : f32, beta : f32,
             tt : &mut transptable::TranspositionTable) -> Option<f32> {
         let mut newalpha = alpha;

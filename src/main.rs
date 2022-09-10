@@ -203,7 +203,8 @@ fn gen_kifu(n : Option<usize>) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.start(node::Node::think_ab, 7).unwrap()
+                    g.start(node::Node::think_ab_extract2, 7).unwrap()
+                    // g.start(node::Node::think_ab, 7).unwrap()
                 },
                 "all" => {
                     g.start(node::Node::think, 7).unwrap()
@@ -326,7 +327,10 @@ fn duel(ev1 : &str, ev2 : &str) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
-            g.start_with_2et(node::Node::think_ab, 7, &w1, &w2).unwrap();
+            g.start_with_2et(
+                node::Node::think_ab_extract2,
+                // node::Node::think_ab,
+                7, &w1, &w2).unwrap();
             let dresult = g.kifu.winner();
             teban = g.kifu.nth(0).teban;
             result = dresult.unwrap();
@@ -368,7 +372,8 @@ fn duel(ev1 : &str, ev2 : &str) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
-            g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
+            g.start_with_2et(node::Node::think_ab_extract2, 7, &w2, &w1).unwrap();
+            // g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
             let dresult = g.kifu.winner();
             teban = g.kifu.nth(1).teban;
             result = dresult.unwrap();
@@ -449,7 +454,8 @@ fn play(turnh: i8) {
         g.start_against_stdin(
             match think {
                 "" | "ab" => {
-                    node::Node::think_ab
+                    node::Node::think_ab_extract2
+                    // node::Node::think_ab
                 },
                 "all" => {
                     node::Node::think
@@ -484,7 +490,8 @@ fn edax(turnh: i8) {
         g.start_against_edax(
         match think {
             "" | "ab" => {
-                node::Node::think_ab
+                node::Node::think_ab_extract2
+                // node::Node::think_ab
             },
             "all" => {
                 node::Node::think
