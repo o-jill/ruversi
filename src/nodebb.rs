@@ -612,7 +612,7 @@ impl NodeBB {
                 if best.is_none() {
                     node2.best = Some(Best::new(val, x1, y1, teban));
                     node2.hyoka = Some(val);
-                    nd1.best = Some(Best::new(val, x2, y2, teban));
+                    nd1.best = Some(Best::new(val, x2, y2, -teban));
                     // node2.child[idx].best = Some(Best::new(val, x2, y2, -teban));
                     // println!("NONE {}", node2.dump());
                     // if node2.best.as_ref().unwrap().x != nd1.x || node2.best.as_ref().unwrap().y != nd1.y {
@@ -623,7 +623,7 @@ impl NodeBB {
                     node2.best = Some(Best::new(val, x1, y1, teban));
                     node2.hyoka = Some(val);
                     // node2.child[idx].best = Some(Best::new(val, x2, y2, -teban));
-                    nd1.best = Some(Best::new(val, x2, y2, teban));
+                    nd1.best = Some(Best::new(val, x2, y2, -teban));
                     // if node2.best.as_ref().unwrap().x != nd1.x || node2.best.as_ref().unwrap().y != nd1.y {
                     //     panic!("node2.best.x != nd1.x || node2.best.y != nd1.y");
                     // }
