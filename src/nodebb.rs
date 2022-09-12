@@ -382,8 +382,7 @@ impl NodeBB {
             let mut alpha : f32 = -100000.0;
             let mut beta : f32 = 100000.0;
             for mv in moves1 {
-                let x = mv.0;
-                let y = mv.1;
+                let (x, y) = mv;
                 let newban = ban2.r#move(x, y).unwrap();
                 let idx = node2.child.len();
                 node2.child.push(NodeBB::new(x, y, depth - 1));
@@ -433,8 +432,7 @@ impl NodeBB {
         let mut beta : f32 = 100000.0;
         let teban = ban.teban;
         for mv in moves2 {
-            let x = mv.0;
-            let y = mv.1;
+            let (x, y) = mv;
             let newban = ban.r#move(x, y).unwrap();
             let idx = node.child.len();
             node.child.push(NodeBB::new(x, y, depth - 1));
@@ -557,50 +555,34 @@ impl NodeBB {
             let mut alpha : f32 = -100000.0;
             let mut beta : f32 = 100000.0;
             for mv in moves1 {
-                let x1 = mv.0;
-                let y1 = mv.1;
-                let x2 = mv.2;
-                let y2 = mv.3;
+                let (x1, y1, x2, y2) = mv;
 
                 let newban = ban2.r#move(x1, y1).unwrap();
                 let newban2 = newban.r#move(x2, y2).unwrap();
 
-                let m = node2.child.iter_mut().find(|a| a.x == x1 && a.y == y1);
-                let mut nd1 =
-                    if m.is_none() {
-                        node2.child.push(NodeBB::new(x1, y1, depth - 1));
-                        node2.child.last_mut().unwrap()
-                    } else {
-                        m.unwrap()
+                let nd1 =
+                    match node2.child.iter_mut().find(
+                        |a| a.x == x1 && a.y == y1) {
+                        None => {
+                            node2.child.push(NodeBB::new(x1, y1, depth - 1));
+                            node2.child.last_mut().unwrap()
+                        },
+                        Some(m) => m
                     };
-                // let idx = node2.child.len() - 1;
-                // node2.child[idx].child.push(NodeBB::new(x2, y2, depth - 2));
                 nd1.child.push(NodeBB::new(x2, y2, depth - 2));
                 let mut nd2 = nd1.child.last_mut().unwrap();
-                // let mut nd2 = node2.child[idx].child.last_mut().unwrap();
 
                 let val = if cfg!(feature="withtt") {
                         NodeBB::think_internal_ab_tt(
-                            &mut nd2,
-                            // &mut node2.child[idx].child[0],
-                            &newban2, alpha, beta, &mut tt)
+                            &mut nd2, &newban2, alpha, beta, &mut tt)
                     } else {
                         NodeBB::think_internal_ab(
-                            &mut nd2,
-                            // &mut node2.child[idx].child[0],
-                            &newban2, alpha, beta)
+                            &mut nd2, &newban2, alpha, beta)
                     };
 
-                // if nd2.best.is_none() {
-                // // if node2.child[idx].child[0].best.is_none() {
-                //     panic!("node2.child[idx].child[0].best.is_none()");
-                // }
-                // let mut nd1 = &mut node2.child[idx];
-                // ch.hyoka = val;
-                // node2.kyokumen += ch.kyokumen;
                 nd1.hyoka = val;
-                // let nd2 = &nd1.child[0];
                 node2.kyokumen += nd2.kyokumen;
+
                 let best = node2.best.as_ref();
                 let val = val.unwrap();
                 let fteban = teban as f32;
@@ -613,45 +595,12 @@ impl NodeBB {
                     node2.best = Some(Best::new(val, x1, y1, teban));
                     node2.hyoka = Some(val);
                     nd1.best = Some(Best::new(val, x2, y2, -teban));
-                    // node2.child[idx].best = Some(Best::new(val, x2, y2, -teban));
-                    // println!("NONE {}", node2.dump());
-                    // if node2.best.as_ref().unwrap().x != nd1.x || node2.best.as_ref().unwrap().y != nd1.y {
-                    //     panic!("node2.best.x != nd1.x || node2.best.y != nd1.y");
-                    // }
                 } else if best.unwrap().hyoka * fteban < val * fteban {
-                    // print!("UPDT {} -> ", node2.dump());
                     node2.best = Some(Best::new(val, x1, y1, teban));
                     node2.hyoka = Some(val);
-                    // node2.child[idx].best = Some(Best::new(val, x2, y2, -teban));
                     nd1.best = Some(Best::new(val, x2, y2, -teban));
-                    // if node2.best.as_ref().unwrap().x != nd1.x || node2.best.as_ref().unwrap().y != nd1.y {
-                    //     panic!("node2.best.x != nd1.x || node2.best.y != nd1.y");
-                    // }
-                    // if nd1.best.as_ref().unwrap().x != nd2.x || nd1.best.as_ref().unwrap().y != nd2.y {
-                    //     panic!("nd1.best.as_ref().unwrap().x != nd2.x || nd1.best.as_ref().unwrap().y != nd2.y");
-                    // }
-                    // print!("{} {}{} {}{} --> ",
-                    //     node2.child[idx].dump(),
-                    //     node2.child[idx].x, node2.child[idx].y,
-                    //     node2.child[idx].child[0].x, node2.child[idx].child[0].y);
-                    // let bd = Best::new(-999999.0,0,0,0);
-                    // let b = node2.child[idx].best.as_ref().unwrap_or(&bd);
-                    // println!("{} {}:{}", b.hyoka, b.x, b.y);
-                    // println!("{} {}:{}{}", node2.dump(), b.hyoka, b.x, b.y);
-
-                    // if node2.child[idx].best.is_none() {
-                    //     panic!("node2.child[idx].best.is_none()");
-                    // }
-                    // if node2.child[idx].child[0].best.is_none() {
-                    //     panic!("-- node2.child[idx].child[0].best.is_none()");
-                    // }
-                    // print!("UPDT {}", node2.dump());
                 } else {
-                    // node2.child[node.child.len() - 1].as_ref().unwrap().release();
-                    // node2.child[idx].child[0].release();
                     nd2.release();
-                    // print!("RELEASE ");
-                    // println!("RELEASE {}", node2.dump());
                 }
             }
             // tt.dumpsz();
@@ -673,26 +622,21 @@ impl NodeBB {
         let teban = ban.teban;
         for mv in moves2 {
             // println!("{:?}", mv);
-            let x1 = mv.0;
-            let y1 = mv.1;
-            let x2 = mv.2;
-            let y2 = mv.3;
+            let (x1, y1, x2, y2) = mv;
 
             let newban = ban.r#move(x1, y1).unwrap();
             let newban2 = newban.r#move(x2, y2).unwrap();
-            // println!("{}", newban2.to_str());
-            // let idx = node.child.len();
 
-            let m = node.child.iter_mut().find(|a| a.x == x1 && a.y == y1);
-            let mut nd1;
-            if m.is_none() {
-                node.child.push(NodeBB::new(x1, y1, depth - 1));
-                nd1 = node.child.last_mut().unwrap();
-            } else {
-                nd1 = m.unwrap();
-            }
-            // node.child.push(NodeBB::new(x1, y1, depth - 1));
-            // let mut nd1 = node.child.last_mut().unwrap();
+            let nd1 =
+                match node.child.iter_mut().find(
+                    |a| a.x == x1 && a.y == y1) {
+                    None => {
+                        node.child.push(NodeBB::new(x1, y1, depth - 1));
+                        node.child.last_mut().unwrap()
+                    },
+                    Some(m) => m
+                };
+
             nd1.child.push(NodeBB::new(x2, y2, depth - 2));
             let mut nd2 = nd1.child.last_mut().unwrap();
             // println!("lets think! {}{} {}{}", nd1.x, nd1.y, nd2.x, nd2.y);
@@ -705,9 +649,6 @@ impl NodeBB {
                         &mut nd2, &newban2, alpha, beta)
                 };
 
-            // let mut ch = &mut node.child[idx];
-            // ch.hyoka = val;
-            // node.kyokumen += ch.kyokumen;
             nd1.hyoka = val;
             node.kyokumen += nd2.kyokumen;
             let best = node.best.as_ref();
@@ -722,15 +663,11 @@ impl NodeBB {
                 node.best = Some(Best::new(val, x1, y1, teban));
                 node.hyoka = Some(val);
                 nd1.best = Some(Best::new(val, x2, y2, -teban));
-                // node.child[idx].best = Some(Best::new(val, x2, y2, -teban));
             } else if best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, x1, y1, teban));
                 node.hyoka = Some(val);
                 nd1.best = Some(Best::new(val, x2, y2, -teban));
-                // node.child[idx].best = Some(Best::new(val, x2, y2, -teban));
             } else {
-                // node.child[node.child.len() - 1].as_ref().unwrap().release();
-                // node.child[idx].release();
                 nd2.release();
             }
         }
