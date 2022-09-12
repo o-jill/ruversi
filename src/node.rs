@@ -391,8 +391,7 @@ impl Node {
             let mut alpha : f32 = -100000.0;
             let mut beta : f32 = 100000.0;
             for mv in moves1 {
-                let x = mv.0;
-                let y = mv.1;
+                let (x, y) = mv;
                 let newban = ban2.r#move(x, y).unwrap();
                 let idx = node2.child.len();
                 node2.child.push(Node::new(x, y, depth - 1));
@@ -442,8 +441,7 @@ impl Node {
         let mut beta : f32 = 100000.0;
         let teban = ban.teban;
         for mv in moves2 {
-            let x = mv.0;
-            let y = mv.1;
+            let (x, y) = mv;
             let newban = ban.r#move(x, y).unwrap();
             let idx = node.child.len();
             node.child.push(Node::new(x, y, depth - 1));
@@ -564,21 +562,17 @@ impl Node {
             let mut alpha : f32 = -100000.0;
             let mut beta : f32 = 100000.0;
             for mv in moves1 {
-                let x1 = mv.0;
-                let y1 = mv.1;
-                let x2 = mv.2;
-                let y2 = mv.3;
-
+                let (x1, y1, x2, y2) = mv;
                 let newban = ban2.r#move(x1, y1).unwrap();
                 let newban2 = newban.r#move(x2, y2).unwrap();
 
-                let m = node2.child.iter_mut().find(|a| a.x == x1 && a.y == y1);
-                let mut nd1 =
-                    if m.is_none() {
-                        node2.child.push(Node::new(x1, y1, depth - 1));
-                        node2.child.last_mut().unwrap()
-                    } else {
-                        m.unwrap()
+                let mut nd1 = match node2.child.iter_mut().find(
+                        |a| a.x == x1 && a.y == y1) {
+                        None => {
+                            node2.child.push(Node::new(x1, y1, depth - 1));
+                            node2.child.last_mut().unwrap()
+                        },
+                        Some(n) => n,
                     };
                 nd1.child.push(Node::new(x2, y2, depth - 2));
                 let mut nd2 = nd1.child.last_mut().unwrap();
@@ -633,22 +627,18 @@ impl Node {
         let mut beta : f32 = 100000.0;
         let teban = ban.teban;
         for mv in moves2 {
-            let x1 = mv.0;
-            let y1 = mv.1;
-            let x2 = mv.2;
-            let y2 = mv.3;
-
+            let (x1, y1, x2, y2) = mv;
             let newban = ban.r#move(x1, y1).unwrap();
             let newban2 = newban.r#move(x2, y2).unwrap();
 
-            let m = node.child.iter_mut().find(|a| a.x == x1 && a.y == y1);
-            let mut nd1;
-            if m.is_none() {
-                node.child.push(Node::new(x1, y1, depth - 1));
-                nd1 = node.child.last_mut().unwrap();
-            } else {
-                nd1 = m.unwrap();
-            }
+            let mut nd1 = match node.child.iter_mut().find(
+                    |a| a.x == x1 && a.y == y1) {
+                    None => {
+                        node.child.push(Node::new(x1, y1, depth - 1));
+                        node.child.last_mut().unwrap()
+                    },
+                    Some(n) => n,
+                };
             nd1.child.push(Node::new(x2, y2, depth - 2));
             let mut nd2 = nd1.child.last_mut().unwrap();
             let val = if cfg!(feature="withtt") {
