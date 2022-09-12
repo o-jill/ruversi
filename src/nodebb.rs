@@ -759,7 +759,7 @@ impl NodeBB {
         let mut moves2 = Vec::from_iter(moves[n/2..].iter().cloned());
         let ban2 = ban.clone();
         let (tx, rx) = mpsc::channel();
-let nmvs2 = moves1.len();
+
         let sub =
                 thread::spawn(move || {
             moves1.sort_by(|a, b| {
