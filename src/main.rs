@@ -312,6 +312,7 @@ fn duel(ev1 : &str, ev2 : &str) {
             match think {
                 "" | "ab" => {
                     g.start_with_2et(
+                        // nodebb::NodeBB::think_ab_extract3,
                         nodebb::NodeBB::think_ab_extract2,
                         // nodebb::NodeBB::think_ab,
                         7, &w1, &w2).unwrap()

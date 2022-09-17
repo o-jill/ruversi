@@ -450,6 +450,7 @@ impl NodeBB {
             let best = node.best.as_ref();
             let val = val.unwrap();
             let fteban = teban as f32;
+            println!("val:{}, a:{}, b:{}", val, alpha, beta);
             if teban == board::SENTE && alpha < val {
                 alpha = val;
             } else if teban == board::GOTE && beta > val {
@@ -577,11 +578,57 @@ impl NodeBB {
                             &mut nd2, &newban2, alpha, beta, &mut tt)
                     } else {
                         NodeBB::think_internal_ab(
-                            &mut nd2, &newban2, alpha, beta)
+                            &mut nd2, &newban2, -beta, -alpha)
+                            // &mut nd2, &newban2, alpha, beta)
                     };
 
-                nd1.hyoka = val;
                 node2.kyokumen += nd2.kyokumen;
+        if true {  // ---------------
+                nd2.hyoka = val;
+                let best = nd1.best.as_ref();
+                let val = val.unwrap();
+                let teban2 = newban.teban;
+                let fteban2 = teban2 as f32;
+                println!("val:{}, a:{}, b:{}", val, alpha, beta);
+                if teban2 == board::SENTE && -beta < val {
+                    beta = -val;
+                } else if teban2 == board::GOTE && -alpha > val {
+                    alpha = -val;
+                }
+                // if teban2 == board::SENTE && alpha < val {
+                //     alpha = val;
+                // } else if teban2 == board::GOTE && beta > val {
+                //     beta = val;
+                // }
+                if best.is_none() {
+                    nd1.best = Some(Best::new(val, x2, y2, teban2));
+                    nd1.hyoka = Some(val);
+                } else if best.unwrap().hyoka * fteban2 < val * fteban2 {
+                    nd1.best = Some(Best::new(val, x2, y2, teban2));
+                    nd1.hyoka = Some(val);
+                } else {
+                    nd2.release();
+                    continue;
+                }
+                let best = node2.best.as_ref();
+                let fteban = teban as f32;
+                if teban == board::SENTE && alpha < val {
+                    alpha = val;
+                } else if teban == board::GOTE && beta > val {
+                    beta = val;
+                }
+                if best.is_none() {
+                    node2.best = Some(Best::new(val, x1, y1, teban));
+                    node2.hyoka = Some(val);
+                } else if best.unwrap().hyoka * fteban < val * fteban {
+                    node2.best = Some(Best::new(val, x1, y1, teban));
+                    node2.hyoka = Some(val);
+                } else {
+                    // nd2.release();
+                }
+                // if alpha >= beta {break;}
+        } else {
+                nd1.hyoka = val;
 
                 let best = node2.best.as_ref();
                 let val = val.unwrap();
@@ -602,6 +649,7 @@ impl NodeBB {
                 } else {
                     nd2.release();
                 }
+        }
             }
             // tt.dumpsz();
             tx.send(node2).unwrap();
@@ -646,14 +694,56 @@ impl NodeBB {
                 } else {
                     NodeBB::think_internal_ab(
                         // &mut node.child[idx], &newban2, alpha, beta)
-                        &mut nd2, &newban2, alpha, beta)
+                        &mut nd2, &newban2, -beta, -alpha)
+                        // &mut nd2, &newban2, alpha, beta)
                 };
 
-            nd1.hyoka = val;
             node.kyokumen += nd2.kyokumen;
+if true {  // ---------------
+            nd2.hyoka = val;
+            let best = nd1.best.as_ref();
+            let val = val.unwrap();
+            let teban2 = newban.teban;
+            let fteban2 = teban2 as f32;
+            // println!("val:{}, a:{}, b:{}", val, alpha, beta);
+            if teban2 == board::SENTE && alpha < val {
+                alpha = val;
+            } else if teban2 == board::GOTE && beta > val {
+                beta = val;
+            }
+            if best.is_none() {
+                nd1.best = Some(Best::new(val, x2, y2, teban2));
+                nd1.hyoka = Some(val);
+            } else if best.unwrap().hyoka * fteban2 < val * fteban2 {
+                nd1.best = Some(Best::new(val, x2, y2, teban2));
+                nd1.hyoka = Some(val);
+            } else {
+                nd2.release();
+                continue;
+            }
+            let best = node.best.as_ref();
+            let fteban = teban as f32;
+            if teban == board::SENTE && alpha < val {
+                alpha = val;
+            } else if teban == board::GOTE && beta > val {
+                beta = val;
+            }
+            if best.is_none() {
+                node.best = Some(Best::new(val, x1, y1, teban));
+                node.hyoka = Some(val);
+            } else if best.unwrap().hyoka * fteban < val * fteban {
+                node.best = Some(Best::new(val, x1, y1, teban));
+                node.hyoka = Some(val);
+            } else {
+                // nd2.release();
+            }
+            if alpha > beta {break;}
+} else {
+            nd1.hyoka = val;
             let best = node.best.as_ref();
             let val = val.unwrap();
             let fteban = teban as f32;
+            println!("val:{}, a:{}, b:{}", val, alpha, beta);
             if teban == board::SENTE && alpha < val {
                 alpha = val;
             } else if teban == board::GOTE && beta > val {
@@ -670,13 +760,28 @@ impl NodeBB {
             } else {
                 nd2.release();
             }
+}
         }
         sub.join().unwrap();
         // tt.dumpsz();
         let mut subresult = rx.recv().unwrap();
-        if subresult.best.is_none() ||
-            node.best.as_ref().unwrap().hyoka * teban as f32
-                > subresult.best.as_ref().unwrap().hyoka * teban as f32 {
+        println!("node:{}", node.dump());
+        println!("subr:{}", subresult.dump());
+        if subresult.best.is_none() {
+            node.kyokumen += subresult.kyokumen;
+            // println!("node:{}", node.dump());
+            return Some((node.best.as_ref().unwrap().hyoka, node));
+        }
+        let nb = node.best.as_ref().unwrap();
+        let sb = subresult.best.as_ref().unwrap();
+        let fteban = teban as f32;
+        if nb.x == sb.x && nb.y == sb.y {
+            if nb.hyoka * fteban < sb.hyoka * fteban {
+                node.kyokumen += subresult.kyokumen;
+                // println!("node:{}", node.dump());
+                return Some((node.best.as_ref().unwrap().hyoka, node));
+            }
+        } else if nb.hyoka * fteban > sb.hyoka * fteban {
             node.kyokumen += subresult.kyokumen;
             // println!("node:{}", node.dump());
             return Some((node.best.as_ref().unwrap().hyoka, node));
@@ -922,6 +1027,8 @@ impl NodeBB {
         sub.join().unwrap();
         // tt.dumpsz();
         let mut subresult = rx.recv().unwrap();
+        println!("node:{}", node.dump());
+        println!("subr:{}", subresult.dump());
         if subresult.best.is_none() ||
             node.best.as_ref().unwrap().hyoka * teban as f32
                 > subresult.best.as_ref().unwrap().hyoka * teban as f32 {
