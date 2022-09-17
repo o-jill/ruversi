@@ -11,6 +11,25 @@ const SORT_PRI : [i32 ; 64]= [
     0, 3, 1, 2, 2, 1, 3, 0,
 ];
 
+fn move_priority(&(x, y) : &(usize, usize)) -> i32 {
+    let idx = if x == 0 || y == 0 {0} else {x + y * 8 - 9};
+    SORT_PRI[idx]
+}
+
+fn move_priority2(&(x1, y1, x2, y2) : &(usize, usize, usize, usize)) -> i32 {
+    let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
+    let idx2 = if x2 == 0 || y2 == 0 {0} else {x2 + y2 * 8 - 9};
+    SORT_PRI[idx1] * 10 + SORT_PRI[idx2]
+}
+
+fn move_priority3(&(x1, y1, x2, y2, x3, y3)
+        : &(usize, usize, usize, usize, usize, usize)) -> i32 {
+    let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
+    let idx2 = if x2 == 0 || y2 == 0 {0} else {x2 + y2 * 8 - 9};
+    let idx3 = if x3 == 0 || y3 == 0 {0} else {x3 + y3 * 8 - 9};
+    SORT_PRI[idx1] * 100 + SORT_PRI[idx2] * 10 + SORT_PRI[idx3]
+}
+
 static mut INITIALIZED : bool = false;
 
 /*
@@ -370,10 +389,8 @@ impl NodeBB {
         let sub =
                 thread::spawn(move || {
             moves1.sort_by(|a, b| {
-                let ia = a.0 + a.1 * 8 - 9;
-                let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = move_priority(&a);
+                let pb = move_priority(&b);
                 pa.partial_cmp(&pb).unwrap()
             });
             let mut tt = transptable::TranspositionTable::new();
@@ -422,10 +439,8 @@ impl NodeBB {
         });
 
         moves2.sort_by(|a, b| {
-            let ia = a.0 + a.1 * 8 - 9;
-            let ib = b.0 + b.1 * 8 - 9;
-            let pa = SORT_PRI[ia];
-            let pb = SORT_PRI[ib];
+            let pa = move_priority(&a);
+            let pb = move_priority(&b);
             pa.partial_cmp(&pb).unwrap()
         });
         let mut alpha : f32 = -100000.0;
@@ -542,12 +557,8 @@ impl NodeBB {
         let sub =
                 thread::spawn(move || {
             moves1.sort_by(|a, b| {
-                let ia1 = if a.0 == 0 { 0 } else { a.0 + a.1 * 8 - 9 };
-                let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
-                let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
-                let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
-                let pa = SORT_PRI[ia1] * 10 + SORT_PRI[ia2];
-                let pb = SORT_PRI[ib1] * 10 + SORT_PRI[ib2];
+                let pa = move_priority2(&a);
+                let pb = move_priority2(&b);
                 pa.partial_cmp(&pb).unwrap()
             });
             let mut tt = transptable::TranspositionTable::new();
@@ -657,12 +668,8 @@ impl NodeBB {
         });
 
         moves2.sort_by(|a, b| {
-            let ia1 = if a.0 == 0 { 0 } else { a.0 + a.1 * 8 - 9 };
-            let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
-            let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
-            let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
-            let pa = SORT_PRI[ia1] * 10 + SORT_PRI[ia2];
-            let pb = SORT_PRI[ib1] * 10 + SORT_PRI[ib2];
+            let pa = move_priority2(&a);
+            let pb = move_priority2(&b);
             pa.partial_cmp(&pb).unwrap()
         });
         let mut alpha : f32 = -100000.0;
@@ -868,14 +875,8 @@ if true {  // ---------------
         let sub =
                 thread::spawn(move || {
             moves1.sort_by(|a, b| {
-                let ia1 = if a.0 == 0 { 0 } else { a.0 + a.1 * 8 - 9 };
-                let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
-                let ia3 = if a.4 == 0 { 0 } else { a.4 + a.5 * 8 - 9 };
-                let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
-                let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
-                let ib3 = if b.4 == 0 { 0 } else { b.4 + b.5 * 8 - 9 };
-                let pa = SORT_PRI[ia1] * 100 + SORT_PRI[ia2] * 10 + SORT_PRI[ia3];
-                let pb = SORT_PRI[ib1] * 100 + SORT_PRI[ib2] * 10 + SORT_PRI[ib3];
+                let pa = move_priority3(&a);
+                let pb = move_priority3(&b);
                 pa.partial_cmp(&pb).unwrap()
             });
             let mut tt = transptable::TranspositionTable::new();
@@ -949,14 +950,8 @@ if true {  // ---------------
             // return Some(node.best.as_ref().unwrap().hyoka);
         });
         moves2.sort_by(|a, b| {
-            let ia1 = if a.0 == 0 { 0 } else { a.0 + a.1 * 8 - 9 };
-            let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
-            let ia3 = if a.4 == 0 { 0 } else { a.4 + a.5 * 8 - 9 };
-            let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
-            let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
-            let ib3 = if b.4 == 0 { 0 } else { b.4 + b.5 * 8 - 9 };
-            let pa = SORT_PRI[ia1] * 100 + SORT_PRI[ia2] * 10 + SORT_PRI[ia3];
-            let pb = SORT_PRI[ib1] * 100 + SORT_PRI[ib2] * 10 + SORT_PRI[ib3];
+            let pa = move_priority3(&a);
+            let pb = move_priority3(&b);
             pa.partial_cmp(&pb).unwrap()
         });
         let mut alpha : f32 = -100000.0;
@@ -1068,10 +1063,8 @@ if true {  // ---------------
             depth += 1;
         } else {
             moves.sort_by(|a, b| {
-                let ia = a.0 + a.1 * 8 - 9;
-                let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = move_priority(&a);
+                let pb = move_priority(&b);
                 pa.partial_cmp(&pb).unwrap()
             });
         }
@@ -1138,10 +1131,8 @@ if true {  // ---------------
             depth += 1;
         } else {
             moves.sort_by(|a, b| {
-                let ia = a.0 + a.1 * 8 - 9;
-                let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = move_priority(&a);
+                let pb = move_priority(&b);
                 pa.partial_cmp(&pb).unwrap()
             });
         }
@@ -1204,10 +1195,8 @@ if true {  // ---------------
             println!("pass");
         } else {
             moves.sort_by(|a, b| {
-                let ia = a.0 + a.1 * 8 - 9;
-                let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = move_priority(&a);
+                let pb = move_priority(&b);
                 pa.partial_cmp(&pb).unwrap()
             });
         }
@@ -1278,10 +1267,8 @@ if true {  // ---------------
             moves.push((0, 0));
         } else {
             moves.sort_by(|a, b| {
-                let ia = a.0 + a.1 * 8 - 9;
-                let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = move_priority(&a);
+                let pb = move_priority(&b);
                 pa.partial_cmp(&pb).unwrap()
             });
         }
