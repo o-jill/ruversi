@@ -1076,7 +1076,7 @@ if true {  // ---------------
             let idx = node.child.len();
             node.child.push(NodeBB::new(x, y, depth - 1));
             let val = NodeBB::think_internal_ab_tt(
-                &mut node.child[idx], &newban, -beta, -neqwalpha, tt);
+                &mut node.child[idx], &newban, -beta, -newalpha, tt);
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
