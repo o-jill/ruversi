@@ -465,7 +465,7 @@ impl NodeBB {
             let best = node.best.as_ref();
             let val = val.unwrap();
             let fteban = teban as f32;
-            println!("val:{}, a:{}, b:{}", val, alpha, beta);
+            // println!("val:{}, a:{}, b:{}", val, alpha, beta);
             if teban == board::SENTE && alpha < val {
                 alpha = val;
             } else if teban == board::GOTE && beta > val {
@@ -1076,7 +1076,7 @@ if true {  // ---------------
             let idx = node.child.len();
             node.child.push(NodeBB::new(x, y, depth - 1));
             let val = NodeBB::think_internal_ab_tt(
-                &mut node.child[idx], &newban, -beta, -alpha, tt);
+                &mut node.child[idx], &newban, -beta, -neqwalpha, tt);
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
@@ -1144,7 +1144,7 @@ if true {  // ---------------
             let idx = node.child.len();
             node.child.push(NodeBB::new(x, y, depth - 1));
             let val = NodeBB::think_internal_ab(
-                &mut node.child[idx], &newban, -beta, -alpha);
+                &mut node.child[idx], &newban, -beta, -newalpha);
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
