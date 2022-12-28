@@ -28,7 +28,7 @@ impl GameBB {
         }
     }
 
-    pub fn start(&mut self, f : fn(&bitboard::BitBoard, usize) -> Option<(f32, nodebb::NodeBB)>, depth : usize)
+    pub fn start(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>, depth : u8)
             -> Result<(), String> {
         loop {
             // show
@@ -51,7 +51,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x, y, teban, rfen);
+            self.kifu.append(x as usize, y as usize, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -72,7 +72,9 @@ impl GameBB {
         Ok(())
     }
 
-    pub fn start_against_stdin(&mut self, f : fn(&bitboard::BitBoard, usize) -> Option<(f32, nodebb::NodeBB)>, depth : usize, turnin : i8) -> Result<(), String> {
+    pub fn start_against_stdin(&mut self,
+            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>,
+            depth : u8, turnin : i8) -> Result<(), String> {
         loop {
             let x;
             let y;
@@ -91,21 +93,21 @@ impl GameBB {
                         let mut txt = String::new();
                         io::stdin().read_line(&mut txt).unwrap();
                         txt.pop();
-                        let xx = "0abcdefgh".find(txt.chars().nth(0).unwrap()).unwrap_or(10);
+                        let xx = "0abcdefgh".find(txt.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                         let yy = txt.chars().nth(1).unwrap().to_digit(10);
                         if yy.is_none() {
                             println!("invalid position : {}", txt);
                             continue;
                         }
-                        let yy = yy.unwrap();
+                        let yy = yy.unwrap() as u8;
                         if xx > 8 || yy > 8 {
                             println!("invalid position : {}", txt);
                             continue;
                         }
-                        let pos = (xx, yy as usize);
+                        let pos = (xx, yy);
                         if movable.contains(&pos) {
                             x = xx;
-                            y = yy as usize;
+                            y = yy;
                             break;
                         }
                         println!("{} is not allowed.", txt);
@@ -131,7 +133,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x, y, teban, rfen);
+            self.kifu.append(x as usize, y as usize, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -152,8 +154,9 @@ impl GameBB {
         Ok(())
     }
 
-    pub fn start_against_edax(&mut self, f : fn(&bitboard::BitBoard, usize) -> Option<(f32, nodebb::NodeBB)>, depth : usize, turnin : i8)
-            -> Result<(), String> {
+    pub fn start_against_edax(&mut self,
+            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>,
+            depth : u8, turnin : i8) -> Result<(), String> {
         loop {
             let x;
             let y;
@@ -201,8 +204,8 @@ impl GameBB {
 
                     // println!("{}{} from EDAX:{}", xtxt, ytxt, lines[2]);
 
-                    x = "0abcdefgh".find(xtxt).unwrap_or(10);
-                    y = ytxt.to_digit(10).unwrap() as usize;
+                    x = "0abcdefgh".find(xtxt).unwrap_or(10) as u8;
+                    y = ytxt.to_digit(10).unwrap() as u8;
             }
            } else {
                 println!("{}", self.ban.to_str());
@@ -222,7 +225,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x, y, teban, rfen);
+            self.kifu.append(x as usize, y as usize, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -244,8 +247,8 @@ impl GameBB {
     }
 
     pub fn start_with_2et(&mut self,
-            f : fn(&bitboard::BitBoard, usize) -> Option<(f32, nodebb::NodeBB)>,
-            depth : usize, et1 : &weight::Weight, et2 : &weight::Weight)
+            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>,
+            depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
                 -> Result<(), String> {
         loop {
             // show
@@ -278,7 +281,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x, y, teban, rfen);
+            self.kifu.append(x as usize, y as usize, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {

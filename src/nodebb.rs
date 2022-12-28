@@ -11,23 +11,24 @@ const SORT_PRI : [i32 ; 64]= [
     0, 3, 1, 2, 2, 1, 3, 0,
 ];
 
-fn move_priority(&(x, y) : &(usize, usize)) -> i32 {
+fn move_priority(&(x, y) : &(u8, u8)) -> i32 {
     let idx = if x == 0 || y == 0 {0} else {x + y * 8 - 9};
-    SORT_PRI[idx]
+    SORT_PRI[idx as usize]
 }
 
-fn move_priority2(&(x1, y1, x2, y2) : &(usize, usize, usize, usize)) -> i32 {
+fn move_priority2(&(x1, y1, x2, y2) : &(u8, u8, u8, u8)) -> i32 {
     let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
     let idx2 = if x2 == 0 || y2 == 0 {0} else {x2 + y2 * 8 - 9};
-    SORT_PRI[idx1] * 10 + SORT_PRI[idx2]
+    SORT_PRI[idx1 as usize] * 10 + SORT_PRI[idx2 as usize]
 }
 
 fn move_priority3(&(x1, y1, x2, y2, x3, y3)
-        : &(usize, usize, usize, usize, usize, usize)) -> i32 {
+        : &(u8, u8, u8, u8, u8, u8)) -> i32 {
     let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
     let idx2 = if x2 == 0 || y2 == 0 {0} else {x2 + y2 * 8 - 9};
     let idx3 = if x3 == 0 || y3 == 0 {0} else {x3 + y3 * 8 - 9};
-    SORT_PRI[idx1] * 100 + SORT_PRI[idx2] * 10 + SORT_PRI[idx3]
+    SORT_PRI[idx1 as usize] * 100 + SORT_PRI[idx2 as usize] * 10
+        + SORT_PRI[idx3 as usize]
 }
 
 static mut INITIALIZED : bool = false;
@@ -42,13 +43,13 @@ pub static mut WEIGHT : Option<weight::Weight> = None;
 
 pub struct Best {
     pub hyoka : f32,
-    pub x : usize,
-    pub y : usize,
+    pub x : u8,
+    pub y : u8,
     pub teban : i8,
 }
 
 impl Best {
-    pub fn new(h : f32, x : usize, y : usize, t : i8) -> Best {
+    pub fn new(h : f32, x : u8, y : u8, t : i8) -> Best {
         Best { hyoka: h, x: x, y: y, teban: t }
     }
 
@@ -59,7 +60,7 @@ impl Best {
             } else {
                 board::STONE_GOTE
             },
-            board::STR_GOTE.chars().nth(self.x).unwrap(), self.y)
+            board::STR_GOTE.chars().nth(self.x as usize).unwrap(), self.y)
     }
 
     #[allow(dead_code)]
@@ -73,9 +74,9 @@ pub struct NodeBB {
     hyoka : Option<f32>,
     pub kyokumen : usize,
     pub best : Option<Best>,
-    pub x : usize,
-    pub y : usize,
-    depth : usize,
+    pub x : u8,
+    pub y : u8,
+    depth : u8,
 }
 
 pub fn init_weight() {
@@ -96,7 +97,7 @@ pub fn init_weight() {
 }
 
 impl NodeBB {
-    pub fn new(x : usize, y : usize, depth : usize) -> NodeBB {
+    pub fn new(x : u8, y : u8, depth : u8) -> NodeBB {
         NodeBB {
             child : Vec::<NodeBB>::new(),
             hyoka : None,
@@ -125,7 +126,7 @@ impl NodeBB {
         tt.check_or_append(&id, || NodeBB::evaluate(ban))
     }
 
-    pub fn think(ban : &bitboard::BitBoard, mut depth : usize)
+    pub fn think(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
         if depth == 0 {
@@ -348,7 +349,7 @@ impl NodeBB {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn think_ab(ban : &bitboard::BitBoard, mut depth : usize)
+    pub fn think_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
         if depth == 0 {
@@ -375,7 +376,7 @@ impl NodeBB {
         let yose = 18;
         let nblank = ban.nblank();
         if nblank <= yomikiri {
-            depth = yomikiri as usize;
+            depth = yomikiri as u8;
         } else if nblank <= yose {
             depth += 2;
         }
@@ -495,7 +496,7 @@ impl NodeBB {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
-    pub fn think_ab_extract2(ban : &bitboard::BitBoard, mut depth : usize)
+    pub fn think_ab_extract2(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
         if depth == 0 {
@@ -522,7 +523,7 @@ impl NodeBB {
         let yose = 18;
         let nblank = ban.nblank();
         if nblank <= yomikiri {
-            depth = yomikiri as usize;
+            depth = yomikiri as u8;
         } else if nblank <= yose {
             depth += 2;
         }
@@ -798,7 +799,7 @@ if true {  // ---------------
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
-    pub fn think_ab_extract3(ban : &bitboard::BitBoard, mut depth : usize)
+    pub fn think_ab_extract3(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
         if depth == 0 {
@@ -825,7 +826,7 @@ if true {  // ---------------
         let yose = 18;
         let nblank = ban.nblank();
         if nblank <= yomikiri {
-            depth = yomikiri as usize;
+            depth = yomikiri as u8;
         } else if nblank <= yose {
             depth += 2;
         }
@@ -1171,7 +1172,7 @@ if true {  // ---------------
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn vb_think_ab(ban : &bitboard::BitBoard, mut depth : usize)
+    pub fn vb_think_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
         if depth == 0 {

@@ -288,16 +288,16 @@ impl BitBoard {
         x * NUMCELL + y
     }
 
-    pub fn at(&self, x: usize, y: usize) -> i8 {
-        let bit : u64 = LSB_CELL << BitBoard::index(x, y);
+    pub fn at(&self, x: u8, y: u8) -> i8 {
+        let bit : u64 = LSB_CELL << BitBoard::index(x as usize, y as usize);
         let cb = (bit & self.black) != 0;
         let cw = (bit & self.white) != 0;
 
         if cb {SENTE} else if cw {GOTE} else {BLANK}
     }
 
-    pub fn set(&mut self, x : usize, y : usize) {
-        let bit = LSB_CELL << BitBoard::index(x, y);
+    pub fn set(&mut self, x : u8, y : u8) {
+        let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
         let mask = !bit;
         if self.teban == SENTE {
             self.black |= bit;
@@ -620,7 +620,7 @@ impl BitBoard {
      * @param x 0 : pass, 1 ~ 8 : column index.
      * @param y 0 : pass, 1 ~ 8 : row index.
      */
-    pub fn r#move(&self, x : usize, y : usize) -> Result<BitBoard, &str> {
+    pub fn r#move(&self, x : u8, y : u8) -> Result<BitBoard, &str> {
         if x == 0 && y == 0 {  // pass
             let mut ban = self.clone();
             ban.pass();
@@ -634,15 +634,15 @@ impl BitBoard {
         }
         let mut ban = self.clone();
         // ban.set(xc, yc);
-        ban.reverse(xc, yc);
+        ban.reverse(xc as usize, yc as usize);
         ban.flipturn();
         ban.resetpass();
 
         Ok(ban)
     }
 
-    pub fn genmove(&self) -> Option<Vec<(usize, usize)>> {
-        let mut ret = Vec::<(usize, usize)>::new();
+    pub fn genmove(&self) -> Option<Vec<(u8, u8)>> {
+        let mut ret = Vec::<(u8, u8)>::new();
         let mut nblank = 0;
         let black = self.black;
         let white = self.white;
@@ -657,7 +657,7 @@ impl BitBoard {
                 }
                 nblank += 1;
                 if self.checkreverse(x, y) {
-                    ret.push((x + 1, y + 1));
+                    ret.push((x as u8 + 1, y as u8 + 1));
                 }
             }
         }
