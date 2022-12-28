@@ -23,13 +23,13 @@ pub static mut WEIGHT : Option<weight::Weight> = None;
 
 pub struct Best {
     pub hyoka : f32,
-    pub x : usize,
-    pub y : usize,
+    pub x : u8,
+    pub y : u8,
     pub teban : i8,
 }
 
 impl Best {
-    pub fn new(h : f32, x : usize, y : usize, t : i8) -> Best {
+    pub fn new(h : f32, x : u8, y : u8, t : i8) -> Best {
         Best { hyoka: h, x: x, y: y, teban: t }
     }
 
@@ -40,7 +40,7 @@ impl Best {
             } else {
                 board::STONE_GOTE
             },
-            board::STR_GOTE.chars().nth(self.x).unwrap(), self.y)
+            board::STR_GOTE.chars().nth(self.x as usize).unwrap(), self.y)
     }
 
     #[allow(dead_code)]
@@ -54,9 +54,9 @@ pub struct Node {
     hyoka : Option<f32>,
     pub kyokumen : usize,
     pub best : Option<Best>,
-    pub x : usize,
-    pub y : usize,
-    depth : usize,
+    pub x : u8,
+    pub y : u8,
+    depth : u8,
 }
 
 pub fn init_weight() {
@@ -77,7 +77,7 @@ pub fn init_weight() {
 }
 
 impl Node {
-    pub fn new(x : usize, y : usize, depth : usize) -> Node {
+    pub fn new(x : u8, y : u8, depth : u8) -> Node {
         Node {
             child : Vec::<Node>::new(),
             hyoka : None,
@@ -118,7 +118,7 @@ impl Node {
         tt.check_or_append(&id, || Node::evaluate(ban))
     }
 
-    pub fn think(ban : &board::Board, mut depth : usize) -> Option<(f32,Node)> {
+    pub fn think(ban : &board::Board, mut depth : u8) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth);
         if depth == 0 {
             return None;
@@ -339,7 +339,7 @@ impl Node {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn think_ab(ban : &board::Board, mut depth : usize) -> Option<(f32,Node)> {
+    pub fn think_ab(ban : &board::Board, mut depth : u8) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth);
         if depth == 0 {
             return None;
@@ -365,7 +365,7 @@ impl Node {
         let yose = 18;
         let nblank = ban.nblank();
         if nblank <= yomikiri {
-            depth = yomikiri as usize;
+            depth = yomikiri as u8;
         } else if nblank <= yose {
             depth += 2;
         }
@@ -381,8 +381,8 @@ impl Node {
             moves1.sort_by(|a, b| {
                 let ia = a.0 + a.1 * 8 - 9;
                 let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = SORT_PRI[ia as usize];
+                let pb = SORT_PRI[ib as usize];
                 pa.partial_cmp(&pb).unwrap()
             });
             let mut tt = transptable::TranspositionTable::new();
@@ -433,8 +433,8 @@ impl Node {
         moves2.sort_by(|a, b| {
             let ia = a.0 + a.1 * 8 - 9;
             let ib = b.0 + b.1 * 8 - 9;
-            let pa = SORT_PRI[ia];
-            let pb = SORT_PRI[ib];
+            let pa = SORT_PRI[ia as usize];
+            let pb = SORT_PRI[ib as usize];
             pa.partial_cmp(&pb).unwrap()
         });
         let mut alpha : f32 = -100000.0;
@@ -488,7 +488,7 @@ impl Node {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
-    pub fn think_ab_extract2(ban : &board::Board, mut depth : usize)
+    pub fn think_ab_extract2(ban : &board::Board, mut depth : u8)
             -> Option<(f32, Node)> {
         let mut node = Node::new(0, 0, depth);
         if depth == 0 {
@@ -515,7 +515,7 @@ impl Node {
         let yose = 18;
         let nblank = ban.nblank();
         if nblank <= yomikiri {
-            depth = yomikiri as usize;
+            depth = yomikiri as u8;
         } else if nblank <= yose {
             depth += 2;
         }
@@ -552,8 +552,8 @@ impl Node {
                 let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
                 let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
                 let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
-                let pa = SORT_PRI[ia1] * 10 + SORT_PRI[ia2];
-                let pb = SORT_PRI[ib1] * 10 + SORT_PRI[ib2];
+                let pa = SORT_PRI[ia1 as usize] * 10 + SORT_PRI[ia2 as usize];
+                let pb = SORT_PRI[ib1 as usize] * 10 + SORT_PRI[ib2 as usize];
                 pa.partial_cmp(&pb).unwrap()
             });
             let mut tt = transptable::TranspositionTable::new();
@@ -619,8 +619,8 @@ impl Node {
             let ia2 = if a.2 == 0 { 0 } else { a.2 + a.3 * 8 - 9 };
             let ib1 = if b.0 == 0 { 0 } else { b.0 + b.1 * 8 - 9 };
             let ib2 = if b.2 == 0 { 0 } else { b.2 + b.3 * 8 - 9 };
-            let pa = SORT_PRI[ia1] * 10 + SORT_PRI[ia2];
-            let pb = SORT_PRI[ib1] * 10 + SORT_PRI[ib2];
+            let pa = SORT_PRI[ia1 as usize] * 10 + SORT_PRI[ia2 as usize];
+            let pb = SORT_PRI[ib1 as usize] * 10 + SORT_PRI[ib2 as usize];
             pa.partial_cmp(&pb).unwrap()
         });
         let mut alpha : f32 = -100000.0;
@@ -715,8 +715,8 @@ impl Node {
             moves.sort_by(|a, b| {
                 let ia = a.0 + a.1 * 8 - 9;
                 let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = SORT_PRI[ia as usize];
+                let pb = SORT_PRI[ib as usize];
                 pa.partial_cmp(&pb).unwrap()
             });
         }
@@ -783,8 +783,8 @@ impl Node {
             moves.sort_by(|a, b| {
                 let ia = a.0 + a.1 * 8 - 9;
                 let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = SORT_PRI[ia as usize];
+                let pb = SORT_PRI[ib as usize];
                 pa.partial_cmp(&pb).unwrap()
             });
         }
@@ -823,7 +823,7 @@ impl Node {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn vb_think_ab(ban : &board::Board, mut depth : usize) -> Option<(f32,Node)> {
+    pub fn vb_think_ab(ban : &board::Board, mut depth : u8) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth);
         if depth == 0 {
             return None;
@@ -848,8 +848,8 @@ impl Node {
             moves.sort_by(|a, b| {
                 let ia = a.0 + a.1 * 8 - 9;
                 let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = SORT_PRI[ia as usize];
+                let pb = SORT_PRI[ib as usize];
                 pa.partial_cmp(&pb).unwrap()
             });
         }
@@ -922,8 +922,8 @@ impl Node {
             moves.sort_by(|a, b| {
                 let ia = a.0 + a.1 * 8 - 9;
                 let ib = b.0 + b.1 * 8 - 9;
-                let pa = SORT_PRI[ia];
-                let pb = SORT_PRI[ib];
+                let pa = SORT_PRI[ia as usize];
+                let pb = SORT_PRI[ib as usize];
                 pa.partial_cmp(&pb).unwrap()
             });
         }

@@ -11,7 +11,7 @@ once_cell = "1.12"
 regex = "1"
 
 [features]
-default = ["bitboard"]
+# default = ["bitboard"]
 nosimd = []
 nnv1 = []
 nnv2 = []

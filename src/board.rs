@@ -507,7 +507,7 @@ impl Board {
         false
     }
 
-    pub fn r#move(&self, x : usize, y : usize) -> Result<Board, &str> {
+    pub fn r#move(&self, x : u8, y : u8) -> Result<Board, &str> {
         if x == 0 && y == 0 {  // pass
             let mut ban = self.clone();
             ban.pass();
@@ -516,20 +516,20 @@ impl Board {
 
         let xc = x - 1;
         let yc = y - 1;
-        if self.at(xc, yc) != BLANK {
+        if self.at(xc as usize, yc as usize) != BLANK {
             return Err("stone exists.");
         }
         let mut ban = self.clone();
-        ban.set(xc, yc);
-        ban.reverse(xc, yc);
+        ban.set(xc as usize, yc as usize);
+        ban.reverse(xc as usize, yc as usize);
         ban.flipturn();
         ban.resetpass();
 
         Ok(ban)
     }
 
-    pub fn genmove(&self) -> Option<Vec<(usize, usize)>> {
-        let mut ret = Vec::<(usize, usize)>::new();
+    pub fn genmove(&self) -> Option<Vec<(u8, u8)>> {
+        let mut ret = Vec::<(u8, u8)>::new();
         let mut nblank = 0;
         for y in 0..8 {
             for x in 0..8 {
@@ -538,8 +538,8 @@ impl Board {
                     continue;
                 }
                 nblank += 1;
-                if self.checkreverse(x, y) {
-                    ret.push((x + 1, y + 1));
+                if self.checkreverse(x as usize, y as usize) {
+                    ret.push((x as u8 + 1, y as u8 + 1));
                 }
             }
         }
