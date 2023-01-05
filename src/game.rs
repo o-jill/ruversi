@@ -2,6 +2,7 @@ use super::*;
 
 use std::fs::File;
 use std::io::{self, Write};
+use std::sync::{Arc, RwLock, Mutex};
 
 pub struct GameBB {
     ban : bitboard::BitBoard,
@@ -42,6 +43,52 @@ impl GameBB {
             let ft = st.elapsed();
             println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
             let best = node.best.unwrap();
+            let x = best.x;
+            let y = best.y;
+            // apply move
+            let ban = self.ban.r#move(x, y).unwrap();
+            let rfen = self.ban.to_str();
+            let teban = self.ban.teban;
+            self.ban = ban;
+
+            // save to kifu
+            self.kifu.append(x as usize, y as usize, teban, rfen);
+
+            // check finished
+            if self.ban.is_passpass() {
+                break;
+            }
+            if self.ban.is_full() {
+                let rfen = self.ban.to_str();
+                let teban = self.ban.teban;
+                self.kifu.append(0, 0, teban, rfen);
+                break;
+            }
+        }
+        // check who won
+        self.kifu.winneris(self.ban.count());
+        println!("{}", self.kifu.to_str());
+        // show
+        self.ban.put();
+        Ok(())
+    }
+
+    pub fn startsh(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<Mutex<shnode::ShNode>>)>, depth : u8)
+            -> Result<(), String> {
+        loop {
+            // show
+            // self.ban.put();
+            println!("{}", self.ban.to_str());
+            // think
+            let st = Instant::now();
+            let (val, node) = f(&self.ban, depth).unwrap();
+            // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
+            // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
+            let ft = st.elapsed();
+            let nd = node.lock().unwrap();
+            println!("val:{:.3} {} {}msec", val, nd.dump(), ft.as_millis());
+            let best = nd.best.as_ref().unwrap();
+            
             let x = best.x;
             let y = best.y;
             // apply move
@@ -276,6 +323,68 @@ impl GameBB {
             let y = best.y;
             // apply move
             let ban = self.ban.r#move(x, y).unwrap();
+            let rfen = self.ban.to_str();
+            let teban = self.ban.teban;
+            self.ban = ban;
+
+            // save to kifu
+            self.kifu.append(x as usize, y as usize, teban, rfen);
+
+            // check finished
+            if self.ban.is_passpass() {
+                break;
+            }
+            if self.ban.is_full() {
+                let rfen = self.ban.to_str();
+                let teban = self.ban.teban;
+                self.kifu.append(0, 0, teban, rfen);
+                break;
+            }
+        }
+        // check who won
+        self.kifu.winneris(self.ban.count());
+        println!("{}", self.kifu.to_str());
+        // show
+        self.ban.put();
+        Ok(())
+    }
+
+    pub fn startsh_with_2et(&mut self,
+            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<Mutex<shnode::ShNode>>)>,
+            depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
+                -> Result<(), String> {
+        loop {
+            // show
+            // self.ban.put();
+            println!("{}", self.ban.to_str());
+            // switch weight
+            if self.ban.teban == bitboard::SENTE {
+                unsafe {
+                    nodebb::WEIGHT.as_mut().unwrap().copy(et1);
+                }
+            } else {
+                unsafe {
+                    nodebb::WEIGHT.as_mut().unwrap().copy(et2);
+                }
+            }
+            // think
+            let st = Instant::now();
+            let (val, node) = f(&self.ban, depth).unwrap();
+            // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
+            // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
+            let ft = st.elapsed();
+            let x;
+            let y;
+            let ban;
+            {
+                let nd = node.lock().unwrap();
+                println!("val:{:.3} {} {}msec", val, nd.dump(), ft.as_millis());
+                let best = nd.best.as_ref().unwrap();
+                x = best.x;
+                y = best.y;
+                // apply move
+                ban = self.ban.r#move(x, y).unwrap();
+            }
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;

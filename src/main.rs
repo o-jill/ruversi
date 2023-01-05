@@ -14,6 +14,7 @@ mod initialpos;
 mod myoption;
 mod node;
 mod nodebb;
+mod shnode;
 mod kifu;
 mod trainer;
 mod transptable;
@@ -320,6 +321,9 @@ fn duel(ev1 : &str, ev2 : &str) {
                 "all" => {
                     g.start_with_2et(nodebb::NodeBB::think, 7, &w1, &w2).unwrap()
                 },
+                // "" => {
+                //     g.startsh_with_2et(shnode::ShNode::think, 7, &w1, &w2).unwrap()
+                // },
                 _ => { panic!("unknown thinking method.") }
             }
             let dresult = g.kifu.winner();
@@ -365,6 +369,9 @@ fn duel(ev1 : &str, ev2 : &str) {
                 "all" => {
                     g.start_with_2et(nodebb::NodeBB::think, 7, &w2, &w1).unwrap()
                 },
+                // "" => {
+                //     g.startsh_with_2et(shnode::ShNode::think, 7, &w2, &w1).unwrap()
+                // },
                 _ => { panic!("unknown thinking method.") }
             }
             let dresult = g.kifu.winner();
