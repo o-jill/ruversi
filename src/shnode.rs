@@ -332,3 +332,47 @@ impl ShNode {
         }
     }
 }
+
+#[test]
+fn test_shnode() {
+    let node = Arc::new(Mutex::new(ShNode::new(99, 2, 8)));
+    let node12 = Arc::new(Mutex::new(ShNode::new(1, 2, 7)));
+    node12.lock().unwrap().kyokumen = 8765;
+    let node34 = Arc::new(Mutex::new(ShNode::new(3, 4, 7)));
+    node34.lock().unwrap().kyokumen = 7654;
+    node.lock().unwrap().child.push(node12.clone());
+    node.lock().unwrap().child.push(node34.clone());
+    node.lock().unwrap().hyoka = Some(99.9);
+    node.lock().unwrap().kyokumen = 9876;
+    node.lock().unwrap().best = Some(Best::new(99.9, 1, 2, bitboard::SENTE));
+    let node56 = Arc::new(Mutex::new(ShNode::new(5, 6, 6)));
+    node56.lock().unwrap().kyokumen = 6543;
+    let node78 = Arc::new(Mutex::new(ShNode::new(7, 8, 6)));
+    node78.lock().unwrap().kyokumen = 5432;
+    node12.lock().unwrap().child.push(node56.clone());
+    node12.lock().unwrap().child.push(node78.clone());
+    node12.lock().unwrap().hyoka = Some(99.9);
+    node12.lock().unwrap().best = Some(Best::new(99.9, 7, 8, bitboard::GOTE));
+    let node9a = Arc::new(Mutex::new(ShNode::new(2, 1, 5)));
+    node9a.lock().unwrap().kyokumen = 4321;
+    let nodebc = Arc::new(Mutex::new(ShNode::new(4, 3, 5)));
+    nodebc.lock().unwrap().kyokumen = 3210;
+    node78.lock().unwrap().child.push(node9a.clone());
+    node78.lock().unwrap().child.push(nodebc.clone());
+    node78.lock().unwrap().hyoka = Some(99.9);
+    node78.lock().unwrap().best = Some(Best::new(99.9, 2, 1, bitboard::SENTE));
+    let nodede = Arc::new(Mutex::new(ShNode::new(6, 5, 4)));
+    let nodefg = Arc::new(Mutex::new(ShNode::new(8, 7, 4)));
+    node9a.lock().unwrap().child.push(nodede.clone());
+    node9a.lock().unwrap().child.push(nodefg.clone());
+    node9a.lock().unwrap().hyoka = Some(99.9);
+    node9a.lock().unwrap().best = Some(Best::new(99.9, 8, 7, bitboard::GOTE));
+
+    assert_eq!(node.lock().unwrap().dump(), "val:Some(99.9), 9876 nodes. @@a2[]g8@@b1[]h7");
+    assert_eq!(node12.lock().unwrap().dump(), "val:Some(99.9), 8765 nodes. []g8@@b1[]h7");
+    assert_eq!(node34.lock().unwrap().dump(), "val:None, 7654 nodes. ");
+    assert_eq!(node56.lock().unwrap().dump(), "val:None, 6543 nodes. ");
+    assert_eq!(node78.lock().unwrap().dump(), "val:Some(99.9), 5432 nodes. @@b1[]h7");
+    assert_eq!(node9a.lock().unwrap().dump(), "val:Some(99.9), 4321 nodes. []h7");
+    assert_eq!(nodebc.lock().unwrap().dump(), "val:None, 3210 nodes. ");
+}
