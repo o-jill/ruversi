@@ -1,4 +1,5 @@
 use std::{fs::File, io::{BufReader, BufRead}};
+use std::collections::HashSet;
 // use regex::Regex;
 
 pub const INITIALPOSFILE : &str = "data/initialpos.txt";
@@ -104,6 +105,23 @@ impl InitialPos {
             for &b in tags.iter() {
                 if a.tag == b {
                     ret.extend_from_slice(&a.rfens);
+                    break;
+                }
+            }
+        }
+        ret
+    }
+
+    pub fn rfens_uniq(&self, tags : &[&str]) -> Vec<String> {
+        let mut ret = Vec::<String>::new();
+        for a in self.list.iter() {
+            for &b in tags.iter() {
+                if a.tag == b {
+                    let t = a.rfens.clone();
+                    let hm = t.into_iter().collect::<HashSet<String>>();
+                    let mut rfentbl = Vec::from_iter(hm);
+                    rfentbl.sort();
+                    ret.extend_from_slice(&rfentbl);
                     break;
                 }
             }
