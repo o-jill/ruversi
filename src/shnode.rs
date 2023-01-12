@@ -191,11 +191,11 @@ impl ShNode {
 
                 let lb = lf.best.as_ref();
                 if be.is_none() {
-                    be = Some(Best::new(lb.unwrap().hyoka, lf.x, lf.y, teban));
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
                 } else if lb.is_none() {
                     // nothing to do.
                 } else if be.as_ref().unwrap().hyoka * fteban < lb.as_ref().unwrap().hyoka * fteban {
-                    be = Some(Best::new(lb.unwrap().hyoka, lf.x, lf.y, teban));
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
                 }
             }
             hyoka = be.as_ref().unwrap().hyoka;
