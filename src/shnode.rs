@@ -160,7 +160,6 @@ impl ShNode {
                 let newban = ban2.r#move(x, y).unwrap();
                 let val = ShNode::think_internal(leaf, &newban);
                 leaf.lock().unwrap().hyoka = val;
-                leaf.lock().unwrap().best = Some(Best::new(val.unwrap(), x, y, teban));
             }
         });
 
@@ -176,7 +175,6 @@ impl ShNode {
             let newban = ban.r#move(x, y).unwrap();
             let val = ShNode::think_internal(leaf, &newban);
             leaf.lock().unwrap().hyoka = val;
-            leaf.lock().unwrap().best = Some(Best::new(val.unwrap(), x, y, teban));
         }
         sub.join().unwrap();
         // tt.dumpsz();
@@ -193,11 +191,11 @@ impl ShNode {
 
                 let lb = lf.best.as_ref();
                 if be.is_none() {
-                    be = Some(lb.unwrap().clone());
+                    be = Some(Best::new(lb.unwrap().hyoka, lf.x, lf.y, teban));
                 } else if lb.is_none() {
                     // nothing to do.
                 } else if be.as_ref().unwrap().hyoka * fteban < lb.as_ref().unwrap().hyoka * fteban {
-                    be = Some(lb.unwrap().clone());
+                    be = Some(Best::new(lb.unwrap().hyoka, lf.x, lf.y, teban));
                 }
             }
             hyoka = be.as_ref().unwrap().hyoka;
