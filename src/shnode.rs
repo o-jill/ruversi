@@ -263,7 +263,7 @@ impl ShNode {
             } else {
                 // println!("b{depth}{}{} != b{mvx}{mvy}", nod.x, nod.y);
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
-                // nd.child[idx].lock().unwrap().release();
+                nod.child[idx].lock().unwrap().release();
             }
         }
         Some(hyoka)
