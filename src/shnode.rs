@@ -324,9 +324,9 @@ impl ShNode {
             });
             //let mut tt = transptable::TranspositionTable::new();
             let teban = ban2.teban;
+            let mut alpha : f32 = -100000.0;
+            let mut beta : f32 = 100000.0;
             for leaf in leaves1.iter_mut() {
-                let mut alpha : f32 = -100000.0;
-                let mut beta : f32 = 100000.0;
                     let x;
                 let y;
                 {
@@ -335,8 +335,14 @@ impl ShNode {
                     y = lf.y;
                 }
                 let newban = ban2.r#move(x, y).unwrap();
-                let val = ShNode::think_internal(leaf, &newban);
+                let val = ShNode::think_internal_ab(leaf, &newban, alpha, beta);
                 leaf.lock().unwrap().hyoka = val;
+                let val = val.unwrap();
+                if teban == bitboard::SENTE && alpha < val {
+                    alpha = val;
+                } else if teban == bitboard::GOTE && beta > val {
+                    beta = val;
+                }
             }
         });
 
@@ -351,9 +357,9 @@ impl ShNode {
         });
         //let mut tt = transptable::TranspositionTable::new();
         let teban = ban.teban;
+        let mut alpha : f32 = -100000.0;
+        let mut beta : f32 = 100000.0;
         for leaf in leaves2.iter_mut() {
-            let mut alpha : f32 = -100000.0;
-            let mut beta : f32 = 100000.0;
                 let x;
             let y;
             {
@@ -362,8 +368,14 @@ impl ShNode {
                 y = lf.y;
             }
             let newban = ban.r#move(x, y).unwrap();
-            let val = ShNode::think_internal(leaf, &newban);
+            let val = ShNode::think_internal_ab(leaf, &newban, alpha, beta);
             leaf.lock().unwrap().hyoka = val;
+            let val = val.unwrap();
+            if teban == bitboard::SENTE && alpha < val {
+                alpha = val;
+            } else if teban == bitboard::GOTE && beta > val {
+                beta = val;
+            }
         }
 
         sub.join().unwrap();
