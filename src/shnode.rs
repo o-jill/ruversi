@@ -271,7 +271,7 @@ impl ShNode {
 
     pub fn think_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, Arc<Mutex<ShNode>>)> {
-        let mut node = Arc::new(Mutex::new(ShNode::new(0, 0, depth)));
+        let node = Arc::new(Mutex::new(ShNode::new(0, 0, depth)));
         if depth == 0 {
             return None;
         }
@@ -414,7 +414,7 @@ impl ShNode {
         let mut nod = node.lock().unwrap();
         let mut newalpha = alpha;
         let mut depth = nod.depth;
-        if ban.nblank() == 0 || ban.is_passpass() {
+        if ban.is_full() || ban.is_passpass() {
             nod.kyokumen = 1;
             return Some(ban.count()  as f32 * 10.0);
         }
