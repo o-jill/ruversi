@@ -408,6 +408,225 @@ impl ShNode {
         Some((hyoka, node.clone()))
     }
 
+    pub fn think_ab_extract2(ban : &bitboard::BitBoard, mut depth : u8)
+            -> Option<(f32, Arc<Mutex<ShNode>>)> {
+        let node = Arc::new(Mutex::new(ShNode::new(0, 0, depth)));
+        if depth == 0 {
+            return None;
+        }
+        if ban.is_passpass() {
+            return None;
+        }
+        // let sum = 0;
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            return None;
+        }
+        // let mut tt = transptable::TranspositionTable::new();
+        let mut moves = moves.unwrap();
+        if moves.len() == 0 {  // pass
+            moves.push((0, 0));
+            depth += 1;
+            node.lock().unwrap().depth += 1;
+        }
+        let yomikiri = 12;
+        let yose = 18;
+        let nblank = ban.nblank();
+        if nblank <= yomikiri {
+            depth = yomikiri as u8;
+        } else if nblank <= yose {
+            depth += 2;
+        }
+        let n = moves.len();
+        let mut leaves = Vec::<Arc<Mutex<ShNode>>>::new();
+        for (mvx, mvy) in moves {
+            let n = Arc::new(Mutex::new(ShNode::new(mvx, mvy, depth - 1)));
+            node.lock().unwrap().child.push(n.clone());
+            leaves.push(n);
+        }
+
+        let mut leaves2nd = Vec::<(u8, u8, Arc<Mutex<ShNode>>)>::new();
+        for leaf in leaves.iter() {
+            let x = leaf.lock().unwrap().x;
+            let y = leaf.lock().unwrap().y;
+            let ban = ban.r#move(x, y).unwrap();
+            let moves = ban.genmove();
+            if moves.is_none() {
+                let n = Arc::new(Mutex::new(ShNode::new(0, 0, depth - 2)));
+                leaf.lock().unwrap().child.push(n.clone());
+                leaves2nd.push((x, y, n.clone()));
+// println!("{x} {y} 0 0  --");
+                continue;
+            }
+            let moves = moves.unwrap();
+            if moves.is_empty() {
+                let n = Arc::new(Mutex::new(ShNode::new(0, 0, depth - 2)));
+                leaf.lock().unwrap().child.push(n.clone());
+                leaves2nd.push((x, y, n.clone()));
+// println!("{x} {y} 0 0--");
+                continue;
+            }
+            for (mvx, mvy) in moves {
+// println!("{x} {y} {mvx} {mvy}  --");
+                let n = Arc::new(Mutex::new(ShNode::new(mvx, mvy, depth - 2)));
+                leaf.lock().unwrap().child.push(n.clone());
+                leaves2nd.push((x, y, n.clone()));
+            }
+        }
+        // let mut leaves2 = Vec::from_iter(leaves2nd[0..n/2].iter().cloned());
+        // let mut leaves1 = Vec::from_iter(leaves2nd[n/2..].iter().cloned());
+        let mut leaves1 = Vec::new();
+        let mut leaves2 = Vec::new();
+        for (idx, l) in leaves2nd.iter().enumerate() {
+            if idx & 1 == 0 {
+                leaves2.push((l.0, l.1, l.2.clone()));
+            } else {
+                leaves1.push((l.0, l.1, l.2.clone()));
+            }
+        }
+        let ban2 = ban.clone();
+
+        let sub =
+                thread::spawn(move || {
+            leaves1.sort_by(|(ax, ay, a), (bx, by, b)| {
+                let pa;
+                let pb;
+                {let aa = a.lock().unwrap();
+                let bb = b.lock().unwrap();
+                let ia = move_priority2(&(*ax, *ay, aa.x, aa.y));
+                let ib = move_priority2(&(*bx, *by, bb.x, bb.y));
+                pa = SORT_PRI[ia as usize];
+                pb = SORT_PRI[ib as usize];}
+                pa.partial_cmp(&pb).unwrap()
+            });
+            //let mut tt = transptable::TranspositionTable::new();
+            let teban = ban2.teban;
+            let mut alpha : f32 = -100000.0;
+            let mut beta : f32 = 100000.0;
+    // let mut km = 0;
+            for (x, y, leaf) in leaves1.iter_mut() {
+                let xx;
+                let yy;
+                {
+                    let lf = leaf.lock().unwrap();
+                    xx = lf.x;
+                    yy = lf.y;
+                }
+                let newban = ban2.r#move(*x, *y).unwrap();
+                let newban = newban.r#move(xx, yy).unwrap();
+                let val = ShNode::think_internal_ab(&leaf, &newban, alpha, beta);
+// if xx == 0 {println!("{x} {y} {xx} {yy} - {:?}", val);}
+                leaf.lock().unwrap().hyoka = val;
+                let val = val.unwrap();
+        // km += leaf.lock().unwrap().kyokumen;
+                if teban == bitboard::SENTE && alpha < val {
+                    alpha = val;
+                } else if teban == bitboard::GOTE && beta > val {
+                    beta = val;
+                }
+            }
+    // println!(" ++ {km}");
+        });
+
+        leaves2.sort_by(|(ax, ay, a), (bx, by, b)| {
+            let aa = a.lock().unwrap();
+            let bb = b.lock().unwrap();
+            let ia = move_priority2(&(*ax, *ay, aa.x, aa.y));
+            let ib = move_priority2(&(*bx, *by, bb.x, bb.y));
+            let pa = SORT_PRI[ia as usize];
+            let pb = SORT_PRI[ib as usize];
+            pa.partial_cmp(&pb).unwrap()
+        });
+        //let mut tt = transptable::TranspositionTable::new();
+        let teban = ban.teban;
+        let mut alpha : f32 = -100000.0;
+        let mut beta : f32 = 100000.0;
+    // let mut km = 0;
+        for (x, y, leaf) in leaves2.iter_mut() {
+            let xx;
+            let yy;
+            {
+                let lf = leaf.lock().unwrap();
+                xx = lf.x;
+                yy = lf.y;
+            }
+            let newban = ban.r#move(*x, *y).unwrap();
+            let newban = newban.r#move(xx, yy).unwrap();
+            let val = ShNode::think_internal_ab(&leaf, &newban, alpha, beta);
+// if xx == 0 {println!("{x} {y} {xx} {yy} + {:?}", val);}
+            leaf.lock().unwrap().hyoka = val;
+            let val = val.unwrap();
+    // km += leaf.lock().unwrap().kyokumen;
+            if teban == bitboard::SENTE && alpha < val {
+                alpha = val;
+            } else if teban == bitboard::GOTE && beta > val {
+                beta = val;
+            }
+        }
+// println!(" -- {km}");
+
+        sub.join().unwrap();
+
+        let fteban = teban as f32;
+        let mut hyoka : Option<f32> = None;
+        {
+            let teban2 = -teban;
+            let fteban2 = teban2 as f32;
+            let mut km = 0;
+            let nd = &mut node.lock().unwrap();
+            for leaf in nd.child.iter() {
+                let mut lf = leaf.lock().unwrap();
+                let mut km2 = 0;
+                let mut hyo : Option<f32> = None;
+                let mut bes : Option<Best> = None;
+                for leaf2 in lf.child.iter() {
+                    let lf2 = leaf2.lock().unwrap();
+                    km2 += lf2.kyokumen;
+                    let hk = lf2.hyoka;
+                    if hk.is_none() {
+// println!("continue;;");
+                        continue;
+                    }
+                    if hyo.is_none() || hk.unwrap() * fteban2 > hyo.unwrap() * fteban2 {
+                        hyo = hk;
+                        bes = Some(Best::new(hk.unwrap(), lf2.x, lf2.y, teban2));
+                    }
+                }
+                lf.hyoka = hyo;
+                lf.best = bes;
+                lf.kyokumen = km2;
+                km += km2;
+// println!("{}{} {:?}", lf.x, lf.y, lf.hyoka);
+            }
+
+            let mut be : Option<Best> = None;
+            for leaf in nd.child.iter() {
+                let lf = leaf.lock().unwrap();
+// println!("{}{} {:?}", lf.x, lf.y, lf.hyoka);
+                let lb = lf.best.as_ref();
+                if lf.hyoka.is_none() {
+                    continue;
+                }
+                if hyoka.is_none() {
+                    hyoka = lf.hyoka;
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
+                } else if lb.is_none() {
+                    // nothing to do.
+                } else if hyoka.unwrap() * fteban < lf.hyoka.unwrap() * fteban {
+                    hyoka = lf.hyoka;
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
+                }
+            }
+            nd.hyoka = hyoka;
+            nd.best = be;
+            nd.kyokumen = km;
+        }
+        // println!("done.");
+        Some((hyoka.unwrap(), node.clone()))
+    }
+
     pub fn think_internal_ab(node:&Arc<Mutex<ShNode>>, ban : &bitboard::BitBoard,
         alpha : f32, beta : f32)
             -> Option<f32> {
