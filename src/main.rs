@@ -322,7 +322,9 @@ fn duel(ev1 : &str, ev2 : &str) {
                     g.start_with_2et(nodebb::NodeBB::think, 7, &w1, &w2).unwrap()
                 },
                 // "" => {
-                //     g.startsh_with_2et(shnode::ShNode::think, 7, &w1, &w2).unwrap()
+                //     g.startsh_with_2et(shnode::ShNode::think_ab_extract2, 7, &w1, &w2).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think_ab, 7, &w1, &w2).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think, 7, &w1, &w2).unwrap()
                 // },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -370,7 +372,9 @@ fn duel(ev1 : &str, ev2 : &str) {
                     g.start_with_2et(nodebb::NodeBB::think, 7, &w2, &w1).unwrap()
                 },
                 // "" => {
-                //     g.startsh_with_2et(shnode::ShNode::think, 7, &w2, &w1).unwrap()
+                //     g.startsh_with_2et(shnode::ShNode::think_ab_extract2, 7, &w2, &w1).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think_ab, 7, &w2, &w1).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think, 7, &w2, &w1).unwrap()
                 // },
                 _ => { panic!("unknown thinking method.") }
             }

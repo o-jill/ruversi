@@ -2,7 +2,7 @@ use super::*;
 
 use std::fs::File;
 use std::io::{self, Write};
-use std::sync::{Arc, RwLock, Mutex};
+use std::sync::{Arc, RwLock};
 
 pub struct GameBB {
     ban : bitboard::BitBoard,
@@ -73,7 +73,7 @@ impl GameBB {
         Ok(())
     }
 
-    pub fn startsh(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<Mutex<shnode::ShNode>>)>, depth : u8)
+    pub fn startsh(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<RwLock<shnode::ShNode>>)>, depth : u8)
             -> Result<(), String> {
         loop {
             // show
@@ -85,7 +85,7 @@ impl GameBB {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            let nd = node.lock().unwrap();
+            let nd = node.read().unwrap();
             println!("val:{:.3} {} {}msec", val, nd.dump(), ft.as_millis());
             let best = nd.best.as_ref().unwrap();
             
@@ -350,7 +350,8 @@ impl GameBB {
     }
 
     pub fn startsh_with_2et(&mut self,
-            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<Mutex<shnode::ShNode>>)>,
+            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<RwLock<shnode::ShNode>>)>,
+            // f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<Mutex<shnode::ShNode>>)>,
             depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
                 -> Result<(), String> {
         loop {
@@ -377,7 +378,7 @@ impl GameBB {
             let y;
             let ban;
             {
-                let nd = node.lock().unwrap();
+                let nd = node.read().unwrap();
                 println!("val:{:.3} {} {}msec", val, nd.dump(), ft.as_millis());
                 let best = nd.best.as_ref().unwrap();
                 x = best.x;
