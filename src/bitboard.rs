@@ -643,7 +643,7 @@ impl BitBoard {
 
     pub fn genmove(&self) -> Option<Vec<(u8, u8)>> {
         let mut ret = Vec::<(u8, u8)>::new();
-        let mut nblank = 0;
+        // let mut nblank = 0;
         let black = self.black;
         let white = self.white;
         for y in 0..NUMCELL {
@@ -655,14 +655,14 @@ impl BitBoard {
                 if cb || cw {
                     continue;
                 }
-                nblank += 1;
+                // nblank += 1;
                 if self.checkreverse(x, y) {
                     ret.push((x as u8 + 1, y as u8 + 1));
                 }
             }
         }
         if ret.is_empty() {  // pass
-            return if nblank == 0 {
+            return if self.is_full() {
                 None
             } else {
                 Some(vec![])
