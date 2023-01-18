@@ -319,6 +319,7 @@ fn duel(ev1 : &str, ev2 : &str) {
                         7, &w1, &w2).unwrap()
                 },
                 "all" => {
+                    // g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w2, &w1).unwrap()
                     g.start_with_2et(nodebb::NodeBB::think, 7, &w1, &w2).unwrap()
                 },
                 // "" => {
@@ -369,6 +370,7 @@ fn duel(ev1 : &str, ev2 : &str) {
                     g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
                 },
                 "all" => {
+                    // g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w2, &w1).unwrap()
                     g.start_with_2et(nodebb::NodeBB::think, 7, &w2, &w1).unwrap()
                 },
                 // "" => {
