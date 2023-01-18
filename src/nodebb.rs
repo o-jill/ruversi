@@ -40,6 +40,7 @@ static mut INITIALIZED : bool = false;
  */
 // static mut WEIGHT : Option<Vec<f32>> = None;
 pub static mut WEIGHT : Option<weight::Weight> = None;
+static mut ND_ROOT : Option<NodeBB> = None;
 
 pub struct Best {
     pub hyoka : f32,
@@ -91,7 +92,7 @@ pub fn init_weight() {
 
     unsafe {
         WEIGHT = Some(weight);
-
+        ND_ROOT = Some(NodeBB::new(0, 0, 0));
         INITIALIZED = true;
     }
 }
@@ -124,6 +125,94 @@ impl NodeBB {
     fn evalwtt(ban : &bitboard::BitBoard, tt : &mut transptable::TranspositionTable) -> f32 {
         let id = if cfg!(feature="nosimd") {ban.to_id()} else {ban.to_id_simd()};
         tt.check_or_append(&id, || NodeBB::evaluate(ban))
+    }
+
+    pub fn thinko(ban : &bitboard::BitBoard, mut depth : u8)
+            -> Option<(f32, &NodeBB)> {
+        if depth == 0 {
+            return None;
+        }
+        if ban.is_passpass() {
+            return None;
+        }
+
+        // let sum = 0;
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            return None;
+        }
+
+        let node;
+        unsafe {
+            ND_ROOT = Some(NodeBB::new(0, 0, depth));
+            node = ND_ROOT.as_mut().unwrap();
+        }
+        let mut moves = moves.unwrap();
+        if moves.len() == 0 {  // pass
+            moves.push((0, 0));
+            node.depth += 1;
+            depth += 1;
+        }
+        let n = moves.len();
+        for (mvx, mvy) in moves.iter() {
+            node.child.push(NodeBB::new(*mvx, *mvy, depth - 1));
+        }
+// let moves1 = &moves[0..n/2];
+        let moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());
+        let moves2 = Vec::from_iter(moves[n/2..].iter().cloned());
+        let ban2 = ban.clone();
+
+        let sub = thread::spawn(move || {
+            let node2;
+            unsafe {
+                node2 = ND_ROOT.as_mut().unwrap();
+            }
+            for (mvx, mvy) in moves1 {
+                let nd = node2.child.iter_mut().find(|a| {
+                        a.x == mvx && a.y == mvy
+                    });
+                if nd.is_none() {
+                    panic!("node2.child.iter_mut().find(|a|");
+                }
+                let mut nd = nd.unwrap();
+                let newban = ban2.r#move(mvx, mvy).unwrap();
+                let val = NodeBB::think_internal(nd, &newban);
+                nd.hyoka = val;
+            }
+            });
+
+        for (mvx, mvy) in moves2 {
+            let nd = node.child.iter_mut().find(|a|
+                    a.x == mvx && a.y == mvy
+                ).unwrap();
+            let newban = ban.r#move(mvx, mvy).unwrap();
+            let val = NodeBB::think_internal(nd, &newban);
+
+            nd.hyoka = val;
+        }
+        sub.join().unwrap();
+        // tt.dumpsz();
+        let mut hyoka = None;
+        let mut be = None;
+        let mut km = 0;
+        let teban = ban.teban;
+        let fteban = teban as f32;
+        for c in node.child.iter() {
+            km += c.kyokumen;
+            if c.hyoka.is_none() {
+                continue;
+            }
+            if hyoka.is_none() || hyoka.unwrap() * fteban < c.hyoka.unwrap() * fteban {
+                hyoka = c.hyoka;
+                be = Some(Best::new(hyoka.unwrap(), c.x, c.y, teban));
+            }
+        }
+        node.hyoka = hyoka;
+        node.best = be;
+        node.kyokumen = km;
+        Some((hyoka.unwrap(), node))
     }
 
     pub fn think(ban : &bitboard::BitBoard, mut depth : u8)
