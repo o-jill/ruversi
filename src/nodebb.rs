@@ -1,4 +1,5 @@
 use super::*;
+use std::sync::Arc;
 
 const SORT_PRI : [i32 ; 64]= [
     0, 3, 1, 2, 2, 1, 3, 0,
@@ -583,6 +584,179 @@ impl NodeBB {
         }
         subresult.kyokumen += node.kyokumen;
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
+    }
+
+    pub fn thinko_ab(ban : &bitboard::BitBoard, mut depth : u8)
+            -> Option<(f32, &NodeBB)> {
+        let mut node = NodeBB::new(0, 0, depth);
+        if depth == 0 {
+            return None;
+        }
+        if ban.is_passpass() {
+            return None;
+        }
+        // let sum = 0;
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            return None;
+        }
+
+        let node;
+        unsafe {
+            ND_ROOT = Some(NodeBB::new(0, 0, depth));
+            node = ND_ROOT.as_mut().unwrap();
+        }
+        let mut moves = moves.unwrap();
+        if moves.len() == 0 {  // pass
+            moves.push((0, 0));
+            node.depth += 1;
+            depth += 1;
+        }
+        let yomikiri = 12;
+        let yose = 18;
+        let nblank = ban.nblank();
+        if nblank <= yomikiri {
+            depth = yomikiri as u8;
+        } else if nblank <= yose {
+            depth += 2;
+        }
+        let n = moves.len();
+        for (mvx, mvy) in moves.iter() {
+            node.child.push(NodeBB::new(*mvx, *mvy, depth - 1));
+        }
+        // let moves1 = &moves[0..n/2];
+        let mut moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());
+        let mut moves2 = Vec::from_iter(moves[n/2..].iter().cloned());
+        let ban2 = ban.clone();
+
+        let salpha = Arc::new(std::sync::Mutex::new(-100000.0 as f32));
+        let sbeta = Arc::new(std::sync::Mutex::new(100000.0 as f32));
+        let sal = salpha.clone();
+        let sbe = sbeta.clone();
+
+        let sub =
+                thread::spawn(move || {
+            moves1.sort_by(|a, b| {
+                let pa = move_priority(&a);
+                let pb = move_priority(&b);
+                pa.partial_cmp(&pb).unwrap()
+            });
+            let teban = ban2.teban;
+            let node2;
+            unsafe {
+                node2 = ND_ROOT.as_mut().unwrap();
+            }
+            let mut alpha : f32 = -100000.0;
+            let mut beta : f32 = 100000.0;
+            // let mut alpha : f32 = *sal.lock().unwrap();
+            // let mut beta : f32 = *sbe.lock().unwrap();
+            for (mvx, mvy) in moves1 {
+                let nd = node2.child.iter_mut().find(|a| {
+                        a.x == mvx && a.y == mvy
+                    });
+                // if nd.is_none() {
+                //     panic!("node2.child.iter_mut().find(|a|");
+                // }
+                let mut nd = nd.unwrap();
+                let newban = ban2.r#move(mvx, mvy).unwrap();
+                let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
+                nd.hyoka = val;
+                let val = val.unwrap();
+                if teban == bitboard::SENTE {
+                    if val > alpha {
+                        alpha = val;
+                    }
+                    // let mut sa = sal.lock().unwrap();
+                    // if val > *sa {
+                    //     *sa = val;
+                    //     alpha = val;
+                    // } else {
+                    //     alpha = *sa;
+                    // }
+                } else if teban == bitboard::GOTE {
+                    if val < beta {
+                        beta = val;
+                    }
+                    // let mut sb = sbe.lock().unwrap();
+                    // if val < *sb {
+                    //     *sb = val;
+                    //     beta = val;
+                    // } else {
+                    //     beta = *sb;
+                    // }
+                }
+            }
+        });
+
+        moves2.sort_by(|a, b| {
+            let pa = move_priority(&a);
+            let pb = move_priority(&b);
+            pa.partial_cmp(&pb).unwrap()
+        });
+        let mut alpha : f32 = -100000.0;
+        let mut beta : f32 = 100000.0;
+        // let mut alpha : f32 = *salpha.lock().unwrap();
+        // let mut beta : f32 = *sbeta.lock().unwrap();
+        let teban = ban.teban;
+        for (mvx, mvy) in moves2 {
+            let nd = node.child.iter_mut().find(|a| {
+                    a.x == mvx && a.y == mvy
+                });
+            // if nd.is_none() {
+            //     panic!("node2.child.iter_mut().find(|a|");
+            // }
+            let mut nd = nd.unwrap();
+            let newban = ban.r#move(mvx, mvy).unwrap();
+            let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
+            nd.hyoka = val;
+            let val = val.unwrap();
+            if teban == bitboard::SENTE {
+                if val > alpha {
+                    alpha = val;
+                }
+                // let mut sa = salpha.lock().unwrap();
+                // if val > *sa {
+                //     *sa = val;
+                //     alpha = val;
+                // } else {
+                //     alpha = *sa;
+                // }
+            } else if teban == bitboard::GOTE {
+                if val < beta {
+                    beta = val;
+                }
+                // let mut sb = sbeta.lock().unwrap();
+                // if val < *sb {
+                //     *sb = val;
+                //     beta = val;
+                // } else {
+                //     beta = *sb;
+                // }
+            }
+        }
+        sub.join().unwrap();
+        // tt.dumpsz();
+        let mut hyoka = None;
+        let mut be = None;
+        let mut km = 0;
+        let teban = ban.teban;
+        let fteban = teban as f32;
+        for c in node.child.iter() {
+            km += c.kyokumen;
+            if c.hyoka.is_none() {
+                continue;
+            }
+            if hyoka.is_none() || hyoka.unwrap() * fteban < c.hyoka.unwrap() * fteban {
+                hyoka = c.hyoka;
+                be = Some(Best::new(hyoka.unwrap(), c.x, c.y, teban));
+            }
+        }
+        node.hyoka = hyoka;
+        node.best = be;
+        node.kyokumen = km;
+        Some((hyoka.unwrap(), node))
     }
 
     pub fn think_ab_extract2(ban : &bitboard::BitBoard, mut depth : u8)
