@@ -310,6 +310,10 @@ impl ShNode {
         let mut leaves1 = Vec::from_iter(leaves[0..n/2].iter().cloned());
         let mut leaves2 = Vec::from_iter(leaves[n/2..].iter().cloned());
         let ban2 = ban.clone();
+        let salpha = Arc::new(std::sync::Mutex::new(-100000.0 as f32));
+        let sbeta = Arc::new(std::sync::Mutex::new(100000.0 as f32));
+        let sal = salpha.clone();
+        let sbe = sbeta.clone();
 
         let sub =
                 thread::spawn(move || {
@@ -324,8 +328,8 @@ impl ShNode {
             });
             //let mut tt = transptable::TranspositionTable::new();
             let teban = ban2.teban;
-            let mut alpha : f32 = -100000.0;
-            let mut beta : f32 = 100000.0;
+            let mut alpha : f32 = *sal.lock().unwrap();
+            let mut beta : f32 = *sbe.lock().unwrap();
             for leaf in leaves1.iter_mut() {
                     let x;
                 let y;
@@ -338,10 +342,22 @@ impl ShNode {
                 let val = ShNode::think_internal_ab(leaf, &newban, alpha, beta);
                 leaf.write().unwrap().hyoka = val;
                 let val = val.unwrap();
-                if teban == bitboard::SENTE && alpha < val {
-                    alpha = val;
-                } else if teban == bitboard::GOTE && beta > val {
-                    beta = val;
+                if teban == bitboard::SENTE {
+                    let mut sa = sal.lock().unwrap();
+                    if val > *sa {
+                        *sa = val;
+                        alpha = val;
+                    } else {
+                        alpha = *sa;
+                    }
+                } else if teban == bitboard::GOTE {
+                    let mut sb = sbe.lock().unwrap();
+                    if val < *sb {
+                        *sb = val;
+                        beta = val;
+                    } else {
+                        beta = *sb;
+                    }
                 }
             }
         });
@@ -357,10 +373,12 @@ impl ShNode {
         });
         //let mut tt = transptable::TranspositionTable::new();
         let teban = ban.teban;
-        let mut alpha : f32 = -100000.0;
-        let mut beta : f32 = 100000.0;
+        let mut alpha : f32 = *salpha.lock().unwrap();
+        let mut beta : f32 = *sbeta.lock().unwrap();
+    // let mut alpha : f32 = -100000.0;
+        // let mut beta : f32 = 100000.0;
         for leaf in leaves2.iter_mut() {
-                let x;
+            let x;
             let y;
             {
                 let lf = leaf.read().unwrap();
@@ -371,10 +389,22 @@ impl ShNode {
             let val = ShNode::think_internal_ab(leaf, &newban, alpha, beta);
             leaf.write().unwrap().hyoka = val;
             let val = val.unwrap();
-            if teban == bitboard::SENTE && alpha < val {
-                alpha = val;
-            } else if teban == bitboard::GOTE && beta > val {
-                beta = val;
+            if teban == bitboard::SENTE {
+                let mut sa = salpha.lock().unwrap();
+                if val > *sa {
+                    *sa = val;
+                    alpha = val;
+                } else {
+                    alpha = *sa;
+                }
+            } else if teban == bitboard::GOTE {
+                let mut sb = sbeta.lock().unwrap();
+                if val < *sb {
+                    *sb = val;
+                    beta = val;
+                } else {
+                    beta = *sb;
+                }
             }
         }
 
@@ -475,22 +505,25 @@ impl ShNode {
                 leaves2nd.push((x, y, n.clone()));
             }
         }
-        // let mut leaves2 = Vec::from_iter(leaves2nd[0..n/2].iter().cloned());
-        // let mut leaves1 = Vec::from_iter(leaves2nd[n/2..].iter().cloned());
-        let mut leaves1 = Vec::new();
-        let mut leaves2 = Vec::new();
-        for (idx, l) in leaves2nd.iter().enumerate() {
-            if idx & 1 == 0 {
-                leaves2.push((l.0, l.1, l.2.clone()));
-            } else {
-                leaves1.push((l.0, l.1, l.2.clone()));
-            }
-        }
+        let mut leaves2 = Vec::from_iter(leaves2nd[0..n/2].iter().cloned());
+        let mut leaves1 = Vec::from_iter(leaves2nd[n/2..].iter().cloned());
+        // let mut leaves1 = Vec::new();
+        // let mut leaves2 = Vec::new();
+        // for (idx, l) in leaves2nd.iter().enumerate() {
+        //     if idx & 1 == 0 {
+        //         leaves2.push((l.0, l.1, l.2.clone()));
+        //     } else {
+        //         leaves1.push((l.0, l.1, l.2.clone()));
+        //     }
+        // }
         let ban2 = ban.clone();
-
+        let salpha = Arc::new(std::sync::Mutex::new(-100000.0 as f32));
+        let sbeta = Arc::new(std::sync::Mutex::new(100000.0 as f32));
+        let sal = salpha.clone();
+        let sbe = sbeta.clone();
         let sub =
                 thread::spawn(move || {
-            leaves1.sort_by(|(ax, ay, a), (bx, by, b)| {
+                    leaves1.sort_by(|(ax, ay, a), (bx, by, b)| {
                 let pa;
                 let pb;
                 {let aa = a.read().unwrap();
@@ -503,8 +536,8 @@ impl ShNode {
             });
             //let mut tt = transptable::TranspositionTable::new();
             let teban = ban2.teban;
-            let mut alpha : f32 = -100000.0;
-            let mut beta : f32 = 100000.0;
+            let mut alpha : f32 = *sal.lock().unwrap();
+            let mut beta : f32 = *sbe.lock().unwrap();
     // let mut km = 0;
             for (x, y, leaf) in leaves1.iter_mut() {
                 let xx;
@@ -521,10 +554,22 @@ impl ShNode {
                 leaf.write().unwrap().hyoka = val;
                 let val = val.unwrap();
         // km += leaf.lock().unwrap().kyokumen;
-                if teban == bitboard::SENTE && alpha < val {
-                    alpha = val;
-                } else if teban == bitboard::GOTE && beta > val {
-                    beta = val;
+                if teban == bitboard::SENTE {
+                    let mut sa = sal.lock().unwrap();
+                    if val > *sa {
+                        *sa = val;
+                        alpha = val;
+                    } else {
+                        alpha = *sa;
+                    }
+                } else if teban == bitboard::GOTE {
+                    let mut sb = sbe.lock().unwrap();
+                    if val < *sb {
+                        *sb = val;
+                        beta = val;
+                    } else {
+                        beta = *sb;
+                    }
                 }
             }
     // println!(" ++ {km}");
@@ -541,9 +586,9 @@ impl ShNode {
         });
         //let mut tt = transptable::TranspositionTable::new();
         let teban = ban.teban;
-        let mut alpha : f32 = -100000.0;
-        let mut beta : f32 = 100000.0;
-    // let mut km = 0;
+        let mut alpha : f32 = *salpha.lock().unwrap();
+        let mut beta : f32 = *sbeta.lock().unwrap();
+// let mut km = 0;
         for (x, y, leaf) in leaves2.iter_mut() {
             let xx;
             let yy;
@@ -559,10 +604,22 @@ impl ShNode {
             leaf.write().unwrap().hyoka = val;
             let val = val.unwrap();
     // km += leaf.lock().unwrap().kyokumen;
-            if teban == bitboard::SENTE && alpha < val {
-                alpha = val;
-            } else if teban == bitboard::GOTE && beta > val {
-                beta = val;
+            if teban == bitboard::SENTE {
+                let mut sa = salpha.lock().unwrap();
+                if val > *sa {
+                    *sa = val;
+                    alpha = val;
+                } else {
+                    alpha = *sa;
+                }
+            } else if teban == bitboard::GOTE {
+                let mut sb = sbeta.lock().unwrap();
+                if val < *sb {
+                    *sb = val;
+                    beta = val;
+                } else {
+                    beta = *sb;
+                }
             }
         }
 // println!(" -- {km}");
