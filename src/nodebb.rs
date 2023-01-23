@@ -738,10 +738,11 @@ impl NodeBB {
         sub.join().unwrap();
         // tt.dumpsz();
         let mut hyoka = None;
-        let mut be = None;
         let mut km = 0;
         let teban = ban.teban;
         let fteban = teban as f32;
+        let mut bx = 0;
+        let mut by = 0;
         for c in node.child.iter() {
             km += c.kyokumen;
             if c.hyoka.is_none() {
@@ -749,11 +750,12 @@ impl NodeBB {
             }
             if hyoka.is_none() || hyoka.unwrap() * fteban < c.hyoka.unwrap() * fteban {
                 hyoka = c.hyoka;
-                be = Some(Best::new(hyoka.unwrap(), c.x, c.y, teban));
+                bx = c.x;
+                by = c.y;
             }
         }
         node.hyoka = hyoka;
-        node.best = be;
+        node.best = Some(Best::new(hyoka.unwrap(), bx, by, teban));
         node.kyokumen = km;
         Some((hyoka.unwrap(), node))
     }
