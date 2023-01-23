@@ -1402,34 +1402,35 @@ if true {  // ---------------
             });
         }
 
-        for mv in moves {
-            let x = mv.0;
-            let y = mv.1;
-            let newban = ban.r#move(x, y).unwrap();
+        for (mvx, mvy) in moves {
+            let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = node.child.len();
-            node.child.push(NodeBB::new(x, y, depth - 1));
+            node.child.push(NodeBB::new(mvx, mvy, depth - 1));
             let val = NodeBB::think_internal_ab(
                 &mut node.child[idx], &newban, -beta, -newalpha);
             let mut ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
-            let best = node.best.as_ref();
+            let best = node.best.as_mut();
             let val = val.unwrap();
             if newalpha < -val {
                 newalpha = -val;
             }
             if best.is_none() {
-                node.best = Some(Best::new(val, x, y, teban));
+                node.best = Some(Best::new(val, mvx, mvy, teban));
                 continue;
             }
             let fteban = teban as f32;
-            if best.unwrap().hyoka * fteban < val * fteban {
-                node.best = Some(Best::new(val, x, y, teban));
+            let mut be = best.unwrap();
+            if be.hyoka * fteban < val * fteban {
+                be.x = mvx;
+                be.y = mvy;
+                be.hyoka = val;
                 continue;
             }
             if newalpha >= beta {
                 // cut
-                return Some(node.best.as_ref().unwrap().hyoka);
+                return Some(be.hyoka);
             }
             node.child[idx].release();
         }
