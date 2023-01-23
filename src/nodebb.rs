@@ -588,7 +588,6 @@ impl NodeBB {
 
     pub fn thinko_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, &NodeBB)> {
-        let mut node = NodeBB::new(0, 0, depth);
         if depth == 0 {
             return None;
         }
