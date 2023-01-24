@@ -728,10 +728,11 @@ impl NodeBB {
         sub.join().unwrap();
         // tt.dumpsz();
         let mut hyoka = None;
-        let mut be = None;
         let mut km = 0;
         let teban = ban.teban;
         let fteban = teban as f32;
+        let mut bx = 0;
+        let mut by = 0;
         for c in node.child.iter() {
             km += c.kyokumen;
             if c.hyoka.is_none() {
@@ -739,11 +740,12 @@ impl NodeBB {
             }
             if hyoka.is_none() || hyoka.unwrap() * fteban < c.hyoka.unwrap() * fteban {
                 hyoka = c.hyoka;
-                be = Some(Best::new(hyoka.unwrap(), c.x, c.y, teban));
+                bx = c.x;
+                by = c.y;
             }
         }
         node.hyoka = hyoka;
-        node.best = be;
+        node.best = Some(Best::new(hyoka.unwrap(), bx, by, teban));
         node.kyokumen = km;
         Some((hyoka.unwrap(), node))
     }
@@ -1396,7 +1398,7 @@ if true {  // ---------------
             let val = NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha);
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
-            let best = node.best.as_ref();
+            let best = node.best.as_mut();
             let val = val.unwrap();
             if newalpha < -val {
                 newalpha = -val;
@@ -1406,13 +1408,16 @@ if true {  // ---------------
                 continue;
             }
             let fteban = teban as f32;
-            if best.unwrap().hyoka * fteban < val * fteban {
-                node.best = Some(Best::new(val, mvx, mvy, teban));
+            let mut be = best.unwrap();
+            if be.hyoka * fteban < val * fteban {
+                be.x = mvx;
+                be.y = mvy;
+                be.hyoka = val;
                 continue;
             }
             if newalpha >= beta {
                 // cut
-                return Some(node.best.as_ref().unwrap().hyoka);
+                return Some(be.hyoka);
             }
             node.child[idx].release();
         }
