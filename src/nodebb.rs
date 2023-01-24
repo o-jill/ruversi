@@ -151,7 +151,7 @@ impl NodeBB {
             node = ND_ROOT.as_mut().unwrap();
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             node.depth += 1;
             depth += 1;
@@ -234,7 +234,7 @@ impl NodeBB {
         }
 
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             node.depth += 1;
             depth += 1;
@@ -350,7 +350,7 @@ impl NodeBB {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         }
@@ -401,7 +401,7 @@ impl NodeBB {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         }
@@ -449,7 +449,7 @@ impl NodeBB {
         }
         let mut tt = transptable::TranspositionTable::new();
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
             node.depth += 1;
@@ -598,7 +598,7 @@ impl NodeBB {
             node = ND_ROOT.as_mut().unwrap();
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             node.depth += 1;
             depth += 1;
