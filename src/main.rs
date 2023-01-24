@@ -200,13 +200,15 @@ fn gen_kifu(n : Option<usize>) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.start(
-                        // nodebb::NodeBB::think_ab_extract2,
-                        nodebb::NodeBB::think_ab,
-                        7).unwrap()
+                    // g.start(
+                    //     // nodebb::NodeBB::think_ab_extract2,
+                    //     nodebb::NodeBB::think_ab,
+                    //     7).unwrap()
+                    g.starto(nodebb::NodeBB::thinko_ab_extract2, 7).unwrap();
                 },
                 "all" => {
-                    g.start(nodebb::NodeBB::think, 7).unwrap()
+                    // g.start(nodebb::NodeBB::think, 7).unwrap()
+                    g.starto(nodebb::NodeBB::thinko, 7).unwrap();
                 },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -326,16 +328,16 @@ fn duel(ev1 : &str, ev2 : &str) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.start_with_2et(
-                        // nodebb::NodeBB::think_ab_extract3,
-                        // nodebb::NodeBB::think_ab_extract2,
-                        nodebb::NodeBB::think_ab,
-                        7, &w1, &w2).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w2, &w1).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w2, &w1).unwrap()
+                    // g.start_with_2et(
+                    //     // nodebb::NodeBB::think_ab_extract3,
+                    //     // nodebb::NodeBB::think_ab_extract2,
+                    //     nodebb::NodeBB::think_ab,
+                    //     7, &w1, &w2).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w1, &w2).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w1, &w2).unwrap()
                     // g.start_with_2et(nodebb::NodeBB::think, 7, &w1, &w2).unwrap()
                 },
                 // "" => {
@@ -383,8 +385,8 @@ fn duel(ev1 : &str, ev2 : &str) {
             match think {
                 "" | "ab" => {
                     // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, 7, &w1, &w2).unwrap()
-                    g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w2, &w1).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w2, &w1).unwrap()
                     // g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w2, &w1).unwrap()
                 },
                 "all" => {
@@ -467,14 +469,25 @@ fn play(turnh: i8) {
         let mut g = game::GameBB::new();
         // play
         let think = MYOPT.get().unwrap().think.as_str();
-        g.start_against_stdin(
+        // g.start_against_stdin(
+        //     match think {
+        //         "" | "ab" => {
+        //             // nodebb::NodeBB::think_ab_extract2
+        //             nodebb::NodeBB::think_ab
+        //         },
+        //         "all" => {
+        //             nodebb::NodeBB::think
+        //         },
+        //         _ => { panic!("unknown thinking method.") }
+        //     }, 7, turnh).unwrap();
+        g.starto_against_stdin(
             match think {
                 "" | "ab" => {
-                    // nodebb::NodeBB::think_ab_extract2
-                    nodebb::NodeBB::think_ab
+                    nodebb::NodeBB::thinko_ab_extract2
+                    // nodebb::NodeBB::think_ab
                 },
                 "all" => {
-                    nodebb::NodeBB::think
+                    nodebb::NodeBB::thinko
                 },
                 _ => { panic!("unknown thinking method.") }
             }, 7, turnh).unwrap();
@@ -503,17 +516,28 @@ fn edax(turnh: i8) {
         let mut g = game::GameBB::new();
         // play
         let think = MYOPT.get().unwrap().think.as_str();
-        g.start_against_edax(
-        match think {
-            "" | "ab" => {
-                // nodebb::NodeBB::think_ab_extract2
-                nodebb::NodeBB::think_ab
-            },
-            "all" => {
-                nodebb::NodeBB::think
-            },
-            _ => { panic!("unknown thinking method.") }
-        }, 7, turnh).unwrap();
+        // g.start_against_edax(
+        //     match think {
+        //         "" | "ab" => {
+        //             // nodebb::NodeBB::think_ab_extract2
+        //             nodebb::NodeBB::think_ab
+        //         },
+        //         "all" => {
+        //             nodebb::NodeBB::think
+        //         },
+        //         _ => { panic!("unknown thinking method.") }
+        //     }, 7, turnh).unwrap();
+        g.starto_against_edax(
+            match think {
+                "" | "ab" => {
+                    // nodebb::NodeBB::think_ab_extract2
+                    nodebb::NodeBB::thinko_ab_extract2
+                },
+                "all" => {
+                    nodebb::NodeBB::thinko
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, 7, turnh).unwrap();
     } else {
         // prepare game
         let mut g = game::Game::new();
