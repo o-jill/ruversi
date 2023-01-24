@@ -312,12 +312,13 @@ fn duel(ev1 : &str, ev2 : &str) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    // g.start_with_2et(
-                    //     // nodebb::NodeBB::think_ab_extract3,
-                    //     // nodebb::NodeBB::think_ab_extract2,
-                    //     nodebb::NodeBB::think_ab,
-                    //     7, &w1, &w2).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w2, &w1).unwrap()
+                    g.start_with_2et(
+                        // nodebb::NodeBB::think_ab_extract3,
+                        // nodebb::NodeBB::think_ab_extract2,
+                        nodebb::NodeBB::think_ab,
+                        7, &w1, &w2).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w2, &w1).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w2, &w1).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w2, &w1).unwrap()
@@ -368,8 +369,9 @@ fn duel(ev1 : &str, ev2 : &str) {
             match think {
                 "" | "ab" => {
                     // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, 7, &w1, &w2).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w2, &w1).unwrap()
+                    g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w2, &w1).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w2, &w1).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w2, &w1).unwrap()
