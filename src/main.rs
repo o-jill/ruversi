@@ -144,19 +144,33 @@ fn trial() {
 }
 
 fn verbose(rfen : &str) {
-    match board::Board::from(rfen) {
-        Err(msg) => {println!("{}", msg)},
-        Ok(ban) => {
-            ban.put();
+    if cfg!(feature="bitboard") {
+            match bitboard::BitBoard::from(rfen) {
+            Err(msg) => {println!("{}", msg)},
+            Ok(ban) => {
+                ban.put();
 
-            let st = Instant::now();
-            let (val, node) =
-                node::Node::vb_think_ab( &ban, 7).unwrap();
-            let ft = st.elapsed();
-            println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+                let st = Instant::now();
+                let (val, node) =
+                    nodebb::NodeBB::thinko_ab_extract2( &ban, 7).unwrap();
+                let ft = st.elapsed();
+                println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+            }
+        }
+    } else {
+        match board::Board::from(rfen) {
+            Err(msg) => {println!("{}", msg)},
+            Ok(ban) => {
+                ban.put();
+
+                let st = Instant::now();
+                let (val, node) =
+                    node::Node::vb_think_ab( &ban, 7).unwrap();
+                let ft = st.elapsed();
+                println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+            }
         }
     }
-    // aaa;
 }
 
 fn gen_kifu(n : Option<usize>) {
