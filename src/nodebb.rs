@@ -772,7 +772,8 @@ impl NodeBB {
             node = ND_ROOT.as_mut().unwrap();
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
+            // println!("moves.is_empty()");
             moves.push((0, 0));
             node.depth += 1;
             depth += 1;
@@ -794,18 +795,23 @@ impl NodeBB {
             let nd = node.child.iter_mut().find(|a| {
                     a.x == mvx && a.y == mvy
                 });
-            // if nd.is_none() {
-            //     panic!("node2.child.iter_mut().find(|a|");
-            // }
             let nd = nd.unwrap();
             let newban = ban.r#move(mvx, mvy).unwrap();
             let moves = newban.genmove();
             if moves.is_none() {
+                // println!("moves.len() == 0");
                 nd.child.push(NodeBB::new(0, 0, depth - 1));
                 moves4.push((mvx, mvy, 0, 0));
                 continue;
             }
-            for (mvx2, mvy2) in moves.unwrap() {
+            let moves = moves.unwrap();
+            if moves.is_empty() {
+                // println!("moves.len() == 0");
+                nd.child.push(NodeBB::new(0, 0, depth - 1));
+                moves4.push((mvx, mvy, 0, 0));
+                continue;
+            }
+            for (mvx2, mvy2) in moves {
                 nd.child.push(NodeBB::new(mvx2, mvy2, depth - 2));
                 moves4.push((mvx, mvy, mvx2, mvy2));
             }
@@ -975,15 +981,19 @@ impl NodeBB {
         let mut hyoka = None;
         let mut be = None;
         for c in node.child.iter() {
+            // println!("ch:{}{}", c.x, c.y);
             if c.hyoka.is_none() {
+                // println!("c.hyoka.is_none");
                 continue;
             }
             if hyoka.is_none() {
+                // println!("hyoka.is_none");
                 hyoka = c.hyoka;
                 be = Some(Best::new(hyoka.unwrap(), c.x, c.y, teban));
                 continue;
             }
             if hyoka.unwrap() * fteban < c.hyoka.unwrap() * fteban {
+                // println!("update hyoka");
                 hyoka = c.hyoka;
                 let best = be.as_mut().unwrap();
                 best.x = c.x;
