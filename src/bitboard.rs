@@ -641,6 +641,10 @@ impl BitBoard {
         Ok(ban)
     }
 
+    /// # Returns
+    /// - None : no empty cells.
+    /// - Some(vec![])  : no available cells. pass.
+    /// - Some(Vec![n]) : available cells.
     pub fn genmove(&self) -> Option<Vec<(u8, u8)>> {
         let mut ret = Vec::<(u8, u8)>::new();
         // let mut nblank = 0;
