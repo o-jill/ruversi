@@ -19,18 +19,18 @@ NO Warranty.
   play against Edax instead of you. please use with --play(bw).  
 * --duel  
   play games from some situations with evaltable1 and 2.  
-* --evaltable1 \<path>  
-  a file for boardevaluation.
-* --evaltable2 \<path>  
-  reserved.
+* --ev1 \<path>  
+  a file for board evaluation.
+* --ev2 \<path>  
+  a file for board evaluation.
 * --genkifu  
-  set generatin kifu mode.
+  set generating kifu mode.
 * -Nx  
   initial board group x for generating kifu. 0~9. all of the initial board positions will be used when this option is not specified.
 * --thinkab  
-  use alpha-beta prunning. default.
+  use alpha-beta pruning. default.
 * --thinkall  
-  search every node. (no prunning)
+  search every node. (no pruning)
 * --learn  
   set lerning mode.
 * --repeat \<number>  
