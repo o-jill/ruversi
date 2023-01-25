@@ -143,7 +143,7 @@ fn trial() {
     }
 }
 
-fn verbose(rfen : &str) {
+fn verbose(rfen : &str, depth : u8) {
     if cfg!(feature="bitboard") {
             match bitboard::BitBoard::from(rfen) {
             Err(msg) => {println!("{}", msg)},
@@ -152,7 +152,7 @@ fn verbose(rfen : &str) {
 
                 let st = Instant::now();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_extract2( &ban, 7).unwrap();
+                    nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
                 let ft = st.elapsed();
                 println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
             }
@@ -165,7 +165,7 @@ fn verbose(rfen : &str) {
 
                 let st = Instant::now();
                 let (val, node) =
-                    node::Node::vb_think_ab( &ban, 7).unwrap();
+                    node::Node::vb_think_ab(&ban, depth).unwrap();
                 let ft = st.elapsed();
                 println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
             }
@@ -642,6 +642,7 @@ fn main() {
     }
     if *mode == myoption::Mode::RFEN {
         let rfen = &MYOPT.get().unwrap().rfen;
-        verbose(rfen);
+        let depth = &MYOPT.get().unwrap().depth;
+        verbose(rfen, *depth);
     }
 }

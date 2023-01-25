@@ -22,7 +22,7 @@ pub enum Opponent {
 /// See 'options:' section in Readme.md.
 #[derive(Debug)]
 pub struct MyOption {
-    pub depth : i32,
+    pub depth : u8,
     pub eta : Option<f32>,
     pub evaltable1 : String,
     pub evaltable2 : String,
@@ -155,7 +155,13 @@ impl MyOption {
                     opt.rfen = e;
                 } else if old == "--depth" {
                     match i32::from_str_radix(&e, 10) {
-                        Ok(dep) => {opt.depth = dep;},
+                        Ok(dep) => {
+                            if dep <= 0 || dep > 60 {
+                                println!("depth {dep} is invalid number.");
+                            } else {
+                                opt.depth = dep as u8;
+                            }
+                        },
                         Err(err) => {
                             println!("failed read {} {}. ({})", old, e, err);
                         }
