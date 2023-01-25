@@ -557,7 +557,7 @@ fn edax(turnh: i8) {
     }
 }
 
-/// show command options.
+/// show command options and exit(1).
 fn help() {
     myoption::showhelp("a reversi program written in rust.");
     std::process::exit(1);

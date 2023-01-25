@@ -157,7 +157,9 @@ impl MyOption {
     }
 }
 
-/// show command options.
+/// Show command options.
+/// # Arguments
+/// * `str` - some message to be put before options.
 pub fn showhelp(msg : &str) {
     println!("{}\n", msg);
 
