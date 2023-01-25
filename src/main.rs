@@ -306,7 +306,7 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
     println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
 }
 
-fn duel(ev1 : &str, ev2 : &str) {
+fn duel(ev1 : &str, ev2 : &str, depth : u8) {
     let mut w1 = weight::Weight::new();
     w1.read(ev1).unwrap();
     let mut w2 = weight::Weight::new();
@@ -332,18 +332,18 @@ fn duel(ev1 : &str, ev2 : &str) {
                     //     // nodebb::NodeBB::think_ab_extract3,
                     //     // nodebb::NodeBB::think_ab_extract2,
                     //     nodebb::NodeBB::think_ab,
-                    //     7, &w1, &w2).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w1, &w2).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w1, &w2).unwrap()
+                    //     depth, &w1, &w2).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w1, &w2).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w1, &w2).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think, 7, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think, depth, &w1, &w2).unwrap()
                 },
                 // "" => {
-                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, 7, &w1, &w2).unwrap()
-                //     g.startsh_with_2et(shnode::ShNode::think_ab, 7, &w1, &w2).unwrap()
-                //     // g.startsh_with_2et(shnode::ShNode::think, 7, &w1, &w2).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, depth, &w1, &w2).unwrap()
+                //     g.startsh_with_2et(shnode::ShNode::think_ab, depth, &w1, &w2).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think, depth, &w1, &w2).unwrap()
                 // },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -356,7 +356,7 @@ fn duel(ev1 : &str, ev2 : &str) {
             g.start_with_2et(
                 // node::Node::think_ab_extract2,
                 node::Node::think_ab,
-                7, &w1, &w2).unwrap();
+                depth, &w1, &w2).unwrap();
             let dresult = g.kifu.winner();
             teban = g.kifu.nth(0).teban;
             result = dresult.unwrap();
@@ -384,19 +384,19 @@ fn duel(ev1 : &str, ev2 : &str) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, 7, &w1, &w2).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w2, &w1).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w2, &w1).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, depth, &w1, &w2).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w2, &w1).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w2, &w1).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w2, &w1).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think, 7, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think, depth, &w2, &w1).unwrap()
                 },
                 // "" => {
-                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, 7, &w2, &w1).unwrap()
-                //     g.startsh_with_2et(shnode::ShNode::think_ab, 7, &w2, &w1).unwrap()
-                //     // g.startsh_with_2et(shnode::ShNode::think, 7, &w2, &w1).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, depth, &w2, &w1).unwrap()
+                //     g.startsh_with_2et(shnode::ShNode::think_ab, depth, &w2, &w1).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think, depth, &w2, &w1).unwrap()
                 // },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -406,8 +406,8 @@ fn duel(ev1 : &str, ev2 : &str) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
-            // g.start_with_2et(node::Node::think_ab_extract2, 7, &w2, &w1).unwrap();
-            g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
+            // g.start_with_2et(node::Node::think_ab_extract2, depth, &w2, &w1).unwrap();
+            g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
             let dresult = g.kifu.winner();
             teban = g.kifu.nth(1).teban;
             result = dresult.unwrap();
@@ -463,7 +463,7 @@ fn readeval(path: &str) {
     }
 }
 
-fn play(turnh: i8) {
+fn play(depth : u8, turnh: i8) {
     if cfg!(feature="bitboard") {
         // prepare game
         let mut g = game::GameBB::new();
@@ -479,7 +479,7 @@ fn play(turnh: i8) {
         //             nodebb::NodeBB::think
         //         },
         //         _ => { panic!("unknown thinking method.") }
-        //     }, 7, turnh).unwrap();
+        //     }, depth, turnh).unwrap();
         g.starto_against_stdin(
             match think {
                 "" | "ab" => {
@@ -490,7 +490,7 @@ fn play(turnh: i8) {
                     nodebb::NodeBB::thinko
                 },
                 _ => { panic!("unknown thinking method.") }
-            }, 7, turnh).unwrap();
+            }, depth, turnh).unwrap();
     } else {
         // prepare game
         let mut g = game::Game::new();
@@ -506,11 +506,11 @@ fn play(turnh: i8) {
                     node::Node::think
                 },
                 _ => { panic!("unknown thinking method.") }
-            }, 7, turnh).unwrap();
+            }, depth, turnh).unwrap();
         }
 }
 
-fn edax(turnh: i8) {
+fn edax(depth : u8, turnh: i8) {
     if cfg!(feature="bitboard") {
         // prepare game
         let mut g = game::GameBB::new();
@@ -526,7 +526,7 @@ fn edax(turnh: i8) {
         //             nodebb::NodeBB::think
         //         },
         //         _ => { panic!("unknown thinking method.") }
-        //     }, 7, turnh).unwrap();
+        //     }, depth, turnh).unwrap();
         g.starto_against_edax(
             match think {
                 "" | "ab" => {
@@ -537,7 +537,7 @@ fn edax(turnh: i8) {
                     nodebb::NodeBB::thinko
                 },
                 _ => { panic!("unknown thinking method.") }
-            }, 7, turnh).unwrap();
+            }, depth, turnh).unwrap();
     } else {
         // prepare game
         let mut g = game::Game::new();
@@ -553,7 +553,7 @@ fn edax(turnh: i8) {
                 node::Node::think
             },
             _ => { panic!("unknown thinking method.") }
-        }, 7, turnh).unwrap();
+        }, depth, turnh).unwrap();
     }
 }
 
@@ -566,6 +566,7 @@ fn help() {
 fn main() {
     println!("Hello, reversi world!");
 
+    // read command options
     MYOPT
         .set(myoption::MyOption::new(std::env::args().collect()))
         .unwrap();
@@ -583,8 +584,6 @@ fn main() {
 
     // trial();
 
-    // read command options
-
     // read eval table
     let path = &MYOPT.get().unwrap().evaltable1;
     if path.is_empty() {
@@ -600,6 +599,7 @@ fn main() {
     }
 
     // trial();
+    let depth = MYOPT.get().unwrap().depth;
 
     if *mode == myoption::Mode::None || *mode == myoption::Mode::GenKifu {
         let n = MYOPT.get().unwrap().n;
@@ -613,14 +613,15 @@ fn main() {
     if *mode == myoption::Mode::Duel {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
-        duel(ev1, ev2);
+        duel(ev1, ev2, depth);
     }
     if *mode == myoption::Mode::Play {
         let turn = MYOPT.get().unwrap().turn;
         let opp = &MYOPT.get().unwrap().opponent;
-        match opp{
+        match opp {
             myoption::Opponent::CUI => {
                 play(
+                    depth,
                     if turn == board::NONE {
                         let mut rng = rand::thread_rng();
                         if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
@@ -630,6 +631,7 @@ fn main() {
             },
             myoption::Opponent::Edax => {
                 edax(
+                    depth,
                     if turn == board::NONE {
                         let mut rng = rand::thread_rng();
                         if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
@@ -642,7 +644,6 @@ fn main() {
     }
     if *mode == myoption::Mode::RFEN {
         let rfen = &MYOPT.get().unwrap().rfen;
-        let depth = &MYOPT.get().unwrap().depth;
-        verbose(rfen, *depth);
+        verbose(rfen, depth);
     }
 }
