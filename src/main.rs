@@ -557,12 +557,23 @@ fn edax(turnh: i8) {
     }
 }
 
+/// show command options.
+fn help() {
+    myoption::showhelp("a reversi program written in rust.");
+    std::process::exit(1);
+}
+
 fn main() {
     println!("Hello, reversi world!");
 
     MYOPT
         .set(myoption::MyOption::new(std::env::args().collect()))
         .unwrap();
+
+    let mode = &MYOPT.get().unwrap().mode;
+    if *mode == myoption::Mode::Help {
+        help();
+    }
 
     if cfg!(feature="bitboard") {
         nodebb::init_weight();
@@ -590,7 +601,6 @@ fn main() {
 
     // trial();
 
-    let mode = &MYOPT.get().unwrap().mode;
     if *mode == myoption::Mode::None || *mode == myoption::Mode::GenKifu {
         let n = MYOPT.get().unwrap().n;
         gen_kifu(n);

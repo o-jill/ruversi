@@ -156,3 +156,35 @@ impl MyOption {
         opt
     }
 }
+
+/// show command options.
+pub fn showhelp(msg : &str) {
+    println!("{}\n", msg);
+
+    println!("options:
+  --duel     play games from some situations with evaltable1 and 2.
+  --Edax     play against Edax instead of you. please use with --play(bw).
+  --genkifu  set generatin kifu mode. default.
+  --help or -h  show this help.
+  --learn    set lerning mode. default.
+  --play     play a game agaist you. turn is random.
+  --playb    play a game agaist you. your turn is black(SENTE).
+             you can use w/ --Edax to make ruversi black.
+  --playw    play a game agaist you. your turn is white(GOTE).
+             you can use w/ --Edax to make ruversi white.
+  --rfen <rfen>  think from rfen for debug. don't forget \"\" not to be recognized as 2 part.
+
+  Common:
+    --thinkab   use alpha-beta pruning. default.
+    --thinkall  search every node. (no pruning)
+  Duel:
+    --ev1 <path>  a file for board evaluation.
+    --ev2 <path>  a file for board evaluation.
+  GenKifu:
+    -Nx  initial board group x for generating kifu. 0~9.
+        all of the initial board positions will be used when this option is not specified.
+  Learn:
+    --repeat <number>  number of learning. default 10000.
+    --eta <ratio>      learning ratio. default 0.0001.
+");
+}
