@@ -22,16 +22,17 @@ pub enum Opponent {
 /// See 'options:' section in Readme.md.
 #[derive(Debug)]
 pub struct MyOption {
-    pub n : Option<usize>,
-    pub repeat : Option<usize>,
+    pub depth : i32,
     pub eta : Option<f32>,
-    pub mode : Mode,
     pub evaltable1 : String,
     pub evaltable2 : String,
-    pub think : String,  // "all", "ab"
-    pub rfen : String,
-    pub turn : i8,  // SENTE, GOTE
+    pub mode : Mode,
+    pub n : Option<usize>,
     pub opponent : Opponent,
+    pub repeat : Option<usize>,
+    pub rfen : String,
+    pub think : String,  // "all", "ab"
+    pub turn : i8,  // SENTE, GOTE
 }
 
 impl MyOption {
@@ -43,27 +44,29 @@ impl MyOption {
     /// # Return value
     /// instance of MyOptions.<br>
     /// default:<br>
-    /// - n: None
-    /// - repeat: None
+    /// - depth: 7
     /// - eta: None
-    /// - mode: Mode::None
     /// - evaltable1: ""
     /// - evaltable2: ""
-    /// - think: ""
-    /// - rfen: ""
+    /// - mode: Mode::None
+    /// - n: None
     /// - opponent: Opponent::None
+    /// - repeat: None
+    /// - rfen: ""
+    /// - think: ""
     pub fn new(args: Vec<String>) -> MyOption {
         let mut opt = MyOption {
-            n : None,
-            repeat : None,
+            depth : 7,
             eta : None,
-            mode : Mode::None,
             evaltable1 : String::new(),
             evaltable2 : String::new(),
-            think : String::new(),
-            rfen : String::new(),
-            turn : board::NONE,
+            mode : Mode::None,
+            n : None,
             opponent: Opponent::None,
+            repeat : None,
+            rfen : String::new(),
+            think : String::new(),
+            turn : board::NONE,
         };
         let mut old = String::new();
         for e in args {
@@ -92,6 +95,8 @@ impl MyOption {
                 }
             } else if e == "--rfen" {
                 opt.mode = Mode::RFEN;
+                old = e;
+            } else if e == "--depth" {
                 old = e;
             } else if e == "--help" || e == "-h" {
                 opt.mode = Mode::Help;
@@ -148,6 +153,13 @@ impl MyOption {
                     }
                 } else if old == "--rfen" {
                     opt.rfen = e;
+                } else if old == "--depth" {
+                    match i32::from_str_radix(&e, 10) {
+                        Ok(dep) => {opt.depth = dep;},
+                        Err(err) => {
+                            println!("failed read {} {}. ({})", old, e, err);
+                        }
+                    }
                 } else {
                     println!("unknown option: {}", e);
                 }
@@ -179,6 +191,7 @@ pub fn showhelp(msg : &str) {
   Common:
     --thinkab   use alpha-beta pruning. default.
     --thinkall  search every node. (no pruning)
+    --depth x   searching depth. default 7.
   Duel:
     --ev1 <path>  a file for board evaluation.
     --ev2 <path>  a file for board evaluation.
