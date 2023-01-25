@@ -8,6 +8,7 @@ pub enum Mode {
   Duel,
   RFEN,
   Play,
+  Help,
 }
 
 #[derive(Debug, PartialEq)]
@@ -92,6 +93,8 @@ impl MyOption {
             } else if e == "--rfen" {
                 opt.mode = Mode::RFEN;
                 old = e;
+            } else if e == "--help" || e == "-h" {
+                opt.mode = Mode::Help;
             } else if e == "--thinkab" {
                 opt.think = "ab".to_string();
             } else if e == "--thinkall" {
