@@ -143,6 +143,10 @@ fn trial() {
     }
 }
 
+/// think about a given situation.
+/// # Arguments
+/// - rfen : RFEN text to be thought.
+/// - depth : depth to think.
 fn verbose(rfen : &str, depth : u8) {
     if cfg!(feature="bitboard") {
             match bitboard::BitBoard::from(rfen) {
@@ -173,6 +177,9 @@ fn verbose(rfen : &str, depth : u8) {
     }
 }
 
+/// generate kifu
+/// # Arguments
+/// - n : None or Some(0 - 9). index in 10 group.
 fn gen_kifu(n : Option<usize>) {
     let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     let rfentbl =
@@ -239,6 +246,10 @@ fn gen_kifu(n : Option<usize>) {
     }
 }
 
+/// training a weight.
+/// # Arguments
+/// - repeat : Number of repeat. None as 10000.
+/// - eta : learning ratio. None as 0.0001.
 fn training(repeat : Option<usize>, eta : Option<f32>) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.0001);
@@ -306,6 +317,10 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
     println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
 }
 
+/// duel between 2 eval tables.
+/// # Arguments
+/// - ev1 : eval table 1.
+/// - ev2 : eval table 2.
 fn duel(ev1 : &str, ev2 : &str, depth : u8) {
     let mut w1 = weight::Weight::new();
     w1.read(ev1).unwrap();
@@ -442,6 +457,9 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
     println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
 }
 
+/// read eval file.
+/// # Arguments
+/// - path : file path.
 fn readeval(path: &str) {
     println!("read eval table: {}", path);
     if cfg!(feature="bitboard") {
@@ -463,6 +481,10 @@ fn readeval(path: &str) {
     }
 }
 
+/// play a game ruversi vs you.
+/// # Arguments
+/// - depth : depth to think.
+/// - turnh : your turn.
 fn play(depth : u8, turnh: i8) {
     if cfg!(feature="bitboard") {
         // prepare game
@@ -510,6 +532,10 @@ fn play(depth : u8, turnh: i8) {
         }
 }
 
+/// play a game ruversi vs Edax.
+/// # Arguments
+/// - depth : depth to think.
+/// - turnh : Edax's turn.
 fn edax(depth : u8, turnh: i8) {
     if cfg!(feature="bitboard") {
         // prepare game
