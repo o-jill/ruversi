@@ -589,6 +589,77 @@ fn help() {
     std::process::exit(1);
 }
 
+pub fn postxt(x : u8, y : u8) -> String {
+    if x < 1 || x > 8 || y < 1 || y > 8 {
+        return String::from("PASS");
+    }
+
+    format!("{}{}", bitboard::STR_GOTE.chars().nth(x as usize).unwrap(), y)
+}
+
+/// generate RFENs by moving 2 stones with a RFEN.
+/// # Arguments
+/// - tag : tag name in initialpos.txt to use as start positions.
+/// # Returns
+/// Ok(()) for success, otherwise Err(error message).
+fn geninitpos(tag : &str) -> Result<(), String>{
+    if tag.is_empty() {
+        return Err(String::from("error: tag is empty."));
+    }
+
+    let path = format!("{}/{}", env!("CARGO_MANIFEST_DIR"), initialpos::INITIALPOSFILE);
+    let ip = initialpos::InitialPos::read(&path);
+    if ip.is_err() {
+        return Err(format!("error: failed to read {path}."));
+    }
+
+    let ipos = ip.unwrap();
+    let pos = ipos.at(tag);
+    if pos.is_none() {
+        return Err(format!("error: failed to find tag:{tag}."));
+    }
+
+    let pos = pos.unwrap();
+    for rfen in pos.rfens.iter() {
+        let ban = bitboard::BitBoard::from(rfen);
+        if ban.is_err() {
+            return Err(format!("error: reading rfen \"{rfen}\"."));
+        }
+
+        let ban = ban.unwrap();
+        let moves = ban.genmove();
+        if moves.is_none() {  // no empty cells.
+            continue;
+        }
+
+        let mut moves = moves.unwrap();
+        if moves.is_empty() {
+            moves.push((0, 0));
+        }
+        for (mvx, mvy) in moves.iter() {
+            let mvstr = postxt(*mvx, *mvy);
+
+            let ban2 = ban.r#move(*mvx, *mvy).unwrap();
+            let moves2 = ban2.genmove();
+            if moves2.is_none() {  // no empty cells.
+                continue;
+            }
+
+            let mut moves2 = moves2.unwrap();
+            if moves2.is_empty() {
+                moves2.push((0, 0));
+            }
+            for (mvx2, mvy2) in moves2.iter() {
+                let mvstr2 = postxt(*mvx2, *mvy2);
+                let ban3 = ban2.r#move(*mvx2, *mvy2).unwrap();
+                println!("\"{}\",  // ****** {mvstr} {mvstr2}", ban3.to_str());
+            }
+        }
+    }
+
+    Ok(())
+}
+
 fn main() {
     println!("Hello, reversi world!");
 
@@ -671,5 +742,12 @@ fn main() {
     if *mode == myoption::Mode::RFEN {
         let rfen = &MYOPT.get().unwrap().rfen;
         verbose(rfen, depth);
+    }
+    if *mode == myoption::Mode::InitPos {
+        let tag = &MYOPT.get().unwrap().initpos;
+        match geninitpos(tag) {
+            Ok(_) => {},
+            Err(msg) => {eprintln!("{msg}");}
+        }
     }
 }
