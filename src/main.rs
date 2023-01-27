@@ -143,7 +143,11 @@ fn trial() {
     }
 }
 
-fn verbose(rfen : &str) {
+/// think about a given situation.
+/// # Arguments
+/// - rfen : RFEN text to be thought.
+/// - depth : depth to think.
+fn verbose(rfen : &str, depth : u8) {
     if cfg!(feature="bitboard") {
             match bitboard::BitBoard::from(rfen) {
             Err(msg) => {println!("{}", msg)},
@@ -152,7 +156,7 @@ fn verbose(rfen : &str) {
 
                 let st = Instant::now();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_extract2( &ban, 7).unwrap();
+                    nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
                 let ft = st.elapsed();
                 println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
             }
@@ -165,7 +169,7 @@ fn verbose(rfen : &str) {
 
                 let st = Instant::now();
                 let (val, node) =
-                    node::Node::vb_think_ab( &ban, 7).unwrap();
+                    node::Node::vb_think_ab(&ban, depth).unwrap();
                 let ft = st.elapsed();
                 println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
             }
@@ -173,6 +177,9 @@ fn verbose(rfen : &str) {
     }
 }
 
+/// generate kifu
+/// # Arguments
+/// - n : None or Some(0 - 9). index in 10 group.
 fn gen_kifu(n : Option<usize>) {
     let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     let rfentbl =
@@ -239,6 +246,10 @@ fn gen_kifu(n : Option<usize>) {
     }
 }
 
+/// training a weight.
+/// # Arguments
+/// - repeat : Number of repeat. None as 10000.
+/// - eta : learning ratio. None as 0.0001.
 fn training(repeat : Option<usize>, eta : Option<f32>) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.0001);
@@ -306,7 +317,11 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
     println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
 }
 
-fn duel(ev1 : &str, ev2 : &str) {
+/// duel between 2 eval tables.
+/// # Arguments
+/// - ev1 : eval table 1.
+/// - ev2 : eval table 2.
+fn duel(ev1 : &str, ev2 : &str, depth : u8) {
     let mut w1 = weight::Weight::new();
     w1.read(ev1).unwrap();
     let mut w2 = weight::Weight::new();
@@ -332,18 +347,18 @@ fn duel(ev1 : &str, ev2 : &str) {
                     //     // nodebb::NodeBB::think_ab_extract3,
                     //     // nodebb::NodeBB::think_ab_extract2,
                     //     nodebb::NodeBB::think_ab,
-                    //     7, &w1, &w2).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w1, &w2).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w1, &w2).unwrap()
+                    //     depth, &w1, &w2).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w1, &w2).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w1, &w2).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think, 7, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think, depth, &w1, &w2).unwrap()
                 },
                 // "" => {
-                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, 7, &w1, &w2).unwrap()
-                //     g.startsh_with_2et(shnode::ShNode::think_ab, 7, &w1, &w2).unwrap()
-                //     // g.startsh_with_2et(shnode::ShNode::think, 7, &w1, &w2).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, depth, &w1, &w2).unwrap()
+                //     g.startsh_with_2et(shnode::ShNode::think_ab, depth, &w1, &w2).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think, depth, &w1, &w2).unwrap()
                 // },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -356,7 +371,7 @@ fn duel(ev1 : &str, ev2 : &str) {
             g.start_with_2et(
                 // node::Node::think_ab_extract2,
                 node::Node::think_ab,
-                7, &w1, &w2).unwrap();
+                depth, &w1, &w2).unwrap();
             let dresult = g.kifu.winner();
             teban = g.kifu.nth(0).teban;
             result = dresult.unwrap();
@@ -384,19 +399,19 @@ fn duel(ev1 : &str, ev2 : &str) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, 7, &w1, &w2).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think_ab, 7, &w2, &w1).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, 7, &w2, &w1).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, 7, &w2, &w1).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, depth, &w1, &w2).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w2, &w1).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w2, &w1).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, 7, &w2, &w1).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think, 7, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think, depth, &w2, &w1).unwrap()
                 },
                 // "" => {
-                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, 7, &w2, &w1).unwrap()
-                //     g.startsh_with_2et(shnode::ShNode::think_ab, 7, &w2, &w1).unwrap()
-                //     // g.startsh_with_2et(shnode::ShNode::think, 7, &w2, &w1).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, depth, &w2, &w1).unwrap()
+                //     g.startsh_with_2et(shnode::ShNode::think_ab, depth, &w2, &w1).unwrap()
+                //     // g.startsh_with_2et(shnode::ShNode::think, depth, &w2, &w1).unwrap()
                 // },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -406,8 +421,8 @@ fn duel(ev1 : &str, ev2 : &str) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
-            // g.start_with_2et(node::Node::think_ab_extract2, 7, &w2, &w1).unwrap();
-            g.start_with_2et(node::Node::think_ab, 7, &w2, &w1).unwrap();
+            // g.start_with_2et(node::Node::think_ab_extract2, depth, &w2, &w1).unwrap();
+            g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
             let dresult = g.kifu.winner();
             teban = g.kifu.nth(1).teban;
             result = dresult.unwrap();
@@ -442,6 +457,9 @@ fn duel(ev1 : &str, ev2 : &str) {
     println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
 }
 
+/// read eval file.
+/// # Arguments
+/// - path : file path.
 fn readeval(path: &str) {
     println!("read eval table: {}", path);
     if cfg!(feature="bitboard") {
@@ -463,7 +481,11 @@ fn readeval(path: &str) {
     }
 }
 
-fn play(turnh: i8) {
+/// play a game ruversi vs you.
+/// # Arguments
+/// - depth : depth to think.
+/// - turnh : your turn.
+fn play(depth : u8, turnh: i8) {
     if cfg!(feature="bitboard") {
         // prepare game
         let mut g = game::GameBB::new();
@@ -479,7 +501,7 @@ fn play(turnh: i8) {
         //             nodebb::NodeBB::think
         //         },
         //         _ => { panic!("unknown thinking method.") }
-        //     }, 7, turnh).unwrap();
+        //     }, depth, turnh).unwrap();
         g.starto_against_stdin(
             match think {
                 "" | "ab" => {
@@ -490,7 +512,7 @@ fn play(turnh: i8) {
                     nodebb::NodeBB::thinko
                 },
                 _ => { panic!("unknown thinking method.") }
-            }, 7, turnh).unwrap();
+            }, depth, turnh).unwrap();
     } else {
         // prepare game
         let mut g = game::Game::new();
@@ -506,11 +528,15 @@ fn play(turnh: i8) {
                     node::Node::think
                 },
                 _ => { panic!("unknown thinking method.") }
-            }, 7, turnh).unwrap();
+            }, depth, turnh).unwrap();
         }
 }
 
-fn edax(turnh: i8) {
+/// play a game ruversi vs Edax.
+/// # Arguments
+/// - depth : depth to think.
+/// - turnh : Edax's turn.
+fn edax(depth : u8, turnh: i8) {
     if cfg!(feature="bitboard") {
         // prepare game
         let mut g = game::GameBB::new();
@@ -526,7 +552,7 @@ fn edax(turnh: i8) {
         //             nodebb::NodeBB::think
         //         },
         //         _ => { panic!("unknown thinking method.") }
-        //     }, 7, turnh).unwrap();
+        //     }, depth, turnh).unwrap();
         g.starto_against_edax(
             match think {
                 "" | "ab" => {
@@ -537,7 +563,7 @@ fn edax(turnh: i8) {
                     nodebb::NodeBB::thinko
                 },
                 _ => { panic!("unknown thinking method.") }
-            }, 7, turnh).unwrap();
+            }, depth, turnh).unwrap();
     } else {
         // prepare game
         let mut g = game::Game::new();
@@ -553,7 +579,7 @@ fn edax(turnh: i8) {
                 node::Node::think
             },
             _ => { panic!("unknown thinking method.") }
-        }, 7, turnh).unwrap();
+        }, depth, turnh).unwrap();
     }
 }
 
@@ -563,9 +589,81 @@ fn help() {
     std::process::exit(1);
 }
 
+pub fn postxt(x : u8, y : u8) -> String {
+    if x < 1 || x > 8 || y < 1 || y > 8 {
+        return String::from("PASS");
+    }
+
+    format!("{}{}", bitboard::STR_GOTE.chars().nth(x as usize).unwrap(), y)
+}
+
+/// generate RFENs by moving 2 stones with a RFEN.
+/// # Arguments
+/// - tag : tag name in initialpos.txt to use as start positions.
+/// # Returns
+/// Ok(()) for success, otherwise Err(error message).
+fn geninitpos(tag : &str) -> Result<(), String>{
+    if tag.is_empty() {
+        return Err(String::from("error: tag is empty."));
+    }
+
+    let path = format!("{}/{}", env!("CARGO_MANIFEST_DIR"), initialpos::INITIALPOSFILE);
+    let ip = initialpos::InitialPos::read(&path);
+    if ip.is_err() {
+        return Err(format!("error: failed to read {path}."));
+    }
+
+    let ipos = ip.unwrap();
+    let pos = ipos.at(tag);
+    if pos.is_none() {
+        return Err(format!("error: failed to find tag:{tag}."));
+    }
+
+    let pos = pos.unwrap();
+    for rfen in pos.rfens.iter() {
+        let ban = bitboard::BitBoard::from(rfen);
+        if ban.is_err() {
+            return Err(format!("error: reading rfen \"{rfen}\"."));
+        }
+
+        let ban = ban.unwrap();
+        let moves = ban.genmove();
+        if moves.is_none() {  // no empty cells.
+            continue;
+        }
+
+        let mut moves = moves.unwrap();
+        if moves.is_empty() {
+            moves.push((0, 0));
+        }
+        for (mvx, mvy) in moves.iter() {
+            let mvstr = postxt(*mvx, *mvy);
+
+            let ban2 = ban.r#move(*mvx, *mvy).unwrap();
+            let moves2 = ban2.genmove();
+            if moves2.is_none() {  // no empty cells.
+                continue;
+            }
+
+            let mut moves2 = moves2.unwrap();
+            if moves2.is_empty() {
+                moves2.push((0, 0));
+            }
+            for (mvx2, mvy2) in moves2.iter() {
+                let mvstr2 = postxt(*mvx2, *mvy2);
+                let ban3 = ban2.r#move(*mvx2, *mvy2).unwrap();
+                println!("\"{}\",  // ****** {mvstr} {mvstr2}", ban3.to_str());
+            }
+        }
+    }
+
+    Ok(())
+}
+
 fn main() {
     println!("Hello, reversi world!");
 
+    // read command options
     MYOPT
         .set(myoption::MyOption::new(std::env::args().collect()))
         .unwrap();
@@ -583,8 +681,6 @@ fn main() {
 
     // trial();
 
-    // read command options
-
     // read eval table
     let path = &MYOPT.get().unwrap().evaltable1;
     if path.is_empty() {
@@ -600,6 +696,7 @@ fn main() {
     }
 
     // trial();
+    let depth = MYOPT.get().unwrap().depth;
 
     if *mode == myoption::Mode::None || *mode == myoption::Mode::GenKifu {
         let n = MYOPT.get().unwrap().n;
@@ -613,14 +710,15 @@ fn main() {
     if *mode == myoption::Mode::Duel {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
-        duel(ev1, ev2);
+        duel(ev1, ev2, depth);
     }
     if *mode == myoption::Mode::Play {
         let turn = MYOPT.get().unwrap().turn;
         let opp = &MYOPT.get().unwrap().opponent;
-        match opp{
+        match opp {
             myoption::Opponent::CUI => {
                 play(
+                    depth,
                     if turn == board::NONE {
                         let mut rng = rand::thread_rng();
                         if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
@@ -630,6 +728,7 @@ fn main() {
             },
             myoption::Opponent::Edax => {
                 edax(
+                    depth,
                     if turn == board::NONE {
                         let mut rng = rand::thread_rng();
                         if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
@@ -642,6 +741,13 @@ fn main() {
     }
     if *mode == myoption::Mode::RFEN {
         let rfen = &MYOPT.get().unwrap().rfen;
-        verbose(rfen);
+        verbose(rfen, depth);
+    }
+    if *mode == myoption::Mode::InitPos {
+        let tag = &MYOPT.get().unwrap().initpos;
+        match geninitpos(tag) {
+            Ok(_) => {},
+            Err(msg) => {eprintln!("{msg}");}
+        }
     }
 }

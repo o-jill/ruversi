@@ -156,10 +156,10 @@ fn testinitpos() {
     let one = one.unwrap();
     assert_eq!(one.tag, "ONE");
     assert_eq!(one.rfens, [
-        "8/8/8/3Aa3/2C3/8/8/8 w".to_string(), "8/8/8/3Aa3/3B3/4A3/8/8 w".to_string(),
-        "8/8/3A4/3B3/3aA3/8/8/8 w".to_string(), "8/8/8/3C2/3aA3/8/8/8 w".to_string()]);
+        "8/8/8/3Aa3/2C3/8/8/8 w".to_string(), "8/8/8/3Aa3/3B3/3A4/8/8 w".to_string(),
+        "8/8/4A3/3B3/3aA3/8/8/8 w".to_string(), "8/8/8/3C2/3aA3/8/8/8 w".to_string()]);
     let zeroone = ipos.rfens(&["ZERO", "ONE"]);
     assert_eq!(zeroone, ["8/8/8/3Aa3/3aA3/8/8/8 b".to_string(),
-        "8/8/8/3Aa3/2C3/8/8/8 w".to_string(), "8/8/8/3Aa3/3B3/4A3/8/8 w".to_string(),
-        "8/8/3A4/3B3/3aA3/8/8/8 w".to_string(), "8/8/8/3C2/3aA3/8/8/8 w".to_string()]);
+        "8/8/8/3Aa3/2C3/8/8/8 w".to_string(), "8/8/8/3Aa3/3B3/3A4/8/8 w".to_string(),
+        "8/8/4A3/3B3/3aA3/8/8/8 w".to_string(), "8/8/8/3C2/3aA3/8/8/8 w".to_string()]);
 }
