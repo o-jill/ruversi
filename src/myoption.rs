@@ -9,6 +9,7 @@ pub enum Mode {
   RFEN,
   Play,
   Help,
+  InitPos,
 }
 
 #[derive(Debug, PartialEq)]
@@ -26,6 +27,7 @@ pub struct MyOption {
     pub eta : Option<f32>,
     pub evaltable1 : String,
     pub evaltable2 : String,
+    pub initpos : String,
     pub mode : Mode,
     pub n : Option<usize>,
     pub opponent : Opponent,
@@ -48,6 +50,7 @@ impl MyOption {
     /// - eta: None
     /// - evaltable1: ""
     /// - evaltable2: ""
+    /// - initpos: ""
     /// - mode: Mode::None
     /// - n: None
     /// - opponent: Opponent::None
@@ -60,6 +63,7 @@ impl MyOption {
             eta : None,
             evaltable1 : String::new(),
             evaltable2 : String::new(),
+            initpos: String::new(),
             mode : Mode::None,
             n : None,
             opponent: Opponent::None,
@@ -100,6 +104,9 @@ impl MyOption {
                 old = e;
             } else if e == "--help" || e == "-h" {
                 opt.mode = Mode::Help;
+            } else if e == "--initpos" {
+                opt.mode = Mode::InitPos;
+                old = e;
             } else if e == "--thinkab" {
                 opt.think = "ab".to_string();
             } else if e == "--thinkall" {
@@ -166,6 +173,8 @@ impl MyOption {
                             println!("failed read {} {}. ({})", old, e, err);
                         }
                     }
+                } else if old == "--initpos" {
+                    opt.initpos = e;
                 } else {
                     println!("unknown option: {}", e);
                 }
