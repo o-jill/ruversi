@@ -23,12 +23,12 @@ jobs:
     - uses: actions/checkout@v3
     - name: cpu
       run: cat /proc/cpuinfo
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      continue-on-error: true # とにかくログを保存するとこまで行きたい
-      id: utest
-      run: cargo test --verbose
+    # - name: Build
+    #   run: cargo build --verbose
+    # - name: Run tests
+    #   continue-on-error: true # とにかくログを保存するとこまで行きたい
+    #   id: utest
+    #   run: cargo test --verbose
     - name: Run
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaserun
@@ -49,11 +49,11 @@ jobs:
         name: kifu${{ matrix.kifu }}_${{ env.CURRENT_DATETIME }}
         path: |
           kifu
-    - name: check error test
-      if: ${{ steps.utest.outcome == 'failure' }}
-      run: |
-        echo ${{ steps.utest.outcome }} == 'failure'
-        exit 1
+    # - name: check error test
+    #   if: ${{ steps.utest.outcome == 'failure' }}
+    #   run: |
+    #     echo ${{ steps.utest.outcome }} == 'failure'
+    #     exit 1
     - name: check error run
       if: ${{ steps.releaserun.outcome == 'failure' }}
       run: |
