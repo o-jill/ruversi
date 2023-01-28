@@ -38,7 +38,7 @@ jobs:
     - name: Learn
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaselearn
-      run: cargo run --release -- --learn
+      run: cargo run --release -- --learn --repeat 10
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定
