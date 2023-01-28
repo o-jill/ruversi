@@ -535,7 +535,7 @@ impl ShNode {
                 pa.partial_cmp(&pb).unwrap()
             });
             //let mut tt = transptable::TranspositionTable::new();
-            let teban = ban2.teban;
+            let teban = -ban2.teban;
             let mut alpha : f32 = *sal.lock().unwrap();
             let mut beta : f32 = *sbe.lock().unwrap();
     // let mut km = 0;
@@ -585,7 +585,7 @@ impl ShNode {
             pa.partial_cmp(&pb).unwrap()
         });
         //let mut tt = transptable::TranspositionTable::new();
-        let teban = ban.teban;
+        let teban = -ban.teban;
         let mut alpha : f32 = *salpha.lock().unwrap();
         let mut beta : f32 = *sbeta.lock().unwrap();
 // let mut km = 0;
@@ -626,6 +626,7 @@ impl ShNode {
 
         sub.join().unwrap();
 
+        let teban = ban.teban;
         let fteban = teban as f32;
         let mut hyoka : Option<f32> = None;
         {
