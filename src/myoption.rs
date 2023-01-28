@@ -192,7 +192,6 @@ pub fn showhelp(msg : &str) {
 
     println!("options:
   --duel     play games from some situations with evaltable1 and 2.
-  --Edax     play against Edax instead of you. please use with --play(bw).
   --genkifu  set generatin kifu mode. default.
   --help or -h  show this help.
   --learn    set lerning mode. default.
@@ -216,5 +215,7 @@ pub fn showhelp(msg : &str) {
   Learn:
     --repeat <number>  number of learning. default 10000.
     --eta <ratio>      learning ratio. default 0.0001.
+  Play:
+    --Edax  play against Edax instead of you. please use with --play(bw).
 ");
 }
