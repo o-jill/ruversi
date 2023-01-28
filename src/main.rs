@@ -672,6 +672,7 @@ fn main() {
     if *mode == myoption::Mode::Help {
         help();
     }
+    println!("mode:{mode:?}");
 
     if cfg!(feature="bitboard") {
         nodebb::init_weight();
