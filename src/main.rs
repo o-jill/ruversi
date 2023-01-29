@@ -660,6 +660,56 @@ fn geninitpos(tag : &str) -> Result<(), String>{
     Ok(())
 }
 
+fn equalrfen() -> Result<(), String> {
+    let obf = "/tmp/test.obf";
+    let cd = "../../edax-reversi/";
+    let edaxpath = "./bin/lEdax-x64-modern";
+    let evfile = "data/eval.dat";
+    let scoreptn = regex::Regex::new("%\\s+([+-]\\d\\d)").unwrap();
+    let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
+    // let rfentbl = &ip.at("FIVE").unwrap().rfens;
+    // let rfentbl = &ip.at("FOUR").unwrap().rfens;
+    let rfentbl = &ip.at("THREE").unwrap().rfens;
+    for rfen in rfentbl.iter() {
+        // println!("rfen:{rfen}");
+        let ban = bitboard::BitBoard::from(rfen).unwrap();
+        {
+            // println!("put board to a file...");
+            let mut f = File::create(obf).unwrap();
+            f.write(ban.to_obf().as_bytes()).unwrap();
+            f.write("\n".as_bytes()).unwrap();
+            f.flush().unwrap();
+        }
+        // launch edax
+        let cmd = match std::process::Command::new(edaxpath)
+            .arg("--solve").arg(obf).current_dir(cd)
+            .arg("--eval-file").arg(evfile)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::null()).spawn() {
+            Err(msg) => panic!("error running edax... [{}]", msg),
+            Ok(prcs) => prcs,
+        };
+        // read stdout and get moves
+        let w = cmd.wait_with_output().unwrap();
+        let txt = String::from_utf8(w.stdout).unwrap();
+        // println!("{txt}");
+        let lines : Vec<_> = txt.split("\n").collect();
+        // println!("{}", lines[2]);
+        match scoreptn.captures(&lines[2]) {
+            Some(cap) => {
+                let score = &cap[1];
+                if vec!["-01", "+00", "+01"].contains(&score) {
+                    println!("{rfen}, {score}");
+                 } else {
+                    eprintln!("{rfen}, {score}");
+                 }
+            },
+            _ => {}
+        }
+        }
+    Ok(())
+}
+
 fn main() {
     println!("Hello, reversi world!");
 
@@ -747,6 +797,12 @@ fn main() {
     if *mode == myoption::Mode::InitPos {
         let tag = &MYOPT.get().unwrap().initpos;
         match geninitpos(tag) {
+            Ok(_) => {},
+            Err(msg) => {eprintln!("{msg}");}
+        }
+    }
+    if *mode == myoption::Mode::Equal {
+        match equalrfen() {
             Ok(_) => {},
             Err(msg) => {eprintln!("{msg}");}
         }

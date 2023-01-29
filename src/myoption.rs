@@ -10,6 +10,7 @@ pub enum Mode {
   Play,
   Help,
   InitPos,
+  Equal,
 }
 
 #[derive(Debug, PartialEq)]
@@ -107,6 +108,8 @@ impl MyOption {
             } else if e == "--initpos" {
                 opt.mode = Mode::InitPos;
                 old = e;
+            } else if e == "--equal" {
+                opt.mode = Mode::Equal;
             } else if e == "--thinkab" {
                 opt.think = "ab".to_string();
             } else if e == "--thinkall" {
