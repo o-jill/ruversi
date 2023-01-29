@@ -63,7 +63,7 @@ impl InitialPos {
                         _ => {}
                     }
                     let rfenptn =
-                        regex::Regex::new("\"([1-8A-Ha-h/]+ [bw])\"").unwrap();
+                        regex::Regex::new("^([1-8A-Ha-h/]+ [bw])").unwrap();
                     match rfenptn.captures(&line) {
                         Some(cap) => {
                             let rfen = &cap[1];

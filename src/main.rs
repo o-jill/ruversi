@@ -652,7 +652,7 @@ fn geninitpos(tag : &str) -> Result<(), String>{
             for (mvx2, mvy2) in moves2.iter() {
                 let mvstr2 = postxt(*mvx2, *mvy2);
                 let ban3 = ban2.r#move(*mvx2, *mvy2).unwrap();
-                println!("\"{}\",  // ****** {mvstr} {mvstr2}", ban3.to_str());
+                println!("{},  // ****** {mvstr} {mvstr2}", ban3.to_str());
             }
         }
     }
