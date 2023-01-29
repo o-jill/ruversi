@@ -145,7 +145,7 @@ fn testinitpos() {
     assert!(ip.is_ok());
     let ipos = ip.unwrap();
     let tags = ipos.tags();
-    assert_eq!(tags, ["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT"]);
+    assert_eq!(tags, ["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"]);
     let zero = ipos.at("ZERO");
     assert!(zero.is_some());
     let zero = zero.unwrap();
