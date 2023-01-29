@@ -333,8 +333,8 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
     let mut result;
     let mut teban;
 
-    let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
-    let rfentbl = &ip.at("THREE").unwrap().rfens;
+    let ip = initialpos::InitialPos::read(initialpos::EQUALFILE).unwrap();
+    let rfentbl = &ip.rfens_all();
     for rfen in rfentbl.iter() {
         if cfg!(feature="bitboard") {
             // prepare game
