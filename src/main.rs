@@ -666,10 +666,19 @@ fn equalrfen() -> Result<(), String> {
     let edaxpath = "./bin/lEdax-x64-modern";
     let evfile = "data/eval.dat";
     let scoreptn = regex::Regex::new("%\\s+([+-]\\d\\d)").unwrap();
-    let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
+    // let input = initialpos::INITIALPOSFILE;
+    let input = "data/initialpos.seven.txt";
+    let ip = initialpos::InitialPos::read(input).unwrap();
+    let rfentbl = &ip.rfens_all();
+    // let rfentbl = &ip.at("SIX").unwrap().rfens;
     // let rfentbl = &ip.at("FIVE").unwrap().rfens;
     // let rfentbl = &ip.at("FOUR").unwrap().rfens;
-    let rfentbl = &ip.at("THREE").unwrap().rfens;
+    // let rfentbl = &ip.at("THREE").unwrap().rfens;
+    let mut m1 = 0;
+    let mut pm0 = 0;
+    let mut p1 = 0;
+    let mut count = 0;
+    let mut res = String::new();
     for rfen in rfentbl.iter() {
         // println!("rfen:{rfen}");
         let ban = bitboard::BitBoard::from(rfen).unwrap();
@@ -698,15 +707,34 @@ fn equalrfen() -> Result<(), String> {
         match scoreptn.captures(&lines[2]) {
             Some(cap) => {
                 let score = &cap[1];
-                if vec!["-01", "+00", "+01"].contains(&score) {
-                    println!("{rfen}, {score}");
-                 } else {
-                    eprintln!("{rfen}, {score}");
-                 }
+                // if vec!["-01", "+00", "+01"].contains(&score) {
+                //     println!("{rfen}, {score}");
+                //  } else {
+                //     // eprintln!("{rfen}, {score}");
+                //  }
+                if "-01" == score {
+                    res += &format!("{rfen}, {score}\n");
+                    m1 = m1 + 1;
+                    count += 1;
+                } else if "+00" == score {
+                    res += &format!("{rfen}, {score}\n");
+                    pm0 = pm0 + 1;
+                    count += 1;
+                } else if "+01" == score {
+                    res += &format!("{rfen}, {score}\n");
+                    p1 = p1 + 1;
+                    count += 1;
+                }
             },
             _ => {}
         }
+        if count >= 20 {
+            print!("{res}");
+            count = 0;
+            res.clear();
         }
+    }
+    println!("{res}\n-1:{m1}, 00:{pm0}, +01:{p1}");
     Ok(())
 }
 
