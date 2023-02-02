@@ -432,8 +432,29 @@ impl Weight {
 
     /**
      * exp(-x)
+     * 
+     * # Arguments  
+     * * `x` - [4 ; f32]  
+     * * `y` - [exp(-x[0]), exp(-x[1]), exp(-x[2]), exp(-x[3])]  
      */
     fn expmx_ps( x : *const f32, y : *mut f32) {
+        unsafe {
+            let x4 = x86_64::_mm_load_ps(x);
+            let y4 = Weight::expmx_ps_simd(x4);
+            x86_64::_mm_store_ps(y, y4);
+        }
+    }
+
+    /**
+     * exp(-x)
+     * 
+     * # Arguments  
+     * * `x4` - [4 ; f32] as x86_64::__m128
+     * 
+     * # Return value  
+     * [exp(-x4[0]), exp(-x4[1]), exp(-x4[2]), exp(-x4[3])] as x86_64::__m128.
+     */
+    fn expmx_ps_simd(x4 : x86_64::__m128) -> x86_64::__m128 {
         let exp_hi : f32 = 88.3762626647949;
         let exp_lo : f32 = -exp_hi;
 
@@ -448,7 +469,7 @@ impl Weight {
         let cephes_exp_p4 : f32 = 1.6666665459E-1;
         let cephes_exp_p5 : f32 = 5.0000001201E-1;
         unsafe {
-            let x4 = x86_64::_mm_load_ps(x);
+            // let x4 = x86_64::_mm_load_ps(x);
             // clip x
             let max4 = x86_64::_mm_set1_ps(exp_hi);
             let x4 = x86_64::_mm_min_ps(x4, max4);
@@ -506,7 +527,8 @@ impl Weight {
             let pow2n = x86_64::_mm_castsi128_ps(emm0);
 
             let y4 = x86_64::_mm_mul_ps(y4, pow2n);
-            x86_64::_mm_store_ps(y, y4);
+            y4
+            // x86_64::_mm_store_ps(y, y4);
         }
     }
 
