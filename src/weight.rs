@@ -52,7 +52,7 @@ impl EvalFile {
 }
 
 pub struct Weight {
-    weight : Vec<f32>
+    pub weight : Vec<f32>
 }
 
 impl Weight {
@@ -2135,7 +2135,7 @@ impl Weight {
         }
     }
 
-    fn backwardv3(&mut self,
+    pub fn backwardv3(&mut self,
         ban : &board::Board, winner : i8, eta : f32,
         (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
         let cells = &ban.cells;
