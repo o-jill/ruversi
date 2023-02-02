@@ -26,7 +26,7 @@ static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::O
 
 #[allow(dead_code)]
 fn trial() {
-    if true {
+    if false {
         let rfen = "h/H/h/H/h/H/h/H b";  // same
         // let rfen = "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b";  // diff
         // let rfen = "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w";  // diff
@@ -783,7 +783,7 @@ fn main() {
         node::init_weight();
     }
 
-    trial();
+    // trial();
 
     // read eval table
     let path = &MYOPT.get().unwrap().evaltable1;
