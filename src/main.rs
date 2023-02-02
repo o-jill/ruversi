@@ -26,6 +26,59 @@ static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::O
 
 #[allow(dead_code)]
 fn trial() {
+    if true {
+        let rfen = "h/H/h/H/h/H/h/H b";  // same
+        // let rfen = "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b";  // diff
+        // let rfen = "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w";  // diff
+        let bban = bitboard::BitBoard::from(rfen).unwrap();
+        let ban = board::Board::from(rfen).unwrap();
+        ban.put();
+        let mut w = weight::Weight::new();
+        w.init();
+        let mut w2 = weight::Weight::new();
+        w2.copy(&w);
+        let mut w3 = weight::Weight::new();
+        w3.copy(&w);
+        let res_nosimd = w.evaluatev3bb(&bban);
+        let res_simd = w.evaluatev3bb_simd(&bban);
+        let res_simdavx = w.evaluatev3bb_simd(&bban);
+        println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
+        let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
+        let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb(&bban);
+        let (bh_sa, ah_sa, res_simdavx, fssa) = w.forwardv3bb(&bban);
+        println!("{bh_ns:?} == \n{bh_s:?} == \n{bh_sa:?} ???");
+        println!("{ah_ns:?} == \n{ah_s:?} == \n{ah_sa:?} ???");
+        println!("{res_nosimd:?} == \n{res_simd:?} == \n{res_simdavx:?} ???");
+        println!("{fsns:?} == {fss:?} == {fssa:?} ???");
+        let res = w.forwardv3bb(&bban);
+        let winner = 1;
+        let eta = 0.001;
+        w.backwardv3bb(&bban, winner, eta, &res);
+        w2.backwardv3bb_simd(&bban, winner, eta, &res);
+        let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        let s = sv.join(",");
+        let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        let s2 = sv.join(",");
+        // println!("{s}\n{s2}");
+        for ((idx, a), b) in sv.iter().enumerate().zip(sv2.iter()) {
+            if a != b {
+                println!("{a} is not {b} @ {idx}");
+            }
+        }
+        println!("sv and sv2 are {}", if sv == sv2 {"same"} else {"not completely same"});
+        let res = w3.forwardv3(&ban);
+        // let winner = 1;
+        // let eta = 0.001;
+        w3.backwardv3(&ban, winner, eta, &res);
+        let sv3 = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        // let s3 = sv3.join(",");
+        for ((idx, a), b) in sv.iter().enumerate().zip(sv3.iter()) {
+            if a != b {
+                println!("{a} is not {b} @ {idx}");
+            }
+        }
+        panic!("sv and sv3 are {}", if sv == sv3 {"same"} else {"not completely same"});
+    }
     if false {
         let die = Uniform::from(-1..=1);
         let mut rng = rand::thread_rng();
@@ -730,7 +783,7 @@ fn main() {
         node::init_weight();
     }
 
-    // trial();
+    trial();
 
     // read eval table
     let path = &MYOPT.get().unwrap().evaltable1;
