@@ -2259,7 +2259,62 @@ impl Weight {
         }
     }
 
-    fn backwardv3bb(&mut self,
+    pub fn backwardv3bb(&mut self,
+        ban : &bitboard::BitBoard, winner : i8, eta : f32,
+        (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+
+        let ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - 10.0 * winner as f32;
+        let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        let deta = diff * eta;
+        for i in 0..N_HIDDEN {
+            wh[i] -= hidsig[i] * deta;
+        }
+        wh[N_HIDDEN] -= deta;
+
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            // tmp = wo x diff
+            let tmp = wh[i] * diff;
+            // sig = 1 / (1 + exp(-hidden[i]))
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            // h = wo x diff x sig x (1 - sig)
+            *h = tmp * sig * (1.0 - sig);
+        }
+
+        // back to input
+        for (i, h) in dhid.iter().enumerate() {
+            let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let heta = *h * eta;
+
+            for y in 0..bitboard::NUMCELL {
+                let mut bit = bitboard::LSB_CELL << y;
+                for x in 0..bitboard::NUMCELL {
+                    // let w = w1[x + y * bitboard::NUMCELL];
+                    let cb = (black & bit) != 0;
+                    let cw = (white & bit) != 0;
+                    let diff = if cb {heta} else if cw {-heta} else {0.0};
+                    w1[x + y * bitboard::NUMCELL] -= diff;
+
+                    bit <<= bitboard::NUMCELL;
+                }
+            }
+
+            let wtbn = &mut ow[board::CELL_2D * N_HIDDEN ..];
+            wtbn[i] -= teban * heta;
+            let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+            wfs[i] -= fs.0 as f32 * heta;
+            wfs[i + N_HIDDEN] -= fs.1 as f32 * heta;
+            let wdc = &mut ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+            wdc[i] -= heta;
+        }
+    }
+
+    pub fn backwardv3bb_simd(&mut self,
         ban : &bitboard::BitBoard, winner : i8, eta : f32,
         (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
         let black = ban.black;
@@ -2292,10 +2347,37 @@ impl Weight {
         wh[N_HIDDEN] -= deta;
 
         let mut dhid = [0.0 as f32 ; N_HIDDEN];
-        for (i, h) in dhid.iter_mut().enumerate() {
-            let tmp = wh[i] * diff;
-            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
-            *h = tmp * sig * (1.0 - sig);
+        if cfg!(feature="nosimd") {
+            for (i, h) in dhid.iter_mut().enumerate() {
+                // tmp = wo x diff
+                let tmp = wh[i] * diff;
+                // sig = 1 / (1 + exp(-hidden[i]))
+                let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+                // h = wo x diff x sig x (1 - sig)
+                *h = tmp * sig * (1.0 - sig);
+            }
+        } else {
+            unsafe {
+                let diff4 = x86_64::_mm_set1_ps(diff);
+                let one = x86_64::_mm_set1_ps(1.0);
+                for i in 0..N_HIDDEN / 4 {
+                    let idx = i * 4;
+                    let wh4 = x86_64::_mm_load_ps(wh[idx..].as_ptr());
+                    // tmp = wh x diff
+                    let tmp = x86_64::_mm_mul_ps(wh4, diff4);
+                    // sig = 1 / (1 + exp(-hidden[i]))
+                    let hid4 = x86_64::_mm_load_ps(hidden[idx..].as_ptr());
+                    let emx = Weight::expmx_ps_simd(hid4);
+                    let onemx = x86_64::_mm_add_ps(one, emx);
+                    let sig = x86_64::_mm_div_ps(one, onemx);
+                    // h = wh x diff x sig x (1 - sig)
+                    let tmp2 = x86_64::_mm_mul_ps(tmp, sig);
+                    let onessig = x86_64::_mm_sub_ps(one, sig);
+                    let h4 = x86_64::_mm_mul_ps(tmp2, onessig);
+
+                    x86_64::_mm_store_ps(dhid[idx..].as_mut_ptr(), h4);
+                }
+            }
         }
 
         // back to input
