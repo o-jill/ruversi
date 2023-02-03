@@ -2526,6 +2526,10 @@ impl Weight {
                 self.forwardv3bb_simd(&ban)
             };
         // backward
-        self.backwardv3bb(ban, winner, eta, &res);
+        if cfg!(feature="nosimd") {
+            self.backwardv3bb(ban, winner, eta, &res);
+        } else {
+            self.backwardv3bb_simd(ban, winner, eta, &res);
+        }
     }
 }
