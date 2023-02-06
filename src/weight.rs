@@ -13,9 +13,10 @@ const N_HIDDEN : usize = 4;
 const N_OUTPUT : usize = 1;
 const N_WEIGHT: usize = (N_INPUT + 1) * N_HIDDEN + N_HIDDEN + 1;
 
-const WSZV1 : usize = (board::CELL_2D + 1 + 1) * N_HIDDEN + N_HIDDEN + 1;
+const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + N_HIDDEN + 1;
 const WSZV2 : usize = WSZV1;
-const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
+const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * 4 + N_HIDDEN + 1;
+const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
 
 // v2
 // 8/8/1A6/2Ab3/2C3/8/8/8 w
@@ -29,6 +30,7 @@ enum EvalFile{
     V1,
     V2,
     V3,
+    V4,
 }
 
 impl EvalFile {
@@ -38,6 +40,7 @@ impl EvalFile {
             EvalFile::V1 => {"# 65-4-1"},
             EvalFile::V2 => {"# 64+1-4-1"},
             EvalFile::V3 => {"# 64+1+2-4-1"},
+            EvalFile::V4 => {"# 64+1+2-8-1"},
         }
     }
 
@@ -46,6 +49,7 @@ impl EvalFile {
             "# 65-4-1" => Some(EvalFile::V1),
             "# 64+1-4-1" => Some(EvalFile::V2),
             "# 64+1+2-4-1" => Some(EvalFile::V3),
+            "# 64+1+2-8-1" => Some(EvalFile::V4),
             _ => None
         }
     }
@@ -105,6 +109,7 @@ impl Weight {
                         EvalFile::V1 => {return self.readv1(&l)},
                         EvalFile::V2 => {return self.readv2(&l)},
                         EvalFile::V3 => {return self.readv3(&l)},
+                        EvalFile::V4 => {return self.readv4(&l)},
                         _ => {}
                     }
                 },
@@ -116,40 +121,11 @@ impl Weight {
     }
 
     fn readv1(&mut self, line : &str) -> Result<(), String> {
-        let csv = line.split(",").collect::<Vec<_>>();
-        let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
-        let nsz = newtable.len();
-        if WSZV1 != nsz {
-            return Err(String::from("size mismatch"));
-        }
-        if cfg!(feature="nnv1") {
-            self.weight = newtable;
-        } else if cfg!(feature="nnv2") {
-            self.fromv1tov2(&newtable);
-            // println!("self.fromv1tov2(&newtable);");
-        } else {
-            self.fromv1tov3(&newtable);
-            // println!("self.fromv1tov3(&newtable);");
-        }
-        // println!("v1:{:?}", self.weight);
-        Ok(())
+        Err(String::from("v1 format is not supported any more."))
     }
 
     fn readv2(&mut self, line : &str) -> Result<(), String> {
-        let csv = line.split(",").collect::<Vec<_>>();
-        let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
-        let nsz = newtable.len();
-        if WSZV2 != nsz {
-            return Err(String::from("size mismatch"));
-        }
-        if cfg!(feature="nnv2") {
-            self.weight = newtable;
-        } else {
-            self.fromv2tov3(&newtable);
-            // println!("self.fromv2tov3(&newtable);");
-        }
-        // println!("v2:{:?}", self.weight);
-        Ok(())
+        Err(String::from("v2 format is not supported any more."))
     }
 
     fn readv3(&mut self, line : &str) -> Result<(), String> {
@@ -159,8 +135,20 @@ impl Weight {
         if WSZV3 != nsz {
             return Err(String::from("size mismatch"));
         }
-        self.weight = newtable;
+        self.fromv3tov4(&newtable);
         // println!("v3:{:?}", self.weight);
+        Ok(())
+    }
+
+    fn readv4(&mut self, line : &str) -> Result<(), String> {
+        let csv = line.split(",").collect::<Vec<_>>();
+        let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+        let nsz = newtable.len();
+        if WSZV4 != nsz {
+            return Err(String::from("size mismatch"));
+        }
+        self.weight = newtable;
+        // println!("v4:{:?}", self.weight);
         Ok(())
     }
 
@@ -182,9 +170,15 @@ impl Weight {
         Weight::write(&mut f, &self.weight, &EvalFile::V2);
     }
 
+    #[allow(dead_code)]
     pub fn writev3(&self, path : &str) {
         let mut f = fs::File::create(path).unwrap();
         Weight::write(&mut f, &self.weight, &EvalFile::V3);
+    }
+
+    pub fn writev4(&self, path : &str) {
+        let mut f = fs::File::create(path).unwrap();
+        Weight::write(&mut f, &self.weight, &EvalFile::V4);
     }
 
     pub fn writev1asv2(&self, path : &str) {
@@ -269,6 +263,62 @@ impl Weight {
         for (w, t) in we.iter_mut().zip(dcw2.iter()) {
             *w = *t;
         }
+    }
+
+    /// copy v3 data into v4.
+    fn fromv3tov4(&mut self, tbl : &Vec<f32>) {
+        // ban
+        let n = 4 * board::CELL_2D;
+        let we = &mut self.weight[0..n];
+        let tb = &tbl[0..n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // teban
+        let idx3 = 4 * board::CELL_2D;
+        let idx4 = N_HIDDEN * board::CELL_2D;
+        let n = 4;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // fixed stone
+        let idx3 = 4 * (board::CELL_2D +  1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1);
+        let n = 4;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // dc
+        let idx3 = 4 * (board::CELL_2D + 1 + 1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 1);
+        let n = 4;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // w2
+        let idx3 = 4 * (board::CELL_2D + 1 + 1 + 1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 1 + 1);
+        let n = 4;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // dc2
+        let idx3 = 4 * (board::CELL_2D + 1 + 1 + 1 + 1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 1 + 1 + 1);
+        self.weight[idx4] =  tbl[idx3];
     }
 
     pub fn evaluatev1(&self, ban : &board::Board) -> f32 {
