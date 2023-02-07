@@ -488,6 +488,7 @@ impl Node {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
+    #[allow(dead_code)]
     pub fn think_ab_extract2(ban : &board::Board, mut depth : u8)
             -> Option<(f32, Node)> {
         let mut node = Node::new(0, 0, depth);

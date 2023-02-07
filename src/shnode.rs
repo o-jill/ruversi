@@ -12,25 +12,26 @@ const SORT_PRI : [i32 ; 64]= [
     0, 3, 1, 2, 2, 1, 3, 0,
 ];
 
-fn move_priority(&(x, y) : &(u8, u8)) -> i32 {
-    let idx = if x == 0 || y == 0 {0} else {x + y * 8 - 9};
-    SORT_PRI[idx as usize]
-}
+// fn move_priority(&(x, y) : &(u8, u8)) -> i32 {
+//     let idx = if x == 0 || y == 0 {0} else {x + y * 8 - 9};
+//     SORT_PRI[idx as usize]
+// }
 
+#[allow(dead_code)]
 fn move_priority2(&(x1, y1, x2, y2) : &(u8, u8, u8, u8)) -> i32 {
     let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
     let idx2 = if x2 == 0 || y2 == 0 {0} else {x2 + y2 * 8 - 9};
     SORT_PRI[idx1 as usize] * 10 + SORT_PRI[idx2 as usize]
 }
 
-fn move_priority3(&(x1, y1, x2, y2, x3, y3)
-        : &(u8, u8, u8, u8, u8, u8)) -> i32 {
-    let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
-    let idx2 = if x2 == 0 || y2 == 0 {0} else {x2 + y2 * 8 - 9};
-    let idx3 = if x3 == 0 || y3 == 0 {0} else {x3 + y3 * 8 - 9};
-    SORT_PRI[idx1 as usize] * 100 + SORT_PRI[idx2 as usize] * 10
-        + SORT_PRI[idx3 as usize]
-}
+// fn move_priority3(&(x1, y1, x2, y2, x3, y3)
+//         : &(u8, u8, u8, u8, u8, u8)) -> i32 {
+//     let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
+//     let idx2 = if x2 == 0 || y2 == 0 {0} else {x2 + y2 * 8 - 9};
+//     let idx3 = if x3 == 0 || y3 == 0 {0} else {x3 + y3 * 8 - 9};
+//     SORT_PRI[idx1 as usize] * 100 + SORT_PRI[idx2 as usize] * 10
+//         + SORT_PRI[idx3 as usize]
+// }
 
 /*
  * input: NUMCELL * NUMCELL + 1(teban) + 1
@@ -38,6 +39,7 @@ fn move_priority3(&(x1, y1, x2, y2, x3, y3)
  * output: 1
  */
 // static mut WEIGHT : Option<Vec<f32>> = None;
+#[allow(dead_code)]
 pub static mut WEIGHT : &Option<weight::Weight> = unsafe {&nodebb::WEIGHT};
 
 #[derive(Clone)]
@@ -49,6 +51,7 @@ pub struct Best {
 }
 
 impl Best {
+    #[allow(dead_code)]
     pub fn new(h : f32, x : u8, y : u8, t : i8) -> Best {
         Best { hyoka: h, x: x, y: y, teban: t }
     }
@@ -80,6 +83,7 @@ pub struct ShNode {
 }
 
 impl ShNode {
+    #[allow(dead_code)]
     pub fn new(x : u8, y : u8, depth : u8) -> ShNode {
         ShNode {
             child : Vec::<Arc<RwLock<ShNode>>>::new(),
@@ -92,6 +96,7 @@ impl ShNode {
         }
     }
 
+    #[allow(dead_code)]
     fn evaluate(ban : &bitboard::BitBoard) -> f32 {
         // unsafe{ return WEIGHT.as_ref().unwrap().evaluatev3bb(ban)}
         unsafe {
@@ -105,11 +110,13 @@ impl ShNode {
         }
     }
 
+    #[allow(dead_code)]
     fn evalwtt(ban : &bitboard::BitBoard, tt : &mut transptable::TranspositionTable) -> f32 {
         let id = if cfg!(feature="nosimd") {ban.to_id()} else {ban.to_id_simd()};
         tt.check_or_append(&id, || ShNode::evaluate(ban))
     }
 
+    #[allow(dead_code)]
     pub fn think(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, Arc<RwLock<ShNode>>)> {
 // println!("shnode::think(ban, d:{depth})");
@@ -135,7 +142,7 @@ impl ShNode {
             node.write().unwrap().depth += 1;
             depth += 1;
         }
-        let teban = ban.teban;
+        // let teban = ban.teban;
         // let ddd = node.lock().unwrap().depth;
         let n = moves.len();
         let mut leaves = Vec::<Arc<RwLock<ShNode>>>::new();
@@ -269,6 +276,7 @@ impl ShNode {
         Some(hyoka)
     }
 
+    #[allow(dead_code)]
     pub fn think_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, Arc<RwLock<ShNode>>)> {
         let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth)));
@@ -438,6 +446,7 @@ impl ShNode {
         Some((hyoka, node.clone()))
     }
 
+    #[allow(dead_code)]
     pub fn think_ab_extract2(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, Arc<RwLock<ShNode>>)> {
         let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth)));
