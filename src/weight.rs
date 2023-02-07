@@ -2582,7 +2582,7 @@ fn testweight() {
         let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let s = sv.join(",");
         let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        let s2 = sv.join(",");
+        let s2 = sv2.join(",");
         assert_eq!(s, s2);
         let res = w3.forwardv3(&ban);
         w3.backwardv3(&ban, winner, eta, &res);
