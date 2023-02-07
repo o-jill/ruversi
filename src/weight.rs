@@ -9,7 +9,7 @@ use std::arch::x86_64;
  * output: 1
  */
 const N_INPUT : usize = board::CELL_2D + 1 + 2;
-const N_HIDDEN : usize = 4;
+const N_HIDDEN : usize = 8;
 const N_OUTPUT : usize = 1;
 const N_WEIGHT: usize = (N_INPUT + 1) * N_HIDDEN + N_HIDDEN + 1;
 
