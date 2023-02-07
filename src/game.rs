@@ -29,6 +29,7 @@ impl GameBB {
         }
     }
 
+    #[allow(dead_code)]
     pub fn start(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>, depth : u8)
             -> Result<(), String> {
         loop {
@@ -116,6 +117,7 @@ impl GameBB {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn startsh(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<RwLock<shnode::ShNode>>)>, depth : u8)
             -> Result<(), String> {
         loop {
@@ -162,6 +164,7 @@ impl GameBB {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn start_against_stdin(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>,
             depth : u8, turnin : i8) -> Result<(), String> {
@@ -326,6 +329,7 @@ impl GameBB {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn start_against_edax(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>,
             depth : u8, turnin : i8) -> Result<(), String> {
@@ -509,6 +513,7 @@ impl GameBB {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn start_with_2et(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>,
             depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
@@ -621,6 +626,7 @@ impl GameBB {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn startsh_with_2et(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<RwLock<shnode::ShNode>>)>,
             // f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<Mutex<shnode::ShNode>>)>,

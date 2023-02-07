@@ -363,6 +363,7 @@ impl Weight {
         sum
     }
 
+    #[allow(dead_code)]
     pub fn evaluatev2_simd(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
@@ -1390,6 +1391,7 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
+    #[allow(dead_code)]
     pub fn forwardv2_simd2(&self, ban : &board::Board)
         -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];

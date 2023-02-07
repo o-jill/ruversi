@@ -22,10 +22,12 @@ impl RfenSet {
       self.rfens.push(rfen.to_string());
   }
 
+  #[allow(dead_code)]
   pub fn len(&self) -> usize {
       self.rfens.len()
   }
 
+  #[allow(dead_code)]
   pub fn dump(&self) -> String {
       let mut ret : String = format!("# {} {}\n", self.tag, self.len());
       ret += &self.rfens.join("\n");
@@ -92,6 +94,7 @@ impl InitialPos {
         self.list.push(RfenSet::new(tag.to_string(), rfen.to_string()));
     }
 
+    #[allow(dead_code)]
     pub fn tags(&self) -> Vec<&str> {
         self.list.iter().map(|a| {a.tag.as_str()}).collect::<Vec<&str>>()
     }
@@ -100,6 +103,7 @@ impl InitialPos {
         self.list.iter().find(|a| a.tag == tag)
     }
 
+    #[allow(dead_code)]
     pub fn rfens(&self, tags : &[&str]) -> Vec<String> {
         let mut ret = Vec::<String>::new();
         for a in self.list.iter() {
