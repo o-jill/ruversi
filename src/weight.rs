@@ -13,9 +13,9 @@ const N_HIDDEN : usize = 8;
 const N_OUTPUT : usize = 1;
 const N_WEIGHT: usize = (N_INPUT + 1) * N_HIDDEN + N_HIDDEN + 1;
 
-const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + N_HIDDEN + 1;
+const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + 4 + 1;
 const WSZV2 : usize = WSZV1;
-const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * 4 + N_HIDDEN + 1;
+const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * 4 + 4 + 1;
 const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
 
 // v2
@@ -133,7 +133,7 @@ impl Weight {
         let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
         let nsz = newtable.len();
         if WSZV3 != nsz {
-            return Err(String::from("size mismatch"));
+            return Err(format!("size mismatch {WSZV3} != {nsz}"));
         }
         self.fromv3tov4(&newtable);
         // println!("v3:{:?}", self.weight);
