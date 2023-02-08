@@ -2,6 +2,7 @@ use super::*;
 use rand::Rng;
 use std::{fs, io::{BufReader, BufRead}};
 use std::arch::x86_64;
+use rayon::prelude::*;
 
 /*
  * input: NUMCELL * NUMCELL + 1(teban) + 2(fixedstones) + 1
@@ -2325,6 +2326,96 @@ impl Weight {
         }
     }
 
+    unsafe fn set_unsync(v : &[f32], idx: usize, val : f32) {
+        let ptr = v.as_ptr() as *mut f32;
+        let addr = ptr.offset(idx as isize);
+        *addr = val;
+    }
+
+    unsafe fn set_unsyncsub(v : &[f32], idx: usize, val : f32) {
+        let before = v[idx];
+        let ptr = v.as_ptr() as *mut f32;
+        let addr = ptr.offset(idx as isize);
+        *addr = before - val;
+    }
+
+    pub fn backwardv3bb_para(&mut self,
+        ban : &bitboard::BitBoard, winner : i8, eta : f32,
+        (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+
+        // let ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - 10.0 * winner as f32;
+        // let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        let idx = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN;
+        let deta = diff * eta;
+        for i in 0..N_HIDDEN {
+            // wh[i] -= hidsig[i] * deta;
+            self.weight[idx + i] -= hidsig[i] * deta;
+        }
+        // wh[N_HIDDEN] -= deta;
+        self.weight[idx + N_HIDDEN] -= deta;
+
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            // tmp = wo x diff
+            // let tmp = wh[i] * diff;
+            let tmp = self.weight[idx + i] * diff;
+            // sig = 1 / (1 + exp(-hidden[i]))
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            // h = wo x diff x sig x (1 - sig)
+            *h = tmp * sig * (1.0 - sig);
+        }
+
+        // back to input
+        dhid.par_iter().enumerate().for_each(|(i, h)| {
+        // for (i, h) in dhid.iter().enumerate() {
+            // let ow = &mut self.weight[0..];
+            // let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let idx = i * board::CELL_2D;
+            let heta = *h * eta;
+
+            for y in 0..bitboard::NUMCELL {
+                let mut bit = bitboard::LSB_CELL << y;
+                for x in 0..bitboard::NUMCELL {
+                    // let bit = bitboard::LSB_CELL << (y + bitboard::NUMCELL * x);
+                    // let w = w1[x + y * bitboard::NUMCELL];
+                    let cb = (black & bit) != 0;
+                    let cw = (white & bit) != 0;
+                    let diff = if cb {heta} else if cw {-heta} else {0.0};
+                    // w1[x + y * bitboard::NUMCELL] -= diff;
+                    // self.weight[idx + x + y * bitboard::NUMCELL] -= diff;
+                    unsafe {
+                        Weight::set_unsyncsub(&self.weight, idx + x + y * bitboard::NUMCELL, diff);
+                    }
+
+                    bit <<= bitboard::NUMCELL;
+                }
+            }
+        } );
+        // let ow = &mut self.weight;
+        for (i, h) in dhid.iter().enumerate() {
+            let heta = *h * eta;
+            // let wtbn = &mut ow[board::CELL_2D * N_HIDDEN ..];
+            let idx = board::CELL_2D * N_HIDDEN;
+            // wtbn[i] -= teban * heta;
+            self.weight[i + idx] -= teban * heta;
+            // let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+            let idx = (board::CELL_2D + 1) * N_HIDDEN;
+            // wfs[i] -= fs.0 as f32 * heta;
+            // wfs[i + N_HIDDEN] -= fs.1 as f32 * heta;
+            self.weight[idx + i] -= fs.0 as f32 * heta;
+            self.weight[idx + i + N_HIDDEN] -= fs.1 as f32 * heta;
+            // let wdc = &mut ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+            let idx = (board::CELL_2D + 1 + 2) * N_HIDDEN;
+            // wdc[i] -= heta;
+            self.weight[idx + i]  -= heta;
+        }// );
+    }
+
     pub fn backwardv3bb_simd(&mut self,
         ban : &bitboard::BitBoard, winner : i8, eta : f32,
         (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
@@ -2562,6 +2653,8 @@ fn testweight() {
         w2.copy(&w);
         let mut w3 = weight::Weight::new();
         w3.copy(&w);
+        let mut wp = weight::Weight::new();
+        wp.copy(&w);
         let res_nosimd = w.evaluatev3bb(&bban);
         let res_simd = w.evaluatev3bb_simd(&bban);
         let res_simdavx = w.evaluatev3bb_simd(&bban);
@@ -2595,8 +2688,21 @@ fn testweight() {
         assert_eq!(s, s2);
         let res = w3.forwardv3(&ban);
         w3.backwardv3(&ban, winner, eta, &res);
-        let sv3 = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        let sv3 = w3.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let s3 = sv3.join(",");
         assert_eq!(s, s3);
+        wp.backwardv3bb_para(&bban, winner, eta, &res);
+        let sv4 = wp.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        // let s4 = sv4.join(",");
+        // assert_eq!(s, s4);
+        let newtable1 : Vec<f32> = sv.iter().map(|a| a.parse::<f32>().unwrap()).collect();
+        let newtable4 : Vec<f32> = sv4.iter().map(|a| a.parse::<f32>().unwrap()).collect();
+        for ((idx, a), b) in newtable1.iter().enumerate().zip(newtable4.iter()) {
+            // assert!((a - b).abs() < 1e-4);
+            if (a - b).abs() > 1e-7 {
+                println!("{a} - {b} > 1e-7  @{idx} {}", idx/bitboard::CELL_2D);
+                assert!((a - b).abs() < 1e-4);
+            }
+        }
     }
 }
