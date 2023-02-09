@@ -233,7 +233,7 @@ fn verbose(rfen : &str, depth : u8) {
 /// generate kifu
 /// # Arguments
 /// - n : None or Some(0 - 9). index in 10 group.
-fn gen_kifu(n : Option<usize>) {
+fn gen_kifu(n : Option<usize>, depth: u8) {
     let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     let rfentbl =
             ip.rfens_uniq(&["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"]);
@@ -263,12 +263,12 @@ fn gen_kifu(n : Option<usize>) {
                     // g.start(
                     //     // nodebb::NodeBB::think_ab_extract2,
                     //     nodebb::NodeBB::think_ab,
-                    //     7).unwrap()
-                    g.starto(nodebb::NodeBB::thinko_ab_extract2, 7).unwrap();
+                    //     depth).unwrap()
+                    g.starto(nodebb::NodeBB::thinko_ab_extract2, depth).unwrap();
                 },
                 "all" => {
-                    // g.start(nodebb::NodeBB::think, 7).unwrap()
-                    g.starto(nodebb::NodeBB::thinko, 7).unwrap();
+                    // g.start(nodebb::NodeBB::think, depth).unwrap()
+                    g.starto(nodebb::NodeBB::thinko, depth).unwrap();
                 },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -280,11 +280,11 @@ fn gen_kifu(n : Option<usize>) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    // g.start(node::Node::think_ab_extract2, 7).unwrap()
-                    g.start(node::Node::think_ab, 7).unwrap()
+                    // g.start(node::Node::think_ab_extract2, depth).unwrap()
+                    g.start(node::Node::think_ab, depth).unwrap()
                 },
                 "all" => {
-                    g.start(node::Node::think, 7).unwrap()
+                    g.start(node::Node::think, depth).unwrap()
                 },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -832,7 +832,7 @@ fn main() {
 
     if *mode == myoption::Mode::None || *mode == myoption::Mode::GenKifu {
         let n = MYOPT.get().unwrap().n;
-        gen_kifu(n);
+        gen_kifu(n, depth);
     }
     if *mode == myoption::Mode::None || *mode == myoption::Mode::Learn {
         let repeat = MYOPT.get().unwrap().repeat;
