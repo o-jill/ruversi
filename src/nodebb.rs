@@ -1,5 +1,5 @@
 use super::*;
-use std::sync::Arc;
+// use std::sync::Arc;
 
 const SORT_PRI : [i32 ; 64]= [
     0, 3, 1, 2, 2, 1, 3, 0,
@@ -23,6 +23,7 @@ fn move_priority2(&(x1, y1, x2, y2) : &(u8, u8, u8, u8)) -> i32 {
     SORT_PRI[idx1 as usize] * 10 + SORT_PRI[idx2 as usize]
 }
 
+#[allow(dead_code)]
 fn move_priority3(&(x1, y1, x2, y2, x3, y3)
         : &(u8, u8, u8, u8, u8, u8)) -> i32 {
     let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
@@ -117,7 +118,7 @@ impl NodeBB {
                 WEIGHT.as_ref().unwrap().evaluatev3bb(ban)
             } else if cfg!(feature="avx") {
                     WEIGHT.as_ref().unwrap().evaluatev3bb_simdavx(ban)
-            } else {
+                } else {
                 WEIGHT.as_ref().unwrap().evaluatev3bb_simd(ban)
             }
         }
@@ -216,6 +217,7 @@ impl NodeBB {
         Some((hyoka.unwrap(), node))
     }
 
+    #[allow(dead_code)]
     pub fn think(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
@@ -380,6 +382,7 @@ impl NodeBB {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
+    #[allow(dead_code)]
     pub fn think_internal_tt(node:&mut NodeBB, ban : &bitboard::BitBoard,
         tt : &mut transptable::TranspositionTable) -> Option<f32> {
         let mut depth = node.depth;
@@ -431,6 +434,7 @@ impl NodeBB {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
+    #[allow(dead_code)]
     pub fn think_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
@@ -576,6 +580,7 @@ impl NodeBB {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
+    #[allow(dead_code)]
     pub fn thinko_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, &NodeBB)> {
         if depth == 0 {
@@ -620,10 +625,10 @@ impl NodeBB {
         let mut moves2 = Vec::from_iter(moves[n/2..].iter().cloned());
         let ban2 = ban.clone();
 
-        let salpha = Arc::new(std::sync::Mutex::new(-100000.0 as f32));
-        let sbeta = Arc::new(std::sync::Mutex::new(100000.0 as f32));
-        let sal = salpha.clone();
-        let sbe = sbeta.clone();
+        // let salpha = Arc::new(std::sync::Mutex::new(-100000.0 as f32));
+        // let sbeta = Arc::new(std::sync::Mutex::new(100000.0 as f32));
+        // let sal = salpha.clone();
+        // let sbe = sbeta.clone();
 
         let sub =
                 thread::spawn(move || {
@@ -1007,6 +1012,7 @@ impl NodeBB {
         Some((hyoka.unwrap(), node))
     }
 
+    #[allow(dead_code)]
     pub fn think_ab_extract2(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
@@ -1310,6 +1316,7 @@ if true {  // ---------------
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
+    #[allow(dead_code)]
     pub fn think_ab_extract3(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
@@ -1548,6 +1555,7 @@ if true {  // ---------------
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
+    #[allow(dead_code)]
     pub fn think_internal_ab_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
             tt : &mut transptable::TranspositionTable) -> Option<f32> {
         let mut newalpha = alpha;
@@ -1681,6 +1689,7 @@ if true {  // ---------------
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
+    #[allow(dead_code)]
     pub fn vb_think_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth);
@@ -1745,6 +1754,7 @@ if true {  // ---------------
         Some((node.best.as_ref().unwrap().hyoka, node))
     }
 
+    #[allow(dead_code)]
     pub fn vb_think_internal_ab(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32) -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;

@@ -296,6 +296,7 @@ impl BitBoard {
         if cb {SENTE} else if cw {GOTE} else {BLANK}
     }
 
+    #[allow(dead_code)]
     pub fn set(&mut self, x : u8, y : u8) {
         let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
         let mask = !bit;

@@ -372,6 +372,7 @@ impl Weight {
         sum
     }
 
+    #[allow(dead_code)]
     pub fn evaluatev2_simd(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
@@ -1399,6 +1400,7 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
+    #[allow(dead_code)]
     pub fn forwardv2_simd2(&self, ban : &board::Board)
         -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -2589,7 +2591,7 @@ fn testweight() {
         let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let s = sv.join(",");
         let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        let s2 = sv.join(",");
+        let s2 = sv2.join(",");
         assert_eq!(s, s2);
         let res = w3.forwardv3(&ban);
         w3.backwardv3(&ban, winner, eta, &res);
