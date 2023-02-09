@@ -2395,25 +2395,31 @@ impl Weight {
                     bit <<= bitboard::NUMCELL;
                 }
             }
-        } );
-        // let ow = &mut self.weight;
-        for (i, h) in dhid.iter().enumerate() {
-            let heta = *h * eta;
+        // } );
+        // // let ow = &mut self.weight;
+        // for (i, h) in dhid.iter().enumerate() {
+            // let heta = *h * eta;
             // let wtbn = &mut ow[board::CELL_2D * N_HIDDEN ..];
-            let idx = board::CELL_2D * N_HIDDEN;
+            let idx1 = board::CELL_2D * N_HIDDEN;
             // wtbn[i] -= teban * heta;
-            self.weight[i + idx] -= teban * heta;
-            // let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
-            let idx = (board::CELL_2D + 1) * N_HIDDEN;
+            // self.weight[i + idx] -= teban * heta;
+    // let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+            let idx2 = (board::CELL_2D + 1) * N_HIDDEN;
             // wfs[i] -= fs.0 as f32 * heta;
             // wfs[i + N_HIDDEN] -= fs.1 as f32 * heta;
-            self.weight[idx + i] -= fs.0 as f32 * heta;
-            self.weight[idx + i + N_HIDDEN] -= fs.1 as f32 * heta;
+            // self.weight[idx + i] -= fs.0 as f32 * heta;
+            // self.weight[idx + i + N_HIDDEN] -= fs.1 as f32 * heta;
             // let wdc = &mut ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
-            let idx = (board::CELL_2D + 1 + 2) * N_HIDDEN;
+            let idx3 = (board::CELL_2D + 1 + 2) * N_HIDDEN;
             // wdc[i] -= heta;
-            self.weight[idx + i]  -= heta;
-        }// );
+            // self.weight[idx + i]  -= heta;
+            unsafe {
+                Weight::set_unsyncsub(&self.weight, idx1 + i, teban * heta);
+                Weight::set_unsyncsub(&self.weight, idx2 + i, fs.0 as f32 * heta);
+                Weight::set_unsyncsub(&self.weight, idx2 + i + N_HIDDEN, fs.1 as f32 * heta);
+                Weight::set_unsyncsub(&self.weight, idx3 + i, heta);
+            }
+        });
     }
 
     pub fn backwardv3bb_simd(&mut self,
