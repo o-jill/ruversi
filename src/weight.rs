@@ -13,7 +13,9 @@ const N_HIDDEN : usize = 8;
 const N_OUTPUT : usize = 1;
 const N_WEIGHT: usize = (N_INPUT + 1) * N_HIDDEN + N_HIDDEN + 1;
 
+#[allow(dead_code)]
 const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + 4 + 1;
+#[allow(dead_code)]
 const WSZV2 : usize = WSZV1;
 const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * 4 + 4 + 1;
 const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
@@ -120,11 +122,11 @@ impl Weight {
         Err("no weight".to_string())
     }
 
-    fn readv1(&mut self, line : &str) -> Result<(), String> {
+    fn readv1(&mut self, _line : &str) -> Result<(), String> {
         Err(String::from("v1 format is not supported any more."))
     }
 
-    fn readv2(&mut self, line : &str) -> Result<(), String> {
+    fn readv2(&mut self, _line : &str) -> Result<(), String> {
         Err(String::from("v2 format is not supported any more."))
     }
 
@@ -222,6 +224,7 @@ impl Weight {
         *self.weight.last_mut().unwrap() = *tbl.last().unwrap();
     }
 
+    #[allow(dead_code)]
     fn fromv1tov3(&mut self, tbl : &Vec<f32>) {
         // ban
         for i in 0..N_HIDDEN {
