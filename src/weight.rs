@@ -2585,9 +2585,10 @@ impl Weight {
     fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
         // forward
         let res = if cfg!(feature="nosimd") {
-                self.forwardv3bb(&ban)
+                self.forwardv3bb(&ban)  // 27s(w/ h8)
             } else {
-                self.forwardv3bb_simd(&ban)
+                self.forwardv3bb_simd(&ban)  // 15s(w/ h8)
+                // self.forwardv3bb_simdavx(&ban)  // 28s(w/ h8)
             };
         // backward
         if cfg!(feature="nosimd") {
