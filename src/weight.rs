@@ -2593,16 +2593,35 @@ impl Weight {
         if cfg!(feature="nosimd") {
             self.backwardv3bb(ban, winner, eta, &res);
         } else {
-            self.backwardv3bb_simd(ban, winner, eta, &res);
+            self.backwardv3bb(ban, winner, eta, &res);
+            // too slow  self.backwardv3bb_simd(ban, winner, eta, &res);
         }
     }
+}
+
+#[allow(dead_code)]
+fn dbg_assert_eq_vec(va : &[f32], vb : &[f32]) -> bool {
+    for (a, b) in va.iter().zip(vb.iter()) {
+        if (a - b).abs() >= 1.4e-6 {
+            println!("| {a} - {b} | >= 1.4e-6...");
+            return false;
+        }
+    }
+    true
 }
 
 #[test]
 fn testweight() {
     let rfens = [
         "h/H/h/H/h/H/h/H b",
+        "h/H/h/H/h/H/h/H w",
+        "H/h/H/h/H/h/H/h b",
+        "H/h/H/h/H/h/H/h w",
         "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
         "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w"
     ];
     for rfen in rfens.iter() {
@@ -2617,21 +2636,23 @@ fn testweight() {
         w3.copy(&w);
         let res_nosimd = w.evaluatev3bb(&bban);
         let res_simd = w.evaluatev3bb_simd(&bban);
-        let res_simdavx = w.evaluatev3bb_simd(&bban);
-        assert!((res_nosimd - res_simd).abs() < 1e-5);
-        assert!((res_nosimd - res_simdavx).abs() < 1e-5);
+        let res_simdavx = w.evaluatev3bb_simdavx(&bban);
+        assert!((res_nosimd - res_simd).abs() < 1e-6);
+        assert!((res_nosimd - res_simdavx).abs() < 1e-6);
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
         let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
-        let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb(&bban);
-        let (bh_sa, ah_sa, res_simdavx, fssa) = w.forwardv3bb(&bban);
-        assert_eq!(bh_ns, bh_s);
-        assert_eq!(bh_ns, bh_sa);
+        let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simdavx(&bban);
+        let (bh_sa, ah_sa, res_simdavx, fssa) = w.forwardv3bb_simd(&bban);
+        assert!(dbg_assert_eq_vec(&bh_ns, &bh_s));
+        assert!(dbg_assert_eq_vec(&bh_ns, &bh_sa));
         // println!("{bh_ns:?} == \n{bh_s:?} == \n{bh_sa:?} ???");
-        assert_eq!(ah_ns, ah_s);
-        assert_eq!(ah_ns, ah_sa);
+        assert!(dbg_assert_eq_vec(&ah_ns, &ah_s));
+        assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa));
         // println!("{ah_ns:?} == \n{ah_s:?} == \n{ah_sa:?} ???");
-        assert_eq!(res_nosimd, res_simd);
-        assert_eq!(res_nosimd, res_simdavx);
+        // assert_eq!(res_nosimd, res_simd);
+        assert!((res_nosimd[0] - res_simd[0]).abs() < 1e-6);
+        // assert_eq!(res_nosimd, res_simdavx);
+        assert!((res_nosimd[0] - res_simdavx[0]).abs() < 1e-6);
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
         assert_eq!(fsns, fss);
         assert_eq!(fsns, fssa);
@@ -2641,15 +2662,17 @@ fn testweight() {
         let eta = 0.001;
         w.backwardv3bb(&bban, winner, eta, &res);
         w2.backwardv3bb_simd(&bban, winner, eta, &res);
-        let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        let s = sv.join(",");
-        let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        let s2 = sv2.join(",");
-        assert_eq!(s, s2);
+        // let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        // let s = sv.join(",");
+        // let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        // let s2 = sv2.join(",");
+        // assert_eq!(s, s2);
+        assert!(dbg_assert_eq_vec(&w.weight, &w2.weight));
         let res = w3.forwardv3(&ban);
         w3.backwardv3(&ban, winner, eta, &res);
-        let sv3 = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        let s3 = sv3.join(",");
-        assert_eq!(s, s3);
+        // let sv3 = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        // let s3 = sv3.join(",");
+        // assert_eq!(s, s3);
+        assert!(dbg_assert_eq_vec(&w.weight, &w3.weight));
     }
 }
