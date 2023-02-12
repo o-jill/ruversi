@@ -5,7 +5,7 @@ use std::arch::x86_64;
 
 /*
  * input: NUMCELL * NUMCELL + 1(teban) + 2(fixedstones) + 1
- * hidden: 4 + 1
+ * hidden: 8 + 1
  * output: 1
  */
 const N_INPUT : usize = board::CELL_2D + 1 + 2;
