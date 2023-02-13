@@ -2,7 +2,7 @@ use super::*;
 use rand::Rng;
 use std::{fs, io::{BufReader, BufRead}};
 use std::arch::x86_64;
-use rayon::prelude::*;
+// use rayon::prelude::*;
 
 /*
  * input: NUMCELL * NUMCELL + 1(teban) + 2(fixedstones) + 1
@@ -10,7 +10,7 @@ use rayon::prelude::*;
  * output: 1
  */
 const N_INPUT : usize = board::CELL_2D + 1 + 2;
-const N_HIDDEN : usize = 4;
+const N_HIDDEN : usize = 12;
 const N_OUTPUT : usize = 1;
 const N_WEIGHT: usize = (N_INPUT + 1) * N_HIDDEN + N_HIDDEN + 1;
 
@@ -55,6 +55,10 @@ impl EvalFile {
 pub struct Weight {
     pub weight : Vec<f32>
 }
+
+// WEIGHT for TRAINING
+static mut DUMBBELL : [f32 ; N_WEIGHT] = [0.0 ; N_WEIGHT];
+static mut USE_DUMBBELL : bool = false;
 
 impl Weight {
     pub fn new() -> Weight {
@@ -1653,7 +1657,13 @@ impl Weight {
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
-        let ow = &self.weight;
+        let ow = unsafe {
+                if USE_DUMBBELL {
+                    &DUMBBELL
+                } else {
+                    &self.weight[0..]
+                }
+            };
 
         let fs = ban.fixedstones();
 
@@ -1695,7 +1705,13 @@ impl Weight {
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
-        let ow = &self.weight;
+        let ow = unsafe {
+                if USE_DUMBBELL {
+                    &DUMBBELL
+                } else {
+                    &self.weight[0..]
+                }
+            };
 
         let fs = ban.fixedstones();
 
@@ -1794,7 +1810,13 @@ impl Weight {
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
-        let ow = &self.weight;
+        let ow = unsafe {
+                if USE_DUMBBELL {
+                    &DUMBBELL
+                } else {
+                    &self.weight[0..]
+                }
+            };
 
         let fs = ban.fixedstones();
 
@@ -2002,10 +2024,12 @@ impl Weight {
     pub fn train(&mut self, rfen : &str, winner : i8, eta : f32) -> Result<(), String> {
         if cfg!(feature="bitboard") {
             let ban = bitboard::BitBoard::from(rfen).unwrap();
-            self.learnbb(&ban, winner, eta);
+            self.learnbb_wd(&ban, winner, eta);
+            // self.learnbb(&ban, winner, eta);
 
             let ban = ban.rotate180();
-            self.learnbb(&ban, winner, eta);
+            self.learnbb_wd(&ban, winner, eta);
+            // self.learnbb(&ban, winner, eta);
         } else{
             let ban = board::Board::from(rfen).unwrap();
             self.learn(&ban, winner, eta);
@@ -2278,13 +2302,22 @@ impl Weight {
         let white = ban.white;
         let teban = ban.teban as f32;
 
-        let ow = &mut self.weight;
+        let ow = unsafe {
+                if USE_DUMBBELL {
+                    &mut DUMBBELL
+                } else {
+                    &mut self.weight[0..]
+                }
+            };
         // back to hidden
         let diff : f32 = output[0] - 10.0 * winner as f32;
         let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         let deta = diff * eta;
+        println!("deta {deta} = {diff} x {eta}");
         for i in 0..N_HIDDEN {
+            print!("{} ", wh[i]);
             wh[i] -= hidsig[i] * deta;
+            println!("wh[{i}] -= {hidsig:?}[{i}] x {deta}");
         }
         wh[N_HIDDEN] -= deta;
 
@@ -2292,11 +2325,15 @@ impl Weight {
         for (i, h) in dhid.iter_mut().enumerate() {
             // tmp = wo x diff
             let tmp = wh[i] * diff;
+            println!("{tmp} = {wh:?}[{i}] x {diff}");
             // sig = 1 / (1 + exp(-hidden[i]))
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            println!("{sig} = 1 / (1 + exp(-{hidden:?}[{i}])");
             // h = wo x diff x sig x (1 - sig)
             *h = tmp * sig * (1.0 - sig);
+            println!("{h} = {tmp} x {sig} x (1 - sig)");
         }
+        println!("v3bb {diff}  {hidsig:?},  {dhid:?}");
 
         // back to input
         for (i, h) in dhid.iter().enumerate() {
@@ -2326,12 +2363,14 @@ impl Weight {
         }
     }
 
+    #[allow(dead_code)]
     unsafe fn set_unsync(v : &[f32], idx: usize, val : f32) {
         let ptr = v.as_ptr() as *mut f32;
         let addr = ptr.offset(idx as isize);
         *addr = val;
     }
 
+    #[allow(dead_code)]
     unsafe fn set_unsyncsub(v : &[f32], idx: usize, val : f32) {
         let before = v[idx];
         let ptr = v.as_ptr() as *mut f32;
@@ -2339,6 +2378,7 @@ impl Weight {
         *addr = before - val;
     }
 
+    #[allow(dead_code)]
     pub fn backwardv3bb_para(&mut self,
         ban : &bitboard::BitBoard, winner : i8, eta : f32,
         (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
@@ -2347,35 +2387,119 @@ impl Weight {
         let teban = ban.teban as f32;
 
         // let ow = &mut self.weight;
+        let ow = unsafe {
+            if !USE_DUMBBELL {
+                panic!("No DUMBBELL in this gym??");
+            }
+            // &mut self.weight[0..]
+            &mut DUMBBELL
+        };
+
         // back to hidden
         let diff : f32 = output[0] - 10.0 * winner as f32;
-        // let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
-        let idx = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN;
+        let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        // let idx = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN;
         let deta = diff * eta;
+        // println!("deta {deta} = {diff} x {eta}");
         for i in 0..N_HIDDEN {
-            // wh[i] -= hidsig[i] * deta;
-            self.weight[idx + i] -= hidsig[i] * deta;
+            // print!("{} ", wh[i]);
+            wh[i] -= hidsig[i] * deta;
+            // println!("wh[{i}] -= {hidsig:?}[{i}] x {deta}");
+            // ow[idx + i] -= hidsig[i] * deta;
         }
-        // wh[N_HIDDEN] -= deta;
-        self.weight[idx + N_HIDDEN] -= deta;
+        wh[N_HIDDEN] -= deta;
+        // ow[idx + N_HIDDEN] -= deta;
 
         let mut dhid = [0.0 as f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             // tmp = wo x diff
-            // let tmp = wh[i] * diff;
-            let tmp = self.weight[idx + i] * diff;
+            let tmp = wh[i] * diff;
+            // println!("{tmp} = {wh:?}[{i}] x {diff}");
+            // let tmp = ow[idx + i] * diff;
             // sig = 1 / (1 + exp(-hidden[i]))
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            // println!("{sig} = 1 / (1 + exp(-{hidden:?}[{i}])");
             // h = wo x diff x sig x (1 - sig)
             *h = tmp * sig * (1.0 - sig);
+            // println!("{h} = {tmp} x {sig} x (1 - sig)");
         }
+        // println!("para {diff}  {hidsig:?},  {dhid:?}");
 
         // back to input
-        dhid.par_iter().enumerate().for_each(|(i, h)| {
-        // for (i, h) in dhid.iter().enumerate() {
+        let dhid2 = dhid.clone();
+        let black2 = black;
+        let white2 = white;
+        let fs2 = fs.clone();
+        let sub = std::thread::spawn(move|| {
             // let ow = &mut self.weight[0..];
-            // let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
-            let idx = i * board::CELL_2D;
+            let ow = unsafe {
+                if !USE_DUMBBELL {
+                    panic!("No DUMBBELL in this gym??");
+                }
+                // &mut self.weight[0..]
+                &mut DUMBBELL
+            };
+            for (i, h) in dhid2.iter().enumerate() {
+                if i % 2 == 0 {continue;}
+
+                let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+                // let idx = i * board::CELL_2D;
+                let heta = *h * eta;
+
+                for y in 0..bitboard::NUMCELL {
+                    let mut bit = bitboard::LSB_CELL << y;
+                    for x in 0..bitboard::NUMCELL {
+                        // let bit = bitboard::LSB_CELL << (y + bitboard::NUMCELL * x);
+                        // let w = w1[x + y * bitboard::NUMCELL];
+                        let cb = (black2 & bit) != 0;
+                        let cw = (white2 & bit) != 0;
+                        let diff = if cb {heta} else if cw {-heta} else {0.0};
+                        w1[x + y * bitboard::NUMCELL] -= diff;
+                        // ow[idx + x + y * bitboard::NUMCELL] -= diff;
+                        // unsafe {
+                        //     Weight::set_unsyncsub(&ow, idx + x + y * bitboard::NUMCELL, diff);
+                        // }
+
+                        bit <<= bitboard::NUMCELL;
+                    }
+                }
+
+                // let heta = *h * eta;
+                let wtbn = &mut ow[board::CELL_2D * N_HIDDEN ..];
+                // let idx1 = board::CELL_2D * N_HIDDEN;
+                wtbn[i] -= teban * heta;
+                // ow[idx1 + i] -= teban * heta;
+                let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+                // let idx2 = (board::CELL_2D + 1) * N_HIDDEN;
+                wfs[i] -= fs2.0 as f32 * heta;
+                wfs[i + N_HIDDEN] -= fs2.1 as f32 * heta;
+                // ow[idx2 + i] -= fs2.0 as f32 * heta;
+                // ow[idx2 + i + N_HIDDEN] -= fs2.1 as f32 * heta;
+                let wdc = &mut ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+                // let idx3 = (board::CELL_2D + 1 + 2) * N_HIDDEN;
+                // ow[idx3 + i + N_HIDDEN] -= heta;
+                wdc[i] -= heta;
+                // unsafe {
+                //     Weight::set_unsyncsub(&ow, idx1 + i, teban * heta);
+                //     Weight::set_unsyncsub(&ow, idx2 + i, fs.0 as f32 * heta);
+                //     Weight::set_unsyncsub(&ow, idx2 + i + N_HIDDEN, fs.1 as f32 * heta);
+                //     Weight::set_unsyncsub(&ow, idx3 + i, heta);
+                // }
+            }
+        });
+        let ow = unsafe {
+            if !USE_DUMBBELL {
+                panic!("No DUMBBELL in this gym??");
+            }
+            // &mut self.weight[0..]
+            &mut DUMBBELL
+        };
+        // dhid.par_iter().enumerate().for_each(|(i, h)| {
+        for (i, h) in dhid.iter().enumerate() {
+            if i % 2 == 1 {continue;}
+            // let ow = &mut self.weight[0..];
+            let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            // let idx = i * board::CELL_2D;
             let heta = *h * eta;
 
             for y in 0..bitboard::NUMCELL {
@@ -2386,40 +2510,35 @@ impl Weight {
                     let cb = (black & bit) != 0;
                     let cw = (white & bit) != 0;
                     let diff = if cb {heta} else if cw {-heta} else {0.0};
-                    // w1[x + y * bitboard::NUMCELL] -= diff;
-                    // self.weight[idx + x + y * bitboard::NUMCELL] -= diff;
-                    unsafe {
-                        Weight::set_unsyncsub(&self.weight, idx + x + y * bitboard::NUMCELL, diff);
-                    }
+                    w1[x + y * bitboard::NUMCELL] -= diff;
 
                     bit <<= bitboard::NUMCELL;
                 }
             }
-        // } );
-        // // let ow = &mut self.weight;
-        // for (i, h) in dhid.iter().enumerate() {
+
             // let heta = *h * eta;
-            // let wtbn = &mut ow[board::CELL_2D * N_HIDDEN ..];
-            let idx1 = board::CELL_2D * N_HIDDEN;
-            // wtbn[i] -= teban * heta;
-            // self.weight[i + idx] -= teban * heta;
-    // let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
-            let idx2 = (board::CELL_2D + 1) * N_HIDDEN;
-            // wfs[i] -= fs.0 as f32 * heta;
-            // wfs[i + N_HIDDEN] -= fs.1 as f32 * heta;
-            // self.weight[idx + i] -= fs.0 as f32 * heta;
-            // self.weight[idx + i + N_HIDDEN] -= fs.1 as f32 * heta;
-            // let wdc = &mut ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
-            let idx3 = (board::CELL_2D + 1 + 2) * N_HIDDEN;
-            // wdc[i] -= heta;
-            // self.weight[idx + i]  -= heta;
-            unsafe {
-                Weight::set_unsyncsub(&self.weight, idx1 + i, teban * heta);
-                Weight::set_unsyncsub(&self.weight, idx2 + i, fs.0 as f32 * heta);
-                Weight::set_unsyncsub(&self.weight, idx2 + i + N_HIDDEN, fs.1 as f32 * heta);
-                Weight::set_unsyncsub(&self.weight, idx3 + i, heta);
-            }
-        });
+            let wtbn = &mut ow[board::CELL_2D * N_HIDDEN ..];
+            // let idx1 = board::CELL_2D * N_HIDDEN;
+            wtbn[i] -= teban * heta;
+            // ow[idx1 + i] -= teban * heta;
+            let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+            // let idx2 = (board::CELL_2D + 1) * N_HIDDEN;
+            wfs[i] -= fs.0 as f32 * heta;
+            wfs[i + N_HIDDEN] -= fs.1 as f32 * heta;
+            // ow[idx2 + i] -= fs.0 as f32 * heta;
+            // ow[idx2 + i + N_HIDDEN] -= fs.1 as f32 * heta;
+            let wdc = &mut ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+            // let idx3 = (board::CELL_2D + 1 + 2) * N_HIDDEN;
+            // ow[idx3 + i + N_HIDDEN] -= heta;
+            wdc[i] -= heta;
+            // unsafe {
+            //     Weight::set_unsyncsub(&ow, idx1 + i, teban * heta);
+            //     Weight::set_unsyncsub(&ow, idx2 + i, fs.0 as f32 * heta);
+            //     Weight::set_unsyncsub(&ow, idx2 + i + N_HIDDEN, fs.1 as f32 * heta);
+            //     Weight::set_unsyncsub(&ow, idx3 + i, heta);
+            // }
+        }// );
+        // sub.join().unwrap();
     }
 
     pub fn backwardv3bb_simd(&mut self,
@@ -2429,7 +2548,13 @@ impl Weight {
         let white = ban.white;
         let teban = ban.teban as f32;
 
-        let ow = &mut self.weight;
+        let ow = unsafe {
+                if USE_DUMBBELL {
+                    &mut DUMBBELL
+                } else {
+                    &mut self.weight[0..]
+                }
+            };
         // back to hidden
         let diff : f32 = output[0] - 10.0 * winner as f32;
         let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
@@ -2640,6 +2765,33 @@ impl Weight {
             self.backwardv3bb_simd(ban, winner, eta, &res);
         }
     }
+
+    fn learnbb_wd(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
+        unsafe {
+            if USE_DUMBBELL {
+            } else {
+                DUMBBELL.as_mut().copy_from_slice(&self.weight);
+                USE_DUMBBELL = true;
+            }
+        }
+        // forward
+        let res = if cfg!(feature="nosimd") {
+                self.forwardv3bb(&ban)
+            } else {
+                self.forwardv3bb(&ban)
+                // self.forwardv3bb_simd(&ban)
+            };
+        // backward
+        // if cfg!(feature="nosimd") {
+        //     self.backwardv3bb(ban, winner, eta, &res);
+        // } else {
+        //     self.backwardv3bb_simd(ban, winner, eta, &res);
+        // }
+        self.backwardv3bb_para(ban, winner, eta, &res);
+        // unsafe {
+        //     self.weight.copy_from_slice(&DUMBBELL);
+        // }
+    }
 }
 
 #[test]
@@ -2655,6 +2807,7 @@ fn testweight() {
         ban.put();
         let mut w = weight::Weight::new();
         w.init();
+        println!("w:{:?}", w.weight);
         let mut w2 = weight::Weight::new();
         w2.copy(&w);
         let mut w3 = weight::Weight::new();
@@ -2686,18 +2839,21 @@ fn testweight() {
         let winner = 1;
         let eta = 0.001;
         w.backwardv3bb(&bban, winner, eta, &res);
-        w2.backwardv3bb_simd(&bban, winner, eta, &res);
         let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let s = sv.join(",");
+        w2.backwardv3bb_simd(&bban, winner, eta, &res);
         let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         let s2 = sv2.join(",");
         assert_eq!(s, s2);
-        let res = w3.forwardv3(&ban);
-        w3.backwardv3(&ban, winner, eta, &res);
-        let sv3 = w3.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        let s3 = sv3.join(",");
-        assert_eq!(s, s3);
+        unsafe {
+            USE_DUMBBELL = true;
+            DUMBBELL.copy_from_slice(&wp.weight);
+        }
         wp.backwardv3bb_para(&bban, winner, eta, &res);
+        unsafe {
+            wp.weight.copy_from_slice(&DUMBBELL);
+            USE_DUMBBELL = false;
+        }
         let sv4 = wp.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         // let s4 = sv4.join(",");
         // assert_eq!(s, s4);
@@ -2705,10 +2861,15 @@ fn testweight() {
         let newtable4 : Vec<f32> = sv4.iter().map(|a| a.parse::<f32>().unwrap()).collect();
         for ((idx, a), b) in newtable1.iter().enumerate().zip(newtable4.iter()) {
             // assert!((a - b).abs() < 1e-4);
-            if (a - b).abs() > 1e-7 {
-                println!("{a} - {b} > 1e-7  @{idx} {}", idx/bitboard::CELL_2D);
+            if (a - b).abs() > 1e-4 {
+                println!("{a} - {b} > 1e-4  @{idx} {}", idx/bitboard::CELL_2D);
                 assert!((a - b).abs() < 1e-4);
             }
         }
+        let res = w3.forwardv3(&ban);
+        w3.backwardv3(&ban, winner, eta, &res);
+        let sv3 = w3.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+        let s3 = sv3.join(",");
+        assert_eq!(s, s3);
     }
 }
