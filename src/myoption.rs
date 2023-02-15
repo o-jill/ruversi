@@ -35,6 +35,7 @@ pub struct MyOption {
     pub repeat : Option<usize>,
     pub rfen : String,
     pub think : String,  // "all", "ab"
+    pub outtrain : String,  // progress,exrfens,summary
     pub turn : i8,  // SENTE, GOTE
 }
 
@@ -55,6 +56,7 @@ impl MyOption {
     /// - mode: Mode::None
     /// - n: None
     /// - opponent: Opponent::None
+    /// - outtrain: ""
     /// - repeat: None
     /// - rfen: ""
     /// - think: ""
@@ -68,6 +70,7 @@ impl MyOption {
             mode : Mode::None,
             n : None,
             opponent: Opponent::None,
+            outtrain: String::new(),
             repeat : None,
             rfen : String::new(),
             think : String::new(),
@@ -115,6 +118,8 @@ impl MyOption {
             } else if e == "--thinkall" {
                 opt.think = "all".to_string();
             } else if e == "--repeat" {
+                old = e;
+            } else if e == "--trainout" {
                 old = e;
             } else if e == "--eta" {
                 old = e;
@@ -182,6 +187,8 @@ impl MyOption {
                     }
                 } else if old == "--initpos" {
                     opt.initpos = e;
+                } else if old == "--trainout" {
+                    opt.outtrain = e;
                 } else {
                     println!("unknown option: {}", e);
                 }
@@ -222,6 +229,13 @@ pub fn showhelp(msg : &str) {
   Learn:
     --repeat <number>  number of learning. default 10000.
     --eta <ratio>      learning ratio. default 0.0001.
+    --trainout <options>  output control.
+        exrfens  : put RFENs in 2nd moves in every kifus.
+        nosave   : skip saving weights.
+        progress : show progress
+        summary  : show play summary.
+        time     : show processing time.
+        default: progress,summary,time
   Play:
     --Edax  play against Edax instead of you. please use with --play(bw).
 ");
