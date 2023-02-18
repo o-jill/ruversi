@@ -1827,6 +1827,140 @@ impl Weight {
         (hidden, hidsig, output, fs)
     }
 
+    pub fn forwardv3bb_simdavx2(&self, ban : &bitboard::BitBoard)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+        let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+        let ow = &self.weight;
+
+        let fs = ban.fixedstones();
+
+        let mut sum = *ow.last().unwrap();
+
+        let wtbn = &ow[board::CELL_2D * N_HIDDEN .. (board::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            let w1 = unsafe{ow.as_ptr().add(i * board::CELL_2D)};
+            let mut hidsum : f32 = wdc[i];
+            let mut sum8 = unsafe {x86_64::_mm256_setzero_ps()};
+            const M : usize = 32;
+            let mut bit8 = 0x0101010101010101;
+            for j in 0..board::CELL_2D / M {
+                let idx = j * M;
+                let b81 = (bit8 & black) >> 4 * j;
+                let w81 = (bit8 & white) >> 4 * j;
+                bit8 <<= 1;
+                let b82 = (bit8 & black) >> 4 * j + 1;
+                let w82 = (bit8 & white) >> 4 * j + 1;
+                bit8 <<= 1;
+                let b83 = (bit8 & black) >> 4 * j + 2;
+                let w83 = (bit8 & white) >> 4 * j + 2;
+                bit8 <<= 1;
+                let b84 = (bit8 & black) >> 4 * j + 3;
+                let w84 = (bit8 & white) >> 4 * j + 3;
+                bit8 <<= 1;
+
+                unsafe {
+                    x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
+
+                    // 0x00000000ffeeddcc000000007766554400000000bbaa99880000000033221100
+                    let b32 = x86_64::_mm256_set_epi64x(
+                        (b82 >> 32) as i64, (b81 >> 32) as i64,
+                        (b82 & 0xffffffff) as i64, (b81 & 0xffffffff) as i64);
+                    let w32 = x86_64::_mm256_set_epi64x(
+                        (w82 >> 32) as i64, (w81 >> 32) as i64,
+                        (w82 & 0xffffffff) as i64, (w81 & 0xffffffff) as i64);
+                    let b322 = x86_64::_mm256_set_epi64x(
+                        (b84 >> 32) as i64, (b83 >> 32) as i64,
+                        (b84 & 0xffffffff) as i64, (b83 & 0xffffffff) as i64);
+                    let w322 = x86_64::_mm256_set_epi64x(
+                        (w84 >> 32) as i64, (w83 >> 32) as i64,
+                        (w84 & 0xffffffff) as i64, (w83 & 0xffffffff) as i64);
+                    let c321 = x86_64::_mm256_sub_epi8(b32, w32);
+                    let c322 = x86_64::_mm256_sub_epi8(b322, w322);
+
+                    let zero = x86_64::_mm256_setzero_si256();
+                    // to i16
+                    let s321 = x86_64::_mm256_cmpgt_epi8(zero, c321);
+                    // 0x0000000000000000777766665555444400000000000000003333222211110000
+                    let c161 = x86_64::_mm256_unpacklo_epi8(c321, s321);
+                    // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
+                    let c162 = x86_64::_mm256_unpackhi_epi8(c321, s321);
+                    let s322 = x86_64::_mm256_cmpgt_epi8(zero, c322);
+                    // 0x0000000000000000777766665555444400000000000000003333222211110000
+                    let c163 = x86_64::_mm256_unpacklo_epi8(c322, s322);
+                    // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
+                    let c164 = x86_64::_mm256_unpackhi_epi8(c322, s322);
+
+                    // to i32
+                    // 0x7777777766666666555555554444444433333333222222221111111100000000
+                    let s161 = x86_64::_mm256_cmpgt_epi16(zero, c161);
+                    let c81 = x86_64::_mm256_unpacklo_epi16(c161, s161);
+                    // 0xffffffffeeeeeeeeddddddddccccccccbbbbbbbbaaaaaaaa9999999988888888
+                    let s162 = x86_64::_mm256_cmpgt_epi16(zero, c162);
+                    let c82 = x86_64::_mm256_unpacklo_epi16(c162, s162);
+                    // 0x7777777766666666555555554444444433333333222222221111111100000000
+                    let s163 = x86_64::_mm256_cmpgt_epi16(zero, c163);
+                    let c83 = x86_64::_mm256_unpacklo_epi16(c163, s163);
+                    // 0xffffffffeeeeeeeeddddddddccccccccbbbbbbbbaaaaaaaa9999999988888888
+                    let s164 = x86_64::_mm256_cmpgt_epi16(zero, c164);
+                    let c84 = x86_64::_mm256_unpacklo_epi16(c164, s164);
+
+                    let f81 = x86_64::_mm256_cvtepi32_ps(c81);
+                    let f82 = x86_64::_mm256_cvtepi32_ps(c82);
+                    let f83 = x86_64::_mm256_cvtepi32_ps(c83);
+                    let f84 = x86_64::_mm256_cvtepi32_ps(c84);
+
+                    let x81 = x86_64::_mm256_loadu_ps(w1.add(idx));
+                    let x82 = x86_64::_mm256_loadu_ps(w1.add(idx + 8));
+                    let x83 = x86_64::_mm256_loadu_ps(w1.add(idx + 16));
+                    let x84 = x86_64::_mm256_loadu_ps(w1.add(idx + 24));
+
+                    if true {  // fma
+                        sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
+                        sum8 = x86_64::_mm256_fmadd_ps(x82, f82, sum8);
+                        sum8 = x86_64::_mm256_fmadd_ps(x83, f83, sum8);
+                        sum8 = x86_64::_mm256_fmadd_ps(x84, f84, sum8);
+                    } else {
+                        let mul1 = x86_64::_mm256_mul_ps(x81, f81);
+                        let mul2 = x86_64::_mm256_mul_ps(x82, f82);
+                        let mul3 = x86_64::_mm256_mul_ps(x83, f83);
+                        let mul4 = x86_64::_mm256_mul_ps(x84, f84);
+
+                        let sum12 = x86_64::_mm256_add_ps(mul1, mul2);
+                        let sum34 = x86_64::_mm256_add_ps(mul3, mul4);
+                        let sum1234 = x86_64::_mm256_add_ps(sum12, sum34);
+                        sum8 = x86_64::_mm256_add_ps(sum8, sum1234);
+                    }
+                }
+            }
+
+            let mut sumarr : [f32 ; 8] = [0.0 ; 8];
+            unsafe {
+                x86_64::_mm256_store_ps(sumarr.as_mut_ptr(), sum8);
+            }
+            for s in sumarr {
+                hidsum += s;
+            }
+            // hidsum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
+            hidsum += teban * wtbn[i];
+            hidsum += wfs[i] * fs.0 as f32;
+            hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
+            hidden[i] = hidsum;
+            hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
+            sum += wh[i] * hidsig[i];
+        }
+        output[0] = sum;
+        (hidden, hidsig, output, fs)
+    }
+
+    // note: calc hidden layer w/ simd is slow now...
     pub fn forwardv3bb_simdavx(&self, ban : &bitboard::BitBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -2563,9 +2697,11 @@ impl Weight {
         // forward
         let res = if cfg!(feature="nosimd") {
                 self.forwardv3bb(&ban)  // 27s(w/ h8)
+            } else if cfg!(feature="avx") {
+                self.forwardv3bb_simdavx2(&ban)  // 15s(w/ h8)
+                // self.forwardv3bb_simdavx(&ban)  // 28s(w/ h8)
             } else {
                 self.forwardv3bb_simd(&ban)  // 15s(w/ h8)
-                // self.forwardv3bb_simdavx(&ban)  // 28s(w/ h8)
             };
         // backward
         if cfg!(feature="nosimd") {
@@ -2619,21 +2755,27 @@ fn testweight() {
         assert!((res_nosimd - res_simdavx).abs() < 1e-6);
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
         let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
-        let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simdavx(&bban);
-        let (bh_sa, ah_sa, res_simdavx, fssa) = w.forwardv3bb_simd(&bban);
+        let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simd(&bban);
+        let (bh_sa, ah_sa, res_simdavx, fssa) = w.forwardv3bb_simdavx(&bban);
+        let (bh_sa2, ah_sa2, res_simdavx2, fssa2) = w.forwardv3bb_simdavx(&bban);
         assert!(dbg_assert_eq_vec(&bh_ns, &bh_s));
         assert!(dbg_assert_eq_vec(&bh_ns, &bh_sa));
+        assert!(dbg_assert_eq_vec(&bh_ns, &bh_sa2));
         // println!("{bh_ns:?} == \n{bh_s:?} == \n{bh_sa:?} ???");
         assert!(dbg_assert_eq_vec(&ah_ns, &ah_s));
         assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa));
+        assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa2));
         // println!("{ah_ns:?} == \n{ah_s:?} == \n{ah_sa:?} ???");
         // assert_eq!(res_nosimd, res_simd);
         assert!((res_nosimd[0] - res_simd[0]).abs() < 1e-6);
         // assert_eq!(res_nosimd, res_simdavx);
         assert!((res_nosimd[0] - res_simdavx[0]).abs() < 1e-6);
+        // assert_eq!(res_nosimd, res_simdavx2);
+        assert!((res_nosimd[0] - res_simdavx2[0]).abs() < 1e-6);
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
         assert_eq!(fsns, fss);
         assert_eq!(fsns, fssa);
+        assert_eq!(fsns, fssa2);
         // println!("{fsns:?} == {fss:?} == {fssa:?} ???");
         let res = w.forwardv3bb(&bban);
         let winner = 1;
