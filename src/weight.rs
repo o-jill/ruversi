@@ -2026,13 +2026,6 @@ impl Weight {
             // for n in 0..N {
             //     sum += sumarr[n];
             // }
-            // let mut sigmo : [f32 ; 4] = [0.0 ; 4];
-            // for i in 0..4 {
-            //     sigmo[i] = 1.0 / (1.0 + (-hidden[i]).exp());
-            // }
-            // if hidsig != sigmo {
-            //     println!("{:?} != {:?}", hidsig, sigmo);
-            // }
             sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
         }
 
