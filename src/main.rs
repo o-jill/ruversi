@@ -189,7 +189,7 @@ fn trial() {
     let mut g = game::Game::new();
     g.start(node::Node::think, 7).unwrap();
 
-    let tr = trainer::Trainer::new(0.01, 100);
+    let tr = trainer::Trainer::new(0.01, 100, "./kifu/");
     unsafe {
         tr.run4stones(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
         // tr.run4win(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
@@ -303,15 +303,15 @@ fn gen_kifu(n : Option<usize>) {
 /// # Arguments
 /// - repeat : Number of repeat. None as 10000.
 /// - eta : learning ratio. None as 0.0001.
-fn training(repeat : Option<usize>, eta : Option<f32>) {
+fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.0001);
-
+    let kifupath = "./kifu";
     let st = Instant::now();
 
     // list up kifu
-    let files = std::fs::read_dir("./kifu/").unwrap();
-    let mut files = files.filter_map(|entry| {
+    let dir = std::fs::read_dir(kifupath).unwrap();
+    let mut files = dir.filter_map(|entry| {
         entry.ok().and_then(|e|
             e.path().file_name().and_then(|n|
                 n.to_str().map(|s| String::from(s))
@@ -325,56 +325,155 @@ fn training(repeat : Option<usize>, eta : Option<f32>) {
     files.sort();
 
     // train
-    let tr = trainer::Trainer::new(eta, repeat);
+    let mut tr = trainer::Trainer::new(eta, repeat, kifupath);
+    tr.read_opt_out(opt);
     tr.learn_stones_cache(&mut files);
     // tr.learn_stones(&mut files);
     // tr.learn_win(&mut files);
 
+    let newevalfile = format!("{kifupath}newevaltable.txt");
     // put new eval table
-    unsafe {
-        if cfg!(feature="bitboard") {
-            if cfg!(feature="nnv3") {
-                nodebb::WEIGHT.as_ref().unwrap().writev3("./kifu/newevaltable.txt");
+    if tr.need_save() {
+        unsafe {
+            if cfg!(feature="bitboard") {
+                if cfg!(feature="nnv3") {
+                    nodebb::WEIGHT.as_ref().unwrap().writev3(&newevalfile);
+                } else {
+                    nodebb::WEIGHT.as_ref().unwrap().writev4(&newevalfile);
+                }
             } else {
-                nodebb::WEIGHT.as_ref().unwrap().writev4("./kifu/newevaltable.txt");
-            }
-        } else {
-            if cfg!(feature="nnv1") {
-                node::WEIGHT.as_ref().unwrap().writev1asv2("./kifu/newevaltable.txt");
-            } else if cfg!(feature="nnv2") {
-                node::WEIGHT.as_ref().unwrap().writev2asv3("./kifu/newevaltable.txt");
-            } else if cfg!(feature="nnv3") {
-                node::WEIGHT.as_ref().unwrap().writev3("./kifu/newevaltable.txt");
-            } else {
-                node::WEIGHT.as_ref().unwrap().writev4("./kifu/newevaltable.txt");
+                if cfg!(feature="nnv1") {
+                    node::WEIGHT.as_ref().unwrap().writev1asv2(&newevalfile);
+                } else if cfg!(feature="nnv2") {
+                    node::WEIGHT.as_ref().unwrap().writev2asv3(&newevalfile);
+                } else if cfg!(feature="nnv3") {
+                    node::WEIGHT.as_ref().unwrap().writev3(&newevalfile);
+                } else {
+                    node::WEIGHT.as_ref().unwrap().writev4(&newevalfile);
+                }
             }
         }
     }
 
-    let mut win = 0;
-    let mut draw = 0;
-    let mut lose = 0;
-    let mut total = 0;
-    for path in files.iter() {
-        let kifu = extractrfen::extract(&format!("kifu/{}", path));
-        let result = kifu.winner();
-        total += 1;
-        let result = result.unwrap();
-        match result {
-            kifu::SENTEWIN => {win += 1;},
-            kifu::DRAW => {draw += 1;},
-            kifu::GOTEWIN => {lose += 1;},
-            _ => {}
+    // put new eval table
+    let ft = st.elapsed();
+    if tr.need_time() {
+        let min = ft.as_secs() / 60;
+        let sec = ft.as_secs_f64() % 60.0;
+        let spdbatch = ft.as_secs_f64() * 1000.0 / repeat as f64;
+        let spdkifu = spdbatch / files.len() as f64;
+        println!(
+            "processing time: {}min {:.1}sec ({:.1}msec/batch, {:.3}msec/file)",
+            min, sec, spdbatch, spdkifu);
+    }
+    if tr.need_summay() {
+        let mut win = 0;
+        let mut draw = 0;
+        let mut lose = 0;
+        let mut total = 0;
+        for fname in files.iter() {
+            let path = format!("kifu/{}", fname);
+            let content = std::fs::read_to_string(&path).unwrap();
+            let lines:Vec<&str> = content.split("\n").collect();
+            let kifu = kifu::Kifu::from(&lines);
+            let result = kifu.winner();
+            total += 1;
+            let result = result.unwrap();
+            match result {
+                kifu::SENTEWIN => {win += 1;},
+                kifu::DRAW => {draw += 1;},
+                kifu::GOTEWIN => {lose += 1;},
+                _ => {}
+            }
+        }
+        println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
+        println!("{}", tr.fmt_result());
+    }
+    if tr.need_exrfens() {
+        // list up kifu
+        let files = std::fs::read_dir("./kifu/").unwrap();
+        let files = files.filter_map(|entry| {
+            entry.ok().and_then(|e|
+                e.path().file_name().and_then(|n|
+                    n.to_str().map(|s| String::from(s))
+                )
+            )}).collect::<Vec<String>>().iter().filter(|&fnm| {
+            fnm.find("kifu").is_some()
+        }).cloned().collect::<Vec<String>>();
+        for path in files.iter() {
+            extractrfen::extract(&format!("kifu/{}", path));
         }
     }
-    let ft = st.elapsed();
-    let min = ft.as_secs() / 60;
-    let sec = ft.as_secs() % 60;
-    let spdbatch = ft.as_secs_f64() * 1000.0 / repeat as f64;
-    let spdkifu = spdbatch / files.len() as f64;
-    println!("processing time: {}min {}sec ({:.1}msec/batch, {:.3}msec/file)", min, sec, spdbatch, spdkifu);
-    println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
 }
+
+/// training a weight.
+/// # Arguments
+/// - repeat : Number of repeat. None as 10000.
+/// - eta : learning ratio. None as 0.0001.
+fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
+    let repeat = repeat.unwrap_or(10000);
+    let eta = eta.unwrap_or(0.0001);
+
+    let st = Instant::now();
+
+    // train
+    let mut tr = trainer::Trainer::new(eta, repeat, "./kifu/");
+    tr.read_opt_out(opt);
+    tr.learn_stones_para();
+
+    // put new eval table
+    if tr.need_save() {
+        unsafe {
+            if cfg!(feature="bitboard") {
+                if cfg!(feature="nnv3") {
+                    nodebb::WEIGHT.as_ref().unwrap().writev3("./kifu/newevaltable.txt");
+                } else {
+                    nodebb::WEIGHT.as_ref().unwrap().writev4("./kifu/newevaltable.txt");
+                }
+            } else {
+                if cfg!(feature="nnv1") {
+                    node::WEIGHT.as_ref().unwrap().writev1asv2("./kifu/newevaltable.txt");
+                } else if cfg!(feature="nnv2") {
+                    node::WEIGHT.as_ref().unwrap().writev2asv3("./kifu/newevaltable.txt");
+                } else if cfg!(feature="nnv3") {
+                    node::WEIGHT.as_ref().unwrap().writev3("./kifu/newevaltable.txt");
+                } else {
+                    node::WEIGHT.as_ref().unwrap().writev4("./kifu/newevaltable.txt");
+                }
+            }
+        }
+    }
+
+    let ft = st.elapsed();
+    if tr.need_time() {
+        let min = ft.as_secs() / 60;
+        let sec = ft.as_secs_f64() % 60.0;
+        let spdbatch = ft.as_secs_f64() * 1000.0 / repeat as f64;
+        let spdkifu = spdbatch / tr.nfiles as f64;
+        println!(
+            "processing time: {}min {:.1}sec ({:.1}msec/batch, {:.3}msec/file)",
+            min, sec, spdbatch, spdkifu);
+    }
+    if tr.need_summay() {
+        println!("{}", tr.fmt_result());
+    }
+    if tr.need_exrfens() {
+        // list up kifu
+        let files = std::fs::read_dir("./kifu/").unwrap();
+        let files = files.filter_map(|entry| {
+            entry.ok().and_then(|e|
+                e.path().file_name().and_then(|n|
+                    n.to_str().map(|s| String::from(s))
+                )
+            )}).collect::<Vec<String>>().iter().filter(|&fnm| {
+            fnm.find("kifu").is_some()
+        }).cloned().collect::<Vec<String>>();
+        for path in files.iter() {
+            extractrfen::extract(&format!("kifu/{}", path));
+        }
+    }
+}
+
 
 /// duel between 2 eval tables.
 /// # Arguments
@@ -843,7 +942,9 @@ fn main() {
     if *mode == myoption::Mode::None || *mode == myoption::Mode::Learn {
         let repeat = MYOPT.get().unwrap().repeat;
         let eta = MYOPT.get().unwrap().eta;
-        training(repeat, eta);
+        let tropt = &MYOPT.get().unwrap().outtrain;
+        training(repeat, eta, &tropt);
+        // training_para(repeat, eta, &tropt);
     }
     if *mode == myoption::Mode::Duel {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
