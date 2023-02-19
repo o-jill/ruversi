@@ -679,6 +679,10 @@ impl BitBoard {
         self.black.count_ones() as i8 - self.white.count_ones() as i8
     }
 
+    pub fn countf32(&self) -> f32 {
+        (self.black.count_ones() as i8 - self.white.count_ones() as i8) as f32
+    }
+
     pub fn is_full(&self) -> bool {
         (self.black | self.white) == 0xffffffffffffffff
     }

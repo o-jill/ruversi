@@ -336,7 +336,7 @@ impl NodeBB {
         let mut depth = node.depth;
         if ban.nblank() == 0 || ban.is_passpass() {
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         if depth == 0 {
             node.kyokumen = 1;
@@ -349,7 +349,7 @@ impl NodeBB {
         // no more empty cells
         if moves.is_none() {
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
         if moves.is_empty() {  // pass
@@ -392,7 +392,7 @@ impl NodeBB {
         }
         if ban.is_passpass() {
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -401,7 +401,7 @@ impl NodeBB {
         // no more empty cells
         if moves.is_none() {
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
         if moves.is_empty() {  // pass
@@ -1562,7 +1562,7 @@ if true {  // ---------------
         let mut depth = node.depth;
         if ban.nblank() == 0 || ban.is_passpass() {
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         if depth == 0 {
             node.kyokumen = 1;
@@ -1575,7 +1575,7 @@ if true {  // ---------------
         // no more empty cells
         if moves.is_none() {
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
         if moves.len() == 0 {  // pass
@@ -1628,7 +1628,7 @@ if true {  // ---------------
         // println!("d:{}",depth);
         if ban.nblank() == 0 || ban.is_passpass() {
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         if depth == 0 {
             node.kyokumen = 1;
@@ -1641,7 +1641,7 @@ if true {  // ---------------
         // no more empty cells
         if moves.is_none() {
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
         if moves.len() == 0 {  // pass
@@ -1767,7 +1767,7 @@ if true {  // ---------------
         if ban.is_passpass() {
             println!("pass pass");
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -1777,7 +1777,7 @@ if true {  // ---------------
         if moves.is_none() {
             println!("no more empty cells");
             node.kyokumen = 1;
-            return Some(ban.count()  as f32 * 10.0);
+            return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
         if moves.len() == 0 {  // pass

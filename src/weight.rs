@@ -2188,7 +2188,7 @@ impl Weight {
         let w1sz = board::CELL_2D + 1 + 1;
         let ow = &mut self.weight;
         // back to hidden
-        let diff : f32 = output[0] - 10.0 * winner as f32;
+        let diff : f32 = output[0] - winner as f32;
         let w2 = &mut ow[w1sz * 4..];
         for i in 0..N_HIDDEN {
             w2[i] -= hidsig[i] * diff * eta;
@@ -2242,7 +2242,7 @@ impl Weight {
 
         let ow = &mut self.weight;
         // back to hidden
-        let diff : f32 = output[0] - 10.0 * winner as f32;
+        let diff : f32 = output[0] - winner as f32;
         let w2 = &mut ow[(board::CELL_2D + 2) * N_HIDDEN ..];
         let deta = diff * eta;
         // if cfg!(feature="nosimd") {
@@ -2340,7 +2340,7 @@ impl Weight {
 
         let ow = &mut self.weight;
         // back to hidden
-        let diff : f32 = output[0] - 10.0 * winner as f32;
+        let diff : f32 = output[0] - winner as f32;
         let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         let deta = diff * eta;
         // if cfg!(feature="nosimd") {
@@ -2443,7 +2443,7 @@ impl Weight {
 
         let ow = &mut self.weight;
         // back to hidden
-        let diff : f32 = output[0] - 10.0 * winner as f32;
+        let diff : f32 = output[0] - winner as f32;
         let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         let deta = diff * eta;
         for i in 0..N_HIDDEN {
@@ -2498,7 +2498,7 @@ impl Weight {
 
         let ow = &mut self.weight;
         // back to hidden
-        let diff : f32 = output[0] - 10.0 * winner as f32;
+        let diff : f32 = output[0] - winner as f32;
         let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         let deta = diff * eta;
         // if cfg!(feature="nosimd") {
