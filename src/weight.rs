@@ -2748,16 +2748,16 @@ fn testweight() {
         w2.copy(&w);
         let mut w3 = weight::Weight::new();
         w3.copy(&w);
-        let res_nosimd = w.evaluatev3bb(&bban);
+        let res_nosimde = w.evaluatev3bb(&bban);
         let res_simd = w.evaluatev3bb_simd(&bban);
         let res_simdavx = w.evaluatev3bb_simdavx(&bban);
-        assert!((res_nosimd - res_simd).abs() < 1e-6);
-        assert!((res_nosimd - res_simdavx).abs() < 1e-6);
+        assert!((res_nosimde - res_simd).abs() < 1e-6);
+        assert!((res_nosimde - res_simdavx).abs() < 1e-6);
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
         let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
         let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simd(&bban);
         let (bh_sa, ah_sa, res_simdavx, fssa) = w.forwardv3bb_simdavx(&bban);
-        let (bh_sa2, ah_sa2, res_simdavx2, fssa2) = w.forwardv3bb_simdavx(&bban);
+        let (bh_sa2, ah_sa2, res_simdavx2, fssa2) = w.forwardv3bb_simdavx2(&bban);
         assert!(dbg_assert_eq_vec(&bh_ns, &bh_s));
         assert!(dbg_assert_eq_vec(&bh_ns, &bh_sa));
         assert!(dbg_assert_eq_vec(&bh_ns, &bh_sa2));
@@ -2766,6 +2766,7 @@ fn testweight() {
         assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa));
         assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa2));
         // println!("{ah_ns:?} == \n{ah_s:?} == \n{ah_sa:?} ???");
+        assert!((res_nosimde - res_nosimd[0]).abs() < 1e-6);
         // assert_eq!(res_nosimd, res_simd);
         assert!((res_nosimd[0] - res_simd[0]).abs() < 1e-6);
         // assert_eq!(res_nosimd, res_simdavx);
