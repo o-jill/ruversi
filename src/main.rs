@@ -331,9 +331,10 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
     // tr.learn_stones(&mut files);
     // tr.learn_win(&mut files);
 
-    let newevalfile = format!("{kifupath}newevaltable.txt");
+    let newevalfile = format!("{kifupath}/newevaltable.txt");
     // put new eval table
     if tr.need_save() {
+        println!("save result to {newevalfile}");
         unsafe {
             if cfg!(feature="bitboard") {
                 if cfg!(feature="nnv3") {
@@ -423,6 +424,8 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
 
     // put new eval table
     if tr.need_save() {
+        let newevalfile = format!("./kifu/newevaltable.txt");
+        println!("save result to {newevalfile}");
         unsafe {
             if cfg!(feature="bitboard") {
                 if cfg!(feature="nnv3") {
