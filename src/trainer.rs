@@ -162,12 +162,13 @@ impl Trainer {
      * 読み込んだ棋譜をキャッシュする版
      */
     pub fn learn_stones_cache(&self, files : &mut Vec<String>) {
+        let showprgs = self.need_progress();
         let mut rng = rand::thread_rng();
         let mut kifucache : Vec<(String, kifu::Kifu)> = Vec::new();
         for i in 0..1 {
             for fname in files.iter() {
                 let path = format!("kifu/{}", fname);
-                print!("{} / {} : {}\r", i, self.repeat, path);
+                if showprgs {print!("{} / {} : {}\r", i, self.repeat, path);}
                 let content = std::fs::read_to_string(&path).unwrap();
                 let lines:Vec<&str> = content.split("\n").collect();
                 let kifu = kifu::Kifu::from(&lines);
@@ -184,7 +185,7 @@ impl Trainer {
                     }
                 }
             }
-            println!("");
+            if showprgs {println!("");}
         }
         let n = files.len();
         let mut numbers : Vec<usize> = Vec::with_capacity(n);
@@ -192,7 +193,7 @@ impl Trainer {
         for (i, it) in numbers.iter_mut().enumerate() {*it = i;}
         for i in 1..self.repeat {
             numbers.shuffle(&mut rng);
-            print!("{} / {}\r", i, self.repeat);
+            if showprgs {print!("{} / {}\r", i, self.repeat);}
             for idx in numbers.iter() {
                 let (_path, kifu) = kifucache.iter().nth(*idx).unwrap();
                 unsafe {
@@ -208,7 +209,7 @@ impl Trainer {
                     }
                 }
             }
-            println!("");
+            if showprgs {println!("");}
         }
         println!("Done.");
     }
