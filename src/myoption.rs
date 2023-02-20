@@ -233,7 +233,7 @@ pub fn showhelp(msg : &str) {
         exrfens  : put RFENs in 2nd moves in every kifus.
         nosave   : skip saving weights.
         progress : show progress
-        summary  : show play summary.
+        summary  : show input summary.
         time     : show processing time.
         default: progress,summary,time
   Play:
