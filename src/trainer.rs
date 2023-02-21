@@ -128,7 +128,7 @@ impl Trainer {
         }
         let winner = winner.unwrap();
         for l in kifu.list.iter() {
-            if weight.train(&l.rfen, winner, self.eta).is_err() {
+            if weight.train(&l.rfen, winner, self.eta, 10).is_err() {
                 return Err(String::from("error while training"));
             }
         }
@@ -221,7 +221,7 @@ impl Trainer {
         }
         let score = score.unwrap();
         for l in kifu.list.iter() {
-            if weight.train(&l.rfen, score, self.eta).is_err() {
+            if weight.train(&l.rfen, score, self.eta, 10).is_err() {
                 return Err(String::from("error while training"));
             }
         }
@@ -254,7 +254,7 @@ impl Trainer {
                             break;
                         }
                         //
-                        if weight.train(&rfen, score, eta).is_err() {
+                        if weight.train(&rfen, score, eta, 10).is_err() {
                             println!("error while training");
                             break;
                         }

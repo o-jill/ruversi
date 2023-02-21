@@ -2162,15 +2162,38 @@ impl Weight {
         (hidden, hidsig, output, fs)
     }
 
-    pub fn train(&mut self, rfen : &str, winner : i8, eta : f32) -> Result<(), String> {
+    /// train weights
+    /// 
+    /// # Arguments
+    /// - `self` : self
+    /// - `rfen` : RFEN
+    /// - `winner` : winner or # of stones.
+    /// - `eta` : learning ratio.
+    /// - `mid` : last (mid) moves will not be used.
+    /// 
+    /// # Returns
+    /// - OK(()) if succeeded.
+    /// - Err(String) if some error happebd.
+    pub fn train(&mut self, rfen : &str, winner : i8, eta : f32, mid : i8)
+             -> Result<(), String> {
         if cfg!(feature="bitboard") {
-            let ban = bitboard::BitBoard::from(rfen).unwrap();
+            let ban = match bitboard::BitBoard::from(rfen) {
+                Ok(b) => {b},
+                Err(e) => {return Err(e)}
+            };
+            if ban.count() > 60 - mid {return Ok(());}
+
             self.learnbb(&ban, winner, eta);
 
             let ban = ban.rotate180();
             self.learnbb(&ban, winner, eta);
-        } else{
-            let ban = board::Board::from(rfen).unwrap();
+        } else {
+            let ban = match board::Board::from(rfen) {
+                Ok(b) => {b},
+                Err(e) => {return Err(e)}
+            };
+            if ban.count() > 60 - mid {return Ok(());}
+
             self.learn(&ban, winner, eta);
 
             let ban = ban.rotate180();
