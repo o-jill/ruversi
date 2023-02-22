@@ -1,5 +1,5 @@
 use rand::prelude::SliceRandom;
-
+use std::sync::Arc;
 use super::*;
 
 const BIT_OUT_NONE : u32 = 0x0;
@@ -232,6 +232,142 @@ impl Trainer {
      * 棋譜の読み込みと学習を別スレでやる版
      */
     pub fn learn_stones_para(&mut self) {
+        let (tosub, frmain) = std::sync::mpsc::channel::<Arc<kifu::Kifu>>();
+        let (tomain, frsub) = std::sync::mpsc::channel::<()>();
+        let eta = self.eta;
+
+        let sub = std::thread::spawn(move || {
+            let weight = unsafe {nodebb::WEIGHT.as_mut().unwrap()};
+
+            tomain.send(()).unwrap();
+
+            loop {
+                match frmain.recv() {
+                    Ok(kifu) => {
+                        // print!("{rfen:?},{score} \r");
+                        if kifu.is_none() {
+                            tomain.send(()).unwrap();
+                            continue;
+                        }
+                        if kifu.is_invalid() {
+                            // println!("score > 64");
+                            break;
+                        }
+                        for te in kifu.list.iter() {
+                            let rfen = &te.rfen;
+                            let score = kifu.score.unwrap();
+                            if weight.train(rfen, score, eta, 10).is_err() {
+                                println!("error while training");
+                                break;
+                            }
+                        }
+                    },
+                    Err(e) => {panic!("{}", e.to_string())}
+                }
+            }
+        });
+
+        // list up kifu
+        let files = std::fs::read_dir(&self.path).unwrap();
+        let mut files = files.filter_map(|entry| {
+            entry.ok().and_then(|e|
+                e.path().file_name().and_then(|n|
+                    n.to_str().map(|s| String::from(s))
+                )
+            )}).collect::<Vec<String>>().iter().filter(|&fnm| {
+                fnm.find("kifu").is_some()
+                // fnm.find(".txt").is_some()
+            }).cloned().collect::<Vec<String>>();
+        // println!("{:?}", files);
+
+        self.nfiles = files.len();
+        files.sort();
+
+        let showprgs = self.need_progress();
+        let mut rng = rand::thread_rng();
+        let mut kifucache : Vec<Arc<kifu::Kifu>> = Vec::new();
+        for fname in files.iter() {
+            let path = format!("{}{}", self.path, fname);
+            if showprgs {print!("0 / {} : {}\r", self.repeat, path);}
+
+            let content = std::fs::read_to_string(&path).unwrap();
+            let lines:Vec<&str> = content.split("\n").collect();
+
+            let kifu = Arc::new(kifu::Kifu::from(&lines));
+            match tosub.send(kifu.clone()) {
+                Ok(_) => {
+                    kifucache.push(kifu.clone());
+                },
+                Err(e) => {
+                    panic!("{}", e.to_string());
+                },
+            }
+
+            self.total += 1;
+            match kifu.winner().unwrap() {
+                kifu::SENTEWIN => {self.win += 1;},
+                kifu::DRAW => {self.draw += 1;},
+                kifu::GOTEWIN => {self.lose += 1;},
+                _ => {}
+            }
+        }
+        let sep = Arc::new(kifu::Kifu::new());
+        match tosub.send(sep.clone()) {
+            Ok(_) => {}
+            Err(e) => {
+                panic!("{}", e.to_string());
+            },
+        }
+        let _ = frsub.recv().unwrap();
+        if showprgs {println!("");}
+
+        let n = kifucache.len();
+        // println!("{n} rfens.");
+        let mut numbers : Vec<usize> = Vec::with_capacity(n);
+        unsafe { numbers.set_len(n); }
+        // for (i, it) in numbers.iter_mut().enumerate() {
+        //     *it = i;
+        // }
+        for i in 0..n {
+            numbers[i] = i;
+        }
+        for i in 1..self.repeat {
+            if showprgs {print!("{i} / {}", self.repeat);}
+            numbers.shuffle(&mut rng);
+            for &idx in numbers.iter() {
+                match tosub.send(kifucache[idx].clone()) {
+                    Ok(_) => {},
+                    Err(e) => {
+                        panic!("{}", e.to_string());
+                    },
+                }
+            }
+            match tosub.send(sep.clone()) {
+                Ok(_) => {}
+                Err(e) => {
+                    panic!("{}", e.to_string());
+                },
+            }
+            frsub.recv().unwrap();
+            if showprgs {println!("");}
+        }
+        // println!("_ _ _");
+        let stop = Arc::new(kifu::Kifu::invalid());
+        match tosub.send(stop) {
+            Ok(_) => {}
+            Err(e) => {
+                panic!("{}", e.to_string());
+            },
+        }
+
+        sub.join().unwrap();
+    }
+
+    /**
+     * 棋譜の読み込みと学習を別スレでやる版
+     */
+    #[allow(dead_code)]
+    pub fn learn_stones_para_rfen(&mut self) {
         let (tosub, frmain) = std::sync::mpsc::channel::<(String, i8)>();
         let (tomain, frsub) = std::sync::mpsc::channel::<()>();
         let eta = self.eta;

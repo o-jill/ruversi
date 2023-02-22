@@ -303,6 +303,7 @@ fn gen_kifu(n : Option<usize>) {
 /// # Arguments
 /// - repeat : Number of repeat. None as 10000.
 /// - eta : learning ratio. None as 0.0001.
+#[allow(dead_code)]
 fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.0001);
@@ -946,8 +947,8 @@ fn main() {
         let repeat = MYOPT.get().unwrap().repeat;
         let eta = MYOPT.get().unwrap().eta;
         let tropt = &MYOPT.get().unwrap().outtrain;
-        training(repeat, eta, &tropt);
-        // training_para(repeat, eta, &tropt);
+        // training(repeat, eta, &tropt);
+        training_para(repeat, eta, &tropt);
     }
     if *mode == myoption::Mode::Duel {
         let ev1 = &MYOPT.get().unwrap().evaltable1;

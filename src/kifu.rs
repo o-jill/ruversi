@@ -171,6 +171,14 @@ impl Kifu {
         ret
     }
 
+    pub fn invalid() -> Kifu {
+        Kifu {
+            list : Vec::<Te>::new(),
+            score : Some(100),
+        }
+    }
+
+    #[allow(dead_code)]
     pub fn copy(&self) -> Kifu {
         let mut ret = Kifu::new();
         ret.score = self.score;
@@ -191,6 +199,19 @@ impl Kifu {
 
     pub fn nth(&self, idx : usize) -> &Te {
         &self.list[idx]
+    }
+
+    #[allow(dead_code)]
+    pub fn is_empty(&self) -> bool {
+        self.list.is_empty()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.score.is_none()
+    }
+
+    pub fn is_invalid(&self) -> bool {
+        self.score.unwrap().abs() > 64
     }
 
     fn score2str(&self) -> String {
