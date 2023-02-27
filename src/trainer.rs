@@ -332,7 +332,10 @@ impl Trainer {
             numbers[i] = i;
         }
         for i in 1..self.repeat {
-            if showprgs {print!("{i} / {}", self.repeat);}
+            if showprgs {
+                print!("{i} / {}\r", self.repeat);
+                std::io::stdout().flush().unwrap();
+            }
             numbers.shuffle(&mut rng);
             for &idx in numbers.iter() {
                 match tosub.send(kifucache[idx].clone()) {
@@ -349,8 +352,8 @@ impl Trainer {
                 },
             }
             frsub.recv().unwrap();
-            if showprgs {println!("");}
         }
+        if showprgs {println!("");}
         // println!("_ _ _");
         let stop = Arc::new(kifu::Kifu::invalid());
         match tosub.send(stop) {
