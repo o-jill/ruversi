@@ -256,7 +256,7 @@ impl Trainer {
                         for te in kifu.list.iter() {
                             let rfen = &te.rfen;
                             let score = kifu.score.unwrap();
-                            if weight.train(rfen, score, etai, 0).is_err() {
+                            if weight.train(rfen, score, eta, 0).is_err() {
                                 println!("error while training");
                                 break;
                             }
