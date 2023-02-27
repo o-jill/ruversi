@@ -308,7 +308,7 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.1);
     let kifupath = "./kifu";
-    println!("eta:{eta}")
+    println!("eta:{eta}");
     let st = Instant::now();
 
     // list up kifu
