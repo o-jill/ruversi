@@ -415,8 +415,8 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
 /// - eta : learning ratio. None as 0.0001.
 fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
     let repeat = repeat.unwrap_or(10000);
-    let eta = eta.unwrap_or(0.0001);
-
+    let eta = eta.unwrap_or(0.1);
+    println!("eta:{eta}");
     let st = Instant::now();
 
     // train
