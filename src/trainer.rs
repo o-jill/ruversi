@@ -234,18 +234,22 @@ impl Trainer {
     pub fn learn_stones_para(&mut self) {
         let (tosub, frmain) = std::sync::mpsc::channel::<Arc<kifu::Kifu>>();
         let (tomain, frsub) = std::sync::mpsc::channel::<()>();
+        // let rpt = self.repeat;
         let eta = self.eta;
 
         let sub = std::thread::spawn(move || {
             let weight = unsafe {nodebb::WEIGHT.as_mut().unwrap()};
 
             tomain.send(()).unwrap();
-
+            let mut i = 0;
+            let mut etai = eta;
             loop {
                 match frmain.recv() {
                     Ok(kifu) => {
                         // print!("{rfen:?},{score} \r");
                         if kifu.is_none() {
+                            i += 1;
+                            etai = 1.0 / (10.0 + i as f32);
                             tomain.send(()).unwrap();
                             continue;
                         }
@@ -256,7 +260,7 @@ impl Trainer {
                         for te in kifu.list.iter() {
                             let rfen = &te.rfen;
                             let score = kifu.score.unwrap();
-                            if weight.train(rfen, score, eta, 0).is_err() {
+                            if weight.train(rfen, score, etai, 0).is_err() {
                                 println!("error while training");
                                 break;
                             }
