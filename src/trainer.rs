@@ -249,7 +249,7 @@ impl Trainer {
                         // print!("{rfen:?},{score} \r");
                         if kifu.is_none() {
                             i += 1;
-                            etai = 1.0 / (10.0 + i as f32);
+                            etai = eta * 10.0 / (10.0 + i as f32);
                             tomain.send(()).unwrap();
                             continue;
                         }
