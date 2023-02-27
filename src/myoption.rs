@@ -228,7 +228,7 @@ pub fn showhelp(msg : &str) {
         all of the initial board positions will be used when this option is not specified.
   Learn:
     --repeat <number>  number of learning. default 10000.
-    --eta <ratio>      learning ratio. default 0.0001.
+    --eta <ratio>      learning ratio. default 0.1.
     --trainout <options>  output control.
         exrfens  : put RFENs in 2nd moves in every kifus.
         nosave   : skip saving weights.
