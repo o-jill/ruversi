@@ -570,6 +570,9 @@ impl GameBB {
         Ok(())
     }
 
+    /// # Arguments
+    /// - et1 : SENTE
+    /// - et2 : GOTE
     pub fn starto_with_2et(&mut self,
         f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
         depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)

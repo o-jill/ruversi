@@ -540,20 +540,11 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
             result = dresult.unwrap();
         }
         total += 1;
-        if teban == board::SENTE {
-            match result {
-                kifu::SENTEWIN => {win[0] += 1;},
-                kifu::DRAW => {draw[0] += 1;},
-                kifu::GOTEWIN => {lose[0] += 1;},
-                _ => {}
-            }
-        } else {
-            match result {
-                kifu::SENTEWIN => {lose[1] += 1;},
-                kifu::DRAW => {draw[1] += 1;},
-                kifu::GOTEWIN => {win[1] += 1;},
-                _ => {}
-            }
+        match result {
+            kifu::SENTEWIN => {win[0] += 1;},
+            kifu::DRAW => {draw[0] += 1;},
+            kifu::GOTEWIN => {lose[0] += 1;},
+            _ => {}
         }
         if cfg!(feature="bitboard") {
             // prepare game
@@ -591,20 +582,11 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
             result = dresult.unwrap();
         }
         total += 1;
-        if teban == board::SENTE {
-            match result {
-                kifu::SENTEWIN => {win[0] += 1;},
-                kifu::DRAW => {draw[0] += 1;},
-                kifu::GOTEWIN => {lose[0] += 1;},
-                _ => {}
-            }
-        } else {
-            match result {
-                kifu::SENTEWIN => {lose[1] += 1;},
-                kifu::DRAW => {draw[1] += 1;},
-                kifu::GOTEWIN => {win[1] += 1;},
-                _ => {}
-            }
+        match result {
+            kifu::SENTEWIN => {lose[1] += 1;},
+            kifu::DRAW => {draw[1] += 1;},
+            kifu::GOTEWIN => {win[1] += 1;},
+            _ => {}
         }
         let twin = win[0] + win[1];
         let tdraw = draw[0] + draw[1];
