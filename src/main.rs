@@ -422,6 +422,7 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
     // train
     let mut tr = trainer::Trainer::new(eta, repeat, "./kifu/");
     tr.read_opt_out(opt);
+    // tr.learn_stones_para_rfengrp();
     tr.learn_stones_para();
 
     // put new eval table
