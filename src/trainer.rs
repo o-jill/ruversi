@@ -10,6 +10,8 @@ const BIT_OUT_TIME : u32 = 0x8;
 pub const BIT_OUT_NOSAVE : u32 = 0x10;
 pub const BIT_OUT_DEFAULT : u32 =
         BIT_OUT_PROGESS | BIT_OUT_SUMMARY | BIT_OUT_TIME;
+static mut RFENCACHE : Vec<(String, i8)> = Vec::new();
+const STOP : u32 = 0xffffffff_u32;
 
 pub struct Trainer {
     eta: f32,
@@ -231,6 +233,7 @@ impl Trainer {
     /**
      * 棋譜の読み込みと学習を別スレでやる版
      */
+    #[allow(dead_code)]
     pub fn learn_stones_para(&mut self) {
         let (tosub, frmain) = std::sync::mpsc::channel::<Arc<kifu::Kifu>>();
         let (tomain, frsub) = std::sync::mpsc::channel::<()>();
@@ -513,7 +516,7 @@ impl Trainer {
      */
     #[allow(dead_code)]
     pub fn learn_stones_para_rfengrp(&mut self) {
-        let (tosub, frmain) = std::sync::mpsc::channel::<Vec<(String, i8)>>();
+        let (tosub, frmain) = std::sync::mpsc::channel::<Vec<u32>>();
         let (tomain, frsub) = std::sync::mpsc::channel::<()>();
         let eta = self.eta;
 
@@ -524,19 +527,19 @@ impl Trainer {
 
             loop {
                 match frmain.recv() {
-                    Ok( rfengrp ) => {
+                    Ok( rfenidxgrp ) => {
                         // print!("{rfen:?},{score} \r");
-                        if rfengrp.is_empty() {
+                        if rfenidxgrp.is_empty() {
                             tomain.send(()).unwrap();
                             continue;
                         }
-                        let score = rfengrp[0].1;
-                        if score > 64 {
+                        if rfenidxgrp[0] == STOP  {
                             // println!("score > 64");
                             break;
                         }
                         //
-                        for (rfen, score) in rfengrp.iter() {
+                        for i in rfenidxgrp {
+                            let (rfen, score) = unsafe {&RFENCACHE[i as usize]};
                             if weight.train(rfen, *score, eta, 0).is_err() {
                                 println!("error while training");
                                 break;
@@ -566,7 +569,7 @@ impl Trainer {
 
         let showprgs = self.need_progress();
         let mut rng = rand::thread_rng();
-        let mut rfencache : Vec<(String, i8)> = Vec::new();
+        // let mut rfencache : Vec<(String, i8)> = Vec::new();
         for fname in files.iter() {
             let path = format!("{}{}", self.path, fname);
             if showprgs {print!("reading {path}\r");}
@@ -578,8 +581,7 @@ impl Trainer {
             let score = kifu.score.unwrap();
             for te in kifu.list.iter() {
                 let rfen = te.rfen.clone();
-                let rfen2 = rfen.clone();
-                rfencache.push((rfen2, score));
+                unsafe {RFENCACHE.push((rfen, score));}
             }
 
             self.total += 1;
@@ -599,27 +601,24 @@ impl Trainer {
         let _ = frsub.recv().unwrap();
         if showprgs {println!("");}
 
-        let n = rfencache.len();
+        let n = unsafe {RFENCACHE.len()};
         // println!("{n} rfens.");
-        let mut numbers : Vec<usize> = Vec::with_capacity(n);
+        let mut numbers : Vec<u32> = Vec::with_capacity(n);
         unsafe { numbers.set_len(n); }
         // for (i, it) in numbers.iter_mut().enumerate() {
         //     *it = i;
         // }
         for i in 0..n {
-            numbers[i] = i;
+            numbers[i] = i as u32;
         }
         for i in 0..self.repeat {
             if showprgs {
-                print!("{i} / {}", self.repeat);
+                print!("{i} / {}\r", self.repeat);
                 std::io::stdout().flush().unwrap();
             }
             numbers.shuffle(&mut rng);
             for idx in 0..10 {
-                let mut grp = Vec::new();
-                for i in numbers[idx * n / 10..(idx + 1) * n / 10 - 1].iter() {
-                    grp.push(rfencache.iter().nth(*i).unwrap().clone());
-                }
+                let grp = numbers[idx * n / 10 .. (idx + 1) * n / 10].to_vec();
                 match tosub.send(grp) {
                     Ok(_) => {},
                     Err(e) => {
@@ -634,10 +633,10 @@ impl Trainer {
                 },
             }
             frsub.recv().unwrap();
-            if showprgs {println!("");}
         }
+        if showprgs {println!("");}
         // println!("_ _ _");
-        match tosub.send(vec![(String::from("stop"), 100)]) {
+        match tosub.send(vec![STOP]) {
             Ok(_) => {}
             Err(e) => {
                 panic!("{}", e.to_string());
