@@ -171,6 +171,7 @@ impl Kifu {
         ret
     }
 
+    #[allow(dead_code)]
     pub fn invalid() -> Kifu {
         Kifu {
             list : Vec::<Te>::new(),
@@ -197,6 +198,7 @@ impl Kifu {
         lines.join("") + &self.score2str()
     }
 
+    #[allow(dead_code)]
     pub fn nth(&self, idx : usize) -> &Te {
         &self.list[idx]
     }
@@ -206,10 +208,12 @@ impl Kifu {
         self.list.is_empty()
     }
 
+    #[allow(dead_code)]
     pub fn is_none(&self) -> bool {
         self.score.is_none()
     }
 
+    #[allow(dead_code)]
     pub fn is_invalid(&self) -> bool {
         self.score.unwrap().abs() > 64
     }

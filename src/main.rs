@@ -495,7 +495,6 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
     let mut lose = [0, 0];
     let mut total = 0;
     let mut result;
-    let mut teban;
 
     let ip = initialpos::InitialPos::read(initialpos::EQUALFILE).unwrap();
     let rfentbl = &ip.rfens_all();
@@ -527,7 +526,6 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
                 _ => { panic!("unknown thinking method.") }
             }
             let dresult = g.kifu.winner();
-            teban = g.kifu.nth(0).teban;
             result = dresult.unwrap();
         } else {
             // prepare game
@@ -537,7 +535,6 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
                 node::Node::think_ab,
                 depth, &w1, &w2).unwrap();
             let dresult = g.kifu.winner();
-            teban = g.kifu.nth(0).teban;
             result = dresult.unwrap();
         }
         total += 1;
@@ -571,7 +568,6 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
                 _ => { panic!("unknown thinking method.") }
             }
             let dresult = g.kifu.winner();
-            teban = g.kifu.nth(1).teban;
             result = dresult.unwrap();
         } else {
             // prepare game
@@ -579,7 +575,6 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
             // g.start_with_2et(node::Node::think_ab_extract2, depth, &w2, &w1).unwrap();
             g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
             let dresult = g.kifu.winner();
-            teban = g.kifu.nth(1).teban;
             result = dresult.unwrap();
         }
         total += 1;
