@@ -413,7 +413,8 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
 /// # Arguments
 /// - repeat : Number of repeat. None as 10000.
 /// - eta : learning ratio. None as 0.0001.
-fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
+fn training_para(repeat : Option<usize>, eta : Option<f32>,
+        opt : &str, prgs : &Vec<u32>) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.1);
     println!("eta:{eta}");
@@ -422,8 +423,9 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
     // train
     let mut tr = trainer::Trainer::new(eta, repeat, "./kifu/");
     tr.read_opt_out(opt);
-    // tr.learn_stones_para_rfengrp();
-    tr.learn_stones_para();
+    tr.set_progress(prgs);
+    tr.learn_stones_para_rfengrp();
+    // tr.learn_stones_para();
 
     // put new eval table
     if tr.need_save() {
@@ -883,9 +885,11 @@ fn main() {
     println!("Hello, reversi world!");
 
     // read command options
-    MYOPT
-        .set(myoption::MyOption::new(std::env::args().collect()))
-        .unwrap();
+    MYOPT.set(
+        match myoption::MyOption::new(std::env::args().collect()) {
+            Ok(mo) => {mo},
+            Err(msg) => {panic!("{msg}")},
+        }).unwrap();
 
     let mode = &MYOPT.get().unwrap().mode;
     if *mode == myoption::Mode::Help {
@@ -926,8 +930,9 @@ fn main() {
         let repeat = MYOPT.get().unwrap().repeat;
         let eta = MYOPT.get().unwrap().eta;
         let tropt = &MYOPT.get().unwrap().outtrain;
+        let prgs = &MYOPT.get().unwrap().progress;
         // training(repeat, eta, &tropt);
-        training_para(repeat, eta, &tropt);
+        training_para(repeat, eta, &tropt, prgs);
     }
     if *mode == myoption::Mode::Duel {
         let ev1 = &MYOPT.get().unwrap().evaltable1;

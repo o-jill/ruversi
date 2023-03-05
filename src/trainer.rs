@@ -12,11 +12,13 @@ pub const BIT_OUT_DEFAULT : u32 =
         BIT_OUT_PROGESS | BIT_OUT_SUMMARY | BIT_OUT_TIME;
 static mut RFENCACHE : Vec<(String, i8)> = Vec::new();
 const STOP : u32 = 0xffffffff_u32;
+const PROGRESS : u32 = 0xfffffffe_u32;
 
 pub struct Trainer {
     eta: f32,
     repeat: usize,
     path: String,
+    progress: Vec<u32>,
     pub nfiles: usize,
     pub total: i32,
     pub win: i32,
@@ -31,6 +33,7 @@ impl Trainer {
             eta: eta,
             repeat: repeat,
             path: String::from(path),
+            progress: Vec::new(),
             nfiles: 0,
             total: 0,
             win: 0,
@@ -97,6 +100,10 @@ impl Trainer {
     pub fn fmt_result(&self) -> String {
         format!("total,{},win,{},draw,{},lose,{}",
                 self.total, self.win, self.draw, self.lose)
+    }
+
+    pub fn set_progress(&mut self, prgs : &Vec<u32>) {
+        self.progress = prgs.to_vec();
     }
 
     #[allow(dead_code)]
@@ -518,6 +525,7 @@ impl Trainer {
     pub fn learn_stones_para_rfengrp(&mut self) {
         let (tosub, frmain) = std::sync::mpsc::channel::<Vec<u32>>();
         let (tomain, frsub) = std::sync::mpsc::channel::<()>();
+        let (txprogress, rxprogress) = std::sync::mpsc::channel();
         let eta = self.eta;
 
         let sub = std::thread::spawn(move || {
@@ -537,6 +545,12 @@ impl Trainer {
                             // println!("score > 64");
                             break;
                         }
+                        if rfenidxgrp[0] == PROGRESS {
+                            let mut w = weight::Weight::new();
+                            w.copy(&weight);
+                            txprogress.send(w).unwrap();
+                            continue;
+                        }
                         //
                         for i in rfenidxgrp {
                             let (rfen, score) = unsafe {&RFENCACHE[i as usize]};
@@ -548,6 +562,18 @@ impl Trainer {
                     },
                     Err(e) => {panic!("{}", e.to_string())}
                 }
+            }
+        });
+        let prgstbl = self.progress.clone();
+        let repeat = self.repeat as u32;
+        let subprgs = std::thread::spawn(move || {
+            for prgs in prgstbl {
+                if prgs >= repeat {
+                    println!("WARNING: progress {prgs} >= {repeat}...");
+                    break;
+                }
+                let weight = rxprogress.recv().unwrap();
+                weight.writev4(&format!("kifu/newevaltable.r{prgs}.txt"));
             }
         });
 
@@ -632,6 +658,14 @@ impl Trainer {
                     panic!("{}", e.to_string());
                 },
             }
+            if self.progress.contains(&(i as u32)) {
+                match tosub.send(vec![PROGRESS]) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        panic!("{}", e.to_string());
+                    },
+                }
+            }
             frsub.recv().unwrap();
         }
         if showprgs {println!("");}
@@ -642,7 +676,7 @@ impl Trainer {
                 panic!("{}", e.to_string());
             },
         }
-
+        subprgs.join().unwrap();
         sub.join().unwrap();
     }
 }
