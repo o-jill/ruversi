@@ -270,6 +270,7 @@ impl Weight {
 
     /// copy v3 data into v4.
     fn fromv3tov4(&mut self, tbl : &Vec<f32>) {
+        self.weight = vec![0.0 ; N_WEIGHT];
         // ban
         let n = 4 * board::CELL_2D;
         let we = &mut self.weight[0..n];
@@ -289,7 +290,7 @@ impl Weight {
         }
 
         // fixed stone
-        let idx3 = 4 * (board::CELL_2D +  1);
+        let idx3 = 4 * (board::CELL_2D + 1);
         let idx4 = N_HIDDEN * (board::CELL_2D + 1);
         let n = 4;
         let we = &mut self.weight[idx4..idx4 + n];
@@ -297,8 +298,6 @@ impl Weight {
         for (w, t) in we.iter_mut().zip(tb.iter()) {
             *w = *t;
         }
-
-        // dc
         let idx3 = 4 * (board::CELL_2D + 1 + 1);
         let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 1);
         let n = 4;
@@ -308,9 +307,19 @@ impl Weight {
             *w = *t;
         }
 
+        // dc
+        let idx3 = 4 * (board::CELL_2D + 1 + 2);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 2);
+        let n = 4;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
         // w2
-        let idx3 = 4 * (board::CELL_2D + 1 + 1 + 1);
-        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 1 + 1);
+        let idx3 = 4 * (board::CELL_2D + 1 + 2 + 1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 2 + 1);
         let n = 4;
         let we = &mut self.weight[idx4..idx4 + n];
         let tb = &tbl[idx3..idx3 + n];
@@ -319,9 +328,11 @@ impl Weight {
         }
 
         // dc2
-        let idx3 = 4 * (board::CELL_2D + 1 + 1 + 1 + 1);
-        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 1 + 1 + 1);
+        let idx3 = 4 * (board::CELL_2D + 1 + 2 + 1 + 1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 2 + 1 + 1);
         self.weight[idx4] =  tbl[idx3];
+        // println!("tbl:{tbl:?}");
+        // println!("we:{:?}", self.weight);
     }
 
     pub fn evaluatev1(&self, ban : &board::Board) -> f32 {
