@@ -140,7 +140,7 @@ impl MyOption {
                     opt.opponent = Opponent::Edax;
                 } else {
                 }
-            } else if e.starts_with("-") {
+            } else if old.is_empty() && e.starts_with("-") {
                 if e.find("-N").is_some() {
                     let n : Vec<&str> = e.split("N").collect();
                     let n = n[1].parse::<usize>();
