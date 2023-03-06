@@ -570,6 +570,9 @@ impl GameBB {
         Ok(())
     }
 
+    /// # Arguments
+    /// - et1 : SENTE
+    /// - et2 : GOTE
     pub fn starto_with_2et(&mut self,
         f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
         depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
@@ -594,7 +597,7 @@ impl GameBB {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+            println!("val:{:.1} {} {}msec", val, node.dump(), ft.as_millis());
             let best = node.best.as_ref().unwrap();
             let x = best.x;
             let y = best.y;

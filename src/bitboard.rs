@@ -16,6 +16,10 @@ const LT_CELL : u64 = LSB_CELL;
 const RT_CELL : u64 = 0x0100000000000000;
 const LB_CELL : u64 = 0x0000000000000080;
 const RB_CELL : u64 = 0x8000000000000000;
+const BITPTN : [u64 ; 9] = [
+    0, 0x1, 0x101, 0x10101, 0x1010101, 0x101010101, 0x10101010101,
+    0x1010101010101, 0x101010101010101,
+];
 
 pub struct BitBoard {
     pub black: u64,
@@ -57,33 +61,27 @@ impl BitBoard {
             teban : teban,
             pass : 0,
         };
+        let mut x = 0;
         let mut y = 0;
-        let mut bit : u64 = LSB_CELL;
         for ch in elem[0].chars() {
             match ch {
                 'A'..='H' => {
                     let n = ch as i32 + 1 - 'A' as i32;
-                    // 3なら(2<<3)-1で3ビット立つのでそれでうまくやれないか？
-                    for _i in 0..n {
-                        ret.black |= bit;
-                        bit <<= NUMCELL;
-                    }
+                    ret.black |= BITPTN[n as usize] << (x * NUMCELL + y);
+                    x += n as usize;
                 },
                 'a'..='h' => {
                     let n = ch as i32 + 1 - 'a' as i32;
-                    for _i in 0..n {
-                        ret.white |= bit;
-                        bit <<= NUMCELL;
-                    }
+                    ret.white |= BITPTN[n as usize] << (x * NUMCELL + y);
+                    x += n as usize;
                 },
                 '1'..='8' => {
                     let n = ch as i32 - '0' as i32;
-                    bit = bit.checked_shl((n * NUMCELL as i32) as u32).unwrap_or(0);
-                    // bit <<= n * NUMCELL as  i32;
+                    x += n as usize;
                 },
                 '/' => {
+                    x = 0;
                     y += 1;
-                    bit = LSB_CELL << y;
                 },
                 _ => {
                     return Err(format!("unknown letter rfen [{}]", ch));
@@ -679,6 +677,10 @@ impl BitBoard {
 
     pub fn count(&self) -> i8 {
         self.black.count_ones() as i8 - self.white.count_ones() as i8
+    }
+
+    pub fn countf32(&self) -> f32 {
+        (self.black.count_ones() as i8 - self.white.count_ones() as i8) as f32
     }
 
     pub fn is_full(&self) -> bool {
