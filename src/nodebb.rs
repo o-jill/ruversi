@@ -757,7 +757,7 @@ impl NodeBB {
 
     pub fn thinko_ab_extract2(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, &NodeBB)> {
-        if depth == 0 {
+        if depth <= 1 {
             return None;
         }
         if ban.is_passpass() {
