@@ -8,6 +8,7 @@ use rand::distributions::{Distribution, Uniform};
 
 mod board;
 mod bitboard;
+mod edaxrunner;
 mod extractrfen;
 mod game;
 mod initialpos;
@@ -804,11 +805,6 @@ fn geninitpos(tag : &str) -> Result<(), String>{
 }
 
 fn equalrfen() -> Result<(), String> {
-    let obf = "/tmp/test.obf";
-    let cd = "../../edax-reversi/";
-    let edaxpath = "./bin/lEdax-x64-modern";
-    let evfile = "data/eval.dat";
-    let scoreptn = regex::Regex::new("%\\s+([+-]\\d\\d)").unwrap();
     // let input = initialpos::INITIALPOSFILE;
     let input = "data/initialpos.seven.txt";
     let ip = initialpos::InitialPos::read(input).unwrap();
@@ -817,67 +813,37 @@ fn equalrfen() -> Result<(), String> {
     // let rfentbl = &ip.at("FIVE").unwrap().rfens;
     // let rfentbl = &ip.at("FOUR").unwrap().rfens;
     // let rfentbl = &ip.at("THREE").unwrap().rfens;
-    let mut m1 = 0;
-    let mut pm0 = 0;
-    let mut p1 = 0;
+    let mut m1_0p1 = [0 ; 3];
     let mut count = 0;
     let mut res = String::new();
     for rfen in rfentbl.iter() {
         // println!("rfen:{rfen}");
         let ban = bitboard::BitBoard::from(rfen).unwrap();
-        {
-            // println!("put board to a file...");
-            let mut f = File::create(obf).unwrap();
-            f.write(ban.to_obf().as_bytes()).unwrap();
-            f.write("\n".as_bytes()).unwrap();
-            f.flush().unwrap();
-        }
+        edaxrunner::obf2file(&ban.to_obf());
+
         // launch edax
-        let cmd = match std::process::Command::new(edaxpath)
-            .arg("--solve").arg(obf).current_dir(cd)
-            .arg("--eval-file").arg(evfile)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::null()).spawn() {
-            Err(msg) => panic!("error running edax... [{}]", msg),
-            Ok(prcs) => prcs,
-        };
-        // read stdout and get moves
-        let w = cmd.wait_with_output().unwrap();
-        let txt = String::from_utf8(w.stdout).unwrap();
-        // println!("{txt}");
-        let lines : Vec<_> = txt.split("\n").collect();
-        // println!("{}", lines[2]);
-        match scoreptn.captures(&lines[2]) {
-            Some(cap) => {
-                let score = &cap[1];
-                // if vec!["-01", "+00", "+01"].contains(&score) {
-                //     println!("{rfen}, {score}");
-                //  } else {
-                //     // eprintln!("{rfen}, {score}");
-                //  }
-                if "-01" == score {
-                    res += &format!("{rfen}, {score}\n");
-                    m1 = m1 + 1;
-                    count += 1;
-                } else if "+00" == score {
-                    res += &format!("{rfen}, {score}\n");
-                    pm0 = pm0 + 1;
-                    count += 1;
-                } else if "+01" == score {
-                    res += &format!("{rfen}, {score}\n");
-                    p1 = p1 + 1;
-                    count += 1;
+        match edaxrunner::run() {
+            Ok((_, score)) => {
+                // println!("score:{score}");
+                match ["-01", "+00", "+01"].iter().position(|&x| x == score) {
+                    Some(i) => {
+                        res += &format!("{rfen}, {score}\n");
+                        m1_0p1[i] += 1;
+                        count += 1;
+                    },
+                    None => {}
                 }
             },
-            _ => {}
-        }
+            Err(msg) => {panic!("{msg}");}
+        };
         if count >= 20 {
             print!("{res}");
+            std::io::stdout().flush().unwrap();
             count = 0;
             res.clear();
         }
     }
-    println!("{res}\n-1:{m1}, 00:{pm0}, +01:{p1}");
+    println!("{res}\n-1:{}, 00:{}, +01:{}", m1_0p1[0], m1_0p1[1], m1_0p1[2]);
     Ok(())
 }
 

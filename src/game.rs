@@ -1,6 +1,5 @@
 use super::*;
 
-use std::fs::File;
 use std::io::{self, Write};
 use std::sync::{Arc, RwLock};
 
@@ -346,43 +345,17 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else {
-                    {
-                        // println!("put board to a file...");
-                        let mut f = File::create("/tmp/test.obf").unwrap();
-                        f.write(self.ban.to_obf().as_bytes()).unwrap();
-                        f.write("\n".as_bytes()).unwrap();
-                        f.flush().unwrap();
-                    }
+                    // println!("put board to a file...");
+                    edaxrunner::obf2file(&self.ban.to_obf());
                     // launch edax
-                    let cd = "../../edax-reversi/";
-                    let edaxpath = "./bin/lEdax-x64-modern";
-                    let evfile = "data/eval.dat";
-                    let tmpobf = "/tmp/test.obf";
-                    let cmd = match std::process::Command::new(edaxpath)
-                        .arg("--solve").arg(tmpobf).current_dir(cd)
-                        .arg("--eval-file").arg(evfile)
-                        .stdout(std::process::Stdio::piped())
-                        .stderr(std::process::Stdio::null()).spawn() {
-                        Err(msg) => panic!("error running edax... [{}]", msg),
-                        Ok(prcs) => prcs,
-                    };
-                    // read stdout and get moves
-                    let w = cmd.wait_with_output().unwrap();
-                    let txt = String::from_utf8(w.stdout).unwrap();
-                    let lines : Vec<_> = txt.split("\n").collect();
-
-                    let pos = lines[2].chars().position(|c| c.is_alphabetic());
-                    if pos.is_none() {panic!("EDAX:\"{}\"", lines[2]);}
-
-                    let i = pos.unwrap();
-                    let xtxt = lines[2].chars().nth(i).unwrap().to_ascii_lowercase();
-                    let ytxt = lines[2].chars().nth(i + 1).unwrap();
-
-                    // println!("{}{} from EDAX:{}", xtxt, ytxt, lines[2]);
-
-                    x = "0abcdefgh".find(xtxt).unwrap_or(10) as u8;
-                    y = ytxt.to_digit(10).unwrap() as u8;
-            }
+                    match edaxrunner::run() {
+                        Ok((pos, _)) => {
+                            x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
+                            y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                        },
+                        Err(msg) => panic!("error running edax... [{msg}]"),
+                    }
+                }
            } else {
                 println!("{}", self.ban.to_str());
                 // think
@@ -438,42 +411,16 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else {
-                    {
-                        // println!("put board to a file...");
-                        let mut f = File::create("/tmp/test.obf").unwrap();
-                        f.write(self.ban.to_obf().as_bytes()).unwrap();
-                        f.write("\n".as_bytes()).unwrap();
-                        f.flush().unwrap();
-                    }
+                    // println!("put board to a file...");
+                    edaxrunner::obf2file(&self.ban.to_obf());
                     // launch edax
-                    let cd = "../../edax-reversi/";
-                    let edaxpath = "./bin/lEdax-x64-modern";
-                    let evfile = "data/eval.dat";
-                    let tmpobf = "/tmp/test.obf";
-                    let cmd = match std::process::Command::new(edaxpath)
-                        .arg("--solve").arg(tmpobf).current_dir(cd)
-                        .arg("--eval-file").arg(evfile)
-                        .stdout(std::process::Stdio::piped())
-                        .stderr(std::process::Stdio::null()).spawn() {
-                        Err(msg) => panic!("error running edax... [{}]", msg),
-                        Ok(prcs) => prcs,
-                    };
-                    // read stdout and get moves
-                    let w = cmd.wait_with_output().unwrap();
-                    let txt = String::from_utf8(w.stdout).unwrap();
-                    let lines : Vec<_> = txt.split("\n").collect();
-
-                    let pos = lines[2].chars().position(|c| c.is_alphabetic());
-                    if pos.is_none() {panic!("EDAX:\"{}\"", lines[2]);}
-
-                    let i = pos.unwrap();
-                    let xtxt = lines[2].chars().nth(i).unwrap().to_ascii_lowercase();
-                    let ytxt = lines[2].chars().nth(i + 1).unwrap();
-
-                    // println!("{}{} from EDAX:{}", xtxt, ytxt, lines[2]);
-
-                    x = "0abcdefgh".find(xtxt).unwrap_or(10) as u8;
-                    y = ytxt.to_digit(10).unwrap() as u8;
+                    match edaxrunner::run() {
+                        Ok((pos, _)) => {
+                            x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
+                            y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                        },
+                        Err(msg) => panic!("error running edax... [{msg}]"),
+                    }
                 }
             } else {
                 // think
@@ -850,42 +797,16 @@ impl Game {
                     x = 0;
                     y = 0;
                 } else {
-                    {
-                        // println!("put board to a file...");
-                        let mut f = File::create("/tmp/test.obf").unwrap();
-                        f.write(self.ban.to_obf().as_bytes()).unwrap();
-                        f.write("\n".as_bytes()).unwrap();
-                        f.flush().unwrap();
-                    }
+                    // println!("put board to a file...");
+                    edaxrunner::obf2file(&self.ban.to_obf());
                     // launch edax
-                    let cd = "../../edax-reversi/";
-                    let edaxpath = "./bin/lEdax-x64-modern";
-                    let evfile = "data/eval.dat";
-                    let tmpobf = "/tmp/test.obf";
-                    let cmd = match std::process::Command::new(edaxpath)
-                        .arg("--solve").arg(tmpobf).current_dir(cd)
-                        .arg("--eval-file").arg(evfile)
-                        .stdout(std::process::Stdio::piped())
-                        .stderr(std::process::Stdio::null()).spawn() {
-                        Err(msg) => panic!("error running edax... [{}]", msg),
-                        Ok(prcs) => prcs,
-                    };
-                    // read stdout and get moves
-                    let w = cmd.wait_with_output().unwrap();
-                    let txt = String::from_utf8(w.stdout).unwrap();
-                    let lines : Vec<_> = txt.split("\n").collect();
-
-                    let pos = lines[2].chars().position(|c| c.is_alphabetic());
-                    if pos.is_none() {panic!("EDAX:\"{}\"", lines[2]);}
-
-                    let i = pos.unwrap();
-                    let xtxt = lines[2].chars().nth(i).unwrap().to_ascii_lowercase();
-                    let ytxt = lines[2].chars().nth(i + 1).unwrap();
-
-                    // println!("{}{} from EDAX:{}", xtxt, ytxt, lines[2]);
-
-                    x = "0abcdefgh".find(xtxt).unwrap_or(10) as u8;
-                    y = ytxt.to_digit(10).unwrap() as u8;
+                    match edaxrunner::run() {
+                        Ok((pos, _)) => {
+                            x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
+                            y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                        },
+                        Err(msg) => panic!("error running edax... [{msg}]"),
+                    }
                 }
            } else {
                 println!("{}", self.ban.to_str());
