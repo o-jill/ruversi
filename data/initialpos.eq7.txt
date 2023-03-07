@@ -1,7 +1,3 @@
-Hello, reversi world!
-unknown option: target/release/ruversi
-mode:Equal
-read eval table: data/evaltable.txt
 8/8/B6/aAc3/1D3/8/8/8 w, -01
 8/8/B1A4/1AaAa3/2aB3/1a6/8/8 w, +00
 8/8/C5/1Bb3/2Ab3/4a3/8/8 w, +00
