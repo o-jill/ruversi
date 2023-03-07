@@ -1,4 +1,5 @@
 require 'zip'
+# gem rubyzip is required.
 
 # example:
 #  $ ruby ikkatsu.rb < token.txt
