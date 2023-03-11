@@ -1,5 +1,5 @@
 use rand::prelude::SliceRandom;
-use std::sync::Arc;
+use std::{sync::Arc, collections::VecDeque};
 use super::*;
 
 const BIT_OUT_NONE : u32 = 0x0;
@@ -637,6 +637,9 @@ impl Trainer {
         for i in 0..n {
             numbers[i] = i as u32;
         }
+        let invalidprogress = 99999999;
+        let mut prgs = VecDeque::from(self.progress.clone());
+        let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
         for i in 0..self.repeat {
             if showprgs {
                 print!("{i} / {}\r", self.repeat);
@@ -658,13 +661,14 @@ impl Trainer {
                     panic!("{}", e.to_string());
                 },
             }
-            if self.progress.contains(&(i as u32)) {
+            if nprgs == i {
                 match tosub.send(vec![PROGRESS]) {
                     Ok(_) => {}
                     Err(e) => {
                         panic!("{}", e.to_string());
                     },
                 }
+                nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
             }
             frsub.recv().unwrap();
         }
