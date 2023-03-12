@@ -2184,7 +2184,7 @@ impl Weight {
     /// 
     /// # Returns
     /// - OK(()) if succeeded.
-    /// - Err(String) if some error happebd.
+    /// - Err(String) if some error happened.
     pub fn train(&mut self, rfen : &str, winner : i8, eta : f32, mid : i8)
              -> Result<(), String> {
         if cfg!(feature="bitboard") {
