@@ -1183,6 +1183,59 @@ impl BitBoard {
     }
 }
 
+/// count # of empty cells
+/// 
+/// # Argument
+/// - `rfen` : rfen text.
+/// 
+/// # Returns
+/// - Ok(# of empty cells) if succeeded.
+/// - Err(msg) if some error happend.
+pub fn count_emptycells(rfen : &str) -> Result<i8, String> {
+    let mut count = 0;
+
+    for ch in rfen.chars() {
+        match ch {
+            'A'..='H' => {
+                // let n = ch  as i8 + 1 - 'A'  as i8;
+                // count += n;
+            },
+            'a'..='h' => {
+                // let n = ch  as i8 + 1 - 'a'  as i8;
+                // count += n;
+            },
+            '1'..='8' => {
+                let n = ch as i8 - '0' as i8;
+                count += n;
+            },
+            '/' => {},
+            ' ' => {
+                return Ok(count);
+            },
+            _ => {
+                return Err(format!("unknown letter rfen [{}]", ch));
+            }
+        }
+    }
+    Err(format!("invalid format [{rfen}]"))
+}
+
+/// count # of stones
+/// 
+/// # Argument
+/// - `rfen` : rfen text.
+/// 
+/// # Returns
+/// - Ok(# of stones) if succeeded.
+/// - Err(msg) if some error happend.
+#[allow(dead_code)]
+pub fn count_stones(rfen : &str) -> Result<i8, String> {
+    match count_emptycells(rfen) {
+        Ok(n) => {Ok(64 - n)},
+        Err(m) => {Err(m)}
+    }
+}
+
 #[test]
 fn testbitbrd() {
     let b = BitBoard::new();
@@ -1515,4 +1568,10 @@ fn testbitbrd() {
     // assert_eq!(b.fixedstones(), (31, 1));
     // let b = b.rotate180();
     // assert_eq!(b.fixedstones(), (31, 1));
+    assert_eq!(count_emptycells("8/8/8/3Aa3/3aA3/8/8/8 b").unwrap(), 60);
+    assert_eq!(count_stones("8/8/8/3Aa3/3aA3/8/8/8 b").unwrap(), 4);
+    assert_eq!(count_emptycells("H/aG/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 25);
+    assert_eq!(count_stones("H/aG/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 39);
+    assert_eq!(count_emptycells("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 25);
+    assert_eq!(count_stones("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 39);
 }

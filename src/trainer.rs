@@ -607,6 +607,10 @@ impl Trainer {
             let score = kifu.score.unwrap();
             for te in kifu.list.iter() {
                 let rfen = te.rfen.clone();
+                // 最後数手は読み切れるので学習しなくて良い
+                if bitboard::count_emptycells(&rfen).unwrap() < 5 {
+                    continue;
+                }
                 unsafe {RFENCACHE.push((rfen, score));}
             }
 
