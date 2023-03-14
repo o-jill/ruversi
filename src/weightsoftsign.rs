@@ -38,6 +38,14 @@ impl EvalFile {
     }
 }
 
+/// soft sign function
+macro_rules! softsign {
+    ($x : expr) => {
+        ($x * 0.5 / ($x.abs() + 1.0) + 0.5)  // 0 ~ 1
+        // $x / ($x.abs() + 1.0)  // -1 ~ 1
+    };
+}
+
 pub struct Weight {
     pub weight : Vec<f32>
 }
@@ -56,6 +64,12 @@ impl Weight {
 
         for a in self.weight.iter_mut() {
             *a = (rng.gen::<f64>() * 2.0 * range - range) as f32;
+        }
+    }
+
+    pub fn copy(&mut self, src : &Weight) {
+        for (d, s) in self.weight.iter_mut().zip(src.weight.iter()) {
+            *d = *s;
         }
     }
 
@@ -146,10 +160,13 @@ impl Weight {
             hidsum += wfs[i] * fs.0 as f32;
             hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
 
-            sum += wh[i] * hidsum * 0.5 / (hidsum.abs() + 1.0) + 0.5;  // 0 ~ 1
-            // sum += wh[i] * hidsum / (hidsum.abs() + 1.0);  // -1 ~ 1
+            sum += wh[i] * softsign!(hidsum);
         }
         sum
+    }
+
+    pub fn evaluatev3_simd(&self, ban : &board::Board) -> f32 {
+        self.evaluatev1(ban)
     }
 
     pub fn evaluatev1bb(&self, ban : &bitboard::BitBoard) -> f32 {
@@ -184,9 +201,208 @@ impl Weight {
             hidsum += wfs[i] * fs.0 as f32;
             hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
 
-            sum += wh[i] * hidsum * 0.5 / (hidsum.abs() + 1.0) + 0.5;  // 0 ~ 1
-            // sum += wh[i] * hidsum / (hidsum.abs() + 1.0);  // -1 ~ 1
+            sum += wh[i] * softsign!(hidsum);
         }
         sum
+    }
+
+    pub fn evaluatev3bb(&self, ban : &bitboard::BitBoard) -> f32 {
+        self.evaluatev1bb(ban)
+    }
+    pub fn evaluatev3bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
+        self.evaluatev1bb(ban)
+    }
+    pub fn evaluatev3bb_simdavx(&self, ban : &bitboard::BitBoard) -> f32 {
+        self.evaluatev1bb(ban)
+    }
+
+    pub fn forwardv1(&self, ban : &board::Board)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+        let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
+
+        let cells = &ban.cells;
+        let teban = ban.teban as f32;
+        let ow = &self.weight;
+
+        let fs = ban.fixedstones();
+
+        let mut sum = *ow.last().unwrap();
+
+        let wtbn = &ow[board::CELL_2D * N_HIDDEN .. (board::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let mut hidsum : f32 = wdc[i];
+            for (&w, &c) in w1.iter().zip(cells.iter()) {
+                hidsum += w * c as f32;
+            }
+            hidsum += teban * wtbn[i];
+            hidsum += wfs[i] * fs.0 as f32;
+            hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
+            hidden[i] = hidsum;
+
+            hidsig[i] = softsign!(hidsum);
+
+            sum += wh[i] * hidsig[i];
+        }
+        output[0] = sum;
+        (hidden, hidsig, output, fs)
+    }
+
+    pub fn forwardv3(&self, ban : &board::Board) 
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+        self.forwardv1(ban)
+    }
+
+    pub fn backwardv1(&mut self,
+        ban : &board::Board, winner : i8, eta : f32,
+        (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
+        let cells = &ban.cells;
+        let teban = ban.teban as f32;
+
+        let ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - winner as f32;
+        let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        let deta = diff * eta;
+        for i in 0..N_HIDDEN {
+            wh[i] -= hidsig[i] * deta;
+        }
+        wh[N_HIDDEN] -= deta;
+
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            let tmp = wh[i] * diff;
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            *h = tmp * sig * (1.0 - sig);
+        }
+        // back to input
+        for (i, h) in dhid.iter().enumerate() {
+            let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let heta = *h * eta;
+            for (&c, w) in cells.iter().zip(w1.iter_mut()) {
+                *w -= c as f32 * heta;
+            }
+            let wtbn = &mut ow[board::CELL_2D * N_HIDDEN ..];
+            wtbn[i] -= teban * heta;
+            let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+            wfs[i] -= fs.0 as f32 * heta;
+            wfs[i + N_HIDDEN] -= fs.1 as f32 * heta;
+            let wdc = &mut ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+            wdc[i] -= heta;
+        }
+    }
+
+    pub fn backwardv1bb(&mut self,
+        ban : &bitboard::BitBoard, winner : i8, eta : f32,
+        (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+
+        let ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - winner as f32;
+        let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        let deta = diff * eta;
+        for i in 0..N_HIDDEN {
+            wh[i] -= hidsig[i] * deta;
+        }
+        wh[N_HIDDEN] -= deta;
+
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            // tmp = wo x diff
+            let tmp = wh[i] * diff;
+            // sig = 1 / (1 + exp(-hidden[i]))
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            // h = wo x diff x sig x (1 - sig)
+            *h = tmp * sig * (1.0 - sig);
+        }
+
+        // back to input
+        for (i, h) in dhid.iter().enumerate() {
+            let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let heta = *h * eta;
+
+            for y in 0..bitboard::NUMCELL {
+                let mut bit = bitboard::LSB_CELL << y;
+                for x in 0..bitboard::NUMCELL {
+                    // let w = w1[x + y * bitboard::NUMCELL];
+                    let cb = (black & bit) != 0;
+                    let cw = (white & bit) != 0;
+                    let diff = if cb {heta} else if cw {-heta} else {0.0};
+                    w1[x + y * bitboard::NUMCELL] -= diff;
+
+                    bit <<= bitboard::NUMCELL;
+                }
+            }
+
+            let wtbn = &mut ow[board::CELL_2D * N_HIDDEN ..];
+            wtbn[i] -= teban * heta;
+            let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+            wfs[i] -= fs.0 as f32 * heta;
+            wfs[i + N_HIDDEN] -= fs.1 as f32 * heta;
+            let wdc = &mut ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+            wdc[i] -= heta;
+        }
+    }
+
+    /// train weights
+    /// 
+    /// # Arguments
+    /// - `self` : self
+    /// - `rfen` : RFEN
+    /// - `winner` : winner or # of stones.
+    /// - `eta` : learning ratio.
+    /// - `mid` : last (mid) moves will not be used.
+    /// 
+    /// # Returns
+    /// - OK(()) if succeeded.
+    /// - Err(String) if some error happened.
+    pub fn train(&mut self, rfen : &str, winner : i8, eta : f32, mid : i8)
+             -> Result<(), String> {
+        if cfg!(feature="bitboard") {
+            let ban = match bitboard::BitBoard::from(rfen) {
+                Ok(b) => {b},
+                Err(e) => {return Err(e)}
+            };
+            if ban.count() > 64 - mid {return Ok(());}
+
+            self.learnbb(&ban, winner, eta);
+
+            let ban = ban.rotate180();
+            self.learnbb(&ban, winner, eta);
+        } else {
+            let ban = match board::Board::from(rfen) {
+                Ok(b) => {b},
+                Err(e) => {return Err(e)}
+            };
+            if ban.count() > 64 - mid {return Ok(());}
+
+            self.learn(&ban, winner, eta);
+
+            let ban = ban.rotate180();
+            self.learn(&ban, winner, eta);
+        }
+        Ok(())
+    }
+
+    fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
+        // forward
+        let (hidden, hidsig, output, fs) = self.forwardv1(&ban);
+        // backward
+        self.backwardv1(ban, winner, eta, &hidden, &hidsig, &output);
+    }
+
+    fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
+        // forward
+        let res = self.forwardv1bb(&ban);
+        // backward
+        self.backwardv1bb(ban, winner, eta, &res);
     }
 }

@@ -41,7 +41,8 @@ static mut INITIALIZED : bool = false;
  * output: 1
  */
 // static mut WEIGHT : Option<Vec<f32>> = None;
-pub static mut WEIGHT : Option<weight::Weight> = None;
+//pub static mut WEIGHT : Option<weight::Weight> = None;
+pub static mut WEIGHT : Option<weightsoftsign::Weight> = None;
 static mut ND_ROOT : Option<NodeBB> = None;
 
 pub struct Best {
@@ -89,7 +90,8 @@ pub fn init_weight() {
         }
     }
 
-    let mut weight = weight::Weight::new();
+    // let mut weight = weight::Weight::new();
+    let mut weight = weightsoftsign::Weight::new();
     weight.init();
 
     unsafe {

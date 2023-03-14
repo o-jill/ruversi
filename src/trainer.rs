@@ -159,7 +159,7 @@ impl Trainer {
                 let lines:Vec<&str> = content.split("\n").collect();
                 let kifu = kifu::Kifu::from(&lines);
                 unsafe {
-                    self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                    self.run4stonessigm(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
                 }
             }
             println!("");
@@ -185,9 +185,10 @@ impl Trainer {
                 kifucache.push((p, kifu.copy()));
                 unsafe {
                     match if cfg!(feature="bitboard") {
-                            self.run4stones(&kifu, &mut nodebb::WEIGHT.as_mut().unwrap())
-                        } else {
-                            self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap())
+                        self.run4stones(&kifu, &mut nodebb::WEIGHT.as_mut().unwrap())
+                        // self.run4stonessigm(&kifu, &mut nodebb::WEIGHT.as_mut().unwrap())
+                    } else {
+                            self.run4stonessigm(&kifu, &mut node::WEIGHT.as_mut().unwrap())
                         } {
                         Err(msg) => {panic!("{}", msg);},
                         _ => {}
@@ -209,8 +210,10 @@ impl Trainer {
                     match if cfg!(feature="bitboard") {
                         self.run4stones(
                             &kifu, &mut nodebb::WEIGHT.as_mut().unwrap())
+                        // self.run4stonessigm(
+                        //     &kifu, &mut nodebb::WEIGHT.as_mut().unwrap())
                         } else {
-                            self.run4stones(
+                            self.run4stonessigm(
                                 &kifu, &mut node::WEIGHT.as_mut().unwrap())
                         } {
                         Err(msg) => {panic!("{}", msg);},
@@ -223,7 +226,22 @@ impl Trainer {
         println!("Done.");
     }
 
-    pub fn run4stones(&self, kifu: &kifu::Kifu, weight: &mut weight::Weight) -> Result<(), String> {
+    pub fn run4stones(&self, kifu: &kifu::Kifu, weight: &mut weightsoftsign::Weight)
+             -> Result<(), String> {
+        let score = kifu.score;
+        if score.is_none() {
+            return Err(String::from("invalid score."));
+        }
+        let score = score.unwrap();
+        for l in kifu.list.iter() {
+            if weight.train(&l.rfen, score, self.eta, 10).is_err() {
+                return Err(String::from("error while training"));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn run4stonessigm(&self, kifu: &kifu::Kifu, weight: &mut weight::Weight) -> Result<(), String> {
         let score = kifu.score;
         if score.is_none() {
             return Err(String::from("invalid score."));
@@ -546,7 +564,8 @@ impl Trainer {
                             break;
                         }
                         if rfenidxgrp[0] == PROGRESS {
-                            let mut w = weight::Weight::new();
+                            let mut w = weightsoftsign::Weight::new();
+                            // let mut w = weight::Weight::new();
                             w.copy(&weight);
                             txprogress.send(w).unwrap();
                             continue;
@@ -573,7 +592,8 @@ impl Trainer {
                     break;
                 }
                 let weight = rxprogress.recv().unwrap();
-                weight.writev4(&format!("kifu/newevaltable.r{prgs}.txt"));
+                weight.writev1(&format!("kifu/newevaltable.r{prgs}.txt"));
+                // weight.writev4(&format!("kifu/newevaltable.r{prgs}.txt"));
             }
         });
 
