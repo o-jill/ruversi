@@ -20,6 +20,7 @@ mod kifu;
 mod trainer;
 mod transptable;
 mod weight;
+mod weightsoftsign;
 
 
 /// global settings.
