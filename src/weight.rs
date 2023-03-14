@@ -2192,7 +2192,7 @@ impl Weight {
                 Ok(b) => {b},
                 Err(e) => {return Err(e)}
             };
-            if ban.count() > 60 - mid {return Ok(());}
+            if ban.count() > 64 - mid {return Ok(());}
 
             self.learnbb(&ban, winner, eta);
 
@@ -2203,7 +2203,7 @@ impl Weight {
                 Ok(b) => {b},
                 Err(e) => {return Err(e)}
             };
-            if ban.count() > 60 - mid {return Ok(());}
+            if ban.count() > 64 - mid {return Ok(());}
 
             self.learn(&ban, winner, eta);
 
