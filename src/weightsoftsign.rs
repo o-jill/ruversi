@@ -258,6 +258,64 @@ impl Weight {
         self.forwardv1(ban)
     }
 
+    pub fn forwardv1bb(&self, ban : &bitboard::BitBoard)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+        let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
+        let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
+
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+        let ow = &self.weight;
+
+        let fs = ban.fixedstones();
+
+        let mut sum = *ow.last().unwrap();
+
+        let wtbn = &ow[board::CELL_2D * N_HIDDEN .. (board::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let mut hidsum : f32 = wdc[i];
+            for y in 0..bitboard::NUMCELL {
+                let mut bit = bitboard::LSB_CELL << y;
+                for x in 0..bitboard::NUMCELL {
+                    let w = w1[x + y * bitboard::NUMCELL];
+                    let cb = (black & bit) != 0;
+                    let cw = (white & bit) != 0;
+                    hidsum += if cb {w} else if cw {-w} else {0.0};
+                    bit <<= bitboard::NUMCELL;
+                }
+            }
+            hidsum += teban * wtbn[i];
+            hidsum += wfs[i] * fs.0 as f32;
+            hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
+            hidden[i] = hidsum;
+            hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
+            sum += wh[i] * hidsig[i];
+        }
+        output[0] = sum;
+        (hidden, hidsig, output, fs)
+    }
+
+    pub fn forwardv3bb(&self, ban : &bitboard::BitBoard)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+                self.forwardv1bb(ban)
+    }
+
+    pub fn forwardv3bb_simd(&self, ban : &bitboard::BitBoard)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+                self.forwardv1bb(ban)
+    }
+
+    pub fn forwardv3bb_simdavx(&self, ban : &bitboard::BitBoard)
+            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+                self.forwardv1bb(ban)
+    }
+
     pub fn backwardv1(&mut self,
         ban : &board::Board, winner : i8, eta : f32,
         (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
@@ -394,9 +452,9 @@ impl Weight {
 
     fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
         // forward
-        let (hidden, hidsig, output, fs) = self.forwardv1(&ban);
+        let res = self.forwardv1(&ban);
         // backward
-        self.backwardv1(ban, winner, eta, &hidden, &hidsig, &output);
+        self.backwardv1(ban, winner, eta, &res);
     }
 
     fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {

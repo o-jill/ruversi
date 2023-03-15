@@ -40,7 +40,8 @@ fn move_priority2(&(x1, y1, x2, y2) : &(u8, u8, u8, u8)) -> i32 {
  */
 // static mut WEIGHT : Option<Vec<f32>> = None;
 #[allow(dead_code)]
-pub static mut WEIGHT : &Option<weight::Weight> = unsafe {&nodebb::WEIGHT};
+pub static mut WEIGHT : &Option<weightsoftsign::Weight> = unsafe {&nodebb::WEIGHT};
+// pub static mut WEIGHT : &Option<weight::Weight> = unsafe {&nodebb::WEIGHT};
 
 #[derive(Clone)]
 pub struct Best {

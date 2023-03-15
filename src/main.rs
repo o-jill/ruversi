@@ -193,7 +193,8 @@ fn trial() {
 
     let tr = trainer::Trainer::new(0.01, 100, "./kifu/");
     unsafe {
-        tr.run4stones(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+        tr.run4stones(&g.kifu, &mut nodebb::WEIGHT.as_mut().unwrap()).unwrap();
+        // tr.run4stones(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
         // tr.run4win(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
     }
 }
@@ -341,11 +342,7 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
         println!("save result to {newevalfile}");
         unsafe {
             if cfg!(feature="bitboard") {
-                if cfg!(feature="nnv3") {
-                    nodebb::WEIGHT.as_ref().unwrap().writev3(&newevalfile);
-                } else {
-                    nodebb::WEIGHT.as_ref().unwrap().writev4(&newevalfile);
-                }
+                nodebb::WEIGHT.as_ref().unwrap().writev1(&newevalfile);
             } else {
                 if cfg!(feature="nnv1") {
                     node::WEIGHT.as_ref().unwrap().writev1asv2(&newevalfile);
@@ -435,11 +432,7 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
         println!("save result to {newevalfile}");
         unsafe {
             if cfg!(feature="bitboard") {
-                if cfg!(feature="nnv3") {
-                    nodebb::WEIGHT.as_ref().unwrap().writev3("./kifu/newevaltable.txt");
-                } else {
-                    nodebb::WEIGHT.as_ref().unwrap().writev4("./kifu/newevaltable.txt");
-                }
+                nodebb::WEIGHT.as_ref().unwrap().writev1("./kifu/newevaltable.txt");
             } else {
                 if cfg!(feature="nnv1") {
                     node::WEIGHT.as_ref().unwrap().writev1asv2("./kifu/newevaltable.txt");
@@ -490,9 +483,9 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
 fn duel(ev1 : &str, ev2 : &str, depth : u8) {
-    let mut w1 = weight::Weight::new();
+    let mut w1 = weightsoftsign::Weight::new();
     w1.read(ev1).unwrap();
-    let mut w2 = weight::Weight::new();
+    let mut w2 = weightsoftsign::Weight::new();
     w2.read(ev2).unwrap();
     let mut win = [0, 0];
     let mut draw = [0, 0];
@@ -534,12 +527,13 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
-            g.start_with_2et(
-                // node::Node::think_ab_extract2,
-                node::Node::think_ab,
-                depth, &w1, &w2).unwrap();
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
+            // g.start_with_2et(
+            //     // node::Node::think_ab_extract2,
+            //     node::Node::think_ab,
+            //     depth, &w1, &w2).unwrap();
+            // let dresult = g.kifu.winner();
+            // result = dresult.unwrap();
+            result = kifu::DRAW;
         }
         total += 1;
         match result {
@@ -577,9 +571,10 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
             // prepare game
             let mut g = game::Game::from(rfen);
             // g.start_with_2et(node::Node::think_ab_extract2, depth, &w2, &w1).unwrap();
-            g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
+            // g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
+            // let dresult = g.kifu.winner();
+            // result = dresult.unwrap();
+            result = kifu::DRAW;
         }
         total += 1;
         match result {

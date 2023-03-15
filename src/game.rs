@@ -463,7 +463,8 @@ impl GameBB {
     #[allow(dead_code)]
     pub fn start_with_2et(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>,
-            depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
+            depth : u8, et1 : &weightsoftsign::Weight, et2 : &weightsoftsign::Weight)
+            // depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
                 -> Result<(), String> {
         loop {
             // show
@@ -522,7 +523,8 @@ impl GameBB {
     /// - et2 : GOTE
     pub fn starto_with_2et(&mut self,
         f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
-        depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
+        depth : u8, et1 : &weightsoftsign::Weight, et2 : &weightsoftsign::Weight)
+        // depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
         loop {
             // show
@@ -580,7 +582,8 @@ impl GameBB {
     pub fn startsh_with_2et(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<RwLock<shnode::ShNode>>)>,
             // f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<Mutex<shnode::ShNode>>)>,
-            depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
+            depth : u8, et1 : &weightsoftsign::Weight, et2 : &weightsoftsign::Weight)
+            // depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
                 -> Result<(), String> {
         loop {
             // show
