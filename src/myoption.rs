@@ -26,6 +26,7 @@ pub enum Opponent {
 pub struct MyOption {
     pub depth : u8,
     pub eta : Option<f32>,
+    pub duellv : i8,
     pub evaltable1 : String,
     pub evaltable2 : String,
     pub initpos : String,
@@ -51,6 +52,7 @@ impl MyOption {
     /// default:<br>
     /// - depth: 7
     /// - eta: None
+    /// - duellv: 5
     /// - evaltable1: ""
     /// - evaltable2: ""
     /// - initpos: ""
@@ -66,6 +68,7 @@ impl MyOption {
         let mut opt = MyOption {
             depth : 7,
             eta : None,
+            duellv : 5,
             evaltable1 : String::new(),
             evaltable2 : String::new(),
             initpos: String::new(),
@@ -80,7 +83,13 @@ impl MyOption {
             turn : board::NONE,
         };
         let mut old = String::new();
-        for e in args {
+        let mut skip = 0;
+        for i in 1..args.len() {
+            if skip > 0 {
+                skip -= 1;
+                continue;
+            }
+            let e = args.iter().nth(i).unwrap().to_string();
             if e.starts_with("--") {
                 if !old.is_empty() {
                     panic!("\"{old}\" was not specified correctly.");
@@ -91,6 +100,21 @@ impl MyOption {
                     opt.mode = Mode::Learn;
                 } else if e == "--duel" {
                     opt.mode = Mode::Duel;
+                    match args.iter().nth(i + 1) {
+                        Some(lvl) => {
+                            let n = lvl.parse::<i8>();
+                            match n {
+                                Ok(level) => {
+                                    if level > 0 {
+                                        opt.duellv = level;
+                                        skip = 1;
+                                    }
+                                },
+                                _ => {},
+                            }
+                        },
+                        _ => {},
+                    }
                 } else if e == "--play" {
                     opt.mode = Mode::Play;
                     if opt.opponent == Opponent::None {

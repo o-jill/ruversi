@@ -488,7 +488,11 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
 /// # Arguments
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
-fn duel(ev1 : &str, ev2 : &str, depth : u8) {
+fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
+    if duellv < 3 || 13 < duellv {
+        panic!("duel level:{duellv} is not supported...");
+    }
+
     let mut w1 = weight::Weight::new();
     w1.read(ev1).unwrap();
     let mut w2 = weight::Weight::new();
@@ -499,7 +503,9 @@ fn duel(ev1 : &str, ev2 : &str, depth : u8) {
     let mut total = 0;
     let mut result;
 
-    let ip = initialpos::InitialPos::read(initialpos::EQUALFILE).unwrap();
+    let eqfile = initialpos::equalfile(duellv);
+    println!("equal file: {eqfile}");
+    let ip = initialpos::InitialPos::read(&eqfile).unwrap();
     let rfentbl = &ip.rfens_all();
     for rfen in rfentbl.iter() {
         if cfg!(feature="bitboard") {
@@ -903,7 +909,8 @@ fn main() {
     if *mode == myoption::Mode::Duel {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
-        duel(ev1, ev2, depth);
+        let duellv = MYOPT.get().unwrap().duellv;
+        duel(ev1, ev2, duellv, depth);
     }
     if *mode == myoption::Mode::Play {
         let turn = MYOPT.get().unwrap().turn;

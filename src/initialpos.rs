@@ -3,7 +3,10 @@ use std::collections::HashSet;
 // use regex::Regex;
 
 pub const INITIALPOSFILE : &str = "data/initialpos.txt";
-pub const EQUALFILE : &str = "data/initialpos.eq5.txt";
+
+pub fn equalfile(lv : i8) -> String {
+    format!("data/initialpos.eq{lv}.txt")
+}
 
 pub struct RfenSet {
   tag: String,
