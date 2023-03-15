@@ -208,14 +208,172 @@ impl Weight {
         sum
     }
 
+    pub fn evaluatev1bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+        let ow = &self.weight;
+
+        let fs = ban.fixedstones();
+
+        let mut sum = *ow.last().unwrap();
+
+        let wtbn = &ow[board::CELL_2D * N_HIDDEN .. (board::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+
+        const N : usize = 4;
+        let mut sumarr : [f32 ; N] = [0.0 ; N];
+
+        for i in 0..N_HIDDEN / N {
+            let hidx = i * N;
+            let mut sum44 : [f32 ; N * N] = [0.0 ; N * N];
+
+            for n in 0..N {
+                let res4 = sum44[n * N..].as_mut_ptr();
+                let w1 = &ow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
+                // let mut hidsum : f32 = dc[i];
+                let mut sum4: x86_64::__m128;
+                unsafe {
+                    sum4 = x86_64::_mm_setzero_ps();
+                }
+                const M : usize = 16;
+                let mut bit8 : u64 = 0x0101010101010101;
+                for j in 0..board::CELL_2D / M {
+                    let idx = j * M;
+                    let b81 = (bit8 & black) >> 2 * j;
+                    let w81 = (bit8 & white) >> 2 * j;
+                    bit8 <<= 1;
+                    let b82 = (bit8 & black) >> 2 * j + 1;
+                    let w82 = (bit8 & white) >> 2 * j + 1;
+                    bit8 <<= 1;
+
+                    unsafe {
+                        let b08 = x86_64::_mm_set_epi64x(b82 as i64, b81 as i64);
+                        let w08 = x86_64::_mm_set_epi64x(w82 as i64, w81 as i64);
+                        let one = x86_64::_mm_set1_epi8(1);
+                        let bm08 = x86_64::_mm_cmpeq_epi8(b08, one);
+                        let wm08 = x86_64::_mm_cmpeq_epi8(w08, one);
+                        let b16l = x86_64::_mm_unpacklo_epi8(bm08, bm08);
+                        let b16h = x86_64::_mm_unpackhi_epi8(bm08, bm08);
+                        let w16l = x86_64::_mm_unpacklo_epi8(wm08, wm08);
+                        let w16h = x86_64::_mm_unpackhi_epi8(wm08, wm08);
+                        let bm1 = x86_64::_mm_unpacklo_epi16(b16l, b16l);
+                        let bm2 = x86_64::_mm_unpackhi_epi16(b16l, b16l);
+                        let bm3 = x86_64::_mm_unpacklo_epi16(b16h, b16h);
+                        let bm4 = x86_64::_mm_unpackhi_epi16(b16h, b16h);
+                        let wm1 = x86_64::_mm_unpacklo_epi16(w16l, w16l);
+                        let wm2 = x86_64::_mm_unpackhi_epi16(w16l, w16l);
+                        let wm3 = x86_64::_mm_unpacklo_epi16(w16h, w16h);
+                        let wm4 = x86_64::_mm_unpackhi_epi16(w16h, w16h);
+                        let ex1 = x86_64::_mm_or_si128(bm1, wm1);
+                        let ex2 = x86_64::_mm_or_si128(bm2, wm2);
+                        let ex3 = x86_64::_mm_or_si128(bm3, wm3);
+                        let ex4 = x86_64::_mm_or_si128(bm4, wm4);
+                        let x41 = x86_64::_mm_load_ps(w1.as_ptr().add(idx));
+                        let x42 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 4));
+                        let x43 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 8));
+                        let x44 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 12));
+                        let minus = x86_64::_mm_set1_ps(-0.0);
+                        let mn1 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm1), minus);
+                        let mn2 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm2), minus);
+                        let mn3 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm3), minus);
+                        let mn4 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm4), minus);
+                        let m41 = x86_64::_mm_xor_ps(x41, mn1);
+                        let m42 = x86_64::_mm_xor_ps(x42, mn2);
+                        let m43 = x86_64::_mm_xor_ps(x43, mn3);
+                        let m44 = x86_64::_mm_xor_ps(x44, mn4);
+                        let w1 = x86_64::_mm_and_ps(m41, x86_64::_mm_castsi128_ps(ex1));
+                        let w2 = x86_64::_mm_and_ps(m42, x86_64::_mm_castsi128_ps(ex2));
+                        let w3 = x86_64::_mm_and_ps(m43, x86_64::_mm_castsi128_ps(ex3));
+                        let w4 = x86_64::_mm_and_ps(m44, x86_64::_mm_castsi128_ps(ex4));
+
+                        let sum12 = x86_64::_mm_add_ps(w1, w2);
+                        let sum34 = x86_64::_mm_add_ps(w3, w4);
+                        let sum1234 = x86_64::_mm_add_ps(sum12, sum34);
+                        sum4 = x86_64::_mm_add_ps(sum4, sum1234);
+                    }
+                }
+                unsafe {
+                    x86_64::_mm_store_ps(res4, sum4);
+                }
+            }
+
+            unsafe {
+                let mut x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
+                let mut x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
+                let mut x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
+                let mut x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
+
+                x86_64::_MM_TRANSPOSE4_PS(&mut x1, &mut x2, &mut x3, &mut x4);
+
+                let h12 = x86_64::_mm_add_ps(x1, x2);
+                let h34 = x86_64::_mm_add_ps(x3, x4);
+                let h1234 = x86_64::_mm_add_ps(h12, h34);
+                // teban
+                let wtbn = x86_64::_mm_load_ps(wtbn[hidx..].as_ptr());
+                let tbn = x86_64::_mm_set1_ps(teban);
+                let tbn4 = x86_64::_mm_mul_ps(wtbn, tbn);
+                let h1234 = x86_64::_mm_add_ps(h1234, tbn4);
+                // fixed stones
+                let wfsb4 = x86_64::_mm_load_ps(wfs[hidx..].as_ptr());
+                let fsb = x86_64::_mm_set1_ps(fs.0 as f32);
+                let fsb4 = x86_64::_mm_mul_ps(wfsb4, fsb);
+                let wfsw4 = x86_64::_mm_load_ps(wfs[hidx + N_HIDDEN..].as_ptr());
+                let fsw = x86_64::_mm_set1_ps(fs.1 as f32);
+                let fsw4 = x86_64::_mm_mul_ps(wfsw4, fsw);
+                let fsbw = x86_64::_mm_add_ps(fsb4, fsw4);
+                let h1234 = x86_64::_mm_add_ps(h1234, fsbw);
+                // dc
+                let wdc4 = x86_64::_mm_load_ps(wdc[hidx..].as_ptr());
+                let h1234 = x86_64::_mm_add_ps(h1234, wdc4);
+
+                if true {  // softsign
+                    let sign4 = x86_64::_mm_set1_epi32(i32::MAX);
+                    let abs4 = x86_64::_mm_and_ps(h1234, x86_64::_mm_castsi128_ps(sign4));
+                    let one = x86_64::_mm_set1_ps(1.0);
+                    let abs4p1 = x86_64::_mm_add_ps(abs4, one);
+                    let ssgn = x86_64::_mm_div_ps(h1234, abs4p1);
+                    let half = x86_64::_mm_set1_ps(0.5);
+                    let ssgn05 = x86_64::_mm_mul_ps(half, ssgn);
+                    let ssgnadj = x86_64::_mm_add_ps(ssgn05, half);
+                    let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
+                    let y4 = x86_64::_mm_mul_ps(wh4, ssgnadj);
+                    x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
+                } else {// sigmoid
+                let emx4 = weight::Weight::expmx_ps_simd(h1234);
+                let one = x86_64::_mm_set1_ps(1.0);
+                let hsp14 = x86_64::_mm_add_ps(emx4, one);
+                let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
+                let y4 = x86_64::_mm_div_ps(wh4, hsp14);
+
+                // let rhsp14 = x86_64::_mm_rcp_ps(hsp14);
+                // let two = x86_64::_mm_set1_ps(2.0);
+                // let x2 = x86_64::_mm_mul_ps(rhsp14, hsp14);
+                // let x3 = x86_64::_mm_sub_ps(two, x2);
+                // let x4 = x86_64::_mm_mul_ps(rhsp14, x3);
+                // let y4 = x86_64::_mm_mul_ps(w24, x4);
+
+                x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
+                }
+            }
+            // for n in 0..N {
+            //     sum += sumarr[n];
+            // }
+            sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
+        }
+        sum
+    }
+
     pub fn evaluatev3bb(&self, ban : &bitboard::BitBoard) -> f32 {
         self.evaluatev1bb(ban)
     }
     pub fn evaluatev3bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
-        self.evaluatev1bb(ban)
+        self.evaluatev1bb_simd(ban)
     }
     pub fn evaluatev3bb_simdavx(&self, ban : &bitboard::BitBoard) -> f32 {
-        self.evaluatev1bb(ban)
+        self.evaluatev1bb_simd(ban)
     }
 
     pub fn forwardv1(&self, ban : &board::Board)

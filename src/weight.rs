@@ -528,7 +528,7 @@ impl Weight {
      * # Return value  
      * [exp(-x4[0]), exp(-x4[1]), exp(-x4[2]), exp(-x4[3])] as x86_64::__m128.
      */
-    unsafe fn expmx_ps_simd(x4 : x86_64::__m128) -> x86_64::__m128 {
+    pub unsafe fn expmx_ps_simd(x4 : x86_64::__m128) -> x86_64::__m128 {
         let exp_hi : f32 = 88.3762626647949;
         let exp_lo : f32 = -exp_hi;
 
