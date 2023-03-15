@@ -160,6 +160,7 @@ impl Weight {
             hidsum += wfs[i] * fs.0 as f32;
             hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
 
+            // sum += wh[i] / (f32::exp(-hidsum) + 1.0);  // sigmoid
             sum += wh[i] * softsign!(hidsum);
         }
         sum
@@ -201,6 +202,7 @@ impl Weight {
             hidsum += wfs[i] * fs.0 as f32;
             hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
 
+            // sum += wh[i] / (f32::exp(-hidsum) + 1.0);  // sigmoid
             sum += wh[i] * softsign!(hidsum);
         }
         sum
