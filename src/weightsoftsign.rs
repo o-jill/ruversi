@@ -14,7 +14,7 @@ const N_OUTPUT : usize = 1;
 const N_WEIGHT: usize = (N_INPUT + 1) * N_HIDDEN + N_HIDDEN + 1;
 
 #[allow(dead_code)]
-const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + 4 + 1;
+const WSZV1 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
 
 #[derive(PartialEq)]
 enum EvalFile{
