@@ -495,8 +495,24 @@ impl Weight {
         let mut dhid = [0.0 as f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = wh[i] * diff;
-            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
-            *h = tmp * sig * (1.0 - sig);
+            if true {
+                // softsign
+                // ($x * 0.5 / ($x.abs() + 1.0) + 0.5)  // 0 ~ 1
+                // $x.abs() x 0.5 / ($x.abs() + 1.0)^2 + 0.5 / ($x.abs() + 1.0)
+                // ($x.abs() x 0.5 + ($x.abs() + 1.0) x 0.5) / ($x.abs() + 1.0)^2
+                // ($x.abs() + 0.5) / ($x.abs() + 1.0)^2
+                let abshid = hidden[i].abs();
+                *h = tmp * (abshid + 0.5) / ((abshid + 1.0) * (abshid + 1.0));
+                // $x / ($x.abs() + 1.0)  // -1 ~ 1
+                // 1 / ($x.abs() + 1.0) + $x.abs() / ($x.abs() + 1.0)^2
+                // (2 x $x + 1) / ($x.abs() + 1.0)^2
+                // let abshid = hidden[i].abs();
+                // *h = tmp * (abshid * 2 + 1.0) / ((abshid + 1.0) * (abshid + 1.0));
+            } else {
+                // sigmoid
+                let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+                *h = tmp * sig * (1.0 - sig);
+            }
         }
         // back to input
         for (i, h) in dhid.iter().enumerate() {
@@ -536,10 +552,26 @@ impl Weight {
         for (i, h) in dhid.iter_mut().enumerate() {
             // tmp = wo x diff
             let tmp = wh[i] * diff;
-            // sig = 1 / (1 + exp(-hidden[i]))
-            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
-            // h = wo x diff x sig x (1 - sig)
-            *h = tmp * sig * (1.0 - sig);
+            if true {
+                // softsign
+                // ($x * 0.5 / ($x.abs() + 1.0) + 0.5)  // 0 ~ 1
+                // $x.abs() x 0.5 / ($x.abs() + 1.0)^2 + 0.5 / ($x.abs() + 1.0)
+                // ($x.abs() x 0.5 + ($x.abs() + 1.0) x 0.5) / ($x.abs() + 1.0)^2
+                // ($x.abs() + 0.5) / ($x.abs() + 1.0)^2
+                let abshid = hidden[i].abs();
+                *h = tmp * (abshid + 0.5) / ((abshid + 1.0) * (abshid + 1.0));
+                // $x / ($x.abs() + 1.0)  // -1 ~ 1
+                // 1 / ($x.abs() + 1.0) + $x.abs() / ($x.abs() + 1.0)^2
+                // (2 x $x + 1) / ($x.abs() + 1.0)^2
+                // let abshid = hidden[i].abs();
+                // *h = tmp * (abshid * 2 + 1.0) / ((abshid + 1.0) * (abshid + 1.0));
+            } else {
+                // sigmoid
+                // sig = 1 / (1 + exp(-hidden[i]))
+                let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+                // h = wo x diff x sig x (1 - sig)
+                *h = tmp * sig * (1.0 - sig);
+            }
         }
 
         // back to input
