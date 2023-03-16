@@ -454,7 +454,7 @@ impl Weight {
             hidsum += wfs[i] * fs.0 as f32;
             hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
             hidden[i] = hidsum;
-            hidsig[i] = 1.0 / (f32::exp(-hidsum) + 1.0);
+            hidsig[i] = softsign!(hidsum);
             sum += wh[i] * hidsig[i];
         }
         output[0] = sum;
