@@ -41,8 +41,8 @@ impl EvalFile {
 /// soft sign function
 macro_rules! softsign {
     ($x : expr) => {
-        ($x * 0.5 / ($x.abs() + 1.0) + 0.5)  // 0 ~ 1
-        // $x / ($x.abs() + 1.0)  // -1 ~ 1
+        // ($x * 0.5 / ($x.abs() + 1.0) + 0.5)  // 0 ~ 1
+        ($x / ($x.abs() + 1.0))  // -1 ~ 1
     };
 }
 
@@ -335,11 +335,18 @@ impl Weight {
                     let one = x86_64::_mm_set1_ps(1.0);
                     let abs4p1 = x86_64::_mm_add_ps(abs4, one);
                     let ssgn = x86_64::_mm_div_ps(h1234, abs4p1);
-                    let half = x86_64::_mm_set1_ps(0.5);
-                    let ssgn05 = x86_64::_mm_mul_ps(half, ssgn);
-                    let ssgnadj = x86_64::_mm_add_ps(ssgn05, half);
+
+                    // ($x * 0.5 / ($x.abs() + 1.0) + 0.5)  // 0 ~ 1
+                    // let half = x86_64::_mm_set1_ps(0.5);
+                    // let ssgn05 = x86_64::_mm_mul_ps(half, ssgn);
+                    // let ssgnadj = x86_64::_mm_add_ps(ssgn05, half);
+                    // let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
+                    // let y4 = x86_64::_mm_mul_ps(wh4, ssgnadj);
+
+                    // ($x / ($x.abs() + 1.0))  // -1 ~ 1
                     let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
-                    let y4 = x86_64::_mm_mul_ps(wh4, ssgnadj);
+                    let y4 = x86_64::_mm_mul_ps(wh4, ssgn);
+
                     x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
                 } else {// sigmoid
                 let emx4 = weight::Weight::expmx_ps_simd(h1234);
@@ -463,17 +470,17 @@ impl Weight {
 
     pub fn forwardv3bb(&self, ban : &bitboard::BitBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
-                self.forwardv1bb(ban)
+        self.forwardv1bb(ban)
     }
 
     pub fn forwardv3bb_simd(&self, ban : &bitboard::BitBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
-                self.forwardv1bb(ban)
+        self.forwardv1bb(ban)
     }
 
     pub fn forwardv3bb_simdavx(&self, ban : &bitboard::BitBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
-                self.forwardv1bb(ban)
+        self.forwardv1bb(ban)
     }
 
     pub fn backwardv1(&mut self,
@@ -501,13 +508,14 @@ impl Weight {
                 // $x.abs() x 0.5 / ($x.abs() + 1.0)^2 + 0.5 / ($x.abs() + 1.0)
                 // ($x.abs() x 0.5 + ($x.abs() + 1.0) x 0.5) / ($x.abs() + 1.0)^2
                 // ($x.abs() + 0.5) / ($x.abs() + 1.0)^2
-                let abshid = hidden[i].abs();
-                *h = tmp * (abshid + 0.5) / ((abshid + 1.0) * (abshid + 1.0));
+                // let abshid = hidden[i].abs();
+                // *h = tmp * (abshid + 0.5) / ((abshid + 1.0) * (abshid + 1.0));
+
                 // $x / ($x.abs() + 1.0)  // -1 ~ 1
                 // 1 / ($x.abs() + 1.0) + $x.abs() / ($x.abs() + 1.0)^2
                 // (2 x $x + 1) / ($x.abs() + 1.0)^2
-                // let abshid = hidden[i].abs();
-                // *h = tmp * (abshid * 2 + 1.0) / ((abshid + 1.0) * (abshid + 1.0));
+                let abshid = hidden[i].abs();
+                *h = tmp * (abshid * 2.0 + 1.0) / ((abshid + 1.0) * (abshid + 1.0));
             } else {
                 // sigmoid
                 let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -558,13 +566,14 @@ impl Weight {
                 // $x.abs() x 0.5 / ($x.abs() + 1.0)^2 + 0.5 / ($x.abs() + 1.0)
                 // ($x.abs() x 0.5 + ($x.abs() + 1.0) x 0.5) / ($x.abs() + 1.0)^2
                 // ($x.abs() + 0.5) / ($x.abs() + 1.0)^2
-                let abshid = hidden[i].abs();
-                *h = tmp * (abshid + 0.5) / ((abshid + 1.0) * (abshid + 1.0));
+                // let abshid = hidden[i].abs();
+                // *h = tmp * (abshid + 0.5) / ((abshid + 1.0) * (abshid + 1.0));
+
                 // $x / ($x.abs() + 1.0)  // -1 ~ 1
                 // 1 / ($x.abs() + 1.0) + $x.abs() / ($x.abs() + 1.0)^2
                 // (2 x $x + 1) / ($x.abs() + 1.0)^2
-                // let abshid = hidden[i].abs();
-                // *h = tmp * (abshid * 2 + 1.0) / ((abshid + 1.0) * (abshid + 1.0));
+                let abshid = hidden[i].abs();
+                *h = tmp * (abshid * 2.0 + 1.0) / ((abshid + 1.0) * (abshid + 1.0));
             } else {
                 // sigmoid
                 // sig = 1 / (1 + exp(-hidden[i]))
