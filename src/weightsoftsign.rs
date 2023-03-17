@@ -46,6 +46,8 @@ macro_rules! softsign {
     };
 }
 
+const USESOFTSIGN : bool = true;
+
 pub struct Weight {
     pub weight : Vec<f32>
 }
@@ -160,8 +162,12 @@ impl Weight {
             hidsum += wfs[i] * fs.0 as f32;
             hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
 
-            // sum += wh[i] / (f32::exp(-hidsum) + 1.0);  // sigmoid
-            sum += wh[i] * softsign!(hidsum);
+            sum +=
+                if USESOFTSIGN {  // softsign
+                    wh[i] * softsign!(hidsum)
+                } else {  // sigmoid
+                    wh[i] / (f32::exp(-hidsum) + 1.0)
+                };
         }
         sum
     }
@@ -202,8 +208,12 @@ impl Weight {
             hidsum += wfs[i] * fs.0 as f32;
             hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
 
-            // sum += wh[i] / (f32::exp(-hidsum) + 1.0);  // sigmoid
-            sum += wh[i] * softsign!(hidsum);
+            sum +=
+                if USESOFTSIGN {  // softsign
+                    wh[i] * softsign!(hidsum)
+                } else {  // sigmoid
+                    wh[i] / (f32::exp(-hidsum) + 1.0)
+                };
         }
         sum
     }
@@ -329,7 +339,7 @@ impl Weight {
                 let wdc4 = x86_64::_mm_load_ps(wdc[hidx..].as_ptr());
                 let h1234 = x86_64::_mm_add_ps(h1234, wdc4);
 
-                if true {  // softsign
+                if USESOFTSIGN {  // softsign
                     let sign4 = x86_64::_mm_set1_epi32(i32::MAX);
                     let abs4 = x86_64::_mm_and_ps(h1234, x86_64::_mm_castsi128_ps(sign4));
                     let one = x86_64::_mm_set1_ps(1.0);
@@ -349,25 +359,22 @@ impl Weight {
 
                     x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
                 } else {// sigmoid
-                let emx4 = weight::Weight::expmx_ps_simd(h1234);
-                let one = x86_64::_mm_set1_ps(1.0);
-                let hsp14 = x86_64::_mm_add_ps(emx4, one);
-                let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
-                let y4 = x86_64::_mm_div_ps(wh4, hsp14);
+                    let emx4 = weight::Weight::expmx_ps_simd(h1234);
+                    let one = x86_64::_mm_set1_ps(1.0);
+                    let hsp14 = x86_64::_mm_add_ps(emx4, one);
+                    let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
+                    let y4 = x86_64::_mm_div_ps(wh4, hsp14);
 
-                // let rhsp14 = x86_64::_mm_rcp_ps(hsp14);
-                // let two = x86_64::_mm_set1_ps(2.0);
-                // let x2 = x86_64::_mm_mul_ps(rhsp14, hsp14);
-                // let x3 = x86_64::_mm_sub_ps(two, x2);
-                // let x4 = x86_64::_mm_mul_ps(rhsp14, x3);
-                // let y4 = x86_64::_mm_mul_ps(w24, x4);
+                    // let rhsp14 = x86_64::_mm_rcp_ps(hsp14);
+                    // let two = x86_64::_mm_set1_ps(2.0);
+                    // let x2 = x86_64::_mm_mul_ps(rhsp14, hsp14);
+                    // let x3 = x86_64::_mm_sub_ps(two, x2);
+                    // let x4 = x86_64::_mm_mul_ps(rhsp14, x3);
+                    // let y4 = x86_64::_mm_mul_ps(w24, x4);
 
-                x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
+                    x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
                 }
             }
-            // for n in 0..N {
-            //     sum += sumarr[n];
-            // }
             sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
         }
         sum
@@ -412,7 +419,12 @@ impl Weight {
             hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
             hidden[i] = hidsum;
 
-            hidsig[i] = softsign!(hidsum);
+            hidsig[i] =
+                if USESOFTSIGN {  // softsign
+                    softsign!(hidsum)
+                } else {  // sigmoid
+                    1.0 / (f32::exp(-hidsum) + 1.0)
+                };
 
             sum += wh[i] * hidsig[i];
         }
@@ -461,7 +473,13 @@ impl Weight {
             hidsum += wfs[i] * fs.0 as f32;
             hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
             hidden[i] = hidsum;
-            hidsig[i] = softsign!(hidsum);
+
+            hidsig[i] = if USESOFTSIGN {  // softsign
+                    softsign!(hidsum)
+                } else {  // sigmoid
+                    1.0 / (f32::exp(-hidsum) + 1.0)
+                };
+
             sum += wh[i] * hidsig[i];
         }
         output[0] = sum;
@@ -594,7 +612,7 @@ impl Weight {
                 let h1234 = x86_64::_mm_add_ps(h1234, wdc4);
                 x86_64::_mm_store_ps(hidden.as_mut_ptr().add(hidx), h1234);
 
-                if true {  // softsign
+                if USESOFTSIGN {  // softsign
                     let sign4 = x86_64::_mm_set1_epi32(i32::MAX);
                     let abs4 = x86_64::_mm_and_ps(h1234, x86_64::_mm_castsi128_ps(sign4));
                     let one = x86_64::_mm_set1_ps(1.0);
@@ -614,7 +632,7 @@ impl Weight {
                     let y4 = x86_64::_mm_mul_ps(wh4, ssgn);
 
                     x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
-                } else {// sigmoid
+                } else {  // sigmoid
                     let emx4 = weight::Weight::expmx_ps_simd(h1234);
                     let one = x86_64::_mm_set1_ps(1.0);
                     let hsp14 = x86_64::_mm_add_ps(emx4, one);
@@ -627,9 +645,6 @@ impl Weight {
                     x86_64::_mm_store_ps(sumarr.as_mut_ptr().add(hidx), y4);
                 }
             }
-            // for n in 0..N {
-            //     sum += sumarr[n];
-            // }
             sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
         }
         output[0] = sum;
@@ -675,7 +690,7 @@ impl Weight {
         let mut dhid = [0.0 as f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = wh[i] * diff;
-            if true {
+            if USESOFTSIGN {
                 // softsign
                 // ($x * 0.5 / ($x.abs() + 1.0) + 0.5)  // 0 ~ 1
                 // $x.abs() x 0.5 / ($x.abs() + 1.0)^2 + 0.5 / ($x.abs() + 1.0)
@@ -733,7 +748,7 @@ impl Weight {
         for (i, h) in dhid.iter_mut().enumerate() {
             // tmp = wo x diff
             let tmp = wh[i] * diff;
-            if true {
+            if USESOFTSIGN {
                 // softsign
                 // ($x * 0.5 / ($x.abs() + 1.0) + 0.5)  // 0 ~ 1
                 // $x.abs() x 0.5 / ($x.abs() + 1.0)^2 + 0.5 / ($x.abs() + 1.0)
@@ -795,7 +810,174 @@ impl Weight {
     pub fn backwardv1bb_simd(&mut self,
         ban : &bitboard::BitBoard, winner : i8, eta : f32,
         (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
-        self.backwardv1bb(ban, winner, eta, &(*hidden , *hidsig , *output , *fs))
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+
+        let ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - winner as f32;
+        let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        let deta = diff * eta;
+        // if cfg!(feature="nosimd") {
+            for i in 0..N_HIDDEN {
+                wh[i] -= hidsig[i] * deta;
+            }
+        // } else {
+        // slow for N_HIDDEN:4
+        //     for i in 0..N_HIDDEN / 4 {
+        //         let hidx = i * 4;
+        //         unsafe {
+        //             let w4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
+        //             let h4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
+        //             let deta4 = x86_64::_mm_set1_ps(deta);
+        //             let hdeta = x86_64::_mm_mul_ps(deta4, h4);
+        //             let y4 = x86_64::_mm_sub_ps(w4, hdeta);
+        //             x86_64::_mm_storeu_ps(wh[hidx..].as_mut_ptr(), y4);
+        //         }
+        //     }
+        // }
+        wh[N_HIDDEN] -= deta;
+
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        // if cfg!(feature="nosimd") {
+            for (i, h) in dhid.iter_mut().enumerate() {
+                // tmp = wo x diff
+                let tmp = wh[i] * diff;
+                if USESOFTSIGN {  // softsign
+                    // softsign
+                    // ($x * 0.5 / ($x.abs() + 1.0) + 0.5)  // 0 ~ 1
+                    // $x.abs() x 0.5 / ($x.abs() + 1.0)^2 + 0.5 / ($x.abs() + 1.0)
+                    // ($x.abs() x 0.5 + ($x.abs() + 1.0) x 0.5) / ($x.abs() + 1.0)^2
+                    // ($x.abs() + 0.5) / ($x.abs() + 1.0)^2
+                    // let abshid = hidden[i].abs();
+                    // *h = tmp * (abshid + 0.5) / ((abshid + 1.0) * (abshid + 1.0));
+
+                    // $x / ($x.abs() + 1.0)  // -1 ~ 1
+                    // 1 / ($x.abs() + 1.0) + $x.abs() / ($x.abs() + 1.0)^2
+                    // (2 x $x.abs() + 1) / ($x.abs() + 1.0)^2
+                    let abshid = hidden[i].abs();
+                    *h = tmp * (abshid * 2.0 + 1.0) / ((abshid + 1.0) * (abshid + 1.0));
+                    // let _2abshid1 = abshid * 2.0 + 1.0;
+                    // *h = tmp * _2abshid1 / (abshid * abshid + _2abshid1);
+                } else {  // sigmoid
+                    // sig = 1 / (1 + exp(-hidden[i]))
+                    let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+                    // h = wo x diff x sig x (1 - sig)
+                    *h = tmp * sig * (1.0 - sig);
+                }
+            }
+        // } else {
+        //     // slow for N_HIDDEN:4 and 8
+        //     unsafe {
+        //         let diff4 = x86_64::_mm_set1_ps(diff);
+        //         let one = x86_64::_mm_set1_ps(1.0);
+        //         for i in 0..N_HIDDEN / 4 {
+        //             let idx = i * 4;
+        //             let wh4 = x86_64::_mm_load_ps(wh[idx..].as_ptr());
+        //             // tmp = wh x diff
+        //             let tmp = x86_64::_mm_mul_ps(wh4, diff4);
+        //             // sig = 1 / (1 + exp(-hidden[i]))
+        //             let hid4 = x86_64::_mm_load_ps(hidden[idx..].as_ptr());
+        //             let emx = Weight::expmx_ps_simd(hid4);
+        //             let onemx = x86_64::_mm_add_ps(one, emx);
+        //             let sig = x86_64::_mm_div_ps(one, onemx);
+        //             // h = wh x diff x sig x (1 - sig)
+        //             let tmp2 = x86_64::_mm_mul_ps(tmp, sig);
+        //             let onessig = x86_64::_mm_sub_ps(one, sig);
+        //             let h4 = x86_64::_mm_mul_ps(tmp2, onessig);
+
+        //             x86_64::_mm_store_ps(dhid[idx..].as_mut_ptr(), h4);
+        //         }
+        //     }
+        // }
+
+        let wtbn = unsafe {ow.as_mut_ptr().add(board::CELL_2D * N_HIDDEN)};
+        let wfs = unsafe {ow.as_mut_ptr().add((board::CELL_2D + 1) * N_HIDDEN)};
+        let wdc = unsafe {ow.as_mut_ptr().add((board::CELL_2D + 1 + 2) * N_HIDDEN)};
+
+        // back to input
+        for (i, h) in dhid.iter().enumerate() {
+            let heta = *h * eta;
+            let w1 = unsafe {ow.as_mut_ptr().add(i * board::CELL_2D)};
+            let heta4 = unsafe {x86_64::_mm_set1_ps(*h * eta)};
+            let mut bit8 = 0x0101010101010101;
+            for j in 0..board::CELL_2D / 16 {
+                let idx = j * 16;
+                let b81 = (bit8 & black) >> (2 * j);
+                let w81 = (bit8 & white) >> (2 * j);
+                bit8 <<= 1;
+                let b82 = (bit8 & black) >> (2 * j + 1);
+                let w82 = (bit8 & white) >> (2 * j + 1);
+                bit8 <<= 1;
+
+                unsafe {
+                    let b16 = x86_64::_mm_set_epi64x(b82 as i64, b81 as i64);
+                    let w16 = x86_64::_mm_set_epi64x(w82 as i64, w81 as i64);
+
+                    let one = x86_64::_mm_set1_epi8(1);
+                    let bm16 = x86_64::_mm_cmpeq_epi8(b16, one);
+                    let wm16 = x86_64::_mm_cmpeq_epi8(w16, one);
+                    let bm8l = x86_64::_mm_unpacklo_epi8(bm16, bm16);
+                    let bm8h = x86_64::_mm_unpackhi_epi8(bm16, bm16);
+                    let wm8l = x86_64::_mm_unpacklo_epi8(wm16, wm16);
+                    let wm8h = x86_64::_mm_unpackhi_epi8(wm16, wm16);
+                    let bm1 = x86_64::_mm_unpacklo_epi16(bm8l, bm8l);
+                    let bm2 = x86_64::_mm_unpackhi_epi16(bm8l, bm8l);
+                    let bm3 = x86_64::_mm_unpacklo_epi16(bm8h, bm8h);
+                    let bm4 = x86_64::_mm_unpackhi_epi16(bm8h, bm8h);
+                    let wm1 = x86_64::_mm_unpacklo_epi16(wm8l, wm8l);
+                    let wm2 = x86_64::_mm_unpackhi_epi16(wm8l, wm8l);
+                    let wm3 = x86_64::_mm_unpacklo_epi16(wm8h, wm8h);
+                    let wm4 = x86_64::_mm_unpackhi_epi16(wm8h, wm8h);
+                    let ex1 = x86_64::_mm_or_si128(bm1, wm1);
+                    let ex2 = x86_64::_mm_or_si128(bm2, wm2);
+                    let ex3 = x86_64::_mm_or_si128(bm3, wm3);
+                    let ex4 = x86_64::_mm_or_si128(bm4, wm4);
+                    let minus = x86_64::_mm_set1_ps(-0.0);
+                    let mn1 = x86_64::_mm_and_ps(minus,
+                                x86_64::_mm_castsi128_ps(wm1));
+                    let mn2 = x86_64::_mm_and_ps(minus,
+                                x86_64::_mm_castsi128_ps(wm2));
+                    let mn3 = x86_64::_mm_and_ps(minus,
+                                x86_64::_mm_castsi128_ps(wm3));
+                    let mn4 = x86_64::_mm_and_ps(minus,
+                                x86_64::_mm_castsi128_ps(wm4));
+                    let mh1 = x86_64::_mm_xor_ps(mn1, heta4);
+                    let mh2 = x86_64::_mm_xor_ps(mn2, heta4);
+                    let mh3 = x86_64::_mm_xor_ps(mn3, heta4);
+                    let mh4 = x86_64::_mm_xor_ps(mn4, heta4);
+                    let df1 = x86_64::_mm_and_ps(mh1,
+                                x86_64::_mm_castsi128_ps(ex1));
+                    let df2 = x86_64::_mm_and_ps(mh2,
+                                x86_64::_mm_castsi128_ps(ex2));
+                    let df3 = x86_64::_mm_and_ps(mh3,
+                                x86_64::_mm_castsi128_ps(ex3));
+                    let df4 = x86_64::_mm_and_ps(mh4,
+                                x86_64::_mm_castsi128_ps(ex4));
+                    // w = x - h x eta x sengo
+                    x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
+                    let x41 = x86_64::_mm_load_ps(w1.add(idx));
+                    let x42 = x86_64::_mm_load_ps(w1.add(idx + 4));
+                    let x43 = x86_64::_mm_load_ps(w1.add(idx + 8));
+                    let x44 = x86_64::_mm_load_ps(w1.add(idx + 12));
+                    let w41 = x86_64::_mm_sub_ps(x41, df1);
+                    let w42 = x86_64::_mm_sub_ps(x42, df2);
+                    let w43 = x86_64::_mm_sub_ps(x43, df3);
+                    let w44 = x86_64::_mm_sub_ps(x44, df4);
+                    x86_64::_mm_store_ps(w1.add(idx), w41);
+                    x86_64::_mm_store_ps(w1.add(idx + 4), w42);
+                    x86_64::_mm_store_ps(w1.add(idx + 8), w43);
+                    x86_64::_mm_store_ps(w1.add(idx + 12), w44);
+                }
+            }
+            unsafe {
+                *wtbn.add(i) -= teban * heta;
+                *wfs.add(i) -= fs.0 as f32 * heta;
+                *wfs.add(i + N_HIDDEN) -= fs.1 as f32 * heta;
+                *wdc.add(i) -= heta;
+            }
+        }
     }
 
     /// train weights
@@ -847,9 +1029,11 @@ impl Weight {
 
     fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
         // forward
-        let res = self.forwardv1bb(&ban);
+        // let res = self.forwardv1bb(&ban);
+        let res = self.forwardv1bb_simd(&ban);
         // backward
-        self.backwardv1bb(ban, winner, eta, &res);
+        // self.backwardv1bb(ban, winner, eta, &res);
+        self.backwardv1bb_simd(ban, winner, eta, &res);
     }
 }
 
