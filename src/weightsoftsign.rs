@@ -784,6 +784,18 @@ impl Weight {
         }
     }
 
+    pub fn backwardv3bb(&mut self,
+        ban : &bitboard::BitBoard, winner : i8, eta : f32,
+        (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
+        self.backwardv1bb(ban, winner, eta, &(*hidden , *hidsig , *output , *fs))
+    }
+
+    pub fn backwardv1bb_simd(&mut self,
+        ban : &bitboard::BitBoard, winner : i8, eta : f32,
+        (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
+        self.backwardv1bb(ban, winner, eta, &(*hidden , *hidsig , *output , *fs))
+    }
+
     /// train weights
     /// 
     /// # Arguments
@@ -836,5 +848,120 @@ impl Weight {
         let res = self.forwardv1bb(&ban);
         // backward
         self.backwardv1bb(ban, winner, eta, &res);
+    }
+}
+
+#[allow(dead_code)]
+fn dbg_assert_eq_vec(va : &[f32], vb : &[f32]) -> bool {
+    for (a, b) in va.iter().zip(vb.iter()) {
+        if (a - b).abs() >= 1.4e-6 {
+            println!("| {a} - {b} | >= 1.4e-6...");
+            return false;
+        }
+    }
+    true
+}
+
+#[test]
+fn testweight() {
+    let rfens = [
+        "h/H/h/H/h/H/h/H b",
+        "h/H/h/H/h/H/h/H w",
+        "H/h/H/h/H/h/H/h b",
+        "H/h/H/h/H/h/H/h w",
+        "h/H/8/H/h/H/h/H b",
+        "h/H/h/8/h/H/h/H w",
+        "H/h/H/h/8/h/H/h b",
+        "H/h/H/h/H/8/H/h w",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA b",
+        "aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa b",
+        "1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa w",
+        "AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1 w",
+        "A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA b",
+        "aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A b",
+        "aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA w",
+    ];
+    for rfen in rfens.iter() {
+        for winner in -1..=1 {
+            let bban = bitboard::BitBoard::from(rfen).unwrap();
+            let ban = board::Board::from(rfen).unwrap();
+            ban.put();
+            let mut w = weightsoftsign::Weight::new();
+            w.init();
+            let mut w2 = weightsoftsign::Weight::new();
+            w2.copy(&w);
+            let mut w3 = weightsoftsign::Weight::new();
+            w3.copy(&w);
+            let res_nosimde = w.evaluatev3bb(&bban);
+            let res_simd = w.evaluatev3bb_simd(&bban);
+            let res_simdavx = w.evaluatev3bb_simdavx(&bban);
+            assert!((res_nosimde - res_simd).abs() < 1e-6);
+            assert!((res_nosimde - res_simdavx).abs() < 1e-6);
+            // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
+            let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
+            let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simd(&bban);
+            let (bh_sa, ah_sa, res_simdavx, fssa)
+                    = w.forwardv3bb_simdavx(&bban);
+            let (bh_sa2, ah_sa2, res_simdavx2, fssa2)
+                    = w.forwardv3bb_simdavx2(&bban);
+            assert!(dbg_assert_eq_vec(&bh_ns, &bh_s));
+            assert!(dbg_assert_eq_vec(&bh_ns, &bh_sa));
+            assert!(dbg_assert_eq_vec(&bh_ns, &bh_sa2));
+            // println!("{bh_ns:?} == \n{bh_s:?} == \n{bh_sa:?} ???");
+            assert!(dbg_assert_eq_vec(&ah_ns, &ah_s));
+            assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa));
+            assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa2));
+            // println!("{ah_ns:?} == \n{ah_s:?} == \n{ah_sa:?} ???");
+            assert!((res_nosimde - res_nosimd[0]).abs() < 1e-6);
+            // assert_eq!(res_nosimd, res_simd);
+            assert!((res_nosimd[0] - res_simd[0]).abs() < 1e-6);
+            // assert_eq!(res_nosimd, res_simdavx);
+            assert!((res_nosimd[0] - res_simdavx[0]).abs() < 1e-6);
+            // assert_eq!(res_nosimd, res_simdavx2);
+            assert!((res_nosimd[0] - res_simdavx2[0]).abs() < 1e-6);
+            // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
+            assert_eq!(fsns, fss);
+            assert_eq!(fsns, fssa);
+            assert_eq!(fsns, fssa2);
+            // println!("{fsns:?} == {fss:?} == {fssa:?} ???");
+            let res = w.forwardv1bb(&bban);
+            // let winner = 1;
+            let eta = 0.001;
+            w.backwardv1bb(&bban, winner, eta, &res);
+            w2.backwardv1bb_simd(&bban, winner, eta, &res);
+            // let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+            // let s = sv.join(",");
+            // let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+            // let s2 = sv2.join(",");
+            // assert_eq!(s, s2);
+            assert!(dbg_assert_eq_vec(&w.weight, &w2.weight));
+            let res = w3.forwardv3(&ban);
+            w3.backwardv1(&ban, winner, eta, &res);
+            // let sv3 = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+            // let s3 = sv3.join(",");
+            // assert_eq!(s, s3);
+            assert!(dbg_assert_eq_vec(&w.weight, &w3.weight));
+            let res_nosimde2 = w.evaluatev1bb(&bban);
+            let res_nosimde3 = w2.evaluatev1bb(&bban);
+            let res_nosimde4 = w3.evaluatev1bb(&bban);
+            // println!("{res_nosimde} -> {res_nosimde2}");
+            assert_eq!(res_nosimde2, res_nosimde3);
+            assert_eq!(res_nosimde2, res_nosimde4);
+            let before = (winner as f32 - res_nosimde).abs();
+            assert!(before > (winner as f32 - res_nosimde2).abs());
+            // assert!(before > (winner as f32 - res_nosimde3).abs());
+            // assert!(before > (winner as f32 - res_nosimde4).abs());
+        }
     }
 }
