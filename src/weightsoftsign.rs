@@ -592,7 +592,7 @@ impl Weight {
                 // dc
                 let wdc4 = x86_64::_mm_load_ps(wdc[hidx..].as_ptr());
                 let h1234 = x86_64::_mm_add_ps(h1234, wdc4);
-                x86_64::_mm_store_ps(hidden.as_mut_ptr(), h1234);
+                x86_64::_mm_store_ps(hidden.as_mut_ptr().add(hidx), h1234);
 
                 if true {  // softsign
                     let sign4 = x86_64::_mm_set1_epi32(i32::MAX);
@@ -610,7 +610,7 @@ impl Weight {
 
                     // ($x / ($x.abs() + 1.0))  // -1 ~ 1
                     let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
-                    x86_64::_mm_store_ps(hidsig.as_mut_ptr(), ssgn);
+                    x86_64::_mm_store_ps(hidsig.as_mut_ptr().add(hidx), ssgn);
                     let y4 = x86_64::_mm_mul_ps(wh4, ssgn);
 
                     x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
@@ -619,12 +619,12 @@ impl Weight {
                     let one = x86_64::_mm_set1_ps(1.0);
                     let hsp14 = x86_64::_mm_add_ps(emx4, one);
                     let sigm = x86_64::_mm_rcp_ps(hsp14);
-                    x86_64::_mm_store_ps(hidsig.as_mut_ptr(), sigm);
+                    x86_64::_mm_store_ps(hidsig.as_mut_ptr().add(hidx), sigm);
 
                     let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
                     // let y4 = x86_64::_mm_div_ps(wh4, hsp14);
                     let y4 = x86_64::_mm_mul_ps(wh4, sigm);
-                    x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
+                    x86_64::_mm_store_ps(sumarr.as_mut_ptr().add(hidx), y4);
                 }
             }
             // for n in 0..N {
@@ -905,14 +905,14 @@ fn testweight() {
             w2.copy(&w);
             let mut w3 = weightsoftsign::Weight::new();
             w3.copy(&w);
-            let res_nosimde = w.evaluatev3bb(&bban);
-            let res_simd = w.evaluatev3bb_simd(&bban);
+            let res_nosimde = w.evaluatev1bb(&bban);
+            let res_simd = w.evaluatev1bb_simd(&bban);
             let res_simdavx = w.evaluatev3bb_simdavx(&bban);
             assert!((res_nosimde - res_simd).abs() < 1e-6);
             assert!((res_nosimde - res_simdavx).abs() < 1e-6);
             // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
-            let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
-            let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simd(&bban);
+            let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv1bb(&bban);
+            let (bh_s, ah_s, res_simd, fss) = w.forwardv1bb_simd(&bban);
             let (bh_sa, ah_sa, res_simdavx, fssa)
                     = w.forwardv3bb_simdavx(&bban);
             let (bh_sa2, ah_sa2, res_simdavx2, fssa2)
