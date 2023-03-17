@@ -744,9 +744,11 @@ impl Weight {
 
                 // $x / ($x.abs() + 1.0)  // -1 ~ 1
                 // 1 / ($x.abs() + 1.0) + $x.abs() / ($x.abs() + 1.0)^2
-                // (2 x $x + 1) / ($x.abs() + 1.0)^2
+                // (2 x $x.abs() + 1) / ($x.abs() + 1.0)^2
                 let abshid = hidden[i].abs();
                 *h = tmp * (abshid * 2.0 + 1.0) / ((abshid + 1.0) * (abshid + 1.0));
+                // let _2abshid1 = abshid * 2.0 + 1.0;
+                // *h = tmp * _2abshid1 / (abshid * abshid + _2abshid1);
             } else {
                 // sigmoid
                 // sig = 1 / (1 + exp(-hidden[i]))
