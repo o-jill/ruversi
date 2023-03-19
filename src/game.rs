@@ -41,7 +41,7 @@ impl GameBB {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+            println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.unwrap();
             let x = best.x;
             let y = best.y;
@@ -84,7 +84,7 @@ impl GameBB {
             let (val, node) = f(&self.ban, depth).unwrap();
 
             let ft = st.elapsed();
-            println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+            println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.as_ref().unwrap();
             let x = best.x;
             let y = best.y;
@@ -130,7 +130,7 @@ impl GameBB {
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
             let nd = node.read().unwrap();
-            println!("val:{:.3} {} {}msec", val, nd.dump(), ft.as_millis());
+            println!("val:{val:.1} {} {}msec", nd.dump(), ft.as_millis());
             let best = nd.best.as_ref().unwrap();
             
             let x = best.x;
@@ -213,7 +213,7 @@ impl GameBB {
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
-                println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+                println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
                 let best = node.best.unwrap();
                 x = best.x;
                 y = best.y;
@@ -295,7 +295,7 @@ impl GameBB {
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
-                println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+                println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
                 let best = node.best.as_ref().unwrap();
                 x = best.x;
                 y = best.y;
@@ -362,7 +362,7 @@ impl GameBB {
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
-                println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+                println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
                 let best = node.best.unwrap();
                 x = best.x;
                 y = best.y;
@@ -427,7 +427,7 @@ impl GameBB {
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
-                println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+                println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
                 let best = node.best.as_ref().unwrap();
                 x = best.x;
                 y = best.y;
@@ -485,7 +485,7 @@ impl GameBB {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+            println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.unwrap();
             let x = best.x;
             let y = best.y;
@@ -544,7 +544,7 @@ impl GameBB {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{:.1} {} {}msec", val, node.dump(), ft.as_millis());
+            println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.as_ref().unwrap();
             let x = best.x;
             let y = best.y;
@@ -607,7 +607,7 @@ impl GameBB {
             let ban;
             {
                 let nd = node.read().unwrap();
-                println!("val:{:.3} {} {}msec", val, nd.dump(), ft.as_millis());
+                println!("val:{val:.1} {} {}msec", nd.dump(), ft.as_millis());
                 let best = nd.best.as_ref().unwrap();
                 x = best.x;
                 y = best.y;
@@ -667,7 +667,7 @@ impl Game {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+            println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.unwrap();
             let x = best.x;
             let y = best.y;
@@ -748,7 +748,7 @@ impl Game {
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
-                println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+                println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
                 let best = node.best.unwrap();
                 x = best.x;
                 y = best.y;
@@ -814,7 +814,7 @@ impl Game {
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
-                println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+                println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
                 let best = node.best.unwrap();
                 x = best.x;
                 y = best.y;
@@ -871,7 +871,7 @@ impl Game {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{:.3} {} {}msec", val, node.dump(), ft.as_millis());
+            println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.unwrap();
             let x = best.x;
             let y = best.y;

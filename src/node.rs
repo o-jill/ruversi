@@ -969,7 +969,7 @@ impl Node {
 
     pub fn dump(&self) -> String {
         let mut ret = String::new();
-        ret += &format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen);
+        ret += &format!("{} nodes. ", self.kyokumen);
         // ret += &format!("{:?}", self.best);
         // let x = self.best.unwrap().1;
         // let y = self.best.unwrap().2;
