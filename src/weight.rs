@@ -2400,37 +2400,38 @@ impl Weight {
         let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         // let idx = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN;
         let deta = diff * eta;
-        // println!("deta {deta} = {diff} x {eta}");
-        for i in 0..N_HIDDEN {
-            // print!("{} ", wh[i]);
-            wh[i] -= hidsig[i] * deta;
-            // println!("wh[{i}] -= {hidsig:?}[{i}] x {deta}");
-            // ow[idx + i] -= hidsig[i] * deta;
-        }
         wh[N_HIDDEN] -= deta;
-        // ow[idx + N_HIDDEN] -= deta;
+        // for i in 0..N_HIDDEN {
+        //     // print!("{} ", wh[i]);
+        //     wh[i] -= hidsig[i] * deta;
+        //     // println!("wh[{i}] -= {hidsig:?}[{i}] x {deta}");
+        //     // ow[idx + i] -= hidsig[i] * deta;
+        // }
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
-        for (i, h) in dhid.iter_mut().enumerate() {
-            // tmp = wo x diff
-            let tmp = wh[i] * diff;
-            // println!("{tmp} = {wh:?}[{i}] x {diff}");
-            // let tmp = ow[idx + i] * diff;
-            // sig = 1 / (1 + exp(-hidden[i]))
-            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
-            // println!("{sig} = 1 / (1 + exp(-{hidden:?}[{i}])");
-            // h = wo x diff x sig x (1 - sig)
-            *h = tmp * sig * (1.0 - sig);
-            // println!("{h} = {tmp} x {sig} x (1 - sig)");
-        }
+        // let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        // for (i, h) in dhid.iter_mut().enumerate() {
+        //     // tmp = wo x diff
+        //     let tmp = wh[i] * diff;
+        //     // println!("{tmp} = {wh:?}[{i}] x {diff}");
+        //     // let tmp = ow[idx + i] * diff;
+        //     // sig = 1 / (1 + exp(-hidden[i]))
+        //     let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+        //     // println!("{sig} = 1 / (1 + exp(-{hidden:?}[{i}])");
+        //     // h = wo x diff x sig x (1 - sig)
+        //     *h = tmp * sig * (1.0 - sig);
+        //     // println!("{h} = {tmp} x {sig} x (1 - sig)");
+        // }
         // println!("para {diff}  {hidsig:?},  {dhid:?}");
 
         // back to input
-        let dhid2 = dhid.clone();
+        // let dhid2 = dhid.clone();
+        let hidsig2 = hidsig.clone();
+        let hidden2 = hidden.clone();
         let black2 = black;
         let white2 = white;
         let fs2 = fs.clone();
         let sub = std::thread::spawn(move|| {
+            // process only odd
             // let ow = &mut self.weight[0..];
             let ow = unsafe {
                 if !USE_DUMBBELL {
@@ -2439,7 +2440,29 @@ impl Weight {
                 // &mut self.weight[0..]
                 &mut DUMBBELL
             };
-            for (i, h) in dhid2.iter().enumerate() {
+            let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+            for i in 0..N_HIDDEN/2 {
+                let idx = 2 * i + 1;
+                // print!("{} ", wh[i]);
+                wh[idx] -= hidsig2[idx] * deta;
+                // println!("wh[{i}] -= {hidsig:?}[{i}] x {deta}");
+                // ow[idx + i] -= hidsig[i] * deta;
+            }
+            let mut dhid = [0.0 as f32 ; N_HIDDEN];
+            for (i, h) in dhid.iter_mut().enumerate() {
+                if i % 2 == 0 {continue;}
+                // tmp = wo x diff
+                let tmp = wh[i] * diff;
+                // println!("{tmp} = {wh:?}[{i}] x {diff}");
+                // let tmp = ow[idx + i] * diff;
+                // sig = 1 / (1 + exp(-hidden[i]))
+                let sig = 1.0 / (1.0 + f32::exp(-hidden2[i]));
+                // println!("{sig} = 1 / (1 + exp(-{hidden:?}[{i}])");
+                // h = wo x diff x sig x (1 - sig)
+                *h = tmp * sig * (1.0 - sig);
+                // println!("{h} = {tmp} x {sig} x (1 - sig)");
+            }
+            for (i, h) in dhid.iter().enumerate() {
                 if i % 2 == 0 {continue;}
 
                 let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
@@ -2494,6 +2517,27 @@ impl Weight {
             // &mut self.weight[0..]
             &mut DUMBBELL
         };
+        for i in 0..N_HIDDEN/2 {
+            let idx = i * 2 + 0;
+            // print!("{} ", wh[i]);
+            wh[idx] -= hidsig[idx] * deta;
+            // println!("wh[{i}] -= {hidsig:?}[{i}] x {deta}");
+            // ow[idx + i] -= hidsig[i] * deta;
+        }
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            if i % 2 == 1 {continue;}
+            // tmp = wo x diff
+            let tmp = wh[i] * diff;
+            // println!("{tmp} = {wh:?}[{i}] x {diff}");
+            // let tmp = ow[idx + i] * diff;
+            // sig = 1 / (1 + exp(-hidden[i]))
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            // println!("{sig} = 1 / (1 + exp(-{hidden:?}[{i}])");
+            // h = wo x diff x sig x (1 - sig)
+            *h = tmp * sig * (1.0 - sig);
+            // println!("{h} = {tmp} x {sig} x (1 - sig)");
+        }
         // dhid.par_iter().enumerate().for_each(|(i, h)| {
         for (i, h) in dhid.iter().enumerate() {
             if i % 2 == 1 {continue;}
@@ -2538,7 +2582,7 @@ impl Weight {
             //     Weight::set_unsyncsub(&ow, idx3 + i, heta);
             // }
         }// );
-        // sub.join().unwrap();
+        sub.join().unwrap();
     }
 
     pub fn backwardv3bb_simd(&mut self,
