@@ -2313,11 +2313,11 @@ impl Weight {
         let diff : f32 = output[0] - 10.0 * winner as f32;
         let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         let deta = diff * eta;
-        println!("deta {deta} = {diff} x {eta}");
+        // println!("deta {deta} = {diff} x {eta}");
         for i in 0..N_HIDDEN {
-            print!("{} ", wh[i]);
+            // print!("{} ", wh[i]);
             wh[i] -= hidsig[i] * deta;
-            println!("wh[{i}] -= {hidsig:?}[{i}] x {deta}");
+            // println!("wh[{i}] -= {hidsig:?}[{i}] x {deta}");
         }
         wh[N_HIDDEN] -= deta;
 
@@ -2325,15 +2325,15 @@ impl Weight {
         for (i, h) in dhid.iter_mut().enumerate() {
             // tmp = wo x diff
             let tmp = wh[i] * diff;
-            println!("{tmp} = {wh:?}[{i}] x {diff}");
+            // println!("{tmp} = {wh:?}[{i}] x {diff}");
             // sig = 1 / (1 + exp(-hidden[i]))
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
-            println!("{sig} = 1 / (1 + exp(-{hidden:?}[{i}])");
+            // println!("{sig} = 1 / (1 + exp(-{hidden:?}[{i}])");
             // h = wo x diff x sig x (1 - sig)
             *h = tmp * sig * (1.0 - sig);
-            println!("{h} = {tmp} x {sig} x (1 - sig)");
+            // println!("{h} = {tmp} x {sig} x (1 - sig)");
         }
-        println!("v3bb {diff}  {hidsig:?},  {dhid:?}");
+        // println!("v3bb {diff}  {hidsig:?},  {dhid:?}");
 
         // back to input
         for (i, h) in dhid.iter().enumerate() {
