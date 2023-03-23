@@ -2401,27 +2401,6 @@ impl Weight {
         // let idx = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN;
         let deta = diff * eta;
         wh[N_HIDDEN] -= deta;
-        // for i in 0..N_HIDDEN {
-        //     // print!("{} ", wh[i]);
-        //     wh[i] -= hidsig[i] * deta;
-        //     // println!("wh[{i}] -= {hidsig:?}[{i}] x {deta}");
-        //     // ow[idx + i] -= hidsig[i] * deta;
-        // }
-
-        // let mut dhid = [0.0 as f32 ; N_HIDDEN];
-        // for (i, h) in dhid.iter_mut().enumerate() {
-        //     // tmp = wo x diff
-        //     let tmp = wh[i] * diff;
-        //     // println!("{tmp} = {wh:?}[{i}] x {diff}");
-        //     // let tmp = ow[idx + i] * diff;
-        //     // sig = 1 / (1 + exp(-hidden[i]))
-        //     let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
-        //     // println!("{sig} = 1 / (1 + exp(-{hidden:?}[{i}])");
-        //     // h = wo x diff x sig x (1 - sig)
-        //     *h = tmp * sig * (1.0 - sig);
-        //     // println!("{h} = {tmp} x {sig} x (1 - sig)");
-        // }
-        // println!("para {diff}  {hidsig:?},  {dhid:?}");
 
         // back to input
         // let dhid2 = dhid.clone();
