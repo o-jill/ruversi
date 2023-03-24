@@ -1415,7 +1415,6 @@ if true {  // ---------------
                 let newban = ban2.r#move(x1, y1).unwrap();
                 let newban2 = newban.r#move(x2, y2).unwrap();
                 let newban3 = newban2.r#move(x3, y3).unwrap();
-                let teban = ban2.teban;
                 let teban2 = -teban;
                 let teban3 = teban;
                 let mut nd1 = match node2.child.iter_mut().find(
