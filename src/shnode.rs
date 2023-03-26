@@ -47,22 +47,16 @@ pub struct Best {
     pub hyoka : f32,
     pub x : u8,
     pub y : u8,
-    pub teban : i8,
 }
 
 impl Best {
     #[allow(dead_code)]
-    pub fn new(h : f32, x : u8, y : u8, t : i8) -> Best {
-        Best { hyoka: h, x: x, y: y, teban: t }
+    pub fn new(h : f32, x : u8, y : u8) -> Best {
+        Best { hyoka: h, x: x, y: y }
     }
 
     pub fn pos(&self) -> String {
-        format!("{}{}{}",
-            if self.teban == board::SENTE {
-                board::STONE_SENTE
-            } else {
-                board::STONE_GOTE
-            },
+        format!("{}{}",
             board::STR_GOTE.chars().nth(self.x as usize).unwrap(), self.y)
     }
 
@@ -80,11 +74,12 @@ pub struct ShNode {
     pub x : u8,
     pub y : u8,
     depth : u8,
+    pub teban : i8,
 }
 
 impl ShNode {
     #[allow(dead_code)]
-    pub fn new(x : u8, y : u8, depth : u8) -> ShNode {
+    pub fn new(x : u8, y : u8, depth : u8, t : i8) -> ShNode {
         ShNode {
             child : Vec::<Arc<RwLock<ShNode>>>::new(),
             hyoka : None,
@@ -93,6 +88,7 @@ impl ShNode {
             x : x,
             y : y,
             depth : depth,
+            teban : t,
         }
     }
 
@@ -134,7 +130,7 @@ impl ShNode {
             return None;
         }
 
-        let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth)));
+        let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth, bitboard::NONE)));
         // println!("{}", node.lock().unwrap().dump());
         let mut moves = moves.unwrap();
         if moves.len() == 0 {  // pass
@@ -145,9 +141,10 @@ impl ShNode {
         // let teban = ban.teban;
         // let ddd = node.lock().unwrap().depth;
         let n = moves.len();
+        let teban = ban.teban;
         let mut leaves = Vec::<Arc<RwLock<ShNode>>>::new();
         for (mvx, mvy) in moves {
-            let n = Arc::new(RwLock::new(ShNode::new(mvx, mvy, depth - 1)));
+            let n = Arc::new(RwLock::new(ShNode::new(mvx, mvy, depth - 1, teban)));
             node.write().unwrap().child.push(n.clone());
             leaves.push(n);
         }
@@ -198,11 +195,11 @@ impl ShNode {
 
                 let lb = lf.best.as_ref();
                 if be.is_none() {
-                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y));
                 } else if lb.is_none() {
                     // nothing to do.
                 } else if be.as_ref().unwrap().hyoka * fteban < lb.as_ref().unwrap().hyoka * fteban {
-                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y));
                 }
             }
             hyoka = be.as_ref().unwrap().hyoka;
@@ -245,7 +242,7 @@ impl ShNode {
         for (mvx, mvy) in moves {
             let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = nod.child.len();
-            let leaf = Arc::new(RwLock::new(ShNode::new(mvx, mvy, depth - 1)));
+            let leaf = Arc::new(RwLock::new(ShNode::new(mvx, mvy, depth - 1, teban)));
             nod.child.push(leaf.clone());
             let val = ShNode::think_internal(
                 &mut nod.child[idx], &newban);
@@ -260,12 +257,12 @@ impl ShNode {
             let val = val.unwrap();
             let fteban = teban as f32;
             if nod.best.is_none() {
-                nod.best = Some(Best::new(val, mvx, mvy, teban));
+                nod.best = Some(Best::new(val, mvx, mvy));
                 hyoka = val;
                 // println!("n{depth}{}{} -> b{mvx}{mvy}", nod.x, nod.y);
             } else if best.unwrap().hyoka * fteban < val * fteban {
                 // println!("b{depth}{}{} -> b{mvx}{mvy}", nod.x, nod.y);
-                nod.best = Some(Best::new(val, mvx, mvy, teban));
+                nod.best = Some(Best::new(val, mvx, mvy));
                 hyoka = val;
             } else {
                 // println!("b{depth}{}{} != b{mvx}{mvy}", nod.x, nod.y);
@@ -279,7 +276,7 @@ impl ShNode {
     #[allow(dead_code)]
     pub fn think_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, Arc<RwLock<ShNode>>)> {
-        let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth)));
+        let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth, bitboard::NONE)));
         if depth == 0 {
             return None;
         }
@@ -309,9 +306,11 @@ impl ShNode {
             depth += 2;
         }
         let n = moves.len();
+        let teban = ban.teban;
         let mut leaves = Vec::<Arc<RwLock<ShNode>>>::new();
         for (mvx, mvy) in moves {
-            let n = Arc::new(RwLock::new(ShNode::new(mvx, mvy, depth - 1)));
+            let n = Arc::new(RwLock::new(
+                    ShNode::new(mvx, mvy, depth - 1, teban)));
             node.write().unwrap().child.push(n.clone());
             leaves.push(n);
         }
@@ -430,11 +429,11 @@ impl ShNode {
 
                 let lb = lf.best.as_ref();
                 if be.is_none() {
-                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y));
                 } else if lb.is_none() {
                     // nothing to do.
                 } else if be.as_ref().unwrap().hyoka * fteban < lb.as_ref().unwrap().hyoka * fteban {
-                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y));
                 }
             }
             hyoka = be.as_ref().unwrap().hyoka;
@@ -449,7 +448,8 @@ impl ShNode {
     #[allow(dead_code)]
     pub fn think_ab_extract2(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, Arc<RwLock<ShNode>>)> {
-        let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth)));
+        let node = Arc::new(RwLock::new(
+                ShNode::new(0, 0, depth, bitboard::NONE)));
         if depth == 0 {
             return None;
         }
@@ -479,9 +479,11 @@ impl ShNode {
             depth += 2;
         }
         let n = moves.len();
+        let teban = ban.teban;
         let mut leaves = Vec::<Arc<RwLock<ShNode>>>::new();
         for (mvx, mvy) in moves {
-            let n = Arc::new(RwLock::new(ShNode::new(mvx, mvy, depth - 1)));
+            let n = Arc::new(RwLock::new(
+                    ShNode::new(mvx, mvy, depth - 1, teban)));
             node.write().unwrap().child.push(n.clone());
             leaves.push(n);
         }
@@ -493,7 +495,8 @@ impl ShNode {
             let ban = ban.r#move(x, y).unwrap();
             let moves = ban.genmove();
             if moves.is_none() {
-                let n = Arc::new(RwLock::new(ShNode::new(0, 0, depth - 2)));
+                let n = Arc::new(RwLock::new(
+                        ShNode::new(0, 0, depth - 2, -teban)));
                 leaf.write().unwrap().child.push(n.clone());
                 leaves2nd.push((x, y, n.clone()));
 // println!("{x} {y} 0 0  --");
@@ -501,7 +504,8 @@ impl ShNode {
             }
             let moves = moves.unwrap();
             if moves.is_empty() {
-                let n = Arc::new(RwLock::new(ShNode::new(0, 0, depth - 2)));
+                let n = Arc::new(RwLock::new(
+                        ShNode::new(0, 0, depth - 2, -teban)));
                 leaf.write().unwrap().child.push(n.clone());
                 leaves2nd.push((x, y, n.clone()));
 // println!("{x} {y} 0 0--");
@@ -509,7 +513,8 @@ impl ShNode {
             }
             for (mvx, mvy) in moves {
 // println!("{x} {y} {mvx} {mvy}  --");
-                let n = Arc::new(RwLock::new(ShNode::new(mvx, mvy, depth - 2)));
+                let n = Arc::new(RwLock::new(
+                        ShNode::new(mvx, mvy, depth - 2, teban)));
                 leaf.write().unwrap().child.push(n.clone());
                 leaves2nd.push((x, y, n.clone()));
             }
@@ -658,7 +663,7 @@ impl ShNode {
                     }
                     if hyo.is_none() || hk.unwrap() * fteban2 > hyo.unwrap() * fteban2 {
                         hyo = hk;
-                        bes = Some(Best::new(hk.unwrap(), lf2.x, lf2.y, teban2));
+                        bes = Some(Best::new(hk.unwrap(), lf2.x, lf2.y));
                     }
                 }
                 lf.hyoka = hyo;
@@ -678,12 +683,12 @@ impl ShNode {
                 }
                 if hyoka.is_none() {
                     hyoka = lf.hyoka;
-                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y));
                 } else if lb.is_none() {
                     // nothing to do.
                 } else if hyoka.unwrap() * fteban < lf.hyoka.unwrap() * fteban {
                     hyoka = lf.hyoka;
-                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y, teban));
+                    be = Some(Best::new(lf.hyoka.unwrap(), lf.x, lf.y));
                 }
             }
             nd.hyoka = hyoka;
@@ -735,7 +740,8 @@ impl ShNode {
         for (mvx, mvy) in moves {
             let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = nod.child.len();
-            let leaf = Arc::new(RwLock::new(ShNode::new(mvx, mvy, depth - 1)));
+            let leaf = Arc::new(RwLock::new(
+                    ShNode::new(mvx, mvy, depth - 1, teban)));
             nod.child.push(leaf.clone());
             let val = ShNode::think_internal_ab(
                 &mut nod.child[idx], &newban, -beta, -newalpha);
@@ -754,11 +760,11 @@ impl ShNode {
 
             let fteban = teban as f32;
             if nod.best.is_none() {
-                nod.best = Some(Best::new(val, mvx, mvy, teban));
+                nod.best = Some(Best::new(val, mvx, mvy));
                 // println!("n{depth}{}{} -> b{mvx}{mvy}", nod.x, nod.y);
             } else if best.unwrap().hyoka * fteban < val * fteban {
                 // println!("b{depth}{}{} -> b{mvx}{mvy}", nod.x, nod.y);
-                nod.best = Some(Best::new(val, mvx, mvy, teban));
+                nod.best = Some(Best::new(val, mvx, mvy));
             } else if newalpha >= beta {
                 // cut
                 return Some(nod.best.as_ref().unwrap().hyoka);
@@ -775,8 +781,18 @@ impl ShNode {
         self.child.clear();
     }
 
+    pub fn to_xy(&self) -> String {
+        format!("{}{}{}",
+            if self.teban == board::SENTE {
+                board::STONE_SENTE
+            } else {
+                board::STONE_GOTE
+            },
+            board::STR_GOTE.chars().nth(self.x as usize).unwrap(), self.y)
+    }
+
     pub fn dump(&self) -> String {
-        let mut logg = String::new();
+        // let mut logg = String::new();
         let mut ret = String::new();
         ret += &format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen);
 
@@ -785,45 +801,46 @@ impl ShNode {
             return ret;
         }
         let best = best.unwrap();
-        ret += &best.pos();
+        // ret += &best.pos();
         let x = best.x;
         let y = best.y;
         let mut m = self.child.iter().find(|&a|
             {
                 let n = a.read().unwrap();
-                logg += &format!("{}{},", n.x, n.y);
+                // logg += &format!("{}{},", n.x, n.y);
                 n.x == x && n.y == y
             }
         );
         if m.is_none() {
             return ret;
         }
-        logg += "#";
+        // logg += "#";
         let mut nd = m.unwrap().clone();
         loop {
+            ret += &nd.read().unwrap().to_xy();
             {
                 let ndt = nd.clone();
                 let nod = ndt.read().unwrap();
                 let besto = nod.best.as_ref();
                 if besto.is_none() {
-                    logg += "b.is_none";
+                    // logg += "b.is_none";
                     return ret;
                 }
                 let besto = besto.unwrap();
-                ret += &besto.pos();
+                // ret += &besto.pos();
 
                 let x = besto.x;
                 let y = besto.y;
-                logg += &format!("b is({x}{y}) ");
+                // logg += &format!("b is({x}{y}) ");
                 m = nod.child.iter().find(|&a|
                     {
                         let n = a.read().unwrap();
-                        logg += &format!("{}{},", n.x, n.y);
+                        // logg += &format!("{}{},", n.x, n.y);
                         n.x == x && n.y == y
                     }
                 );
                 if m.is_none() {
-                    logg += &format!("m.is_none for {x}{y}");
+                    // logg += &format!("m.is_none for {x}{y}");
                     // panic!("{}", logg);
                     return ret;
                 }
@@ -835,38 +852,38 @@ impl ShNode {
 
 #[test]
 fn test_shnode() {
-    let node = Arc::new(RwLock::new(ShNode::new(99, 2, 8)));
-    let node12 = Arc::new(RwLock::new(ShNode::new(1, 2, 7)));
+    let node = Arc::new(RwLock::new(ShNode::new(99, 2, 8, bitboard::NONE)));
+    let node12 = Arc::new(RwLock::new(ShNode::new(1, 2, 7, bitboard::SENTE)));
     node12.write().unwrap().kyokumen = 8765;
-    let node34 = Arc::new(RwLock::new(ShNode::new(3, 4, 7)));
+    let node34 = Arc::new(RwLock::new(ShNode::new(3, 4, 7, bitboard::GOTE)));
     node34.write().unwrap().kyokumen = 7654;
     node.write().unwrap().child.push(node12.clone());
     node.write().unwrap().child.push(node34.clone());
     node.write().unwrap().hyoka = Some(99.9);
     node.write().unwrap().kyokumen = 9876;
-    node.write().unwrap().best = Some(Best::new(99.9, 1, 2, bitboard::SENTE));
-    let node56 = Arc::new(RwLock::new(ShNode::new(5, 6, 6)));
+    node.write().unwrap().best = Some(Best::new(99.9, 1, 2));
+    let node56 = Arc::new(RwLock::new(ShNode::new(5, 6, 6, bitboard::NONE)));
     node56.write().unwrap().kyokumen = 6543;
-    let node78 = Arc::new(RwLock::new(ShNode::new(7, 8, 6)));
+    let node78 = Arc::new(RwLock::new(ShNode::new(7, 8, 6, bitboard::NONE)));
     node78.write().unwrap().kyokumen = 5432;
     node12.write().unwrap().child.push(node56.clone());
     node12.write().unwrap().child.push(node78.clone());
     node12.write().unwrap().hyoka = Some(99.9);
-    node12.write().unwrap().best = Some(Best::new(99.9, 7, 8, bitboard::GOTE));
-    let node9a = Arc::new(RwLock::new(ShNode::new(2, 1, 5)));
+    node12.write().unwrap().best = Some(Best::new(99.9, 7, 8));
+    let node9a = Arc::new(RwLock::new(ShNode::new(2, 1, 5, bitboard::SENTE)));
     node9a.write().unwrap().kyokumen = 4321;
-    let nodebc = Arc::new(RwLock::new(ShNode::new(4, 3, 5)));
+    let nodebc = Arc::new(RwLock::new(ShNode::new(4, 3, 5, bitboard::NONE)));
     nodebc.write().unwrap().kyokumen = 3210;
     node78.write().unwrap().child.push(node9a.clone());
     node78.write().unwrap().child.push(nodebc.clone());
     node78.write().unwrap().hyoka = Some(99.9);
-    node78.write().unwrap().best = Some(Best::new(99.9, 2, 1, bitboard::SENTE));
-    let nodede = Arc::new(RwLock::new(ShNode::new(6, 5, 4)));
-    let nodefg = Arc::new(RwLock::new(ShNode::new(8, 7, 4)));
+    node78.write().unwrap().best = Some(Best::new(99.9, 2, 1));
+    let nodede = Arc::new(RwLock::new(ShNode::new(6, 5, 4, bitboard::NONE)));
+    let nodefg = Arc::new(RwLock::new(ShNode::new(8, 7, 4, bitboard::NONE)));
     node9a.write().unwrap().child.push(nodede.clone());
     node9a.write().unwrap().child.push(nodefg.clone());
     node9a.write().unwrap().hyoka = Some(99.9);
-    node9a.write().unwrap().best = Some(Best::new(99.9, 8, 7, bitboard::GOTE));
+    node9a.write().unwrap().best = Some(Best::new(99.9, 8, 7));
 
     assert_eq!(node.read().unwrap().dump(), "val:Some(99.9), 9876 nodes. @@a2[]g8@@b1[]h7");
     assert_eq!(node12.read().unwrap().dump(), "val:Some(99.9), 8765 nodes. []g8@@b1[]h7");
