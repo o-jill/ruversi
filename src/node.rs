@@ -975,12 +975,15 @@ impl Node {
 
     pub fn dump(&self) -> String {
         let mut ret = String::new();
-        ret += &format!("{} nodes. ", self.kyokumen);
+        ret += &format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen);
         // ret += &format!("{:?}", self.best);
         // let x = self.best.unwrap().1;
         // let y = self.best.unwrap().2;
         // let n = self.child.iter().find(|&a| a.x == x && a.y == y);
         // ret += &format!("{:?}", n.unwrap().best);
+        if self.best.is_none() {
+            return  ret;
+        }
         let mut n = self;
         loop {
             let best = n.best.as_ref().unwrap();
@@ -1003,4 +1006,54 @@ impl Node {
         }
         ret
     }
+}
+
+#[test]
+fn test_node() {
+    let nodede = Node::new(6, 5, 4, bitboard::NONE);
+    let nodefg = Node::new(8, 7, 4, bitboard::NONE);
+
+    let mut nodebc = Node::new(4, 3, 5, bitboard::NONE);
+    nodebc.kyokumen = 3210;
+    assert_eq!(nodebc.dump(), "val:None, 3210 nodes. ");
+
+    let mut node9a = Node::new(2, 1, 5, bitboard::SENTE);
+    node9a.kyokumen = 4321;
+    node9a.hyoka = Some(99.9);
+    node9a.best = Some(Best::new(99.9, 8, 7));
+    node9a.child.push(nodede);
+    node9a.child.push(nodefg);
+    assert_eq!(node9a.dump(), "val:Some(99.9), 4321 nodes. []h7");
+
+    let mut node56 = Node::new(5, 6, 6, bitboard::NONE);
+    node56.kyokumen = 6543;
+    assert_eq!(node56.dump(), "val:None, 6543 nodes. ");
+
+    let mut node78 = Node::new(7, 8, 6, bitboard::NONE);
+    node78.kyokumen = 5432;
+    node78.hyoka = Some(99.9);
+    node78.best = Some(Best::new(99.9, 2, 1));
+    node78.child.push(nodebc);
+    node78.child.push(node9a);
+    assert_eq!(node78.dump(), "val:Some(99.9), 5432 nodes. @@b1[]h7");
+
+    let mut node12 = Node::new(1, 2, 7, bitboard::SENTE);
+    node12.kyokumen = 8765;
+    node12.child.push(node56);
+    node12.hyoka = Some(99.9);
+    node12.best = Some(Best::new(99.9, 7, 8));
+    node12.child.push(node78);
+    assert_eq!(node12.dump(), "val:Some(99.9), 8765 nodes. []g8@@b1[]h7");
+
+    let mut node34 = Node::new(3, 4, 7, bitboard::GOTE);
+    node34.kyokumen = 7654;
+    assert_eq!(node34.dump(), "val:None, 7654 nodes. ");
+
+    let mut node = Node::new(99, 2, 8, bitboard::NONE);
+    node.hyoka = Some(99.9);
+    node.kyokumen = 9876;
+    node.best = Some(Best::new(99.9, 1, 2));
+    node.child.push(node12);
+    node.child.push(node34);
+    assert_eq!(node.dump(), "val:Some(99.9), 9876 nodes. @@a2[]g8@@b1[]h7");
 }
