@@ -25,28 +25,23 @@ jobs:
       id: duel
       run: |
         echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release -- --duel 6 --ev1 data/evaltable.txt --ev2 data/evaltable.txt.old | tee > log.txt
+        cargo run --release -- --duel 6 --ev1 data/evaltable.txt --ev2 data/evaltable.txt.old | tee > kifu/log.txt
     - name: duel result
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel-result
-      run: tail -n 10 log.txt
-    # - name: Set current datetime as env variable
-    #   env:
-    #     TZ: 'Asia/Tokyo' # タイムゾーン指定
-    #   run: echo "CURRENT_DATETIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
-    # - name: Save artifacts
-    #   uses: actions/upload-artifact@v3
-    #   with:
-    #     name: kifu${{ matrix.kifu }}_${{ env.CURRENT_DATETIME }}
-    #     path: |
-    #       kifu
-    # - name: check error test
-    #   if: ${{ steps.utest.outcome == 'failure' }}
-    #   run: |
-    #     echo ${{ steps.utest.outcome }} == 'failure'
-    #     exit 1
-    # - name: check error run
-    #   if: ${{ steps.releaserun.outcome == 'failure' }}
-    #   run: |
-    #     echo ${{ steps.releaserun.outcome }} == 'failure'
-    #     exit 1
+      run: tail -n 5 log.txt
+    - name: Set current datetime as env variable
+      env:
+        TZ: 'Asia/Tokyo' # タイムゾーン指定
+      run: echo "CURRENT_DATETIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+    - name: Save artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: kifu${{ matrix.kifu }}_${{ env.CURRENT_DATETIME }}
+        path: |
+          kifu
+    - name: check error duel
+      if: ${{ steps.duel.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.utest.outcome }} == 'failure'
+        exit 1
