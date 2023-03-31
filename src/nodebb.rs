@@ -1856,6 +1856,13 @@ if true {  // ---------------
         // ret += &format!("{:?}", n.unwrap().best);
         let mut n = self;
         loop {
+            if n.best.is_none() {
+                // ret += &format!("best:none {:?}", n.hyoka);
+                // if n.child.is_empty() {break;}
+                // panic!("n.child is not empty... {} ret:{}", n.child.len(), ret);
+                break;
+            }
+
             let best = n.best.as_ref().unwrap();
             // ret += &format!("{}", best.to_str());
             let x = best.x;
@@ -1871,14 +1878,93 @@ if true {  // ---------------
             }
             // ret += &format!("{}", best.pos());
             ret += &n.to_xy();
+        }
+        ret
+    }
 
+    pub fn dumpv(&self) -> String {
+        let mut ret = String::new();
+        ret += &format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen);
+        // ret += &format!("{:?}", self.best);
+        // let x = self.best.unwrap().1;
+        // let y = self.best.unwrap().2;
+        // let n = self.child.iter().find(|&a| a.x == x && a.y == y);
+        // ret += &format!("{:?}", n.unwrap().best);
+        let mut n = self;
+        loop {
             if n.best.is_none() {
                 // ret += &format!("best:none {:?}", n.hyoka);
                 // if n.child.is_empty() {break;}
                 // panic!("n.child is not empty... {} ret:{}", n.child.len(), ret);
                 break;
             }
+
+            let best = n.best.as_ref().unwrap();
+            // ret += &format!("{}", best.to_str());
+            let x = best.x;
+            let y = best.y;
+            if n.child.len() == 1 {
+                n = &n.child[0];
+            } else {
+                let m = n.child.iter().find(|&a| a.x == x && a.y == y);
+                if m.is_none() {
+                    return ret;
+                }
+                n = m.unwrap();
+            }
+            // ret += &format!("{}", best.pos());
+            ret += &n.to_xy();
         }
         ret
     }
+}
+
+#[test]
+fn test_nodebb() {
+    let nodede = NodeBB::new(6, 5, 4, bitboard::NONE);
+    let nodefg = NodeBB::new(8, 7, 4, bitboard::NONE);
+
+    let mut nodebc = NodeBB::new(4, 3, 5, bitboard::NONE);
+    nodebc.kyokumen = 3210;
+    assert_eq!(nodebc.dumpv(), "val:None, 3210 nodes. ");
+
+    let mut node9a = NodeBB::new(2, 1, 5, bitboard::SENTE);
+    node9a.kyokumen = 4321;
+    node9a.hyoka = Some(99.9);
+    node9a.best = Some(Best::new(99.9, 8, 7));
+    node9a.child.push(nodede);
+    node9a.child.push(nodefg);
+    assert_eq!(node9a.dumpv(), "val:Some(99.9), 4321 nodes. []h7");
+
+    let mut node56 = NodeBB::new(5, 6, 6, bitboard::NONE);
+    node56.kyokumen = 6543;
+    assert_eq!(node56.dumpv(), "val:None, 6543 nodes. ");
+
+    let mut node78 = NodeBB::new(7, 8, 6, bitboard::NONE);
+    node78.kyokumen = 5432;
+    node78.hyoka = Some(99.9);
+    node78.best = Some(Best::new(99.9, 2, 1));
+    node78.child.push(nodebc);
+    node78.child.push(node9a);
+    assert_eq!(node78.dumpv(), "val:Some(99.9), 5432 nodes. @@b1[]h7");
+
+    let mut node12 = NodeBB::new(1, 2, 7, bitboard::SENTE);
+    node12.kyokumen = 8765;
+    node12.child.push(node56);
+    node12.hyoka = Some(99.9);
+    node12.best = Some(Best::new(99.9, 7, 8));
+    node12.child.push(node78);
+    assert_eq!(node12.dumpv(), "val:Some(99.9), 8765 nodes. []g8@@b1[]h7");
+
+    let mut node34 = NodeBB::new(3, 4, 7, bitboard::GOTE);
+    node34.kyokumen = 7654;
+    assert_eq!(node34.dumpv(), "val:None, 7654 nodes. ");
+
+    let mut node = NodeBB::new(99, 2, 8, bitboard::NONE);
+    node.hyoka = Some(99.9);
+    node.kyokumen = 9876;
+    node.best = Some(Best::new(99.9, 1, 2));
+    node.child.push(node12);
+    node.child.push(node34);
+    assert_eq!(node.dumpv(), "val:Some(99.9), 9876 nodes. @@a2[]g8@@b1[]h7");
 }
