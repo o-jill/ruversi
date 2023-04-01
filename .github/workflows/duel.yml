@@ -29,7 +29,11 @@ jobs:
     - name: duel result
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel-result
-      run: tail -n 5 kifu/log.txt
+      run: |
+        tail -n 5 kifu/log.txt
+        cat tools/header.txt > kifu/summary.html
+        cat kifu/log.txt >> kifu/summary.html
+        cat tools/footer.txt >> kifu/summary.html
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定

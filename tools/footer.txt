@@ -1,0 +1,6 @@
+</textarea>
+<br>
+<span id='output'>aaa</span>
+<!-- pre id='output'>aaa</pre-->
+</body>
+</html>
