@@ -1882,6 +1882,7 @@ if true {  // ---------------
         ret
     }
 
+    #[allow(dead_code)]
     pub fn dumpv(&self) -> String {
         let mut ret = String::new();
         ret += &format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen);
