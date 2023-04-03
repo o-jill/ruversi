@@ -229,10 +229,10 @@ impl Weight {
 
         let mut sum = *ow.last().unwrap();
 
-        let wtbn = &ow[board::CELL_2D * N_HIDDEN .. (board::CELL_2D + 1)* N_HIDDEN];
-        let wfs = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
-        let wdc = &ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
-        let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        let wtbn = unsafe{ow.as_ptr().add(board::CELL_2D * N_HIDDEN)};
+        let wfs = unsafe{ow.as_ptr().add((board::CELL_2D + 1) * N_HIDDEN)};
+        let wdc = unsafe{ow.as_ptr().add((board::CELL_2D + 1 + 2) * N_HIDDEN)};
+        let wh = unsafe{ow.as_ptr().add((board::CELL_2D + 1 + 2 + 1) * N_HIDDEN)};
 
         const N : usize = 4;
         let mut sumarr : [f32 ; N] = [0.0 ; N];
@@ -242,7 +242,7 @@ impl Weight {
             let mut sum44 : [f32 ; N * N] = [0.0 ; N * N];
 
             for n in 0..N {
-                let res4 = sum44[n * N..].as_mut_ptr();
+                let res4 = unsafe{sum44.as_mut_ptr().add(n * N)};
                 let w1 = &ow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
                 // let mut hidsum : f32 = dc[i];
                 let mut sum4: x86_64::__m128;
@@ -312,10 +312,10 @@ impl Weight {
             }
 
             unsafe {
-                let mut x1 = x86_64::_mm_load_ps(sum44[0..].as_ptr());
-                let mut x2 = x86_64::_mm_load_ps(sum44[4..].as_ptr());
-                let mut x3 = x86_64::_mm_load_ps(sum44[8..].as_ptr());
-                let mut x4 = x86_64::_mm_load_ps(sum44[12..].as_ptr());
+                let mut x1 = x86_64::_mm_load_ps(sum44.as_ptr());
+                let mut x2 = x86_64::_mm_load_ps(sum44.as_ptr().add(4));
+                let mut x3 = x86_64::_mm_load_ps(sum44.as_ptr().add(8));
+                let mut x4 = x86_64::_mm_load_ps(sum44.as_ptr().add(12));
 
                 x86_64::_MM_TRANSPOSE4_PS(&mut x1, &mut x2, &mut x3, &mut x4);
 
@@ -323,21 +323,21 @@ impl Weight {
                 let h34 = x86_64::_mm_add_ps(x3, x4);
                 let h1234 = x86_64::_mm_add_ps(h12, h34);
                 // teban
-                let wtbn = x86_64::_mm_load_ps(wtbn[hidx..].as_ptr());
+                let wtbn = x86_64::_mm_load_ps(wtbn.add(hidx));
                 let tbn = x86_64::_mm_set1_ps(teban);
                 let tbn4 = x86_64::_mm_mul_ps(wtbn, tbn);
                 let h1234 = x86_64::_mm_add_ps(h1234, tbn4);
                 // fixed stones
-                let wfsb4 = x86_64::_mm_load_ps(wfs[hidx..].as_ptr());
+                let wfsb4 = x86_64::_mm_load_ps(wfs.add(hidx));
                 let fsb = x86_64::_mm_set1_ps(fs.0 as f32);
                 let fsb4 = x86_64::_mm_mul_ps(wfsb4, fsb);
-                let wfsw4 = x86_64::_mm_load_ps(wfs[hidx + N_HIDDEN..].as_ptr());
+                let wfsw4 = x86_64::_mm_load_ps(wfs.add(hidx + N_HIDDEN));
                 let fsw = x86_64::_mm_set1_ps(fs.1 as f32);
                 let fsw4 = x86_64::_mm_mul_ps(wfsw4, fsw);
                 let fsbw = x86_64::_mm_add_ps(fsb4, fsw4);
                 let h1234 = x86_64::_mm_add_ps(h1234, fsbw);
                 // dc
-                let wdc4 = x86_64::_mm_load_ps(wdc[hidx..].as_ptr());
+                let wdc4 = x86_64::_mm_load_ps(wdc.add(hidx));
                 let h1234 = x86_64::_mm_add_ps(h1234, wdc4);
 
                 if USESOFTSIGN {  // softsign
@@ -355,7 +355,7 @@ impl Weight {
                     // let y4 = x86_64::_mm_mul_ps(wh4, ssgnadj);
 
                     // ($x / ($x.abs() + 1.0))  // -1 ~ 1
-                    let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
+                    let wh4 = x86_64::_mm_load_ps(wh.add(hidx));
                     let y4 = x86_64::_mm_mul_ps(wh4, ssgn);
 
                     x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
@@ -363,7 +363,7 @@ impl Weight {
                     let emx4 = weight::Weight::expmx_ps_simd(h1234);
                     let one = x86_64::_mm_set1_ps(1.0);
                     let hsp14 = x86_64::_mm_add_ps(emx4, one);
-                    let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
+                    let wh4 = x86_64::_mm_load_ps(wh.add(hidx));
                     let y4 = x86_64::_mm_div_ps(wh4, hsp14);
 
                     // let rhsp14 = x86_64::_mm_rcp_ps(hsp14);
