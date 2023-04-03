@@ -46,6 +46,7 @@ macro_rules! softsign {
     };
 }
 
+/// true:softsign, false:sigmoid
 const USESOFTSIGN : bool = true;
 
 pub struct Weight {
