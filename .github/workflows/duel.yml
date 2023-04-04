@@ -16,8 +16,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    # - name: Build
-    #   run: cargo build --verbose
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: false # runs 'bundle install' and caches installed gems automatically
     - name: cpu
       run: cat /proc/cpuinfo
     - name: Run duel
@@ -34,6 +37,7 @@ jobs:
         cat tools/header.txt > kifu/summary.html
         cat kifu/log.txt >> kifu/summary.html
         cat tools/footer.txt >> kifu/summary.html
+        ruby tools/summaryduel.rb < kifu/log.txt > duelsummary.html
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定
