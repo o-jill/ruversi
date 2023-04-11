@@ -395,6 +395,13 @@ impl GameBB {
         Ok(())
     }
 
+    /// play a game against Edax.  
+    /// # Arguments  
+    /// - f : fn for searching.  
+    /// - depth : searching depth.  
+    /// - turnin : Edax's turn.  
+    /// # Returns  
+    /// () or Error message.
     pub fn starto_against_edax(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
             depth : u8, turnin : i8) -> Result<(), String> {
@@ -781,6 +788,13 @@ impl Game {
         Ok(())
     }
 
+    /// play a game against Edax.  
+    /// # Arguments  
+    /// - f : fn for searching.  
+    /// - depth : searching depth.  
+    /// - turnin : Edax's turn.  
+    /// # Returns  
+    /// () or Error message.
     pub fn start_against_edax(&mut self,
             f : fn(&board::Board, u8) -> Option<(f32, node::Node)>,
             depth : u8, turnin : i8) -> Result<(), String> {

@@ -608,6 +608,169 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
     println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
 }
 
+/// duel between 2 eval tables.
+/// # Arguments
+/// - ev1 : eval table 1.
+/// - ev2 : eval table 2.
+fn duel_vs_edax(ev1 : &str, duellv : i8, depth : u8) {
+    if duellv < 3 || 13 < duellv {
+        panic!("duel level:{duellv} is not supported...");
+    }
+
+    let mut w1 = weight::Weight::new();
+    w1.read(ev1).unwrap();
+    let mut win = [0, 0];
+    let mut draw = [0, 0];
+    let mut lose = [0, 0];
+    let mut total = 0;
+    let mut dresult;
+    let mut result;
+
+    let think = MYOPT.get().unwrap().think.as_str();
+    let eqfile = initialpos::equalfile(duellv);
+    println!("equal file: {eqfile}");
+    let ip = initialpos::InitialPos::read(&eqfile).unwrap();
+    let rfentbl = &ip.rfens_all();
+    for rfen in rfentbl.iter() {
+        let turn = board::SENTE;
+        if cfg!(feature="bitboard") {
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            // play
+            // g.start_against_edax(
+            //     match think {
+            //         "" | "ab" => {
+            //             // nodebb::NodeBB::think_ab_extract2
+            //             nodebb::NodeBB::think_ab
+            //         },
+            //         "all" => {
+            //             nodebb::NodeBB::think
+            //         },
+            //         _ => { panic!("unknown thinking method.") }
+            //     }, depth, turn).unwrap();
+            g.starto_against_edax(
+                match think {
+                    "" | "ab" => {
+                        // nodebb::NodeBB::think_ab_extract2
+                        nodebb::NodeBB::thinko_ab_extract2
+                    },
+                    "all" => {
+                        nodebb::NodeBB::thinko
+                    },
+                    _ => { panic!("unknown thinking method.") }
+                }, depth, turn).unwrap();
+            dresult = g.kifu.winner();
+        } else {
+            // prepare game
+            let mut g = game::Game::from(rfen);
+            // g.start_against_edax(
+            //     match think {
+            //         "" | "ab" => {
+            //             // nodebb::NodeBB::think_ab_extract2
+            //             nodebb::NodeBB::think_ab
+            //         },
+            //         "all" => {
+            //             nodebb::NodeBB::think
+            //         },
+            //         _ => { panic!("unknown thinking method.") }
+            //     }, depth, turn).unwrap();
+            g.start_against_edax(
+                match think {
+                    "" | "ab" => {
+                        // nodebb::NodeBB::think_ab_extract2
+                        node::Node::think_ab_extract2
+                    },
+                    "all" => {
+                        node::Node::think
+                    },
+                    _ => { panic!("unknown thinking method.") }
+                }, depth, turn).unwrap();
+            dresult = g.kifu.winner();
+        }
+        result = dresult.unwrap();
+        total += 1;
+        match result {
+            kifu::SENTEWIN => {win[0] += 1;},
+            kifu::DRAW => {draw[0] += 1;},
+            kifu::GOTEWIN => {lose[0] += 1;},
+            _ => {}
+        }
+        let turn = board::GOTE;
+        if cfg!(feature="bitboard") {
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            // play
+            // g.start_against_edax(
+            //     match think {
+            //         "" | "ab" => {
+            //             // nodebb::NodeBB::think_ab_extract2
+            //             nodebb::NodeBB::think_ab
+            //         },
+            //         "all" => {
+            //             nodebb::NodeBB::think
+            //         },
+            //         _ => { panic!("unknown thinking method.") }
+            //     }, depth, turnh).unwrap();
+            g.starto_against_edax(
+                match think {
+                    "" | "ab" => {
+                        // nodebb::NodeBB::think_ab_extract2
+                        nodebb::NodeBB::thinko_ab_extract2
+                    },
+                    "all" => {
+                        nodebb::NodeBB::thinko
+                    },
+                    _ => { panic!("unknown thinking method.") }
+                }, depth, turn).unwrap();
+            dresult = g.kifu.winner();
+        } else {
+            // prepare game
+            let mut g = game::Game::from(rfen);
+            // g.start_against_edax(
+            //     match think {
+            //         "" | "ab" => {
+            //             // nodebb::NodeBB::think_ab_extract2
+            //             nodebb::NodeBB::think_ab
+            //         },
+            //         "all" => {
+            //             nodebb::NodeBB::think
+            //         },
+            //         _ => { panic!("unknown thinking method.") }
+            //     }, depth, turnh).unwrap();
+            g.start_against_edax(
+                match think {
+                    "" | "ab" => {
+                        // nodebb::NodeBB::think_ab_extract2
+                        node::Node::think_ab_extract2
+                    },
+                    "all" => {
+                        node::Node::think
+                    },
+                    _ => { panic!("unknown thinking method.") }
+                }, depth, turn).unwrap();
+            dresult = g.kifu.winner();
+        }
+        result = dresult.unwrap();
+        total += 1;
+        match result {
+            kifu::SENTEWIN => {lose[1] += 1;},
+            kifu::DRAW => {draw[1] += 1;},
+            kifu::GOTEWIN => {win[1] += 1;},
+            _ => {}
+        }
+        let twin = win[0] + win[1];
+        let tdraw = draw[0] + draw[1];
+        let tlose = lose[0] + lose[1];
+        let tsen = win[0] + lose[1] + tdraw;
+        let tgo = win[1] + lose[0] + tdraw;
+        let winrate = 100.0 * twin as f64 / (total - tdraw) as f64;
+        let r = 400.0 * (twin as f64 / tlose as f64).log10();
+        println!("total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate:.2}%,R,{r:+.1}");
+        println!("ev1 @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
+        println!("ev1 [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
+    }
+}
+
 /// read eval file.
 /// # Arguments
 /// - path : file path.
