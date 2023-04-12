@@ -6,6 +6,7 @@ pub enum Mode {
   GenKifu,
   Learn,
   Duel,
+  DuelExt,
   RFEN,
   Play,
   Help,
@@ -100,6 +101,23 @@ impl MyOption {
                     opt.mode = Mode::Learn;
                 } else if e == "--duel" {
                     opt.mode = Mode::Duel;
+                    match args.iter().nth(i + 1) {
+                        Some(lvl) => {
+                            let n = lvl.parse::<i8>();
+                            match n {
+                                Ok(level) => {
+                                    if level > 0 {
+                                        opt.duellv = level;
+                                        skip = 1;
+                                    }
+                                },
+                                _ => {},
+                            }
+                        },
+                        _ => {},
+                    }
+                } else if e == "--duelext" {
+                    opt.mode = Mode::DuelExt;
                     match args.iter().nth(i + 1) {
                         Some(lvl) => {
                             let n = lvl.parse::<i8>();
@@ -254,6 +272,7 @@ pub fn showhelp(msg : &str) {
 
     println!("options:
   --duel N   play games from some situations with evaltable1 and 2. N is optional. 3 ~ default 5 ~ 13.
+  --duelext N   play games from some situations against Edax. N is optional. 3 ~ default 5 ~ 13.
   --genkifu  set generatin kifu mode. default.
   --help or -h  show this help.
   --learn    set lerning mode. default.
