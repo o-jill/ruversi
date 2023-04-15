@@ -25,7 +25,7 @@ impl EdaxRunner {
 
     pub fn obf2file(&self, obf : &str) {
         // println!("put board to a file...");
-        let mut f = File::create(&self.path).unwrap();
+        let mut f = File::create(&self.obf).unwrap();
         f.write(obf.as_bytes()).unwrap();
         f.write("\n".as_bytes()).unwrap();
         f.flush().unwrap();
