@@ -984,13 +984,14 @@ fn equalrfen() -> Result<(), String> {
     let mut m1_0p1 = [0 ; 3];
     let mut count = 0;
     let mut res = String::new();
+    let er = edaxrunner::EdaxRunner::new();
     for rfen in rfentbl.iter() {
         // println!("rfen:{rfen}");
         let ban = bitboard::BitBoard::from(rfen).unwrap();
-        edaxrunner::obf2file(&ban.to_obf());
+        er.obf2file(&ban.to_obf());
 
         // launch edax
-        match edaxrunner::run() {
+        match er.run() {
             Ok((_, score)) => {
                 // println!("score:{score}");
                 match ["-01", "+00", "+01"].iter().position(|&x| x == score) {

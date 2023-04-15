@@ -332,6 +332,7 @@ impl GameBB {
     pub fn start_against_edax(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>,
             depth : u8, turnin : i8) -> Result<(), String> {
+        let er = edaxrunner::EdaxRunner::new();
         loop {
             let x;
             let y;
@@ -346,9 +347,9 @@ impl GameBB {
                     y = 0;
                 } else {
                     // println!("put board to a file...");
-                    edaxrunner::obf2file(&self.ban.to_obf());
+                    er.obf2file(&self.ban.to_obf());
                     // launch edax
-                    match edaxrunner::run() {
+                    match er.run() {
                         Ok((pos, _)) => {
                             x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                             y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
@@ -405,6 +406,7 @@ impl GameBB {
     pub fn starto_against_edax(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
             depth : u8, turnin : i8) -> Result<(), String> {
+        let er = edaxrunner::EdaxRunner::new();
         loop {
             // show
             println!("{}", self.ban.to_str());
@@ -419,9 +421,9 @@ impl GameBB {
                     y = 0;
                 } else {
                     // println!("put board to a file...");
-                    edaxrunner::obf2file(&self.ban.to_obf());
+                    er.obf2file(&self.ban.to_obf());
                     // launch edax
-                    match edaxrunner::run() {
+                    match er.run() {
                         Ok((pos, _)) => {
                             x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                             y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
@@ -798,6 +800,7 @@ impl Game {
     pub fn start_against_edax(&mut self,
             f : fn(&board::Board, u8) -> Option<(f32, node::Node)>,
             depth : u8, turnin : i8) -> Result<(), String> {
+        let er = edaxrunner::EdaxRunner::new();
         loop {
             let x;
             let y;
@@ -812,9 +815,9 @@ impl Game {
                     y = 0;
                 } else {
                     // println!("put board to a file...");
-                    edaxrunner::obf2file(&self.ban.to_obf());
+                    er.obf2file(&self.ban.to_obf());
                     // launch edax
-                    match edaxrunner::run() {
+                    match er.run() {
                         Ok((pos, _)) => {
                             x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                             y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
