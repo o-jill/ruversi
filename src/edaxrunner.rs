@@ -52,7 +52,7 @@ impl EdaxRunner {
         let lines : Vec<_> = txt.split("\n").collect();
         // println!("{}", lines[2]);
         let pos = lines[2].chars().position(|c| c.is_alphabetic());
-        if pos.is_none() {return Err(format!("EDAX:\"{}\"", lines[2]));}
+        if pos.is_none() {return Err(format!("EDAX:\"{}\"", txt));}
         let i = pos.unwrap();
         let mut xtxt = lines[2].chars().nth(i).unwrap().to_ascii_lowercase().to_string();
         xtxt.push(lines[2].chars().nth(i + 1).unwrap());
