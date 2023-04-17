@@ -178,6 +178,9 @@ impl GameBB {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
+                } else if movable.len() == 1 {
+                    x = movable[0].0;
+                    y = movable[0].1;
                 } else {
                     loop {
                         print!("your turn[a1 ~ h8]:");
@@ -260,6 +263,9 @@ impl GameBB {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
+                } else if movable.len() == 1 {
+                    x = movable[0].0;
+                    y = movable[0].1;
                 } else {
                     loop {
                         print!("your turn[a1 ~ h8]:");
@@ -345,6 +351,9 @@ impl GameBB {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
+                } else if movable.len() == 1 {
+                    x = movable[0].0;
+                    y = movable[0].1;
                 } else {
                     // println!("put board to a file...");
                     er.obf2file(&self.ban.to_obf());
@@ -419,6 +428,9 @@ impl GameBB {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
+                } else if movable.len() == 1 {
+                    x = movable[0].0;
+                    y = movable[0].1;
                 } else {
                     // println!("put board to a file...");
                     er.obf2file(&self.ban.to_obf());
@@ -722,6 +734,9 @@ impl Game {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
+                } else if movable.len() == 1 {
+                    x = movable[0].0;
+                    y = movable[0].1;
                 } else {
                     loop {
                         print!("your turn[a1 ~ h8]:");
@@ -813,6 +828,9 @@ impl Game {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
+                } else if movable.len() == 1 {
+                    x = movable[0].0;
+                    y = movable[0].1;
                 } else {
                     // println!("put board to a file...");
                     er.obf2file(&self.ban.to_obf());
