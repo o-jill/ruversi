@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufReader, BufRead, Write};
 
 const OBF : &str = "/tmp/test.obf";
 const CD : &str = "../../edax-reversi/";
@@ -23,6 +23,61 @@ impl EdaxRunner {
         }
     }
 
+    pub fn config(&mut self, obf : &str, cd : &str, path : &str, evfile : &str)
+            -> Result<(), String> {
+        if !obf.is_empty() {
+            self.obf = String::from(obf);
+        }
+        if !cd.is_empty() {
+            self.chdir = String::from(cd);
+        }
+        if !path.is_empty() {
+            self.path = String::from(path);
+        }
+        if !evfile.is_empty() {
+            self.evfile = String::from(evfile);
+        }
+        Ok(())
+    }
+
+    /// read config from a file.
+    /// 
+    /// ex.
+    /// obf: /tmp/test.obf
+    /// chdir: ~/edax/
+    /// edax: ./bin/edax
+    /// evfile: ./data/eval.dat
+    pub fn read(&mut self, path : &str) -> Result<(), String> {
+        let file = File::open(path);
+        if file.is_err() {return Err(file.err().unwrap().to_string());}
+
+        let file = file.unwrap();
+        let lines = BufReader::new(file);
+        for line in lines.lines() {
+            match line {
+                Ok(l) =>{
+                    if l.starts_with("obf:") {
+                        self.obf = String::from(l[4..].trim());
+                    } else if l.starts_with("curdir:") {
+                        self.chdir = String::from(l[7..].trim());
+                    } else if l.starts_with("edax:") {
+                        self.path = String::from(l[5..].trim());
+                    } else if l.starts_with("evfile:") {
+                        self.evfile = String::from(l[7..].trim());
+                    }
+                },
+                Err(err) => {return Err(err.to_string())}
+            }
+        }
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn to_str(&self) -> String {
+        format!("obf:{}, curdir:{}, edax:{}, evfile:{}",
+                self.obf, self.chdir, self.path, self.evfile)
+    }
+
     pub fn obf2file(&self, obf : &str) {
         // println!("put board to a file...");
         let mut f = File::create(&self.obf).unwrap();
@@ -42,7 +97,10 @@ impl EdaxRunner {
     pub fn run(&self) -> Result<(String, String), String> {
         // launch edax
         let cmd = match self.spawn() {
-            Err(msg) => return Err(format!("error running edax... [{}]", msg)),
+            Err(msg) => {
+                return Err(format!("error running edax... [{}], config:[{}]",
+                            msg, self.to_str()))
+            },
             Ok(prcs) => prcs,
         };
         // read stdout and get moves
