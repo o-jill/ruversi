@@ -7,17 +7,17 @@ const EDAXPATH : &str = "./bin/lEdax-x64-modern";
 const EVFILE : &str = "data/eval.dat";
 
 pub struct EdaxRunner {
-    pub obf : String,
-    pub cd : String,
-    pub path : String,
-    pub evfile : String
+    obf : String,
+    chdir : String,
+    path : String,
+    evfile : String
 }
 
 impl EdaxRunner {
     pub fn new() -> EdaxRunner {
         EdaxRunner {
             obf: String::from(OBF),
-            cd: String::from(CD),
+            chdir: String::from(CD),
             path: String::from(EDAXPATH),
             evfile: String::from(EVFILE)
         }
@@ -33,7 +33,7 @@ impl EdaxRunner {
 
     fn spawn(&self) -> std::io::Result<std::process::Child> {
         std::process::Command::new(&self.path)
-            .arg("--solve").arg(&self.obf).current_dir(&self.cd)
+            .arg("--solve").arg(&self.obf).current_dir(&self.chdir)
             .arg("--eval-file").arg(&self.evfile)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::null()).spawn()
