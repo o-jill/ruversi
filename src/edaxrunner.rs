@@ -8,7 +8,7 @@ const EVFILE : &str = "data/eval.dat";
 
 pub struct EdaxRunner {
     obf : String,
-    chdir : String,
+    curdir : String,
     path : String,
     evfile : String
 }
@@ -17,7 +17,7 @@ impl EdaxRunner {
     pub fn new() -> EdaxRunner {
         EdaxRunner {
             obf: String::from(OBF),
-            chdir: String::from(CD),
+            curdir: String::from(CD),
             path: String::from(EDAXPATH),
             evfile: String::from(EVFILE)
         }
@@ -29,7 +29,7 @@ impl EdaxRunner {
             self.obf = String::from(obf);
         }
         if !cd.is_empty() {
-            self.chdir = String::from(cd);
+            self.curdir = String::from(cd);
         }
         if !path.is_empty() {
             self.path = String::from(path);
@@ -44,7 +44,7 @@ impl EdaxRunner {
     /// 
     /// ex.
     /// obf: /tmp/test.obf
-    /// chdir: ~/edax/
+    /// curdir: ~/edax/
     /// edax: ./bin/edax
     /// evfile: ./data/eval.dat
     pub fn read(&mut self, path : &str) -> Result<(), String> {
@@ -59,7 +59,7 @@ impl EdaxRunner {
                     if l.starts_with("obf:") {
                         self.obf = String::from(l[4..].trim());
                     } else if l.starts_with("curdir:") {
-                        self.chdir = String::from(l[7..].trim());
+                        self.curdir = String::from(l[7..].trim());
                     } else if l.starts_with("edax:") {
                         self.path = String::from(l[5..].trim());
                     } else if l.starts_with("evfile:") {
@@ -75,7 +75,7 @@ impl EdaxRunner {
     #[allow(dead_code)]
     pub fn to_str(&self) -> String {
         format!("obf:{}, curdir:{}, edax:{}, evfile:{}",
-                self.obf, self.chdir, self.path, self.evfile)
+                self.obf, self.curdir, self.path, self.evfile)
     }
 
     pub fn obf2file(&self, obf : &str) {
@@ -88,7 +88,7 @@ impl EdaxRunner {
 
     fn spawn(&self) -> std::io::Result<std::process::Child> {
         std::process::Command::new(&self.path)
-            .arg("--solve").arg(&self.obf).current_dir(&self.chdir)
+            .arg("--solve").arg(&self.obf).current_dir(&self.curdir)
             .arg("--eval-file").arg(&self.evfile)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::null()).spawn()
