@@ -30,15 +30,6 @@ jobs:
         cd ..
         curl -OL https://github.com/abulmo/edax-reversi/releases/download/v4.4/eval.7z
         p7zip -d -k eval.7z
-        echo "------"
-        ls -l
-        echo "------"
-        ls -l bin/*
-        echo "------"
-        ls -l data/*
-        echo "------"
-        pwd
-        echo "------"
         popd
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
@@ -47,10 +38,8 @@ jobs:
         bundler-cache: false # runs 'bundle install' and caches installed gems automatically
     - name: Run duel edax
       continue-on-error: true # とにかくログを保存するとこまで行きたい
-      id: duel
+      id: dueledax
       run: |
-        pwd
-        echo "------"
         echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
         cargo run --release -- --duelext 3 --depth 9 --Edconf tools/edaxconfig.txt | tee > kifu/log.txt
     - name: duel result
@@ -72,8 +61,8 @@ jobs:
         name: dueledax_${{ env.CURRENT_DATETIME }}
         path: |
           kifu
-    - name: check error duel
-      if: ${{ steps.duel.outcome == 'failure' }}
+    - name: check error duel vs edax
+      if: ${{ steps.dueledax.outcome == 'failure' }}
       run: |
-        echo ${{ steps.utest.outcome }} == 'failure'
+        echo ${{ steps.dueledax.outcome }} == 'failure'
         exit 1
