@@ -11,6 +11,7 @@ mod bitboard;
 mod edaxrunner;
 mod extractrfen;
 mod game;
+mod gtprotocol;
 mod initialpos;
 mod myoption;
 mod node;
@@ -1018,9 +1019,33 @@ fn equalrfen() -> Result<(), String> {
     Ok(())
 }
 
-fn main() {
-    println!("Hello, reversi world!");
+fn gtp() {
+    let mut patha;
+    let mut path : &str = &MYOPT.get().unwrap().evaltable1;
+    if path.is_empty() {
+        patha = format!("{}", std::env::current_exe().unwrap().to_str().unwrap());
+        // println!("patha:{patha}");
+        match patha.rfind("/") {
+            Some(idx) => {
+                patha = patha[0..=idx].to_string();
+            },
+            None => {
+                patha = String::new();
+            }
+        }
+        patha += "data/evaltable.txt";
+        path = &patha;
+    }
 
+    let mut gtp = gtprotocol::GTP::new();
+    match gtp.start(path) {
+        Err(msg) => panic!("{msg}"),
+        Ok(msg) => println!("{msg}"),
+    }
+    std::process::exit(0);
+}
+
+fn main() {
     // read command options
     MYOPT.set(
         match myoption::MyOption::new(std::env::args().collect()) {
@@ -1032,6 +1057,11 @@ fn main() {
     if *mode == myoption::Mode::Help {
         help();
     }
+    if *mode == myoption::Mode::GTP {
+        gtp();
+    }
+
+    println!("Hello, reversi world!");
     println!("mode:{mode:?}");
 
     if cfg!(feature="bitboard") {

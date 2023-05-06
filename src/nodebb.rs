@@ -62,7 +62,7 @@ impl Best {
             // } else {
             //     board::STONE_GOTE
             // },
-            board::STR_GOTE.chars().nth(self.x as usize).unwrap(), self.y)
+            board::STR_SENTE.chars().nth(self.x as usize).unwrap(), self.y)
     }
 
     #[allow(dead_code)]

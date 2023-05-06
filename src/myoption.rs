@@ -7,6 +7,7 @@ pub enum Mode {
   Learn,
   Duel,
   DuelExt,
+  GTP,
   RFEN,
   Play,
   Help,
@@ -184,6 +185,8 @@ impl MyOption {
                     opt.opponent = Opponent::Edax;
                 } else if e == "--Edconf" {
                     old = e;
+                } else if e == "--gtp" {
+                    opt.mode = Mode::GTP;
                 } else {
                 }
             } else if old.is_empty() && e.starts_with("-") {
