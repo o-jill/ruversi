@@ -295,6 +295,7 @@ pub fn showhelp(msg : &str) {
   --playw    play a game agaist you. your turn is white(GOTE).
              you can use w/ --Edax to make ruversi white.
   --rfen <rfen>  think from rfen for debug. don't forget \"\" not to be recognized as 2 part.
+  --gtp      go text protocol mode.
 
   Common:
     --thinkab   use alpha-beta pruning. default.

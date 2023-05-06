@@ -19,6 +19,8 @@ NO Warranty.
   play against Edax instead of you. please use with --play(bw).  
 * --duel N  
   play games from some situations with evaltable1 and 2. N is optional. default 5.  
+* --gtp  
+  go text protocol mode.
 * --ev1 \<path>  
   a file for board evaluation.
 * --ev2 \<path>  
