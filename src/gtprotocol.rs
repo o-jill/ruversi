@@ -190,46 +190,50 @@ impl GTP {
             },
             "play" => {
                 // black D5
-                match self.ban.genmove() {
-                    Some(a) => {
-                        if a.is_empty() {
-                            self.ban.pass();
-                        } else {
-                            let color = match elem[idx + 1] {
-                                "black" => {bitboard::SENTE},
-                                "white" => {bitboard::GOTE},
-                                _ => {
-                                    self.status = Status::Error;
-                                    self.emsg = format!("error: unknown command [{line}].");
-                                    return;
-                                }
-                            };
-                            if color != self.ban.teban {
+                let color = match elem[idx + 1] {
+                    "black" => {bitboard::SENTE},
+                    "white" => {bitboard::GOTE},
+                    _ => {
+                        self.status = Status::Error;
+                        self.emsg = format!("error: unknown command [{line}].");
+                        return;
+                    }
+                };
+                if color != self.ban.teban {
+                    match self.ban.genmove() {
+                        Some(a) => {
+                            if a.is_empty() {
+                                self.ban.pass();
+                            } else {
                                 self.status = Status::Error;
                                 self.emsg = format!("error: turn mismatch.");
                                 return;
                             }
-                            let (x, y);
-                            match GTP::readpos(elem[idx + 2]) {
-                                Some(xy) => {
-                                    (x, y) = xy;
-                                    match self.ban.r#move(x, y) {
-                                        Err(msg) => {
-                                            self.status = Status::Error;
-                                            self.emsg = String::from(msg) + &self.ban.to_str();
-                                        },
-                                        Ok(b) => {self.ban = b;}
-                                    }
-                                },
-                                _ => {
-                                    self.status = Status::Error;
-                                    self.emsg = format!("error: unknown command [{line}].");
-                                    return;
-                                }
-                            }
+                        },
+                        _ => {
+                            self.status = Status::Error;
+                            self.emsg = format!("error: unknown command [{line}].");
+                            return;
                         }
                     }
-                    _ => {},
+                }
+                let (x, y);
+                match GTP::readpos(elem[idx + 2]) {
+                    Some(xy) => {
+                        (x, y) = xy;
+                        match self.ban.r#move(x, y) {
+                            Err(msg) => {
+                                self.status = Status::Error;
+                                self.emsg = String::from(msg) + &self.ban.to_str();
+                            },
+                            Ok(b) => {self.ban = b;}
+                        }
+                    },
+                    _ => {
+                        self.status = Status::Error;
+                        self.emsg = format!("error: unknown command [{line}].");
+                        return;
+                    }
                 }
                 self.respond(id);
             },
