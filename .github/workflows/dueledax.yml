@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v3
     - name: cpu
       run: cat /proc/cpuinfo
     - name: Setup Edax
@@ -28,20 +29,27 @@ jobs:
         cd ..
         curl -OL https://github.com/abulmo/edax-reversi/releases/download/v4.4/eval.7z
         p7zip -d -k eval.7z
-        ls
+        echo "------"
+        ls -l
+        echo "------"
         ls -l bin/*
+        echo "------"
         ls -l data/*
+        echo "------"
+        pwd
+        echo "------"
         popd
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.2'
         bundler-cache: false # runs 'bundle install' and caches installed gems automatically
-    - uses: actions/checkout@v3
     - name: Run duel edax
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel
       run: |
+        pwd
+        echo "------"
         echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
         cargo run --release -- --duelext 3 --depth 9 --Edconf tools/edaxconfig.txt | tee > kifu/log.txt
     - name: duel result
