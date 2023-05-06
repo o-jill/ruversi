@@ -1,4 +1,4 @@
-name: Duel
+name: vs Edax
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
     - name: Setup Edax
       run: |
         pushd .
-        git checkout https://github.com/abulmo/edax-reversi.git
+        git clone https://github.com/abulmo/edax-reversi.git
         cd edax-reversi
         pwd
         mkdir -p bin
