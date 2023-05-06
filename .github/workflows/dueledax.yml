@@ -1,0 +1,69 @@
+name: Duel
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: cpu
+      run: cat /proc/cpuinfo
+    - name: Setup Edax
+      run: |
+        pushd .
+        git checkout https://github.com/abulmo/edax-reversi.git
+        cd edax-reversi
+        pwd
+        mkdir -p bin
+        cd src
+        make build ARCH=x64 COMP=gcc OS=linux
+        curl -OL https://github.com/abulmo/edax-reversi/releases/download/v4.4/eval.7z
+        p7zip eval.7z
+        popd
+        ls -l bin/*
+        ls -l data/*
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: false # runs 'bundle install' and caches installed gems automatically
+    - uses: actions/checkout@v3
+    - name: Run duel edax
+      continue-on-error: true # とにかくログを保存するとこまで行きたい
+      id: duel
+      run: |
+        echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
+        cargo run --release -- --duelext 3 --depth 9 --Edconfig tools/edaxconfig.txt | tee > kifu/log.txt
+    - name: duel result
+      continue-on-error: true # とにかくログを保存するとこまで行きたい
+      id: duel-result
+      run: |
+        tail -n 5 kifu/log.txt
+        cat tools/header.txt > kifu/summary.html
+        cat kifu/log.txt >> kifu/summary.html
+        cat tools/footer.txt >> kifu/summary.html
+        ruby tools/summaryduel.rb < kifu/log.txt > kifu/duelsummary.html
+    - name: Set current datetime as env variable
+      env:
+        TZ: 'Asia/Tokyo' # タイムゾーン指定
+      run: echo "CURRENT_DATETIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+    - name: Save artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dueledax_${{ env.CURRENT_DATETIME }}
+        path: |
+          kifu
+    - name: check error duel
+      if: ${{ steps.duel.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.utest.outcome }} == 'failure'
+        exit 1
