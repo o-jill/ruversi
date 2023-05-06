@@ -23,6 +23,19 @@ impl EdaxRunner {
         }
     }
 
+    pub fn from_config(path : &str) -> Result<EdaxRunner, String> {
+        let mut er = EdaxRunner::new();
+        if path.is_empty() {
+            return Ok(er);
+        }
+
+        match er.read(path) {
+            Ok(_) => Ok(er),
+            Err(msg) => Err(msg),
+        }
+    }
+
+    #[allow(dead_code)]
     pub fn config(&mut self, obf : &str, cd : &str, path : &str, evfile : &str)
             -> Result<(), String> {
         if !obf.is_empty() {

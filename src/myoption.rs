@@ -28,6 +28,7 @@ pub struct MyOption {
     pub depth : u8,
     pub eta : Option<f32>,
     pub duellv : i8,
+    pub edaxconfig : String,
     pub evaltable1 : String,
     pub evaltable2 : String,
     pub initpos : String,
@@ -70,6 +71,7 @@ impl MyOption {
             depth : 7,
             eta : None,
             duellv : 5,
+            edaxconfig : String::new(),
             evaltable1 : String::new(),
             evaltable2 : String::new(),
             initpos: String::new(),
@@ -180,6 +182,8 @@ impl MyOption {
                     old = e;
                 } else if e == "--Edax" {
                     opt.opponent = Opponent::Edax;
+                } else if e == "--Edconf" {
+                    old = e;
                 } else {
                 }
             } else if old.is_empty() && e.starts_with("-") {
@@ -206,6 +210,12 @@ impl MyOption {
                         e.split(",").collect::<Vec<&str>>().iter().map(|&a| {
                             a.parse::<u32>().unwrap()}).collect();
                     old.clear();
+                } else if old == "--Edconf" {
+                    if std::path::Path::new(&e).exists() {
+                        opt.edaxconfig = e;
+                    } else {
+                        return Err(format!("failed find \"{e}\"."));
+                    }
                 } else if old == "--eta" {
                     let eta = e.parse::<f32>();
                     if eta.is_err() {
@@ -307,5 +317,6 @@ pub fn showhelp(msg : &str) {
         default: nothing.
   Play:
     --Edax  play against Edax instead of you. please use with --play(bw).
+    --Edconf <path>  a file for edax path configuration.
 ");
 }

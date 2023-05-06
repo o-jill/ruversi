@@ -624,6 +624,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
     let mut dresult;
     let mut result;
 
+    let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
@@ -656,7 +657,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
                         nodebb::NodeBB::thinko
                     },
                     _ => { panic!("unknown thinking method.") }
-                }, depth, turn).unwrap();
+                }, depth, turn, econf).unwrap();
             dresult = g.kifu.winner();
         } else {
             // prepare game
@@ -719,7 +720,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
                         nodebb::NodeBB::thinko
                     },
                     _ => { panic!("unknown thinking method.") }
-                }, depth, turn).unwrap();
+                }, depth, turn, econf).unwrap();
             dresult = g.kifu.winner();
         } else {
             // prepare game
@@ -853,6 +854,7 @@ fn edax(depth : u8, turnh: i8) {
         // prepare game
         let mut g = game::GameBB::new();
         // play
+        let econf = MYOPT.get().unwrap().edaxconfig.as_str();
         let think = MYOPT.get().unwrap().think.as_str();
         // g.start_against_edax(
         //     match think {
@@ -875,7 +877,7 @@ fn edax(depth : u8, turnh: i8) {
                     nodebb::NodeBB::thinko
                 },
                 _ => { panic!("unknown thinking method.") }
-            }, depth, turnh).unwrap();
+            }, depth, turnh, econf).unwrap();
     } else {
         // prepare game
         let mut g = game::Game::new();

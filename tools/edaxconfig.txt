@@ -1,0 +1,11 @@
+# edax configuration example
+
+obf: /tmp/testooooooo.obf
+curdir: ~/edax/
+edax: ./bin/edax
+evfile: ./data/eval.dat
+
+# obf: /tmp/test.obf
+# curdir: ../../edax-reversi/
+# edax: ./bin/lEdax-x64-modern
+# evfile: data/eval.dat

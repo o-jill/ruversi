@@ -414,8 +414,11 @@ impl GameBB {
     /// () or Error message.
     pub fn starto_against_edax(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
-            depth : u8, turnin : i8) -> Result<(), String> {
-        let er = edaxrunner::EdaxRunner::new();
+            depth : u8, turnin : i8, econf : &str) -> Result<(), String> {
+        let er = match edaxrunner::EdaxRunner::from_config(econf) {
+            Ok(e) => e,
+            Err(msg) => return Err(msg),
+        };
         loop {
             // show
             println!("{}", self.ban.to_str());
