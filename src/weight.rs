@@ -57,6 +57,12 @@ impl EvalFile {
     }
 }
 
+pub trait WeightAbs<T : board::Board> {
+    fn evaluate(&self, ban : &T) -> f32;
+    fn evaluatesimd(&self, ban : &T) -> f32;
+    fn evaluatesimdavx(&self, ban : &T) -> f32;
+}
+
 pub struct Weight {
     pub weight : Vec<f32>
 }
@@ -335,7 +341,7 @@ impl Weight {
         // println!("we:{:?}", self.weight);
     }
 
-    pub fn evaluatev1(&self, ban : &board::Board) -> f32 {
+    pub fn evaluatev1(&self, ban : &byteboard::ByteBoard) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -357,7 +363,7 @@ impl Weight {
         sum
     }
 
-    pub fn evaluatev1_simd(&self, ban : &board::Board) -> f32 {
+    pub fn evaluatev1_simd(&self, ban : &byteboard::ByteBoard) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -413,7 +419,7 @@ impl Weight {
         sum
     }
 
-    pub fn evaluatev2(&self, ban : &board::Board) -> f32 {
+    pub fn evaluatev2(&self, ban : &byteboard::ByteBoard) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -437,7 +443,7 @@ impl Weight {
     }
 
     #[allow(dead_code)]
-    pub fn evaluatev2_simd(&self, ban : &board::Board) -> f32 {
+    pub fn evaluatev2_simd(&self, ban : &byteboard::ByteBoard) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -605,7 +611,7 @@ impl Weight {
         // x86_64::_mm_store_ps(y, y4);
     }
 
-    pub fn evaluatev2_simd2(&self, ban : &board::Board) -> f32 {
+    pub fn evaluatev2_simd2(&self, ban : &byteboard::ByteBoard) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -722,7 +728,7 @@ impl Weight {
         sum
     }
 
-    pub fn evaluatev3(&self, ban : &board::Board) -> f32 {
+    pub fn evaluatev3(&self, ban : &byteboard::ByteBoard) -> f32 {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
         let ow = &self.weight;
@@ -759,18 +765,18 @@ impl Weight {
 
         let mut sum = *ow.last().unwrap();
 
-        let wtbn = &ow[bitboard::CELL_2D * N_HIDDEN .. (bitboard::CELL_2D + 1)* N_HIDDEN];
-        let wfs = &ow[(bitboard::CELL_2D + 1) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2) * N_HIDDEN];
-        let wdc = &ow[(bitboard::CELL_2D + 1 + 2) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
-        let wh = &ow[(bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        let wtbn = &ow[board::CELL_2D * N_HIDDEN .. (board::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         for i in 0..N_HIDDEN {
-            let w1 = &ow[i * bitboard::CELL_2D .. (i + 1) * bitboard::CELL_2D];
+            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = wdc[i];
-            for y in 0..bitboard::NUMCELL {
+            for y in 0..board::NUMCELL {
                 let mut bit = bitboard::LSB_CELL << y;
-                for x in 0..bitboard::NUMCELL {
-                    let w = w1[x + y * bitboard::NUMCELL];
-                    // let idx = x * bitboard::NUMCELL + y;
+                for x in 0..board::NUMCELL {
+                    let w = w1[x + y * board::NUMCELL];
+                    // let idx = x * board::NUMCELL + y;
                     // let diff = ((bit & black) >> idx) as i32 - ((bit & white) >> idx) as i32;
                     // hidsum += diff as f32 * w;
                     // hidsum += w * ban.at(x, y) as f32;
@@ -778,7 +784,7 @@ impl Weight {
                         if (bit & black) != 0 {w}
                         else if (bit & white) != 0 {-w}
                         else {0.0};
-                    bit <<= bitboard::NUMCELL;
+                    bit <<= board::NUMCELL;
                 }
             }
             hidsum += teban * wtbn[i];
@@ -789,7 +795,7 @@ impl Weight {
         sum
     }
 
-    pub fn evaluatev3_simd(&self, ban : &board::Board) -> f32 {
+    pub fn evaluatev3_simd(&self, ban : &byteboard::ByteBoard) -> f32 {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
         let ow = &self.weight;
@@ -1250,7 +1256,7 @@ impl Weight {
         sum
     }
 
-    pub fn forwardv1(&self, ban : &board::Board)
+    pub fn forwardv1(&self, ban : &byteboard::ByteBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1279,7 +1285,7 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
-    pub fn forwardv1_simd(&self, ban : &board::Board)
+    pub fn forwardv1_simd(&self, ban : &byteboard::ByteBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1349,7 +1355,7 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
-    pub fn forwardv2(&self, ban : &board::Board)
+    pub fn forwardv2(&self, ban : &byteboard::ByteBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1379,7 +1385,7 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
-    pub fn forwardv2_simd(&self, ban : &board::Board)
+    pub fn forwardv2_simd(&self, ban : &byteboard::ByteBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1454,7 +1460,7 @@ impl Weight {
     }
 
     #[allow(dead_code)]
-    pub fn forwardv2_simd2(&self, ban : &board::Board)
+    pub fn forwardv2_simd2(&self, ban : &byteboard::ByteBoard)
         -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1575,7 +1581,7 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
-    pub fn forwardv3(&self, ban : &board::Board)
+    pub fn forwardv3(&self, ban : &byteboard::ByteBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1610,7 +1616,7 @@ impl Weight {
         (hidden, hidsig, output, fs)
     }
 
-    pub fn forwardv3_simd(&self, ban : &board::Board)
+    pub fn forwardv3_simd(&self, ban : &byteboard::ByteBoard)
             -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1718,14 +1724,14 @@ impl Weight {
         for i in 0..N_HIDDEN {
             let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = wdc[i];
-            for y in 0..bitboard::NUMCELL {
+            for y in 0..board::NUMCELL {
                 let mut bit = bitboard::LSB_CELL << y;
-                for x in 0..bitboard::NUMCELL {
-                    let w = w1[x + y * bitboard::NUMCELL];
+                for x in 0..board::NUMCELL {
+                    let w = w1[x + y * board::NUMCELL];
                     let cb = (black & bit) != 0;
                     let cw = (white & bit) != 0;
                     hidsum += if cb {w} else if cw {-w} else {0.0};
-                    bit <<= bitboard::NUMCELL;
+                    bit <<= board::NUMCELL;
                 }
             }
             hidsum += teban * wtbn[i];
@@ -2199,7 +2205,7 @@ impl Weight {
             let ban = ban.rotate180();
             self.learnbb(&ban, winner, eta);
         } else {
-            let ban = match board::Board::from(rfen) {
+            let ban = match byteboard::ByteBoard::from(rfen) {
                 Ok(b) => {b},
                 Err(e) => {return Err(e)}
             };
@@ -2214,7 +2220,7 @@ impl Weight {
     }
 
     fn backwardv1(&mut self,
-            ban : &board::Board, winner : i8, eta : f32,
+            ban : &byteboard::ByteBoard, winner : i8, eta : f32,
             hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN], output : &[f32 ; N_OUTPUT]) {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -2269,7 +2275,7 @@ impl Weight {
     }
 
     fn backwardv2(&mut self,
-        ban : &board::Board, winner : i8, eta : f32,
+        ban : &byteboard::ByteBoard, winner : i8, eta : f32,
         hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN], output : &[f32 ; N_OUTPUT]) {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -2367,7 +2373,7 @@ impl Weight {
     }
 
     pub fn backwardv3(&mut self,
-        ban : &board::Board, winner : i8, eta : f32,
+        ban : &byteboard::ByteBoard, winner : i8, eta : f32,
         (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -2500,16 +2506,16 @@ impl Weight {
             let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let heta = *h * eta;
 
-            for y in 0..bitboard::NUMCELL {
+            for y in 0..board::NUMCELL {
                 let mut bit = bitboard::LSB_CELL << y;
-                for x in 0..bitboard::NUMCELL {
-                    // let w = w1[x + y * bitboard::NUMCELL];
+                for x in 0..board::NUMCELL {
+                    // let w = w1[x + y * board::NUMCELL];
                     let cb = (black & bit) != 0;
                     let cw = (white & bit) != 0;
                     let diff = if cb {heta} else if cw {-heta} else {0.0};
-                    w1[x + y * bitboard::NUMCELL] -= diff;
+                    w1[x + y * board::NUMCELL] -= diff;
 
-                    bit <<= bitboard::NUMCELL;
+                    bit <<= board::NUMCELL;
                 }
             }
 
@@ -2678,7 +2684,7 @@ impl Weight {
         }
     }
 
-    fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
+    fn learn(&mut self, ban : &byteboard::ByteBoard, winner : i8, eta : f32) {
         if cfg!(feature="nnv1") {
             // forward
             let (hidden, hidsig, output) =
@@ -2731,6 +2737,35 @@ impl Weight {
     }
 }
 
+impl WeightAbs<bitboard::BitBoard> for Weight {
+    fn evaluate(&self, ban : &bitboard::BitBoard) -> f32 {
+        self.evaluatev3bb(ban)
+    }
+
+    fn evaluatesimd(&self, ban : &bitboard::BitBoard) -> f32 {
+        self.evaluatev3bb_simd(ban)
+    }
+
+    fn evaluatesimdavx(&self, ban : &bitboard::BitBoard) -> f32 {
+        self.evaluatev3bb_simdavx(ban)
+    }
+}
+
+impl WeightAbs<byteboard::ByteBoard> for Weight {
+    fn evaluate(&self, ban : &byteboard::ByteBoard) -> f32 {
+        self.evaluatev3(ban)
+    }
+
+    fn evaluatesimd(&self, ban : &byteboard::ByteBoard) -> f32 {
+        self.evaluatev3_simd(ban)
+    }
+
+    fn evaluatesimdavx(&self, ban : &byteboard::ByteBoard) -> f32 {
+        self.evaluatev3_simd(ban)
+        // self.evaluatev3_simdavx(ban)
+    }
+}
+
 #[allow(dead_code)]
 fn dbg_assert_eq_vec(va : &[f32], vb : &[f32]) -> bool {
     for (a, b) in va.iter().zip(vb.iter()) {
@@ -2775,7 +2810,7 @@ fn testweight() {
     for rfen in rfens.iter() {
         for winner in -1..=1 {
             let bban = bitboard::BitBoard::from(rfen).unwrap();
-            let ban = board::Board::from(rfen).unwrap();
+            let ban = byteboard::ByteBoard::from(rfen).unwrap();
             ban.put();
             let mut w = weight::Weight::new();
             w.init();

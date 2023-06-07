@@ -127,8 +127,8 @@ impl GTP {
                 //4 genmove white
                 // =4 C3
                 let color = match elem[idx + 1] {
-                    "black" => {bitboard::SENTE},
-                    "white" => {bitboard::GOTE},
+                    "black" => {board::SENTE},
+                    "white" => {board::GOTE},
                     _ => {
                         self.status = Status::Error;
                         self.emsg = format!("error: unknown command [{line}].");
@@ -191,8 +191,8 @@ impl GTP {
             "play" => {
                 // black D5
                 let color = match elem[idx + 1] {
-                    "black" => {bitboard::SENTE},
-                    "white" => {bitboard::GOTE},
+                    "black" => {board::SENTE},
+                    "white" => {board::GOTE},
                     _ => {
                         self.status = Status::Error;
                         self.emsg = format!("error: unknown command [{line}].");

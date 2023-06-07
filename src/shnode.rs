@@ -130,7 +130,7 @@ impl ShNode {
             return None;
         }
 
-        let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth, bitboard::NONE)));
+        let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth, board::NONE)));
         // println!("{}", node.lock().unwrap().dump());
         let mut moves = moves.unwrap();
         if moves.len() == 0 {  // pass
@@ -276,7 +276,7 @@ impl ShNode {
     #[allow(dead_code)]
     pub fn think_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, Arc<RwLock<ShNode>>)> {
-        let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth, bitboard::NONE)));
+        let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth, board::NONE)));
         if depth == 0 {
             return None;
         }
@@ -349,7 +349,7 @@ impl ShNode {
                 let val = ShNode::think_internal_ab(leaf, &newban, alpha, beta);
                 leaf.write().unwrap().hyoka = val;
                 let val = val.unwrap();
-                if teban == bitboard::SENTE {
+                if teban == board::SENTE {
                     let mut sa = sal.lock().unwrap();
                     if val > *sa {
                         *sa = val;
@@ -357,7 +357,7 @@ impl ShNode {
                     } else {
                         alpha = *sa;
                     }
-                } else if teban == bitboard::GOTE {
+                } else if teban == board::GOTE {
                     let mut sb = sbe.lock().unwrap();
                     if val < *sb {
                         *sb = val;
@@ -396,7 +396,7 @@ impl ShNode {
             let val = ShNode::think_internal_ab(leaf, &newban, alpha, beta);
             leaf.write().unwrap().hyoka = val;
             let val = val.unwrap();
-            if teban == bitboard::SENTE {
+            if teban == board::SENTE {
                 let mut sa = salpha.lock().unwrap();
                 if val > *sa {
                     *sa = val;
@@ -404,7 +404,7 @@ impl ShNode {
                 } else {
                     alpha = *sa;
                 }
-            } else if teban == bitboard::GOTE {
+            } else if teban == board::GOTE {
                 let mut sb = sbeta.lock().unwrap();
                 if val < *sb {
                     *sb = val;
@@ -449,7 +449,7 @@ impl ShNode {
     pub fn think_ab_extract2(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, Arc<RwLock<ShNode>>)> {
         let node = Arc::new(RwLock::new(
-                ShNode::new(0, 0, depth, bitboard::NONE)));
+                ShNode::new(0, 0, depth, board::NONE)));
         if depth == 0 {
             return None;
         }
@@ -568,7 +568,7 @@ impl ShNode {
                 leaf.write().unwrap().hyoka = val;
                 let val = val.unwrap();
         // km += leaf.lock().unwrap().kyokumen;
-                if teban == bitboard::SENTE {
+                if teban == board::SENTE {
                     let mut sa = sal.lock().unwrap();
                     if val > *sa {
                         *sa = val;
@@ -576,7 +576,7 @@ impl ShNode {
                     } else {
                         alpha = *sa;
                     }
-                } else if teban == bitboard::GOTE {
+                } else if teban == board::GOTE {
                     let mut sb = sbe.lock().unwrap();
                     if val < *sb {
                         *sb = val;
@@ -618,7 +618,7 @@ impl ShNode {
             leaf.write().unwrap().hyoka = val;
             let val = val.unwrap();
     // km += leaf.lock().unwrap().kyokumen;
-            if teban == bitboard::SENTE {
+            if teban == board::SENTE {
                 let mut sa = salpha.lock().unwrap();
                 if val > *sa {
                     *sa = val;
@@ -626,7 +626,7 @@ impl ShNode {
                 } else {
                     alpha = *sa;
                 }
-            } else if teban == bitboard::GOTE {
+            } else if teban == board::GOTE {
                 let mut sb = sbeta.lock().unwrap();
                 if val < *sb {
                     *sb = val;
@@ -852,34 +852,34 @@ impl ShNode {
 
 #[test]
 fn test_shnode() {
-    let node = Arc::new(RwLock::new(ShNode::new(99, 2, 8, bitboard::NONE)));
-    let node12 = Arc::new(RwLock::new(ShNode::new(1, 2, 7, bitboard::SENTE)));
+    let node = Arc::new(RwLock::new(ShNode::new(99, 2, 8, board::NONE)));
+    let node12 = Arc::new(RwLock::new(ShNode::new(1, 2, 7, board::SENTE)));
     node12.write().unwrap().kyokumen = 8765;
-    let node34 = Arc::new(RwLock::new(ShNode::new(3, 4, 7, bitboard::GOTE)));
+    let node34 = Arc::new(RwLock::new(ShNode::new(3, 4, 7, board::GOTE)));
     node34.write().unwrap().kyokumen = 7654;
     node.write().unwrap().child.push(node12.clone());
     node.write().unwrap().child.push(node34.clone());
     node.write().unwrap().hyoka = Some(99.9);
     node.write().unwrap().kyokumen = 9876;
     node.write().unwrap().best = Some(Best::new(99.9, 1, 2));
-    let node56 = Arc::new(RwLock::new(ShNode::new(5, 6, 6, bitboard::NONE)));
+    let node56 = Arc::new(RwLock::new(ShNode::new(5, 6, 6, board::NONE)));
     node56.write().unwrap().kyokumen = 6543;
-    let node78 = Arc::new(RwLock::new(ShNode::new(7, 8, 6, bitboard::NONE)));
+    let node78 = Arc::new(RwLock::new(ShNode::new(7, 8, 6, board::NONE)));
     node78.write().unwrap().kyokumen = 5432;
     node12.write().unwrap().child.push(node56.clone());
     node12.write().unwrap().child.push(node78.clone());
     node12.write().unwrap().hyoka = Some(99.9);
     node12.write().unwrap().best = Some(Best::new(99.9, 7, 8));
-    let node9a = Arc::new(RwLock::new(ShNode::new(2, 1, 5, bitboard::SENTE)));
+    let node9a = Arc::new(RwLock::new(ShNode::new(2, 1, 5, board::SENTE)));
     node9a.write().unwrap().kyokumen = 4321;
-    let nodebc = Arc::new(RwLock::new(ShNode::new(4, 3, 5, bitboard::NONE)));
+    let nodebc = Arc::new(RwLock::new(ShNode::new(4, 3, 5, board::NONE)));
     nodebc.write().unwrap().kyokumen = 3210;
     node78.write().unwrap().child.push(node9a.clone());
     node78.write().unwrap().child.push(nodebc.clone());
     node78.write().unwrap().hyoka = Some(99.9);
     node78.write().unwrap().best = Some(Best::new(99.9, 2, 1));
-    let nodede = Arc::new(RwLock::new(ShNode::new(6, 5, 4, bitboard::NONE)));
-    let nodefg = Arc::new(RwLock::new(ShNode::new(8, 7, 4, bitboard::NONE)));
+    let nodede = Arc::new(RwLock::new(ShNode::new(6, 5, 4, board::NONE)));
+    let nodefg = Arc::new(RwLock::new(ShNode::new(8, 7, 4, board::NONE)));
     node9a.write().unwrap().child.push(nodede.clone());
     node9a.write().unwrap().child.push(nodefg.clone());
     node9a.write().unwrap().hyoka = Some(99.9);

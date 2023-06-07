@@ -9,7 +9,7 @@ pub struct GameBB {
 }
 
 pub struct Game {
-    ban : board::Board,
+    ban : byteboard::ByteBoard,
     pub kifu : kifu::Kifu,
 }
 
@@ -494,7 +494,7 @@ impl GameBB {
             // self.ban.put();
             println!("{}", self.ban.to_str());
             // switch weight
-            if self.ban.teban == bitboard::SENTE {
+            if self.ban.teban == board::SENTE {
                 unsafe {
                     nodebb::WEIGHT.as_mut().unwrap().copy(et1);
                 }
@@ -553,7 +553,66 @@ impl GameBB {
             // self.ban.put();
             println!("{}", self.ban.to_str());
             // switch weight
-            if self.ban.teban == bitboard::SENTE {
+            if self.ban.teban == board::SENTE {
+                unsafe {
+                    nodebb::WEIGHT.as_mut().unwrap().copy(et1);
+                }
+            } else {
+                unsafe {
+                    nodebb::WEIGHT.as_mut().unwrap().copy(et2);
+                }
+            }
+            // think
+            let st = Instant::now();
+            let (val, node) = f(&self.ban, depth).unwrap();
+            // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
+            // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
+            let ft = st.elapsed();
+            println!("val:{val:.1} {} {}msec", node.dump(), ft.as_millis());
+            let best = node.best.as_ref().unwrap();
+            let x = best.x;
+            let y = best.y;
+            // apply move
+            let ban = self.ban.r#move(x, y).unwrap();
+            let rfen = self.ban.to_str();
+            let teban = self.ban.teban;
+            self.ban = ban;
+
+            // save to kifu
+            self.kifu.append(x as usize, y as usize, teban, rfen);
+
+            // check finished
+            if self.ban.is_passpass() {
+                break;
+            }
+            if self.ban.is_full() {
+                let rfen = self.ban.to_str();
+                let teban = self.ban.teban;
+                self.kifu.append(0, 0, teban, rfen);
+                break;
+            }
+        }
+        // check who won
+        self.kifu.winneris(self.ban.count());
+        println!("{}", self.kifu.to_str());
+        // show
+        self.ban.put();
+        Ok(())
+    }
+
+    /// # Arguments
+    /// - et1 : SENTE
+    /// - et2 : GOTE
+    pub fn starto_with_2et_abstract(&mut self,
+        f : fn(&dyn board::Board/*<bitboard::BitBoard>*/, u8) -> Option<(f32, &nodebb::NodeBB)>,
+        depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
+            -> Result<(), String> {
+        loop {
+            // show
+            // self.ban.put();
+            println!("{}", self.ban.to_str());
+            // switch weight
+            if self.ban.teban == board::SENTE {
                 unsafe {
                     nodebb::WEIGHT.as_mut().unwrap().copy(et1);
                 }
@@ -611,7 +670,7 @@ impl GameBB {
             // self.ban.put();
             println!("{}", self.ban.to_str());
             // switch weight
-            if self.ban.teban == bitboard::SENTE {
+            if self.ban.teban == board::SENTE {
                 unsafe {
                     nodebb::WEIGHT.as_mut().unwrap().copy(et1);
                 }
@@ -668,19 +727,19 @@ impl GameBB {
 impl Game {
     pub fn new() -> Game {
         Game {
-            ban : board::Board::init(),
+            ban : byteboard::ByteBoard::init(),
             kifu : kifu::Kifu::new(),
         }
     }
 
     pub fn from(rfen : &str) -> Game {
         Game {
-            ban: board::Board::from(rfen).unwrap(),
+            ban: byteboard::ByteBoard::from(rfen).unwrap(),
             kifu: kifu::Kifu::new()
         }
     }
 
-    pub fn start(&mut self, f : fn(&board::Board, u8) -> Option<(f32, node::Node)>, depth : u8) -> Result<(), String> {
+    pub fn start(&mut self, f : fn(&byteboard::ByteBoard, u8) -> Option<(f32, node::Node)>, depth : u8) -> Result<(), String> {
         loop {
             // show
             // self.ban.put();
@@ -724,7 +783,7 @@ impl Game {
     }
 
     pub fn start_against_stdin(&mut self,
-            f : fn(&board::Board, u8) -> Option<(f32, node::Node)>,
+            f : fn(&byteboard::ByteBoard, u8) -> Option<(f32, node::Node)>,
             depth : u8, turnin : i8) -> Result<(), String> {
         loop {
             let x;
@@ -816,7 +875,7 @@ impl Game {
     /// # Returns  
     /// () or Error message.
     pub fn start_against_edax(&mut self,
-            f : fn(&board::Board, u8) -> Option<(f32, node::Node)>,
+            f : fn(&byteboard::ByteBoard, u8) -> Option<(f32, node::Node)>,
             depth : u8, turnin : i8) -> Result<(), String> {
         let er = edaxrunner::EdaxRunner::new();
         loop {
@@ -886,7 +945,7 @@ impl Game {
     }
 
     pub fn start_with_2et(&mut self,
-            f : fn(&board::Board, u8) -> Option<(f32, node::Node)>,
+            f : fn(&byteboard::ByteBoard, u8) -> Option<(f32, node::Node)>,
             depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
         loop {

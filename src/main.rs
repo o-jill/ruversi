@@ -8,6 +8,7 @@ use rand::distributions::{Distribution, Uniform};
 
 mod board;
 mod bitboard;
+mod byteboard;
 mod edaxrunner;
 mod extractrfen;
 mod game;
@@ -33,7 +34,7 @@ fn trial() {
         // let rfen = "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b";  // diff
         // let rfen = "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w";  // diff
         let bban = bitboard::BitBoard::from(rfen).unwrap();
-        let ban = board::Board::from(rfen).unwrap();
+        let ban = byteboard::ByteBoard::from(rfen).unwrap();
         ban.put();
         let mut w = weight::Weight::new();
         w.init();
@@ -90,7 +91,7 @@ fn trial() {
                 *c = die.sample(&mut rng);
             }
             let tbn = die.sample(&mut rng);
-            let byb = board::Board::fromarray(cells, tbn);
+            let byb = byteboard::ByteBoard::fromarray(cells, tbn);
             let bib = bitboard::BitBoard::from(&byb.to_str()).unwrap();
             if false {
                 let yres;
@@ -136,14 +137,14 @@ fn trial() {
         }).cloned().collect::<Vec<String>>();
     println!("{:?}", files);
 
-    let ban = board::Board::new();
+    let ban = byteboard::ByteBoard::new();
     ban.put();
     let rfen = "aAaAaAaA/BbBb/C2c/dD/E3/2f/g1/H b";
     println!("rfen: {}", rfen);
-    let ban = board::Board::from(rfen).unwrap();
+    let ban = byteboard::ByteBoard::from(rfen).unwrap();
     ban.put();
     println!("RFEN:{}", ban.to_str());
-    let mut ban = board::Board::init();
+    let mut ban = byteboard::ByteBoard::init();
     ban.flipturn();
     ban.put();
     let st = Instant::now();
@@ -217,7 +218,7 @@ fn verbose(rfen : &str, depth : u8) {
             }
         }
     } else {
-        match board::Board::from(rfen) {
+        match byteboard::ByteBoard::from(rfen) {
             Err(msg) => {println!("{}", msg)},
             Ok(ban) => {
                 ban.put();
@@ -522,7 +523,8 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                     //     nodebb::NodeBB::think_ab,
                     //     depth, &w1, &w2).unwrap()
                     // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w1, &w2).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w1, &w2).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et_abstract(nodebb::NodeBB::thinko_ab_extract2_abstract, depth, &w1, &w2).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
@@ -563,8 +565,9 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                 "" | "ab" => {
                     // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, depth, &w1, &w2).unwrap()
                     // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w2, &w1).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w2, &w1).unwrap()
                     // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et_abstract(nodebb::NodeBB::thinko_ab_extract2_abstract, depth, &w2, &w1).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
@@ -909,7 +912,7 @@ pub fn postxt(x : u8, y : u8) -> String {
         return String::from("PASS");
     }
 
-    format!("{}{}", bitboard::STR_GOTE.chars().nth(x as usize).unwrap(), y)
+    format!("{}{}", board::STR_GOTE.chars().nth(x as usize).unwrap(), y)
 }
 
 /// generate RFENs by moving 2 stones with a RFEN.

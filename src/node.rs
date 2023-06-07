@@ -85,7 +85,7 @@ impl Node {
         }
     }
 
-    fn evaluate(ban : &board::Board) -> f32 {
+    fn evaluate(ban : &byteboard::ByteBoard) -> f32 {
         unsafe {
             if cfg!(feature="nnv1") {
                 if cfg!(feature = "nosimd") {
@@ -109,12 +109,12 @@ impl Node {
         }
     }
 
-    fn evalwtt(ban : &board::Board, tt : &mut transptable::TranspositionTable) -> f32 {
+    fn evalwtt(ban : &byteboard::ByteBoard, tt : &mut transptable::TranspositionTable) -> f32 {
         let id = if cfg!(feature="nosimd") {ban.to_id()} else {ban.to_id_simd()};
         tt.check_or_append(&id, || Node::evaluate(ban))
     }
 
-    pub fn think(ban : &board::Board, mut depth : u8) -> Option<(f32,Node)> {
+    pub fn think(ban : &byteboard::ByteBoard, mut depth : u8) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth, board::NONE);
         if depth == 0 {
             return None;
@@ -230,7 +230,7 @@ impl Node {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
-    pub fn think_internal(node:&mut Node, ban : &board::Board) -> Option<f32> {
+    pub fn think_internal(node:&mut Node, ban : &byteboard::ByteBoard) -> Option<f32> {
         let mut depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
@@ -282,7 +282,7 @@ impl Node {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn think_internal_tt(node:&mut Node, ban : &board::Board,
+    pub fn think_internal_tt(node:&mut Node, ban : &byteboard::ByteBoard,
         tt : &mut transptable::TranspositionTable) -> Option<f32> {
         let mut depth = node.depth;
         if ban.nblank() == 0 || ban.is_passpass() {
@@ -335,7 +335,7 @@ impl Node {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn think_ab(ban : &board::Board, mut depth : u8) -> Option<(f32,Node)> {
+    pub fn think_ab(ban : &byteboard::ByteBoard, mut depth : u8) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth, board::NONE);
         if depth == 0 {
             return None;
@@ -485,7 +485,7 @@ impl Node {
     }
 
     #[allow(dead_code)]
-    pub fn think_ab_extract2(ban : &board::Board, mut depth : u8)
+    pub fn think_ab_extract2(ban : &byteboard::ByteBoard, mut depth : u8)
             -> Option<(f32, Node)> {
         let mut node = Node::new(0, 0, depth, board::NONE);
         if depth == 0 {
@@ -683,7 +683,7 @@ impl Node {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
-    pub fn think_internal_ab_tt(node:&mut Node, ban : &board::Board, alpha : f32, beta : f32,
+    pub fn think_internal_ab_tt(node:&mut Node, ban : &byteboard::ByteBoard, alpha : f32, beta : f32,
             tt : &mut transptable::TranspositionTable) -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;
@@ -752,7 +752,7 @@ impl Node {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn think_internal_ab(node:&mut Node, ban : &board::Board, alpha : f32, beta : f32) -> Option<f32> {
+    pub fn think_internal_ab(node:&mut Node, ban : &byteboard::ByteBoard, alpha : f32, beta : f32) -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;
         if ban.nblank() == 0 || ban.is_passpass() {
@@ -820,7 +820,7 @@ impl Node {
         Some(node.best.as_ref().unwrap().hyoka)
     }
 
-    pub fn vb_think_ab(ban : &board::Board, mut depth : u8) -> Option<(f32,Node)> {
+    pub fn vb_think_ab(ban : &byteboard::ByteBoard, mut depth : u8) -> Option<(f32,Node)> {
         let mut node = node::Node::new(0, 0, depth, board::NONE);
         if depth == 0 {
             return None;
@@ -887,7 +887,7 @@ impl Node {
         Some((node.best.as_ref().unwrap().hyoka, node))
     }
 
-    pub fn vb_think_internal_ab(node:&mut Node, ban : &board::Board, alpha : f32, beta : f32) -> Option<f32> {
+    pub fn vb_think_internal_ab(node:&mut Node, ban : &byteboard::ByteBoard, alpha : f32, beta : f32) -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;
         if depth == 0 {
