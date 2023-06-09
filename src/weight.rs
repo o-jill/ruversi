@@ -58,13 +58,17 @@ impl EvalFile {
 }
 
 pub struct Weight {
-    pub weight : Vec<f32>
+    pub weight : Vec<f32>,
+    pub iweight : Vec<i32>,
 }
+
+const MAG_F32_TO_I32 : f32 = 4096.0;
 
 impl Weight {
     pub fn new() -> Weight {
         Weight {
-            weight: vec![0.0 ; N_WEIGHT]
+            weight: vec![0.0 ; N_WEIGHT],
+            iweight: vec![0 ; N_WEIGHT],
         }
     }
 
@@ -75,6 +79,15 @@ impl Weight {
 
         for a in self.weight.iter_mut() {
             *a = (rng.gen::<f64>() * 2.0 * range - range) as f32;
+        }
+
+        self.cvtf2i();
+    }
+
+    fn cvtf2i(&mut self) {
+        let mag = MAG_F32_TO_I32;
+        for (f, i) in self.weight.iter().zip(self.iweight.iter_mut()) {
+            *i = (f * mag) as i32;
         }
     }
 
@@ -139,6 +152,7 @@ impl Weight {
         }
         self.fromv3tov4(&newtable);
         // println!("v3:{:?}", self.weight);
+        self.cvtf2i();
         Ok(())
     }
 
@@ -151,6 +165,7 @@ impl Weight {
         }
         self.weight = newtable;
         // println!("v4:{:?}", self.weight);
+        self.cvtf2i();
         Ok(())
     }
 
@@ -923,6 +938,7 @@ impl Weight {
         let white = ban.white;
         let teban = ban.teban as f32;
         let ow = &self.weight;
+        let iow = &self.iweight;
 
         let fs = ban.fixedstones();
 
@@ -943,13 +959,74 @@ impl Weight {
             for n in 0..N {
                 let res4 = sum44[n * N..].as_mut_ptr();
                 let w1 = &ow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
+                let iw1 = &iow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
                 // let mut hidsum : f32 = dc[i];
                 let mut sum4: x86_64::__m128;
                 unsafe {
                     sum4 = x86_64::_mm_setzero_ps();
                 }
+                let mut isum4: x86_64::__m128i;
+                unsafe {
+                    isum4 = x86_64::_mm_setzero_si128();
+                }
                 const M : usize = 16;
                 let mut bit8 : u64 = 0x0101010101010101;
+let brd_int = false;
+let brd_int = true;
+if brd_int {
+    for j in 0..board::CELL_2D / M {
+        let idx = j * M;
+        let b81 = (bit8 & black) >> 2 * j;
+        let w81 = (bit8 & white) >> 2 * j;
+        bit8 <<= 1;
+        let b82 = (bit8 & black) >> 2 * j + 1;
+        let w82 = (bit8 & white) >> 2 * j + 1;
+        bit8 <<= 1;
+
+        unsafe {
+            let b08 = x86_64::_mm_set_epi64x(b82 as i64, b81 as i64);
+            let w08 = x86_64::_mm_set_epi64x(w82 as i64, w81 as i64);
+            let zero = x86_64::_mm_setzero_si128();
+            let wm08 = x86_64::_mm_cmpgt_epi8(w08, zero);
+            let c08 = x86_64::_mm_sub_epi8(b08, w08);
+            let c16l = x86_64::_mm_unpacklo_epi8(c08, wm08);
+            let c16h = x86_64::_mm_unpackhi_epi8(c08, wm08);
+
+            let s16l = x86_64::_mm_cmpgt_epi16(zero, c16l);
+            let s16h = x86_64::_mm_cmpgt_epi16(zero, c16h);
+            let c1 = x86_64::_mm_unpacklo_epi16(c16l, s16l);  // -1, 0, 1
+            let c2 = x86_64::_mm_unpackhi_epi16(c16l, s16l);
+            let c3 = x86_64::_mm_unpacklo_epi16(c16h, s16h);
+            let c4 = x86_64::_mm_unpackhi_epi16(c16h, s16h);
+
+            let x41 = x86_64::_mm_load_si128(iw1.as_ptr().add(idx) as *const x86_64::__m128i);
+            let x42 = x86_64::_mm_load_si128(iw1.as_ptr().add(idx + 4) as *const x86_64::__m128i);
+            let x43 = x86_64::_mm_load_si128(iw1.as_ptr().add(idx + 8) as *const x86_64::__m128i);
+            let x44 = x86_64::_mm_load_si128(iw1.as_ptr().add(idx + 12) as *const x86_64::__m128i);
+
+            let mn1 = x86_64::_mm_mul_epi32(c1, x41);
+            let mn2 = x86_64::_mm_mul_epi32(c2, x42);
+            let mn3 = x86_64::_mm_mul_epi32(c3, x43);
+            let mn4 = x86_64::_mm_mul_epi32(c4, x44);
+
+            let sum12 = x86_64::_mm_add_epi32(mn1, mn2);
+            let sum34 = x86_64::_mm_add_epi32(mn3, mn4);
+            let sum1234 = x86_64::_mm_add_epi32(sum12, sum34);
+
+            // let sm = x86_64::_mm_cvtepi32_ps(sum1234);
+            // let mag = x86_64::_mm_set1_ps(1.0 / MAG_F32_TO_I32);
+            // let w4 = x86_64::_mm_mul_ps(mag, sm);
+
+            isum4 = x86_64::_mm_add_epi32(isum4, sum1234);
+        }
+    }
+    unsafe {
+        let sm = x86_64::_mm_cvtepi32_ps(isum4);
+        let mag = x86_64::_mm_set1_ps(1.0 / MAG_F32_TO_I32);
+        let w4 = x86_64::_mm_mul_ps(mag, sm);
+        x86_64::_mm_store_ps(res4, w4);
+    }
+} else {
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
                     let b81 = (bit8 & black) >> 2 * j;
@@ -1008,6 +1085,7 @@ impl Weight {
                 unsafe {
                     x86_64::_mm_store_ps(res4, sum4);
                 }
+}
             }
 
             unsafe {
