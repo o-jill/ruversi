@@ -62,7 +62,9 @@ pub struct Weight {
     pub iweight : Vec<i32>,
 }
 
-const MAG_F32_TO_I32 : f32 = 4096.0;
+const MAG_F32_TO_I32 : f32 = 4096.0 * 16.0;
+// const BRD_INT : bool = false;
+const BRD_INT : bool = true;
 
 impl Weight {
     pub fn new() -> Weight {
@@ -764,6 +766,47 @@ impl Weight {
         sum
     }
 
+    pub fn evaluatev3bbi(&self, ban : &bitboard::BitBoard) -> f32 {
+        let black = ban.black;
+        let white = ban.white;
+        let teban = ban.teban as f32;
+        let ow = &self.weight;
+        let iow = &self.iweight;
+
+        let fs = ban.fixedstones();
+
+        let mut sum = *ow.last().unwrap();
+
+        let wtbn = &ow[bitboard::CELL_2D * N_HIDDEN .. (bitboard::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &ow[(bitboard::CELL_2D + 1) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &ow[(bitboard::CELL_2D + 1 + 2) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wh = &ow[(bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        for i in 0..N_HIDDEN {
+            let mut hidsum : f32 = wdc[i];
+            let w1 = &iow[i * bitboard::CELL_2D .. (i + 1) * bitboard::CELL_2D];
+            let mut isum = 0;
+            for y in 0..bitboard::NUMCELL {
+                let mut bit = bitboard::LSB_CELL << y;
+                for x in 0..bitboard::NUMCELL {
+                    let w = w1[x + y * bitboard::NUMCELL];
+                    isum +=
+                        if (bit & black) != 0 {w}
+                        else if (bit & white) != 0 {-w}
+                        else {0};
+
+                    bit <<= bitboard::NUMCELL;
+                }
+            }
+            hidsum += isum as f32 / MAG_F32_TO_I32;
+
+            hidsum += teban * wtbn[i];
+            hidsum += wfs[i] * fs.0 as f32;
+            hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
+            sum += wh[i] / (f32::exp(-hidsum) + 1.0);
+        }
+        sum
+    }
+
     pub fn evaluatev3bb(&self, ban : &bitboard::BitBoard) -> f32 {
         let black = ban.black;
         let white = ban.white;
@@ -971,9 +1014,7 @@ impl Weight {
                 }
                 const M : usize = 16;
                 let mut bit8 : u64 = 0x0101010101010101;
-let brd_int = false;
-let brd_int = true;
-if brd_int {
+if BRD_INT {
     for j in 0..board::CELL_2D / M {
         let idx = j * M;
         let b81 = (bit8 & black) >> 2 * j;
@@ -1162,9 +1203,7 @@ if brd_int {
         for i in 0..N_HIDDEN / N {
             let hidx = i * N;
             let mut sum48 : [f32 ; N * 8] = [0.0 ; N * 8];
-let brd_int = false;
-// let brd_int = true;
-if brd_int {
+if BRD_INT {
     for n in 0..N {
         let res8 = sum48[n * 8..].as_mut_ptr();
         let w1 = &iow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
@@ -2960,8 +2999,10 @@ fn testweight() {
             let mut w3 = weight::Weight::new();
             w3.copy(&w);
             let res_nosimde = w.evaluatev3bb(&bban);
+            let res_nosimdi = w.evaluatev3bbi(&bban);
             let res_simd = w.evaluatev3bb_simd(&bban);
             let res_simdavx = w.evaluatev3bb_simdavx(&bban);
+            println!("{res_nosimde} == {res_nosimdi} == {res_simd} == {res_simdavx} ???");
             assert!((res_nosimde - res_simd).abs() < 1e-6);
             assert!((res_nosimde - res_simdavx).abs() < 1e-6);
             // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
