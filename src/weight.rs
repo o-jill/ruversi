@@ -1039,16 +1039,16 @@ if BRD_INT {
             let c2 = x86_64::_mm_unpackhi_epi16(c16l, s16l);
             let c3 = x86_64::_mm_unpacklo_epi16(c16h, s16h);
             let c4 = x86_64::_mm_unpackhi_epi16(c16h, s16h);
-
+ 
             let x41 = x86_64::_mm_load_si128(iw1.as_ptr().add(idx) as *const x86_64::__m128i);
             let x42 = x86_64::_mm_load_si128(iw1.as_ptr().add(idx + 4) as *const x86_64::__m128i);
             let x43 = x86_64::_mm_load_si128(iw1.as_ptr().add(idx + 8) as *const x86_64::__m128i);
             let x44 = x86_64::_mm_load_si128(iw1.as_ptr().add(idx + 12) as *const x86_64::__m128i);
 
-            let mn1 = x86_64::_mm_mul_epi32(c1, x41);
-            let mn2 = x86_64::_mm_mul_epi32(c2, x42);
-            let mn3 = x86_64::_mm_mul_epi32(c3, x43);
-            let mn4 = x86_64::_mm_mul_epi32(c4, x44);
+            let mn1 = x86_64::_mm_mullo_epi32(c1, x41);
+            let mn2 = x86_64::_mm_mullo_epi32(c2, x42);
+            let mn3 = x86_64::_mm_mullo_epi32(c3, x43);
+            let mn4 = x86_64::_mm_mullo_epi32(c4, x44);
 
             let sum12 = x86_64::_mm_add_epi32(mn1, mn2);
             let sum34 = x86_64::_mm_add_epi32(mn3, mn4);
@@ -1280,10 +1280,10 @@ if BRD_INT {
                 let x83 = x86_64::_mm256_loadu_si256(w1.as_ptr().add(idx + 16) as *const x86_64::__m256i);
                 let x84 = x86_64::_mm256_loadu_si256(w1.as_ptr().add(idx + 24) as *const x86_64::__m256i);
 
-                let mul1 = x86_64::_mm256_mul_epi32(x81, c81);
-                let mul2 = x86_64::_mm256_mul_epi32(x82, c82);
-                let mul3 = x86_64::_mm256_mul_epi32(x83, c83);
-                let mul4 = x86_64::_mm256_mul_epi32(x84, c84);
+                let mul1 = x86_64::_mm256_mullo_epi32(x81, c81);
+                let mul2 = x86_64::_mm256_mullo_epi32(x82, c82);
+                let mul3 = x86_64::_mm256_mullo_epi32(x83, c83);
+                let mul4 = x86_64::_mm256_mullo_epi32(x84, c84);
 
                 sum8 = x86_64::_mm256_add_epi32(mul1, sum8);
                 sum8 = x86_64::_mm256_add_epi32(mul2, sum8);
