@@ -769,7 +769,7 @@ impl Weight {
     pub fn evaluatev3bbi(&self, ban : &bitboard::BitBoard) -> f32 {
         let black = ban.black;
         let white = ban.white;
-        let teban = ban.teban as f32;
+        let teban = ban.teban as i32;
         let ow = &self.weight;
         let iow = &self.iweight;
 
@@ -777,14 +777,13 @@ impl Weight {
 
         let mut sum = *ow.last().unwrap();
 
-        let wtbn = &ow[bitboard::CELL_2D * N_HIDDEN .. (bitboard::CELL_2D + 1)* N_HIDDEN];
-        let wfs = &ow[(bitboard::CELL_2D + 1) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2) * N_HIDDEN];
-        let wdc = &ow[(bitboard::CELL_2D + 1 + 2) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+        let wtbn = &iow[bitboard::CELL_2D * N_HIDDEN .. (bitboard::CELL_2D + 1)* N_HIDDEN];
+        let wfs = &iow[(bitboard::CELL_2D + 1) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2) * N_HIDDEN];
+        let wdc = &iow[(bitboard::CELL_2D + 1 + 2) * N_HIDDEN .. (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
         let wh = &ow[(bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         for i in 0..N_HIDDEN {
-            let mut hidsum : f32 = wdc[i];
             let w1 = &iow[i * bitboard::CELL_2D .. (i + 1) * bitboard::CELL_2D];
-            let mut isum = 0;
+            let mut isum = wdc[i];
             for y in 0..bitboard::NUMCELL {
                 let mut bit = bitboard::LSB_CELL << y;
                 for x in 0..bitboard::NUMCELL {
@@ -793,15 +792,16 @@ impl Weight {
                         if (bit & black) != 0 {w}
                         else if (bit & white) != 0 {-w}
                         else {0};
-
                     bit <<= bitboard::NUMCELL;
                 }
             }
-            hidsum += isum as f32 / MAG_F32_TO_I32;
+            isum += teban * wtbn[i];
 
-            hidsum += teban * wtbn[i];
-            hidsum += wfs[i] * fs.0 as f32;
-            hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
+            isum += wfs[i] * fs.0 as i32;
+            isum += wfs[i + N_HIDDEN] * fs.1 as i32;
+
+            let hidsum = isum as f32 / MAG_F32_TO_I32;
+
             sum += wh[i] / (f32::exp(-hidsum) + 1.0);
         }
         sum
