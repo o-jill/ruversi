@@ -1127,10 +1127,11 @@ if use_shuffle{
         const N : usize = 4;
         let mut sumarr : [f32 ; N] = [0.0 ; N];
 
+// let mut cellss : [i32;8] = [0;8];
+// let mut cellup : [i32;8] = [0;8];
         for i in 0..N_HIDDEN / N {
             let hidx = i * N;
             let mut sum48 : [f32 ; N * 8] = [0.0 ; N * 8];
-
             for n in 0..N {
                 let res8 = sum48[n * 8..].as_mut_ptr();
                 let w1 = &ow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
@@ -1171,6 +1172,66 @@ if use_shuffle{
                             (w84 >> 32) as i64, (w83 >> 32) as i64,
                             (w84 & 0xffffffff) as i64, (w83 & 0xffffffff) as i64);
 
+let use_shuffle = false;  // 550+2
+let use_shuffle = true;  // 550+2
+if use_shuffle {
+                        let c321 = x86_64::_mm256_sub_epi8(b32, w32);
+                        let c322 = x86_64::_mm256_sub_epi8(b322, w322);
+
+                        let zero = x86_64::_mm256_setzero_si256();
+                        // to i16
+                        let s321 = x86_64::_mm256_cmpgt_epi8(zero, c321);
+                        let s322 = x86_64::_mm256_cmpgt_epi8(zero, c322);
+                        // 0x0000000000000000777766665555444400000000000000003333222211110000
+                        let c161 = x86_64::_mm256_unpacklo_epi8(c321, s321);
+                        // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
+                        let c162 = x86_64::_mm256_unpackhi_epi8(c321, s321);
+                        // 0x0000000000000000777766665555444400000000000000003333222211110000
+                        let c163 = x86_64::_mm256_unpacklo_epi8(c322, s322);
+                        // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
+                        let c164 = x86_64::_mm256_unpackhi_epi8(c322, s322);
+
+                        // to i32
+                        // 0x7777777766666666555555554444444433333333222222221111111100000000
+                        let dst1 = x86_64::_mm256_set_epi32(
+                            7 * 0x01010101 - 1, 5 * 0x01010101 - 1, 3 * 0x01010101 - 1, 1 * 0x01010101 - 1,
+                            7 * 0x01010101 - 1, 5 * 0x01010101 - 1, 3 * 0x01010101 - 1, 1 * 0x01010101 - 1);
+                        let c81 = x86_64::_mm256_shuffle_epi8(c161, dst1);
+                        // x86_64::_mm256_store_si256(cellss.as_mut_ptr() as *mut x86_64::__m256i, c81);
+                        // let s161 = x86_64::_mm256_cmpgt_epi16(zero, c161);
+                        // let c81 = x86_64::_mm256_unpacklo_epi16(c161, s161);
+                        // x86_64::_mm256_store_si256(cellup.as_mut_ptr() as *mut x86_64::__m256i, c81);
+                        // println!("sh:{cellss:?} up:{cellup:?}");
+                        let c82 = x86_64::_mm256_shuffle_epi8(c162, dst1);
+                        let c83 = x86_64::_mm256_shuffle_epi8(c163, dst1);
+                        let c84 = x86_64::_mm256_shuffle_epi8(c164, dst1);
+                        let f81 = x86_64::_mm256_cvtepi32_ps(c81);
+                        let f82 = x86_64::_mm256_cvtepi32_ps(c82);
+                        let f83 = x86_64::_mm256_cvtepi32_ps(c83);
+                        let f84 = x86_64::_mm256_cvtepi32_ps(c84);
+
+                        let x81 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx));
+                        let x82 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx + 8));
+                        let x83 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx + 16));
+                        let x84 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx + 24));
+
+                        if true {  // fma
+                            sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
+                            sum8 = x86_64::_mm256_fmadd_ps(x82, f82, sum8);
+                            sum8 = x86_64::_mm256_fmadd_ps(x83, f83, sum8);
+                            sum8 = x86_64::_mm256_fmadd_ps(x84, f84, sum8);
+                        } else {
+                            let mul1 = x86_64::_mm256_mul_ps(x81, f81);
+                            let mul2 = x86_64::_mm256_mul_ps(x82, f82);
+                            let mul3 = x86_64::_mm256_mul_ps(x83, f83);
+                            let mul4 = x86_64::_mm256_mul_ps(x84, f84);
+
+                            let sum12 = x86_64::_mm256_add_ps(mul1, mul2);
+                            let sum34 = x86_64::_mm256_add_ps(mul3, mul4);
+                            let sum1234 = x86_64::_mm256_add_ps(sum12, sum34);
+                            sum8 = x86_64::_mm256_add_ps(sum8, sum1234);
+                        }
+} else {
                         let c321 = x86_64::_mm256_sub_epi8(b32, w32);
                         let c322 = x86_64::_mm256_sub_epi8(b322, w322);
 
@@ -1227,6 +1288,7 @@ if use_shuffle{
                             let sum1234 = x86_64::_mm256_add_ps(sum12, sum34);
                             sum8 = x86_64::_mm256_add_ps(sum8, sum1234);
                         }
+}
                     }
                 }
                 unsafe {
