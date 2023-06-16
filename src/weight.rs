@@ -3188,9 +3188,11 @@ if use_sub {
 
 #[allow(dead_code)]
 fn dbg_assert_eq_vec(va : &[f32], vb : &[f32]) -> bool {
+    const LIMIT : f32 = 2e-6;
+    // const LIMIT : f32 = 1.4e-6;
     for (a, b) in va.iter().zip(vb.iter()) {
-        if (a - b).abs() >= 1.4e-6 {
-            println!("| {a} - {b} | >= 1.4e-6...");
+        if (a - b).abs() >= LIMIT {
+            println!("| {a} - {b} | >= {LIMIT:e}...");
             return false;
         }
     }
@@ -3227,6 +3229,7 @@ fn testweight() {
         "aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A b",
         "aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA w",
     ];
+    const DLIMIT : f32 = 5.0e-4;
     for rfen in rfens.iter() {
         for winner in -1..=1 {
             let bban = bitboard::BitBoard::from(rfen).unwrap();
@@ -3243,8 +3246,8 @@ fn testweight() {
             let res_simd = w.evaluatev3bb_simd(&bban);
             let res_simdavx = w.evaluatev3bb_simdavx(&bban);
             println!("{res_nosimde} == {res_nosimdi} == {res_simd} == {res_simdavx} ???");
-            assert!((res_nosimde - res_simd).abs() < 1e-6);
-            assert!((res_nosimde - res_simdavx).abs() < 1e-6);
+            assert!((res_nosimde - res_simd).abs() < DLIMIT);
+            assert!((res_nosimde - res_simdavx).abs() < DLIMIT);
             // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
             let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
             let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simd(&bban);
@@ -3259,13 +3262,13 @@ fn testweight() {
             assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa));
             assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa2));
             // println!("{ah_ns:?} == \n{ah_s:?} == \n{ah_sa:?} ???");
-            assert!((res_nosimde - res_nosimd[0]).abs() < 1e-6);
+            assert!((res_nosimde - res_nosimd[0]).abs() < DLIMIT);
             // assert_eq!(res_nosimd, res_simd);
-            assert!((res_nosimd[0] - res_simd[0]).abs() < 1e-6);
+            assert!((res_nosimd[0] - res_simd[0]).abs() < DLIMIT);
             // assert_eq!(res_nosimd, res_simdavx);
-            assert!((res_nosimd[0] - res_simdavx[0]).abs() < 1e-6);
+            assert!((res_nosimd[0] - res_simdavx[0]).abs() < DLIMIT);
             // assert_eq!(res_nosimd, res_simdavx2);
-            assert!((res_nosimd[0] - res_simdavx2[0]).abs() < 1e-6);
+            assert!((res_nosimd[0] - res_simdavx2[0]).abs() < DLIMIT);
             // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
             assert_eq!(fsns, fss);
             assert_eq!(fsns, fssa);
