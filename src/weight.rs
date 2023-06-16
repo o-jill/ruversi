@@ -1430,34 +1430,24 @@ if BRD_INT {
                 let w322 = x86_64::_mm256_set_epi64x(
                     (w84 >> 32) as i64, (w83 >> 32) as i64,
                     (w84 & 0xffffffff) as i64, (w83 & 0xffffffff) as i64);
-let use_sub = false;
-// let use_sub = true;
+// let use_sub = false;  // 640
+let use_sub = true;  // 620
 if use_sub {
                 let zero = x86_64::_mm256_setzero_si256();
                 let b321 = x86_64::_mm256_cmpgt_epi8(b32, zero);
                 let b322 = x86_64::_mm256_cmpgt_epi8(b322, zero);
-                let w321 = x86_64::_mm256_cmpgt_epi8(w32, zero);
-                let w322 = x86_64::_mm256_cmpgt_epi8(w322, zero);
                 // to i16
                 let b161 = x86_64::_mm256_unpacklo_epi8(b321, b321);
                 let b162 = x86_64::_mm256_unpackhi_epi8(b321, b321);
                 let b163 = x86_64::_mm256_unpacklo_epi8(b322, b322);
                 let b164 = x86_64::_mm256_unpackhi_epi8(b322, b322);
-                let w161 = x86_64::_mm256_unpacklo_epi8(w321, w321);
-                let w162 = x86_64::_mm256_unpackhi_epi8(w321, w321);
-                let w163 = x86_64::_mm256_unpacklo_epi8(w322, w322);
-                let w164 = x86_64::_mm256_unpackhi_epi8(w322, w322);
                 // to i32
                 let b81 = x86_64::_mm256_unpacklo_epi16(b161, b161);
                 let b82 = x86_64::_mm256_unpacklo_epi16(b162, b162);
                 let b83 = x86_64::_mm256_unpacklo_epi16(b163, b163);
                 let b84 = x86_64::_mm256_unpacklo_epi16(b164, b164);
-                let w81 = x86_64::_mm256_unpacklo_epi16(w161, w161);
-                let w82 = x86_64::_mm256_unpacklo_epi16(w162, w162);
-                let w83 = x86_64::_mm256_unpacklo_epi16(w163, w163);
-                let w84 = x86_64::_mm256_unpacklo_epi16(w164, w164);
 
-                x86_64::_mm_prefetch(w1.as_ptr().add(idx) as *const i8, x86_64::_MM_HINT_NTA);
+                // x86_64::_mm_prefetch(w1.as_ptr().add(idx) as *const i8, x86_64::_MM_HINT_NTA);
                 let x81 = x86_64::_mm256_loadu_si256(w1.as_ptr().add(idx) as *const x86_64::__m256i);
                 let x82 = x86_64::_mm256_loadu_si256(w1.as_ptr().add(idx + 8) as *const x86_64::__m256i);
                 let x83 = x86_64::_mm256_loadu_si256(w1.as_ptr().add(idx + 16) as *const x86_64::__m256i);
@@ -1466,18 +1456,29 @@ if use_sub {
                 let pl2 = x86_64::_mm256_and_si256(b82, x82);
                 let pl3 = x86_64::_mm256_and_si256(b83, x83);
                 let pl4 = x86_64::_mm256_and_si256(b84, x84);
+                let pl12 = x86_64::_mm256_add_epi32(pl1, pl2);
+                let pl34 = x86_64::_mm256_add_epi32(pl3, pl4);
+                let pl1234 = x86_64::_mm256_add_epi32(pl12, pl34);
+                sum8 = x86_64::_mm256_add_epi32(sum8, pl1234);
+
+                let w321 = x86_64::_mm256_cmpgt_epi8(w32, zero);
+                let w322 = x86_64::_mm256_cmpgt_epi8(w322, zero);
+                let w161 = x86_64::_mm256_unpacklo_epi8(w321, w321);
+                let w162 = x86_64::_mm256_unpackhi_epi8(w321, w321);
+                let w163 = x86_64::_mm256_unpacklo_epi8(w322, w322);
+                let w164 = x86_64::_mm256_unpackhi_epi8(w322, w322);
+                let w81 = x86_64::_mm256_unpacklo_epi16(w161, w161);
+                let w82 = x86_64::_mm256_unpacklo_epi16(w162, w162);
+                let w83 = x86_64::_mm256_unpacklo_epi16(w163, w163);
+                let w84 = x86_64::_mm256_unpacklo_epi16(w164, w164);
                 let mn1 = x86_64::_mm256_and_si256(w81, x81);
                 let mn2 = x86_64::_mm256_and_si256(w82, x82);
                 let mn3 = x86_64::_mm256_and_si256(w83, x83);
                 let mn4 = x86_64::_mm256_and_si256(w84, x84);
 
-                let pl12 = x86_64::_mm256_add_epi32(pl1, pl2);
-                let pl34 = x86_64::_mm256_add_epi32(pl3, pl4);
-                let pl1234 = x86_64::_mm256_add_epi32(pl12, pl34);
                 let mn12 = x86_64::_mm256_add_epi32(mn1, mn2);
                 let mn34 = x86_64::_mm256_add_epi32(mn3, mn4);
                 let mn1234 = x86_64::_mm256_add_epi32(mn12, mn34);
-                sum8 = x86_64::_mm256_add_epi32(sum8, pl1234);
                 sum8 = x86_64::_mm256_sub_epi32(sum8, mn1234);
 } else {
                 // -1 or 0 or +1
