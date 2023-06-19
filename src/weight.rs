@@ -2808,6 +2808,7 @@ fn testweight() {
             let res_nosimde = w.evaluatev3bb(&bban);
             let res_simd = w.evaluatev3bb_simd(&bban);
             let res_simdavx = w.evaluatev3bb_simdavx(&bban);
+            println!("{res_nosimde} == {res_simd} == {res_simdavx} ???");
             assert!((res_nosimde - res_simd).abs() < 1e-6);
             assert!((res_nosimde - res_simdavx).abs() < 1e-6);
             // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
