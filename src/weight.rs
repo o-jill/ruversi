@@ -945,6 +945,7 @@ impl Weight {
         let white = ban.white;
         let teban = ban.teban as f32;
         let ow = &self.weight;
+        let sow = &self.sweight;
 
         let fs = ban.fixedstones();
 
@@ -965,6 +966,7 @@ impl Weight {
             for n in 0..N {
                 let res4 = sum44[n * N..].as_mut_ptr();
                 let w1 = &ow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
+                let sw1 = &sow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
                 // let mut hidsum : f32 = dc[i];
                 let mut sum4: x86_64::__m128;
                 unsafe {
@@ -1003,6 +1005,38 @@ impl Weight {
                         let ex2 = x86_64::_mm_or_si128(bm2, wm2);
                         let ex3 = x86_64::_mm_or_si128(bm3, wm3);
                         let ex4 = x86_64::_mm_or_si128(bm4, wm4);
+let use_f16 = false;  // 640
+// let use_f16 = true;  // 700
+if use_f16 {
+                        let x412 = x86_64::_mm_load_si128(
+                            sw1.as_ptr().add(idx) as *const x86_64::__m128i);
+                        let x434 = x86_64::_mm_load_si128(
+                            sw1.as_ptr().add(idx + 8) as *const x86_64::__m128i);
+                        let x41 = x86_64::_mm_cvtph_ps(x412);
+                        let x412 = x86_64::_mm_srli_si128(x412, 8);
+                        let x42 = x86_64::_mm_cvtph_ps(x412);
+                        let x43 = x86_64::_mm_cvtph_ps(x434);
+                        let x434 = x86_64::_mm_srli_si128(x434, 8);
+                        let x44 = x86_64::_mm_cvtph_ps(x434);
+                        let minus = x86_64::_mm_set1_ps(-0.0);
+                        let mn1 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm1), minus);
+                        let mn2 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm2), minus);
+                        let mn3 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm3), minus);
+                        let mn4 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm4), minus);
+                        let m41 = x86_64::_mm_xor_ps(x41, mn1);
+                        let m42 = x86_64::_mm_xor_ps(x42, mn2);
+                        let m43 = x86_64::_mm_xor_ps(x43, mn3);
+                        let m44 = x86_64::_mm_xor_ps(x44, mn4);
+                        let w1 = x86_64::_mm_and_ps(m41, x86_64::_mm_castsi128_ps(ex1));
+                        let w2 = x86_64::_mm_and_ps(m42, x86_64::_mm_castsi128_ps(ex2));
+                        let w3 = x86_64::_mm_and_ps(m43, x86_64::_mm_castsi128_ps(ex3));
+                        let w4 = x86_64::_mm_and_ps(m44, x86_64::_mm_castsi128_ps(ex4));
+
+                        let sum12 = x86_64::_mm_add_ps(w1, w2);
+                        let sum34 = x86_64::_mm_add_ps(w3, w4);
+                        let sum1234 = x86_64::_mm_add_ps(sum12, sum34);
+                        sum4 = x86_64::_mm_add_ps(sum4, sum1234);
+} else {
                         let x41 = x86_64::_mm_load_ps(w1.as_ptr().add(idx));
                         let x42 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 4));
                         let x43 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 8));
@@ -1025,6 +1059,7 @@ impl Weight {
                         let sum34 = x86_64::_mm_add_ps(w3, w4);
                         let sum1234 = x86_64::_mm_add_ps(sum12, sum34);
                         sum4 = x86_64::_mm_add_ps(sum4, sum1234);
+}
                     }
                 }
                 unsafe {
