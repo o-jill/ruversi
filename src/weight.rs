@@ -58,13 +58,15 @@ impl EvalFile {
 }
 
 pub struct Weight {
-    pub weight : Vec<f32>
+    pub weight : Vec<f32>,
+    pub sweight : Vec<i16>
 }
 
 impl Weight {
     pub fn new() -> Weight {
         Weight {
-            weight: vec![0.0 ; N_WEIGHT]
+            weight: vec![0.0 ; N_WEIGHT],
+            sweight: vec![0 ; N_WEIGHT]
         }
     }
 
@@ -75,6 +77,24 @@ impl Weight {
 
         for a in self.weight.iter_mut() {
             *a = (rng.gen::<f64>() * 2.0 * range - range) as f32;
+        }
+
+        self.cvtf322f16();
+    }
+
+    fn cvtf322f16(&mut self) {
+        let ow = self.weight.as_ptr();
+        let sow = self.sweight.as_mut_ptr();
+        for i in 0..board::CELL_2D * N_HIDDEN / 8 {
+            const MODE :i32 = x86_64::_MM_FROUND_TO_NEAREST_INT ;
+            unsafe {
+                let h1 = x86_64::_mm_cvtps_ph(
+                            x86_64::_mm_load_ps(ow.add(i * 4)), MODE);
+                let h2 = x86_64::_mm_cvtps_ph(
+                            x86_64::_mm_load_ps(ow.add(i * 4 + 4)), MODE);
+                let h12 = x86_64::_mm_unpacklo_epi64(h1, h2);
+                x86_64::_mm_store_si128(sow.add(i * 8) as *mut x86_64::__m128i, h12);
+            }
         }
     }
 
@@ -139,6 +159,7 @@ impl Weight {
         }
         self.fromv3tov4(&newtable);
         // println!("v3:{:?}", self.weight);
+        self.cvtf322f16();
         Ok(())
     }
 
@@ -151,6 +172,7 @@ impl Weight {
         }
         self.weight = newtable;
         // println!("v4:{:?}", self.weight);
+        self.cvtf322f16();
         Ok(())
     }
 
