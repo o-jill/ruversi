@@ -1124,6 +1124,7 @@ if use_f16 {
         let white = ban.white;
         let teban = ban.teban as f32;
         let ow = &self.weight;
+        let sow = &self.sweight;
 
         let fs = ban.fixedstones();
 
@@ -1144,6 +1145,7 @@ if use_f16 {
             for n in 0..N {
                 let res8 = sum48[n * 8..].as_mut_ptr();
                 let w1 = &ow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
+                let sw1 = &sow[(hidx + n) * board::CELL_2D .. (hidx + n + 1) * board::CELL_2D];
                 // let mut hidsum : f32 = dc[i];
                 let mut sum8: x86_64::__m256;
                 unsafe {
@@ -1216,6 +1218,44 @@ if use_f16 {
                         let f83 = x86_64::_mm256_cvtepi32_ps(c83);
                         let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
+let use_f16 = false;  // 600
+let use_f16 = true;  // 740
+if use_f16 {
+    // 740
+                        let x81 = x86_64::_mm_load_si128(sw1.as_ptr().add(idx) as *const x86_64::__m128i);
+                        let x82 = x86_64::_mm_load_si128(sw1.as_ptr().add(idx + 8) as *const x86_64::__m128i);
+                        let x83 = x86_64::_mm_load_si128(sw1.as_ptr().add(idx + 16) as *const x86_64::__m128i);
+                        let x84 = x86_64::_mm_load_si128(sw1.as_ptr().add(idx + 24) as *const x86_64::__m128i);
+    // 750
+                        // let x812 = x86_64::_mm256_load_si256(sw1.as_ptr().add(idx) as *const x86_64::__m256i);
+                        // let x834 = x86_64::_mm256_load_si256(sw1.as_ptr().add(idx + 16) as *const x86_64::__m256i);
+                        // let x81 = x86_64::_mm256_extractf128_si256(x812, 0);
+                        // let x82 = x86_64::_mm256_extractf128_si256(x812, 1);
+                        // let x83 = x86_64::_mm256_extractf128_si256(x834, 0);
+                        // let x84 = x86_64::_mm256_extractf128_si256(x834, 1);
+
+                        let x81 = x86_64::_mm256_cvtph_ps(x81);
+                        let x82 = x86_64::_mm256_cvtph_ps(x82);
+                        let x83 = x86_64::_mm256_cvtph_ps(x83);
+                        let x84 = x86_64::_mm256_cvtph_ps(x84);
+
+                        if true {  // fma
+                            sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
+                            sum8 = x86_64::_mm256_fmadd_ps(x82, f82, sum8);
+                            sum8 = x86_64::_mm256_fmadd_ps(x83, f83, sum8);
+                            sum8 = x86_64::_mm256_fmadd_ps(x84, f84, sum8);
+                        } else {
+                            let mul1 = x86_64::_mm256_mul_ps(x81, f81);
+                            let mul2 = x86_64::_mm256_mul_ps(x82, f82);
+                            let mul3 = x86_64::_mm256_mul_ps(x83, f83);
+                            let mul4 = x86_64::_mm256_mul_ps(x84, f84);
+
+                            let sum12 = x86_64::_mm256_add_ps(mul1, mul2);
+                            let sum34 = x86_64::_mm256_add_ps(mul3, mul4);
+                            let sum1234 = x86_64::_mm256_add_ps(sum12, sum34);
+                            sum8 = x86_64::_mm256_add_ps(sum8, sum1234);
+                        }
+}else {
                         let x81 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx));
                         let x82 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx + 8));
                         let x83 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx + 16));
@@ -1237,6 +1277,7 @@ if use_f16 {
                             let sum1234 = x86_64::_mm256_add_ps(sum12, sum34);
                             sum8 = x86_64::_mm256_add_ps(sum8, sum1234);
                         }
+}
                     }
                 }
                 unsafe {
