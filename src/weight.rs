@@ -1006,7 +1006,7 @@ impl Weight {
                         let ex3 = x86_64::_mm_or_si128(bm3, wm3);
                         let ex4 = x86_64::_mm_or_si128(bm4, wm4);
 let use_f16 = false;  // 640
-// let use_f16 = true;  // 700
+let use_f16 = true;  // 650
 if use_f16 {
                         let x412 = x86_64::_mm_load_si128(
                             sw1.as_ptr().add(idx) as *const x86_64::__m128i);
@@ -1219,14 +1219,18 @@ if use_f16 {
                         let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
 let use_f16 = false;  // 600
-let use_f16 = true;  // 740
+let use_f16 = true;  // 690
 if use_f16 {
-    // 740
-                        let x81 = x86_64::_mm_load_si128(sw1.as_ptr().add(idx) as *const x86_64::__m128i);
-                        let x82 = x86_64::_mm_load_si128(sw1.as_ptr().add(idx + 8) as *const x86_64::__m128i);
-                        let x83 = x86_64::_mm_load_si128(sw1.as_ptr().add(idx + 16) as *const x86_64::__m128i);
-                        let x84 = x86_64::_mm_load_si128(sw1.as_ptr().add(idx + 24) as *const x86_64::__m128i);
-    // 750
+    // 690
+                        let x81 = x86_64::_mm_load_si128(
+                            sw1.as_ptr().add(idx) as *const x86_64::__m128i);
+                        let x82 = x86_64::_mm_load_si128(
+                            sw1.as_ptr().add(idx + 8) as *const x86_64::__m128i);
+                        let x83 = x86_64::_mm_load_si128(
+                            sw1.as_ptr().add(idx + 16) as *const x86_64::__m128i);
+                        let x84 = x86_64::_mm_load_si128(
+                            sw1.as_ptr().add(idx + 24) as *const x86_64::__m128i);
+    // 700
                         // let x812 = x86_64::_mm256_load_si256(sw1.as_ptr().add(idx) as *const x86_64::__m256i);
                         // let x834 = x86_64::_mm256_load_si256(sw1.as_ptr().add(idx + 16) as *const x86_64::__m256i);
                         // let x81 = x86_64::_mm256_extractf128_si256(x812, 0);
