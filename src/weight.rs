@@ -89,9 +89,9 @@ impl Weight {
             const MODE :i32 = x86_64::_MM_FROUND_TO_NEAREST_INT ;
             unsafe {
                 let h1 = x86_64::_mm_cvtps_ph(
-                            x86_64::_mm_load_ps(ow.add(i * 4)), MODE);
+                            x86_64::_mm_load_ps(ow.add(i * 8)), MODE);
                 let h2 = x86_64::_mm_cvtps_ph(
-                            x86_64::_mm_load_ps(ow.add(i * 4 + 4)), MODE);
+                            x86_64::_mm_load_ps(ow.add(i * 8 + 4)), MODE);
                 let h12 = x86_64::_mm_unpacklo_epi64(h1, h2);
                 x86_64::_mm_store_si128(sow.add(i * 8) as *mut x86_64::__m128i, h12);
             }
