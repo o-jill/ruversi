@@ -63,7 +63,7 @@ RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --duel "${DUE
 FINISHDT=`date +%s`
 DURATION=$((FINISHDT - STARTDT))
 echo "duration: ${DURATION} sec." >> ${RESULT}
-tail -n 6 ${RESULT} # | ruby ./tools/speedcheck.rb game
+tail -n 6 ${RESULT} | ruby ./tools/speedcheck.rb game
 }
 
 help() {

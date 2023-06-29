@@ -57,11 +57,38 @@ def learn(lines)
     puts "#{'%.1f' % (avg * 1000000.0 / repeat / files)} usec/file"
 end
 
+# total,8,win,4,draw,0,lose,4,balance,0,8,50.00%,R,+0.0
+# ev1 @@,win,0,draw,0,lose,4
+# ev1 [],win,4,draw,0,lose,0
+# ev1:data/evaltable.txt
+# ev2:data/evaltable.txt
+# duration: 14 sec.
+def game(lines)
+    value = 0;
+    games = 1;
+    lines.each {|line|
+        puts line
+
+        if line.start_with?("duration:")
+            # duration: 14 sec.
+            m = / (\d+) sec/.match(line)
+            value = m[1].to_f
+            next
+        elsif line.start_with?("total,")
+            # total,8687,win,1630,draw,56,lose,7001
+            m = /total.(\d+),/.match(line)
+            games = m[1].to_i
+            next
+        end
+    }
+    puts "#{'%.2f' % (value / games)} sec/game = #{value} / #{games}"
+end
+
 def help()
     puts "ruby #{__FILE__} <mode>"
     puts "  search : summarize searching speed."
     puts "  learn : summarize learning speed."
-    puts "  game : not yet."
+    puts "  game : summarize game speed."
     puts "  help : show this help."
 end
 
@@ -73,7 +100,7 @@ if md == "search"
 elsif md == "learn"
     learn($stdin.read.split("\n"))
 elsif md == "game"
-    help()
+    game($stdin.read.split("\n"))
 elsif md == "help"
     help()
 else
