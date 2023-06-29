@@ -490,7 +490,7 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
 fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
-    if duellv < 3 || 13 < duellv {
+    if duellv < 1 || 13 < duellv {
         panic!("duel level:{duellv} is not supported...");
     }
 
