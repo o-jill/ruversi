@@ -43,12 +43,35 @@ KIFUFILE="kifu/kifu0000000.txt"
 cat ${RESULT} | ruby ./tools/speedcheck.rb learn
 }
 
+game() {
+# SDEPTH="--depth 5"
+SDEPTH="--depth 7"
+# FEATURES=""  # sse
+FEATURES="--features=avx"
+# DUELLV=1
+DUELLV=2
+# DUELLV=3
+
+RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES}
+
+STARTDT=`date +%s`
+
+# for ((j=0;j<${REPEAT};j++)) do
+RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --duel "${DUELLV}" ${SDEPTH} --ev1 data/evaltable.txt --ev2 data/evaltable.txt >> ${RESULT} 2>/dev/null
+# done
+
+FINISHDT=`date +%s`
+DURATION=$((FINISHDT - STARTDT))
+echo "duration: ${DURATION} sec." >> ${RESULT}
+tail -n 6 ${RESULT} # | ruby ./tools/speedcheck.rb game
+}
+
 help() {
   echo "$0 <mode>"
   echo "mode:"
   echo "  search : measure searching speed."
   echo "  learn : measure learning speed."
-  echo "  game : not yet."
+  echo "  game : measure game(duel) speed."
   echo "  help : show this help."
 }
 
@@ -57,7 +80,7 @@ if [ "$1" = "search" ] ; then
 elif [ "$1" = "learn" ]; then
   learn
 elif [ "$1" = "game" ]; then
-  help
+  game
 else
   help
 fi
