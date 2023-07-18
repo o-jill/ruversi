@@ -795,35 +795,31 @@ impl NodeBB {
             depth += 2;
         }
         let teban = ban.teban;
-        for (mvx, mvy) in moves.iter() {
-            node.child.push(NodeBB::new(*mvx, *mvy, depth - 1, teban));
-        }
-
         let teban2 = -teban;
         let mut moves4 = Vec::<(u8, u8, u8, u8)>::new();
-        for (mvx, mvy) in moves {
-            let nd = node.child.iter_mut().find(|a| {
-                    a.x == mvx && a.y == mvy
-                });
-            let nd = nd.unwrap();
-            let newban = ban.r#move(mvx, mvy).unwrap();
+        for (mvx, mvy) in moves.iter() {
+            node.child.push(NodeBB::new(*mvx, *mvy, depth - 1, teban));
+            let nd = node.child.last_mut().unwrap();
+            let newban = ban.r#move(*mvx, *mvy).unwrap();
             let moves = newban.genmove();
             if moves.is_none() {
                 // println!("moves.len() == 0");
                 nd.child.push(NodeBB::new(0, 0, depth - 1, teban2));
-                moves4.push((mvx, mvy, 0, 0));
+                moves4.push((*mvx, *mvy, 0, 0));
                 continue;
             }
+
             let moves = moves.unwrap();
             if moves.is_empty() {
                 // println!("moves.len() == 0");
                 nd.child.push(NodeBB::new(0, 0, depth - 1, teban2));
-                moves4.push((mvx, mvy, 0, 0));
+                moves4.push((*mvx, *mvy, 0, 0));
                 continue;
             }
+
             for (mvx2, mvy2) in moves {
                 nd.child.push(NodeBB::new(mvx2, mvy2, depth - 2, teban2));
-                moves4.push((mvx, mvy, mvx2, mvy2));
+                moves4.push((*mvx, *mvy, mvx2, mvy2));
             }
         }
         // let mut moves1 = Vec::from_iter(moves4[0..n/2].iter().cloned());
