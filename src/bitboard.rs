@@ -326,6 +326,11 @@ impl BitBoard {
         if cb {SENTE} else if cw {GOTE} else {BLANK}
     }
 
+    pub fn exist(&self, x: u8, y: u8) -> bool {
+        let cells = self.black | self.white;
+        (cells & LSB_CELL << BitBoard::index(x as usize, y as usize)) != 0
+    }
+
     #[allow(dead_code)]
     pub fn set(&mut self, x : u8, y : u8) {
         let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
@@ -660,7 +665,7 @@ impl BitBoard {
 
         let xc = x - 1;
         let yc = y - 1;
-        if self.at(xc, yc) != BLANK {
+        if self.exist(xc, yc) {
             return Err("stone exists.");
         }
         let mut ban = self.clone();
