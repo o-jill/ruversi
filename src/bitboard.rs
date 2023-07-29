@@ -92,6 +92,38 @@ impl BitBoard {
         Ok(ret)
     }
 
+    pub fn from_obf(obf : &str) -> BitBoard {
+        let elem = obf.split(" ").collect::<Vec<_>>();
+        let mut ret = BitBoard {
+            black : 0,
+            white : 0,
+            teban : SENTE,
+            pass : 0,
+        };
+        let mut x = 0;
+        let mut y = 0;
+        for ch  in elem[0].chars() {
+            let bit = LSB_CELL << BitBoard::index(x, y);
+            match ch {
+            'X' => {ret.black |= bit;},
+            'O' => {ret.white |= bit;},
+            // '-' => {},
+            _ => {},
+            }
+            x += 1;
+            if x >= NUMCELL {
+                y += 1;
+                x = 0;
+            }
+        }
+        match elem[1] {
+        "X" => {ret.teban = SENTE;},
+        "O" => {ret.teban = GOTE;},
+        _ => {},
+        }
+        ret
+    }
+
     pub fn to_str(&self) -> String {
         let mut ban = Vec::<String>::new();
         let black = self.black;
