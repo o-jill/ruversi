@@ -508,139 +508,143 @@ impl BitBoard {
 
     pub fn checkreverse(&self, x : usize, y : usize) -> bool {
         let color = self.teban;
-        let &mut mine = &mut if color == SENTE {self.black} else {self.white};
-        let &mut oppo = &mut if color == SENTE {self.white} else {self.black};
+        let mine = if color == SENTE {self.black} else {self.white};
+        let oppo = if color == SENTE {self.white} else {self.black};
         let pos = LSB_CELL << BitBoard::index(x, y);
         // 下
-        let mut bit : u64 = pos << 1;
-        let mut rev : u64 = 0;
+        let mut bit : u64 = pos;
+        let mut rev = false;
         for _i in y..NUMCELL {
+            bit <<= 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= 1;
         }
 
         // 上
-        let mut bit : u64 = pos >> 1;
-        let mut rev : u64 = 0;
+        let mut bit : u64 = pos;
+        let mut rev = false;
         for _i in 0..y {
+            bit >>= 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= 1;
         }
 
         // 右
-        let mut bit : u64 = pos << NUMCELL;
-        let mut rev : u64 = 0;
+        let mut bit : u64 = pos;
+        let mut rev = false;
         for _i in x..NUMCELL {
-            if (mine & bit) != 0 {
-                if rev != 0 {return true;}
-                break;
-            } else if (oppo & bit) != 0 {
-                rev |= bit;
-            } else {
-                break;
-            }
             bit <<= NUMCELL;
-        }
-
-        // 左
-        let mut bit : u64 = pos >> NUMCELL;
-        let mut rev : u64 = 0;
-        for _i in 0..x {
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= NUMCELL;
         }
 
         // 右下
-        let mut bit : u64 = pos << (NUMCELL + 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y + i >= NUMCELL {
-                break;
-            }
+        let mut bit : u64 = pos;
+        let mut rev = false;
+        let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
+        for _i in 0..sz {
+            bit <<= NUMCELL + 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= NUMCELL + 1;
         }
 
         // 右上
-        let mut bit : u64 = pos << (NUMCELL - 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y < i {
-                break;
-            }
+        let mut bit : u64 = pos;
+        let mut rev = false;
+        let xx = NUMCELL - 1 - x;
+        let yy = y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
+            bit <<= NUMCELL - 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= NUMCELL - 1;
+        }
+
+        // 左
+        let mut bit : u64 = pos;
+        let mut rev = false;
+        for _i in 0..x {
+            bit >>= NUMCELL;
+            if (mine & bit) != 0 {
+                if rev {return true;}
+
+                break;
+            } else if (oppo & bit) != 0 {
+                rev = true;
+            } else {
+                break;
+            }
         }
 
         // 左上
-        let mut bit : u64 = pos >> (NUMCELL + 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y < i {
-                break;
-            }
+        let mut bit : u64 = pos;
+        let mut rev = false;
+        let sz = if x < y {x} else {y};
+        for _i in 0..sz {
+            bit >>= NUMCELL + 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= NUMCELL + 1;
         }
 
         // 左下
-        let mut bit : u64 = pos >> (NUMCELL - 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y + i >= NUMCELL {
-                break;
-            }
+        let mut bit : u64 = pos;
+        let mut rev = false;
+        let xx = x;
+        let yy = NUMCELL - 1 - y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
+            bit >>= NUMCELL - 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= NUMCELL - 1;
         }
 
         false
@@ -1697,15 +1701,9 @@ fn testbitbrd() {
     for (obf, x, y) in revchktbl {
         println!("obf:{obf}");
         let b = BitBoard::from_obf(obf);
-        assert!(b.checkreverse1(x, y));
-        assert!(b.checkreverse2(x, y));
         assert!(b.checkreverse(x, y));
-        assert!(b.checkreverse4(x, y));
         let b = b.rotate180();
-        assert!(b.checkreverse1(NUMCELL - 1 - x, NUMCELL - 1 - y));
-        assert!(b.checkreverse2(NUMCELL - 1 - x, NUMCELL - 1 - y));
         assert!(b.checkreverse(NUMCELL - 1 - x, NUMCELL - 1 - y));
-        assert!(b.checkreverse4(NUMCELL - 1 - x, NUMCELL - 1 - y));
     }
     for y in 1..NUMCELL - 1 {
         for x in 1..NUMCELL - 1 {
@@ -1714,10 +1712,7 @@ fn testbitbrd() {
             let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
             let mask = !bit;
             b.white &= mask;
-            assert!(b.checkreverse1(x, y));
-            assert!(b.checkreverse2(x, y));
             assert!(b.checkreverse(x, y));
-            assert!(b.checkreverse4(x, y));
         }
     }
     let revchktbl = [
@@ -1742,41 +1737,26 @@ fn testbitbrd() {
     ];
     for (obf, x, y) in revchktbl {
         let b = BitBoard::from_obf(obf);
-        assert!(!b.checkreverse1(x, y));
-        assert!(!b.checkreverse2(x, y));
         assert!(!b.checkreverse(x, y));
-        assert!(!b.checkreverse4(x, y));
         let b = b.rotate180();
-        assert!(!b.checkreverse1(NUMCELL - 1 - x, NUMCELL - 1 - y));
-        assert!(!b.checkreverse2(NUMCELL - 1 - x, NUMCELL - 1 - y));
         assert!(!b.checkreverse(NUMCELL - 1 - x, NUMCELL - 1 - y));
-        assert!(!b.checkreverse4(NUMCELL - 1 - x, NUMCELL - 1 - y));
     }
     for y in 0..NUMCELL {
         for x in 0..NUMCELL {
             let b = BitBoard::from_obf(
                 "---------------------------------------------------------------- X");
-            assert!(!b.checkreverse1(x, y));
-            assert!(!b.checkreverse2(x, y));
             assert!(!b.checkreverse(x, y));
-            assert!(!b.checkreverse4(x, y));
             let mut b = BitBoard::from_obf(
                 "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X");
             let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
             let mask = !bit;
             b.black &= mask;
-            assert!(!b.checkreverse1(x, y));
-            assert!(!b.checkreverse2(x, y));
             assert!(!b.checkreverse(x, y));
-            assert!(!b.checkreverse4(x, y));
 
             let mut b = BitBoard::from_obf(
                 "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO X");
             b.white &= mask;
-            assert!(!b.checkreverse1(x, y));
-            assert!(!b.checkreverse2(x, y));
             assert!(!b.checkreverse(x, y));
-            assert!(!b.checkreverse4(x, y));
         }
     }
 }
