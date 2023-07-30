@@ -29,6 +29,10 @@ cat ${RESULT} | ruby ./tools/speedcheck.rb search
 learn() {
 LREPEAT="--repeat 20"
 KIFUFILE="kifu/kifu0000000.txt"
+# FEATURES=""  # sse
+FEATURES="--features=avx"
+
+RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES}
 
   if ! [ -e $KIFUFILE ]; then
     echo "a kifu file was not found."
@@ -37,7 +41,7 @@ KIFUFILE="kifu/kifu0000000.txt"
   fi
 #  echo "a kifu file was found."
   for ((j=0;j<${REPEAT};j++)) do
-    RUSTFLAGS="-Ctarget-cpu=native" cargo run --release --features=avx -- --learn ${LREPEAT} >> ${RESULT} 2>/dev/null
+    RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --learn ${LREPEAT} >> ${RESULT} 2>/dev/null
   done
 
 cat ${RESULT} | ruby ./tools/speedcheck.rb learn
