@@ -71,7 +71,7 @@ def game(lines)
 
         if line.start_with?("duration:")
             # duration: 14 sec.
-            m = / (\d+) sec/.match(line)
+            m = / (\d+\.?\d*) sec/.match(line)
             value = m[1].to_f
             next
         elsif line.start_with?("total,")
