@@ -1768,7 +1768,7 @@ if true {  // ---------------
             let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             let val = NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha);
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
@@ -1779,23 +1779,22 @@ if true {  // ---------------
             }
             if best.is_none() {
                 node.best = Some(Best::new(val, mvx, mvy));
-                continue;
+            } else {
+                let fteban = teban as f32;
+                let be = best.unwrap();
+                if be.hyoka * fteban < val * fteban {
+                    be.x = mvx;
+                    be.y = mvy;
+                    be.hyoka = val;
+                } else {
+                    node.child[idx].release();
+                }
             }
-            let fteban = teban as f32;
-            let mut be = best.unwrap();
-            if be.hyoka * fteban < val * fteban {
-                be.x = mvx;
-                be.y = mvy;
-                be.hyoka = val;
-                continue;
+            if newalpha >= beta {  // cut
+                return Some(newalpha);
             }
-            if newalpha >= beta {
-                // cut
-                return Some(be.hyoka);
-            }
-            node.child[idx].release();
         }
-        Some(node.best.as_ref().unwrap().hyoka)
+        Some(newalpha)
     }
 
     #[allow(dead_code)]
