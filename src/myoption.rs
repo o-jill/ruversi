@@ -284,8 +284,8 @@ pub fn showhelp(msg : &str) {
     println!("{}\n", msg);
 
     println!("options:
-  --duel N   play games from some situations with evaltable1 and 2. N is optional. 3 ~ default 5 ~ 13.
-  --duelext N   play games from some situations against Edax. N is optional. 3 ~ default 5 ~ 13.
+  --duel N   play games from some situations with evaltable1 and 2. N is optional. 1 ~ default 5 ~ 13.
+  --duelext N   play games from some situations against Edax. N is optional. 1 ~ default 5 ~ 13.
   --genkifu  set generatin kifu mode. default.
   --help or -h  show this help.
   --learn    set lerning mode. default.
