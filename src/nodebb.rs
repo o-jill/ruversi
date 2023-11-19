@@ -1,34 +1,35 @@
 use super::*;
 // use std::sync::Arc;
 
-const SORT_PRI : [i32 ; 64]= [
-    0, 3, 1, 2, 2, 1, 3, 0,
-    3, 3, 4, 4, 4, 4, 3, 3,
-    1, 4, 5, 5, 5, 5, 4, 1,
-    2, 4, 5, 5, 5, 5, 4, 2,
-    2, 4, 5, 5, 5, 5, 4, 2,
-    1, 4, 5, 5, 5, 5, 4, 1,
-    3, 3, 4, 4, 4, 4, 3, 3,
-    0, 3, 1, 2, 2, 1, 3, 0,
+const SORT_PRI : [i32 ; 81]= [
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 3, 1, 2, 2, 1, 3, 0,
+    0, 3, 3, 4, 4, 4, 4, 3, 3,
+    0, 1, 4, 5, 5, 5, 5, 4, 1,
+    0, 2, 4, 5, 5, 5, 5, 4, 2,
+    0, 2, 4, 5, 5, 5, 5, 4, 2,
+    0, 1, 4, 5, 5, 5, 5, 4, 1,
+    0, 3, 3, 4, 4, 4, 4, 3, 3,
+    0, 0, 3, 1, 2, 2, 1, 3, 0,
 ];
 
 fn move_priority(&(x, y) : &(u8, u8)) -> i32 {
-    let idx = if x == 0 || y == 0 {0} else {x + y * 8 - 9};
+    let idx = x + y * 9;
     SORT_PRI[idx as usize]
 }
 
 fn move_priority2(&(x1, y1, x2, y2) : &(u8, u8, u8, u8)) -> i32 {
-    let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
-    let idx2 = if x2 == 0 || y2 == 0 {0} else {x2 + y2 * 8 - 9};
+    let idx1 = x1 + y1 * 9;
+    let idx2 = x2 + y2 * 9;
     SORT_PRI[idx1 as usize] * 10 + SORT_PRI[idx2 as usize]
 }
 
 #[allow(dead_code)]
 fn move_priority3(&(x1, y1, x2, y2, x3, y3)
         : &(u8, u8, u8, u8, u8, u8)) -> i32 {
-    let idx1 = if x1 == 0 || y1 == 0 {0} else {x1 + y1 * 8 - 9};
-    let idx2 = if x2 == 0 || y2 == 0 {0} else {x2 + y2 * 8 - 9};
-    let idx3 = if x3 == 0 || y3 == 0 {0} else {x3 + y3 * 8 - 9};
+    let idx1 = x1 + y1 * 9;
+    let idx2 = x2 + y2 * 9;
+    let idx3 = x3 + y3 * 9;
     SORT_PRI[idx1 as usize] * 100 + SORT_PRI[idx2 as usize] * 10
         + SORT_PRI[idx3 as usize]
 }
