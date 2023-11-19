@@ -211,7 +211,9 @@ fn verbose(rfen : &str, depth : u8) {
 
                 let st = Instant::now();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
+                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                    // nodebb::NodeBB::thinko_ab(&ban, depth).unwrap();
+                    // nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
                 let ft = st.elapsed();
                 println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
             }
@@ -266,7 +268,8 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
                     //     // nodebb::NodeBB::think_ab_extract2,
                     //     nodebb::NodeBB::think_ab,
                     //     depth).unwrap()
-                    g.starto(nodebb::NodeBB::thinko_ab_extract2, depth).unwrap();
+                    g.starto(nodebb::NodeBB::thinko_ab_simple, depth).unwrap();
+                    // g.starto(nodebb::NodeBB::thinko_ab_extract2, depth).unwrap();
                 },
                 "all" => {
                     // g.start(nodebb::NodeBB::think, depth).unwrap()
@@ -521,8 +524,9 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                     //     // nodebb::NodeBB::think_ab_extract2,
                     //     nodebb::NodeBB::think_ab,
                     //     depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w1, &w2).unwrap()
                     // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w1, &w2).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w1, &w2).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w1, &w2).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
@@ -563,8 +567,9 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                 "" | "ab" => {
                     // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, depth, &w1, &w2).unwrap()
                     // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w2, &w1).unwrap()
                     // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w2, &w1).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w2, &w1).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
@@ -652,7 +657,8 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
                 match think {
                     "" | "ab" => {
                         // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_extract2
+                        nodebb::NodeBB::thinko_ab_simple
+                        // nodebb::NodeBB::thinko_ab_extract2
                     },
                     "all" => {
                         nodebb::NodeBB::thinko
@@ -715,7 +721,8 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
                 match think {
                     "" | "ab" => {
                         // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_extract2
+                        nodebb::NodeBB::thinko_ab_simple
+                        // nodebb::NodeBB::thinko_ab_extract2
                     },
                     "all" => {
                         nodebb::NodeBB::thinko
@@ -819,7 +826,8 @@ fn play(depth : u8, turnh: i8) {
         g.starto_against_stdin(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::thinko_ab_extract2
+                    nodebb::NodeBB::thinko_ab_simple
+                    // nodebb::NodeBB::thinko_ab_extract2
                     // nodebb::NodeBB::think_ab
                 },
                 "all" => {
@@ -872,7 +880,8 @@ fn edax(depth : u8, turnh: i8) {
             match think {
                 "" | "ab" => {
                     // nodebb::NodeBB::think_ab_extract2
-                    nodebb::NodeBB::thinko_ab_extract2
+                    nodebb::NodeBB::thinko_ab_simple
+                    // nodebb::NodeBB::thinko_ab_extract2
                 },
                 "all" => {
                     nodebb::NodeBB::thinko
