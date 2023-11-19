@@ -1281,7 +1281,7 @@ fn testbitbrd() {
     assert_eq!(b.to_obf(),
         "---------------------------XO------OX--------------------------- X");
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(5, 3), (6, 4), (3, 5), (4, 6)]));
+    assert_eq!(mv, Some(vec![(3, 5), (4, 6), (5, 3), (6, 4)]));
     let b = BitBoard::from("H/H/H/H/H/H/H/H b").unwrap();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);
@@ -1452,7 +1452,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 4 - 10);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
+    assert_eq!(mv, Some(vec![(2, 2), (3, 4), (4, 3)]));
     let b = b.r#move(2, 2);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1470,7 +1470,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 4 - 10);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
+    assert_eq!(mv, Some(vec![(5, 6), (6, 5), (7, 7)]));
     let b = b.r#move(7, 7);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1523,7 +1523,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 6 - 15);
     b.put();
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
+    assert_eq!(mv, Some(vec![(2, 2), (3, 4), (4, 3)]));
     let b = b.r#move(2, 2);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1541,7 +1541,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (4, 0));
     assert_eq!(b.count(), 6 - 15);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
+    assert_eq!(mv, Some(vec![(5, 6), (6, 5), (7, 7)]));
     let b = b.r#move(7, 7);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1559,7 +1559,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 8 - 17);
     let mv = b.genmove();
     // b.put();
-    assert_eq!(mv, Some(vec![(3, 3), (6, 4), (4, 6)]));
+    assert_eq!(mv, Some(vec![(3, 3), (4, 6), (6, 4)]));
     let b = b.r#move(3, 3);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1577,7 +1577,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (2, 0));
     assert_eq!(b.count(), 8 - 17);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(5, 3), (3, 5), (6, 6)]));
+    assert_eq!(mv, Some(vec![(3, 5), (5, 3), (6, 6)]));
     let b = b.r#move(6, 6);
     assert!(b.is_ok());
     let b = b.unwrap();
