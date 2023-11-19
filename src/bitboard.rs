@@ -349,12 +349,12 @@ impl BitBoard {
         }
 
         let color = self.teban;
-        let mut mine = if color == SENTE {self.black} else {self.white};
-        let mut oppo = if color == SENTE {self.white} else {self.black};
+        let mine = if color == SENTE {self.black} else {self.white};
+        let oppo = if color == SENTE {self.white} else {self.black};
 
         let pos = LSB_CELL << BitBoard::index(x, y);
 
-        let mut revall = pos;
+        let mut revall = 0;
 
         // 下
         let mut bit : u64 = pos << 1;
@@ -423,10 +423,8 @@ impl BitBoard {
         // 右下
         let mut bit : u64 = pos << (NUMCELL + 1);
         let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y + i >= NUMCELL {
-                break;
-            }
+        let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
+        for _i in 0..sz {
             if (mine & bit) != 0 {
                 revall |= rev;
                 break;
@@ -442,10 +440,10 @@ impl BitBoard {
         // 右上
         let mut bit : u64 = pos << (NUMCELL - 1);
         let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y < i {
-                break;
-            }
+        let xx = NUMCELL - 1 - x;
+        let yy = y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
             if (mine & bit) != 0 {
                 revall |= rev;
                 break;
@@ -461,10 +459,8 @@ impl BitBoard {
         // 左上
         let mut bit : u64 = pos >> (NUMCELL + 1);
         let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y < i {
-                break;
-            }
+        let sz = if x < y {x} else {y};
+        for _i in 0..sz {
             if (mine & bit) != 0 {
                 revall |= rev;
                 break;
@@ -480,10 +476,10 @@ impl BitBoard {
         // 左下
         let mut bit : u64 = pos >> (NUMCELL - 1);
         let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y + i >= NUMCELL {
-                break;
-            }
+        let xx = x;
+        let yy = NUMCELL - 1 - y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
             if (mine & bit) != 0 {
                 revall |= rev;
                 break;
@@ -496,14 +492,12 @@ impl BitBoard {
             bit >>= NUMCELL - 1;
         }
 
-        mine |= revall;
-        oppo &= !revall;
         if color == SENTE {
-            self.black = mine;
-            self.white = oppo;
+            self.black = mine | revall | pos;
+            self.white = oppo ^ revall;
         } else {
-            self.white = mine;
-            self.black = oppo;
+            self.white = mine | revall | pos;
+            self.black = oppo ^ revall;
         }
     }
 
