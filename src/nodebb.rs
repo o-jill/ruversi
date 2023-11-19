@@ -778,8 +778,10 @@ impl NodeBB {
             if c.hyoka.is_none() {
                 continue;
             }
-            if hyoka * fteban < c.hyoka.unwrap() * fteban {
-                hyoka = c.hyoka.unwrap();
+
+            let chyoka = c.hyoka.unwrap();
+            if hyoka * fteban < chyoka * fteban {
+                hyoka = chyoka;
                 bx = c.x;
                 by = c.y;
             }
@@ -986,37 +988,31 @@ impl NodeBB {
         let teban = ban.teban;
         let mut km = 0;
         for c in node.child.iter_mut() {
-            let mut hyoka = None;
             let mut be = None;
             let mut km2 = 0;
             let teban2 = -teban;
             let fteban2 = teban2 as f32;
+            let mut hyoka = -98765.0 * fteban2;
             for c2 in c.child.iter() {
                 km2 += c2.kyokumen;
                 if c2.hyoka.is_none() {
                     continue;
                 }
-                if hyoka.is_none() {
-                    hyoka = c2.hyoka;
-                    be = Some(Best::new(hyoka.unwrap(), c2.x, c2.y));
-                    continue;
-                }
-                if hyoka.unwrap() * fteban2 < c2.hyoka.unwrap() * fteban2 {
-                    hyoka = c2.hyoka;
-                    let best = be.as_mut().unwrap();
-                    best.x = c2.x;
-                    best.y = c2.y;
-                    best.hyoka = hyoka.unwrap();
+
+                let chyoka = c2.hyoka.unwrap();
+                if hyoka * fteban2 < chyoka * fteban2 {
+                    hyoka = chyoka;
+                    be = Some(Best::new(hyoka, c2.x, c2.y));
                 }
             }
-            c.hyoka = hyoka;
+            c.hyoka = Some(hyoka);
             c.best = be;
             c.kyokumen = km;
             km += km2;
         }
 
         let fteban = teban as f32;
-        let mut hyoka = None;
+        let mut hyoka = -98765.0 * fteban;
         let mut be = None;
         for c in node.child.iter() {
             // println!("ch:{}{}", c.x, c.y);
@@ -1024,25 +1020,18 @@ impl NodeBB {
                 // println!("c.hyoka.is_none");
                 continue;
             }
-            if hyoka.is_none() {
-                // println!("hyoka.is_none");
-                hyoka = c.hyoka;
-                be = Some(Best::new(hyoka.unwrap(), c.x, c.y));
-                continue;
-            }
-            if hyoka.unwrap() * fteban < c.hyoka.unwrap() * fteban {
+
+            let chyoka = c.hyoka.unwrap();
+            if hyoka * fteban < chyoka * fteban {
                 // println!("update hyoka");
-                hyoka = c.hyoka;
-                let best = be.as_mut().unwrap();
-                best.x = c.x;
-                best.y = c.y;
-                best.hyoka = hyoka.unwrap();
+                hyoka = chyoka;
+                be = Some(Best::new(hyoka, c.x, c.y));
             }
         }
-        node.hyoka = hyoka;
+        node.hyoka = Some(hyoka);
         node.best = be;
         node.kyokumen = km;
-        Some((hyoka.unwrap(), node))
+        Some((hyoka, node))
     }
 
     #[allow(dead_code)]
