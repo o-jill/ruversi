@@ -583,6 +583,37 @@ impl NodeBB {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
+
+    #[allow(dead_code)]
+    pub fn thinko_ab_simple(ban : &bitboard::BitBoard, mut depth : u8)
+            -> Option<(f32, &NodeBB)> {
+        if depth == 0 {
+            return None;
+        }
+        if ban.is_passpass() {
+            return None;
+        }
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            return None;
+        }
+
+        let node;
+        unsafe {
+            ND_ROOT = Some(NodeBB::new(0, 0, depth, bitboard::NONE));
+            node = ND_ROOT.as_mut().unwrap();
+        }
+
+        let alpha : f32 = -123456.7;
+        let beta : f32 = 123456.7;
+        let val = NodeBB::think_internal_ab(node, &ban, alpha, beta);
+        let val = val * ban.teban as f32;
+
+        Some((val, node))
+    }
+
     #[allow(dead_code)]
     pub fn thinko_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, &NodeBB)> {
