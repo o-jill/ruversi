@@ -354,23 +354,21 @@ impl BitBoard {
 
         let pos = LSB_CELL << BitBoard::index(x, y);
 
-        let mask = !pos;
-        mine |= pos;
-        oppo &= mask;
+        let mut revall = pos;
 
         // 下
         let mut bit : u64 = pos << 1;
         let mut rev : u64 = 0;
         for _i in y..NUMCELL {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit <<= 1;
         }
 
@@ -379,14 +377,14 @@ impl BitBoard {
         let mut rev : u64 = 0;
         for _i in 0..y {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit >>= 1;
         }
 
@@ -395,14 +393,14 @@ impl BitBoard {
         let mut rev : u64 = 0;
         for _i in x..NUMCELL {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit <<= NUMCELL;
         }
 
@@ -411,14 +409,14 @@ impl BitBoard {
         let mut rev : u64 = 0;
         for _i in 0..x {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit >>= NUMCELL;
         }
 
@@ -430,14 +428,14 @@ impl BitBoard {
                 break;
             }
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit <<= NUMCELL + 1;
         }
 
@@ -446,17 +444,17 @@ impl BitBoard {
         let mut rev : u64 = 0;
         for i in 1..NUMCELL {
             if x + i >= NUMCELL || y < i {
-                    break;
+                break;
             }
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit <<= NUMCELL - 1;
         }
 
@@ -468,14 +466,14 @@ impl BitBoard {
                 break;
             }
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit >>= NUMCELL + 1;
         }
 
@@ -487,17 +485,19 @@ impl BitBoard {
                 break;
             }
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit >>= NUMCELL - 1;
         }
 
+        mine |= revall;
+        oppo &= !revall;
         if color == SENTE {
             self.black = mine;
             self.white = oppo;
