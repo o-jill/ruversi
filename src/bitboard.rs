@@ -503,139 +503,143 @@ impl BitBoard {
 
     pub fn checkreverse(&self, x : usize, y : usize) -> bool {
         let color = self.teban;
-        let &mut mine = &mut if color == SENTE {self.black} else {self.white};
-        let &mut oppo = &mut if color == SENTE {self.white} else {self.black};
+        let mine = if color == SENTE {self.black} else {self.white};
+        let oppo = if color == SENTE {self.white} else {self.black};
         let pos = LSB_CELL << BitBoard::index(x, y);
         // 下
-        let mut bit : u64 = pos << 1;
-        let mut rev : u64 = 0;
+        let mut bit = pos;
+        let mut rev = false;
         for _i in y..NUMCELL {
+            bit <<= 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= 1;
         }
 
         // 上
-        let mut bit : u64 = pos >> 1;
-        let mut rev : u64 = 0;
+        let mut bit = pos;
+        let mut rev = false;
         for _i in 0..y {
+            bit >>= 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= 1;
         }
 
         // 右
-        let mut bit : u64 = pos << NUMCELL;
-        let mut rev : u64 = 0;
+        let mut bit = pos;
+        let mut rev = false;
         for _i in x..NUMCELL {
+            bit <<= NUMCELL;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= NUMCELL;
         }
 
         // 左
-        let mut bit : u64 = pos >> NUMCELL;
-        let mut rev : u64 = 0;
+        let mut bit = pos;
+        let mut rev = false;
         for _i in 0..x {
+            bit >>= NUMCELL;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= NUMCELL;
         }
 
         // 右下
-        let mut bit : u64 = pos << (NUMCELL + 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y + i >= NUMCELL {
-                break;
-            }
+        let mut bit = pos;
+        let mut rev = false;
+        let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
+        for _i in 0..sz {
+            bit <<= NUMCELL + 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= NUMCELL + 1;
         }
 
         // 右上
-        let mut bit : u64 = pos << (NUMCELL - 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y < i {
-                break;
-            }
+        let mut bit = pos;
+        let mut rev = false;
+        let xx = NUMCELL - 1 - x;
+        let yy = y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
+            bit <<= NUMCELL - 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= NUMCELL - 1;
         }
 
         // 左上
-        let mut bit : u64 = pos >> (NUMCELL + 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y < i {
-                break;
-            }
+        let mut bit = pos;
+        let mut rev = false;
+        let sz = if x < y {x} else {y};
+        for _i in 0..sz {
+            bit >>= NUMCELL + 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= NUMCELL + 1;
         }
 
         // 左下
-        let mut bit : u64 = pos >> (NUMCELL - 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y + i >= NUMCELL {
-                break;
-            }
+        let mut bit = pos;
+        let mut rev = false;
+        let xx = x;
+        let yy = NUMCELL - 1 - y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
+            bit >>= NUMCELL - 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= NUMCELL - 1;
         }
 
         false
