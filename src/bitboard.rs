@@ -678,18 +678,16 @@ impl BitBoard {
     /// - Some(Vec![n]) : available cells.
     pub fn genmove(&self) -> Option<Vec<(u8, u8)>> {
         let mut ret = Vec::<(u8, u8)>::new();
-        // let mut nblank = 0;
-        let black = self.black;
-        let white = self.white;
-        for y in 0..NUMCELL {
-            let mut bit = LSB_CELL << y;
-            for x in 0..NUMCELL {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                bit <<= NUMCELL;
-                if cb || cw {
+        let stones = self.black | self.white;
+        let mut bit = LSB_CELL;
+        for x in 0..NUMCELL {
+            for y in 0..NUMCELL {
+                let exist = bit & stones;
+                bit <<= 1;
+                if exist != 0 {
                     continue;
                 }
+
                 // nblank += 1;
                 if self.checkreverse(x, y) {
                     ret.push((x as u8 + 1, y as u8 + 1));
