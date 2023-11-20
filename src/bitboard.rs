@@ -92,6 +92,38 @@ impl BitBoard {
         Ok(ret)
     }
 
+    pub fn from_obf(obf : &str) -> BitBoard {
+        let elem = obf.split(" ").collect::<Vec<_>>();
+        let mut ret = BitBoard {
+            black : 0,
+            white : 0,
+            teban : SENTE,
+            pass : 0,
+        };
+        let mut x = 0;
+        let mut y = 0;
+        for ch  in elem[0].chars() {
+            let bit = LSB_CELL << BitBoard::index(x, y);
+            match ch {
+            'X' => {ret.black |= bit;},
+            'O' => {ret.white |= bit;},
+            // '-' => {},
+            _ => {},
+            }
+            x += 1;
+            if x >= NUMCELL {
+                y += 1;
+                x = 0;
+            }
+        }
+        match elem[1] {
+        "X" => {ret.teban = SENTE;},
+        "O" => {ret.teban = GOTE;},
+        _ => {},
+        }
+        ret
+    }
+
     pub fn to_str(&self) -> String {
         let mut ban = Vec::<String>::new();
         let black = self.black;
@@ -317,28 +349,26 @@ impl BitBoard {
         }
 
         let color = self.teban;
-        let mut mine = if color == SENTE {self.black} else {self.white};
-        let mut oppo = if color == SENTE {self.white} else {self.black};
+        let mine = if color == SENTE {self.black} else {self.white};
+        let oppo = if color == SENTE {self.white} else {self.black};
 
         let pos = LSB_CELL << BitBoard::index(x, y);
 
-        let mask = !pos;
-        mine |= pos;
-        oppo &= mask;
+        let mut revall = 0;
 
         // 下
         let mut bit : u64 = pos << 1;
         let mut rev : u64 = 0;
         for _i in y..NUMCELL {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit <<= 1;
         }
 
@@ -347,14 +377,14 @@ impl BitBoard {
         let mut rev : u64 = 0;
         for _i in 0..y {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit >>= 1;
         }
 
@@ -363,14 +393,14 @@ impl BitBoard {
         let mut rev : u64 = 0;
         for _i in x..NUMCELL {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit <<= NUMCELL;
         }
 
@@ -379,237 +409,237 @@ impl BitBoard {
         let mut rev : u64 = 0;
         for _i in 0..x {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit >>= NUMCELL;
         }
 
         // 右下
         let mut bit : u64 = pos << (NUMCELL + 1);
         let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y + i >= NUMCELL {
-                break;
-            }
+        let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
+        for _i in 0..sz {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit <<= NUMCELL + 1;
         }
 
         // 右上
         let mut bit : u64 = pos << (NUMCELL - 1);
         let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y < i {
-                    break;
-            }
+        let xx = NUMCELL - 1 - x;
+        let yy = y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit <<= NUMCELL - 1;
         }
 
         // 左上
         let mut bit : u64 = pos >> (NUMCELL + 1);
         let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y < i {
-                break;
-            }
+        let sz = if x < y {x} else {y};
+        for _i in 0..sz {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit >>= NUMCELL + 1;
         }
 
         // 左下
         let mut bit : u64 = pos >> (NUMCELL - 1);
         let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y + i >= NUMCELL {
-                break;
-            }
+        let xx = x;
+        let yy = NUMCELL - 1 - y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
             if (mine & bit) != 0 {
-                oppo &= !rev;
-                mine |= rev;
+                revall |= rev;
                 break;
             } else if (oppo & bit) != 0 {
                 rev |= bit;
             } else {
                 break;
             }
+
             bit >>= NUMCELL - 1;
         }
 
         if color == SENTE {
-            self.black = mine;
-            self.white = oppo;
+            self.black = mine | revall | pos;
+            self.white = oppo ^ revall;
         } else {
-            self.white = mine;
-            self.black = oppo;
+            self.white = mine | revall | pos;
+            self.black = oppo ^ revall;
         }
     }
 
     pub fn checkreverse(&self, x : usize, y : usize) -> bool {
         let color = self.teban;
-        let &mut mine = &mut if color == SENTE {self.black} else {self.white};
-        let &mut oppo = &mut if color == SENTE {self.white} else {self.black};
+        let mine = if color == SENTE {self.black} else {self.white};
+        let oppo = if color == SENTE {self.white} else {self.black};
         let pos = LSB_CELL << BitBoard::index(x, y);
         // 下
-        let mut bit : u64 = pos << 1;
-        let mut rev : u64 = 0;
+        let mut bit = pos;
+        let mut rev = false;
         for _i in y..NUMCELL {
+            bit <<= 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= 1;
         }
 
         // 上
-        let mut bit : u64 = pos >> 1;
-        let mut rev : u64 = 0;
+        let mut bit = pos;
+        let mut rev = false;
         for _i in 0..y {
+            bit >>= 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= 1;
         }
 
         // 右
-        let mut bit : u64 = pos << NUMCELL;
-        let mut rev : u64 = 0;
+        let mut bit = pos;
+        let mut rev = false;
         for _i in x..NUMCELL {
+            bit <<= NUMCELL;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= NUMCELL;
         }
 
         // 左
-        let mut bit : u64 = pos >> NUMCELL;
-        let mut rev : u64 = 0;
+        let mut bit = pos;
+        let mut rev = false;
         for _i in 0..x {
+            bit >>= NUMCELL;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= NUMCELL;
         }
 
         // 右下
-        let mut bit : u64 = pos << (NUMCELL + 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y + i >= NUMCELL {
-                break;
-            }
+        let mut bit = pos;
+        let mut rev = false;
+        let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
+        for _i in 0..sz {
+            bit <<= NUMCELL + 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= NUMCELL + 1;
         }
 
         // 右上
-        let mut bit : u64 = pos << (NUMCELL - 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x + i >= NUMCELL || y < i {
-                break;
-            }
+        let mut bit = pos;
+        let mut rev = false;
+        let xx = NUMCELL - 1 - x;
+        let yy = y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
+            bit <<= NUMCELL - 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit <<= NUMCELL - 1;
         }
 
         // 左上
-        let mut bit : u64 = pos >> (NUMCELL + 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y < i {
-                break;
-            }
+        let mut bit = pos;
+        let mut rev = false;
+        let sz = if x < y {x} else {y};
+        for _i in 0..sz {
+            bit >>= NUMCELL + 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= NUMCELL + 1;
         }
 
         // 左下
-        let mut bit : u64 = pos >> (NUMCELL - 1);
-        let mut rev : u64 = 0;
-        for i in 1..NUMCELL {
-            if x < i || y + i >= NUMCELL {
-                break;
-            }
+        let mut bit = pos;
+        let mut rev = false;
+        let xx = x;
+        let yy = NUMCELL - 1 - y;
+        let sz = if xx < yy {xx} else {yy};
+        for _i in 0..sz {
+            bit >>= NUMCELL - 1;
             if (mine & bit) != 0 {
-                if rev != 0 {return true;}
+                if rev {return true;}
+
                 break;
             } else if (oppo & bit) != 0 {
-                rev |= bit;
+                rev = true;
             } else {
                 break;
             }
-            bit >>= NUMCELL - 1;
         }
 
         false
@@ -646,18 +676,16 @@ impl BitBoard {
     /// - Some(Vec![n]) : available cells.
     pub fn genmove(&self) -> Option<Vec<(u8, u8)>> {
         let mut ret = Vec::<(u8, u8)>::new();
-        // let mut nblank = 0;
-        let black = self.black;
-        let white = self.white;
-        for y in 0..NUMCELL {
-            let mut bit = LSB_CELL << y;
-            for x in 0..NUMCELL {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                bit <<= NUMCELL;
-                if cb || cw {
+        let stones = self.black | self.white;
+        let mut bit = LSB_CELL;
+        for x in 0..NUMCELL {
+            for y in 0..NUMCELL {
+                let exist = bit & stones;
+                bit <<= 1;
+                if exist != 0 {
                     continue;
                 }
+
                 // nblank += 1;
                 if self.checkreverse(x, y) {
                     ret.push((x as u8 + 1, y as u8 + 1));
@@ -1251,7 +1279,7 @@ fn testbitbrd() {
     assert_eq!(b.to_obf(),
         "---------------------------XO------OX--------------------------- X");
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(5, 3), (6, 4), (3, 5), (4, 6)]));
+    assert_eq!(mv, Some(vec![(3, 5), (4, 6), (5, 3), (6, 4)]));
     let b = BitBoard::from("H/H/H/H/H/H/H/H b").unwrap();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);
@@ -1422,7 +1450,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 4 - 10);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
+    assert_eq!(mv, Some(vec![(2, 2), (3, 4), (4, 3)]));
     let b = b.r#move(2, 2);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1440,7 +1468,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 4 - 10);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
+    assert_eq!(mv, Some(vec![(5, 6), (6, 5), (7, 7)]));
     let b = b.r#move(7, 7);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1493,7 +1521,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 6 - 15);
     b.put();
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
+    assert_eq!(mv, Some(vec![(2, 2), (3, 4), (4, 3)]));
     let b = b.r#move(2, 2);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1511,7 +1539,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (4, 0));
     assert_eq!(b.count(), 6 - 15);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
+    assert_eq!(mv, Some(vec![(5, 6), (6, 5), (7, 7)]));
     let b = b.r#move(7, 7);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1529,7 +1557,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 8 - 17);
     let mv = b.genmove();
     // b.put();
-    assert_eq!(mv, Some(vec![(3, 3), (6, 4), (4, 6)]));
+    assert_eq!(mv, Some(vec![(3, 3), (4, 6), (6, 4)]));
     let b = b.r#move(3, 3);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1547,7 +1575,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (2, 0));
     assert_eq!(b.count(), 8 - 17);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(5, 3), (3, 5), (6, 6)]));
+    assert_eq!(mv, Some(vec![(3, 5), (5, 3), (6, 6)]));
     let b = b.r#move(6, 6);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1574,4 +1602,180 @@ fn testbitbrd() {
     assert_eq!(count_stones("H/aG/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 39);
     assert_eq!(count_emptycells("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 25);
     assert_eq!(count_stones("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 39);
+    let revchktbl = [
+        ("-OOOOOOX-------------------------------------------------------- X", 0, 0),
+        ("-OOOOOX--------------------------------------------------------- X", 0, 0),
+        ("-OOOOX---------------------------------------------------------- X", 0, 0),
+        ("-OOOX----------------------------------------------------------- X", 0, 0),
+        ("-OOX------------------------------------------------------------ X", 0, 0),
+        ("-OX------------------------------------------------------------- X", 0, 0),
+        ("--------O-------O-------O-------O-------O-------O-------X------- X", 0, 0),
+        ("--------O-------O-------O-------O-------O-------X--------------- X", 0, 0),
+        ("--------O-------O-------O-------O-------X----------------------- X", 0, 0),
+        ("--------O-------O-------O-------X------------------------------- X", 0, 0),
+        ("--------O-------O-------X--------------------------------------- X", 0, 0),
+        ("--------O-------X----------------------------------------------- X", 0, 0),
+        ("---------O--------O--------O--------O--------O--------O--------X X", 0, 0),
+        ("---------O--------O--------O--------O--------O--------X--------X X", 0, 0),
+        ("---------O--------O--------O--------O--------X--------O--------X X", 0, 0),
+        ("---------O--------O--------O--------X--------O--------O--------X X", 0, 0),
+        ("---------O--------O--------X--------O--------O--------O--------X X", 0, 0),
+        ("---------O--------X--------O--------O--------O--------O--------X X", 0, 0),
+        ("XOOOOOO--------------------------------------------------------- X", 7, 0),
+        ("-XOOOOO--------------------------------------------------------- X", 7, 0),
+        ("--XOOOO--------------------------------------------------------- X", 7, 0),
+        ("---XOOO--------------------------------------------------------- X", 7, 0),
+        ("----XOO--------------------------------------------------------- X", 7, 0),
+        ("-----XO--------------------------------------------------------- X", 7, 0),
+        ("X-------O-------O-------O-------O-------O-------O--------------- X", 0, 7),
+        ("X-------X-------O-------O-------O-------O-------O--------------- X", 0, 7),
+        ("X-------O-------X-------O-------O-------O-------O--------------- X", 0, 7),
+        ("X-------O-------O-------X-------O-------O-------O--------------- X", 0, 7),
+        ("X-------O-------O-------O-------X-------O-------O--------------- X", 0, 7),
+        ("X-------O-------O-------O-------O-------X-------O--------------- X", 0, 7),
+        ("X--------O--------O--------O--------O--------O--------O--------- X", 7, 7),
+        ("-------X------O------O------O------O------O------O-------------- X", 0, 7),
+        ("-------X------X------O------O------O------O------O-------------- X", 0, 7),
+        ("-------X------O------X------O------O------O------O-------------- X", 0, 7),
+        ("-------X------O------O------X------O------O------O-------------- X", 0, 7),
+        ("-------X------O------O------O------X------O------O-------------- X", 0, 7),
+        ("-------X------O------O------O------O------X------O-------------- X", 0, 7),
+        ("--------------O------O------O------O------O------O------X------- X", 7, 0),
+        ("--------------O------O------O------O------O------X------X------- X", 7, 0),
+        ("--------------O------O------O------O------X------O------X------- X", 7, 0),
+        ("--------------O------O------O------X------O------O------X------- X", 7, 0),
+        ("--------------O------O------X------O------O------O------X------- X", 7, 0),
+        ("--------------O------X------O------O------O------O------X------- X", 7, 0),
+        ("-----------OOO---OOO-OO----OOO----O-O-O--O--O-------O-------X--- X", 4, 2),
+        ("-----------OOO---OOO-OO----OOO----O-O-O--O--O---X---O----------- X", 4, 2),
+        ("-----------OOO--XOOO-OO----OOO----O-O-O--O--O-------O----------- X", 4, 2),
+        ("--X--------OOO---OOO-OO----OOO----O-O-O--O--O-------O----------- X", 4, 2),
+        ("----X------OOO---OOO-OO----OOO----O-O-O--O--O-------O----------- X", 4, 2),
+        ("------X----OOO---OOO-OO----OOO----O-O-O--O--O-------O----------- X", 4, 2),
+        ("-----------OOO---OOO-OOX---OOO----O-O-O--O--O-------O----------- X", 4, 2),
+        ("-----------OOO---OOO-OO----OOO----O-O-O--O--O--X----O----------- X", 4, 2),
+        ("X-------OO-------OOOOOO-OO------O-O-----O--O----O---O----------- X", 0, 2),
+        ("--X-----OO-------OOOOOO-OO------O-O-----O--O----O---O----------- X", 0, 2),
+        ("--------OO-------OOOOOOXOO------O-O-----O--O----O---O----------- X", 0, 2),
+        ("--------OO-------OOOOOO-OO------O-O-----O--O----O---O--------X-- X", 0, 2),
+        ("--------OO-------OOOOOO-OO------O-O-----O--O----O---O---X------- X", 0, 2),
+        ("--X------XOX-----X-X-----XXX------------------------------------ X", 2, 2),
+        ("X--------OOO-----O-O-----OOO------------------------------------ X", 2, 2),
+        ("---------OOO----XO-O-----OOO------------------------------------ X", 2, 2),
+        ("---------OOO-----O-O-----OOO----X------------------------------- X", 2, 2),
+        ("---------OOO-----O-O-----OOO--------X--------------------------- X", 2, 2),
+        ("---------OOO-----O-OX----OOO------------------------------------ X", 2, 2),
+        ("----X----OOO-----O-O-----OOO------------------------------------ X", 2, 2),
+        ("--X------OOO-----O-OO----OOO------O-O--------------------------- X", 2, 2),
+        ("X--------OOO-----O-OO----OOO------O-O--------------------------- X", 2, 2),
+        ("---------OOO----XO-OO----OOO------O-O--------------------------- X", 2, 2),
+        ("---------OOO-----O-OO----OOO----X-O-O--------------------------- X", 2, 2),
+        ("---------OOO-----O-OO----OOO------O-O-----X--------------------- X", 2, 2),
+        ("---------OOO-----O-OO----OOO------O-O--------X------------------ X", 2, 2),
+        ("---------OOO-----O-OOX---OOO------O-O--------------------------- X", 2, 2),
+        ("----X----OOO-----O-OO----OOO------O-O--------------------------- X", 2, 2),
+
+        ("--X------OOO-----O-OOO---OOO------O-O-----O--O------------------ X", 2, 2),
+        ("X--------OOO-----O-OOO---OOO------O-O-----O--O------------------ X", 2, 2),
+        ("---------OOO----XO-OOO---OOO------O-O-----O--O------------------ X", 2, 2),
+        ("---------OOO-----O-OOO---OOO----X-O-O-----O--O------------------ X", 2, 2),
+        ("---------OOO-----O-OOO---OOO------O-O-----O--O----X------------- X", 2, 2),
+        ("---------OOO-----O-OOO---OOO------O-O-----O--O--------X--------- X", 2, 2),
+        ("---------OOO-----O-OOOX--OOO------O-O-----O--O------------------ X", 2, 2),
+        ("----X----OOO-----O-OOO---OOO------O-O-----O--O------------------ X", 2, 2),
+
+        ("--X------OOO-----O-OOOO--OOO------O-O-----O--O----O---O--------- X", 2, 2),
+        ("X--------OOO-----O-OOOO--OOO------O-O-----O--O----O---O--------- X", 2, 2),
+        ("---------OOO----XO-OOOO--OOO------O-O-----O--O----O---O--------- X", 2, 2),
+        ("---------OOO-----O-OOOO--OOO----X-O-O-----O--O----O---O--------- X", 2, 2),
+        ("---------OOO-----O-OOOO--OOO------O-O-----O--O----O---O---X----- X", 2, 2),
+        ("---------OOO-----O-OOOO--OOO------O-O-----O--O----O---O--------X X", 2, 2),
+        ("---------OOO-----O-OOOOX-OOO------O-O-----O--O----O---O--------- X", 2, 2),
+        ("----X----OOO-----O-OOOO--OOO------O-O-----O--O----O---O--------- X", 2, 2),
+    ];
+    for (obf, x, y) in revchktbl {
+        println!("obf:{obf}");
+        let b = BitBoard::from_obf(obf);
+        // assert!(b.checkreverse1(x, y));
+        // assert!(b.checkreverse2(x, y));
+        assert!(b.checkreverse(x, y));
+        // assert!(b.checkreverse4(x, y));
+        let b = b.rotate180();
+        // assert!(b.checkreverse1(NUMCELL - 1 - x, NUMCELL - 1 - y));
+        // assert!(b.checkreverse2(NUMCELL - 1 - x, NUMCELL - 1 - y));
+        assert!(b.checkreverse(NUMCELL - 1 - x, NUMCELL - 1 - y));
+        // assert!(b.checkreverse4(NUMCELL - 1 - x, NUMCELL - 1 - y));
+    }
+    for y in 1..NUMCELL - 1 {
+        for x in 1..NUMCELL - 1 {
+            let mut b = BitBoard::from_obf(
+                "XXXXXXXXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXXXXXXXX X");
+            let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
+            let mask = !bit;
+            b.white &= mask;
+            // assert!(b.checkreverse1(x, y));
+            // assert!(b.checkreverse2(x, y));
+            assert!(b.checkreverse(x, y));
+            // assert!(b.checkreverse4(x, y));
+        }
+    }
+    let revchktbl = [
+        ("---------------------------------------------------------------- X", 2, 2),
+        ("XXXXXXXXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X", 2, 2),
+        ("OOOOOOOOOOOOOOOOOO-OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO X", 2, 2),
+        ("XXXXXXXXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X", 2, 2),
+        ("---------OOOOOO--O-OOOO--OOOOOO--OOOOOO--OOOOOO--OOOOOO--------- X", 2, 2),
+        ("---------OOO-----O-O-----OOO------------------------------------ X", 2, 2),
+        ("---------OOO-----O-OO----OOO------O-O--------------------------- X", 2, 2),
+        ("---------OOO-----O-OOO---OOO------O-O-----O--O------------------ X", 2, 2),
+        ("---------XXX-----X-X-----XXX------------------------------------ X", 2, 2),
+        ("---------XXX-----X-XX----XXX------X-X--------------------------- X", 2, 2),
+        ("---------XXX-----X-XXX---XXX------X-X-----X--X------------------ X", 2, 2),
+        ("-X-------------------------------------------------------------- X", 0, 0),
+        ("------X--------------------------------------------------------- X", 7, 0),
+        ("--------X------------------------------------------------------- X", 0, 0),
+        ("---------X--------O--------O--------O--------O--------O--------X X", 0, 0),
+        ("X-------O-------O-------O-------O-------O-------X--------------- X", 0, 7),
+        ("-------X------O------O------O------O------O------X-------------- X", 0, 7),
+        ("--------------X------O------O------O------O------O------X------- X", 7, 0),
+    ];
+    for (obf, x, y) in revchktbl {
+        let b = BitBoard::from_obf(obf);
+        // assert!(!b.checkreverse1(x, y));
+        // assert!(!b.checkreverse2(x, y));
+        assert!(!b.checkreverse(x, y));
+        // assert!(!b.checkreverse4(x, y));
+        let b = b.rotate180();
+        // assert!(!b.checkreverse1(NUMCELL - 1 - x, NUMCELL - 1 - y));
+        // assert!(!b.checkreverse2(NUMCELL - 1 - x, NUMCELL - 1 - y));
+        assert!(!b.checkreverse(NUMCELL - 1 - x, NUMCELL - 1 - y));
+        // assert!(!b.checkreverse4(NUMCELL - 1 - x, NUMCELL - 1 - y));
+    }
+    for y in 0..NUMCELL {
+        for x in 0..NUMCELL {
+            let b = BitBoard::from_obf(
+                "---------------------------------------------------------------- X");
+            // assert!(!b.checkreverse1(x, y));
+            // assert!(!b.checkreverse2(x, y));
+            assert!(!b.checkreverse(x, y));
+            // assert!(!b.checkreverse4(x, y));
+            let mut b = BitBoard::from_obf(
+                "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X");
+            let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
+            let mask = !bit;
+            b.black &= mask;
+            // assert!(!b.checkreverse1(x, y));
+            // assert!(!b.checkreverse2(x, y));
+            assert!(!b.checkreverse(x, y));
+            // assert!(!b.checkreverse4(x, y));
+
+            let mut b = BitBoard::from_obf(
+                "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO X");
+            b.white &= mask;
+            // assert!(!b.checkreverse1(x, y));
+            // assert!(!b.checkreverse2(x, y));
+            assert!(!b.checkreverse(x, y));
+            // assert!(!b.checkreverse4(x, y));
+        }
+    }
 }
