@@ -691,7 +691,7 @@ impl NodeBB {
                 let mut nd = nd.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
                 let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
-                let val = if teban == bitboard::SENTE {val} else {-val};
+                let val = val * teban as f32;
                 nd.hyoka = Some(val);
                 if teban == bitboard::SENTE {
                     if val > alpha {
@@ -1635,15 +1635,15 @@ impl NodeBB {
             let val =
                 if newban.nblank() == 0 {
                     ch.kyokumen = 1;
-                    // newban.countf32() * -fteban
+                    newban.countf32() * -fteban
                     // newban.countf32()
-                    -newban.countf32()
+                    // -newban.countf32()
                     // newban.countf32() * fteban
                 } else if newban.is_passpass() {
                     ch.kyokumen = 1;
-                    // newban.countf32() * -fteban
+                    newban.countf32() * -fteban
                     // newban.countf32()
-                    -newban.countf32()
+                    // -newban.countf32()
                     // newban.countf32() * fteban
                 } else if depth <= 1 {
                     ch.kyokumen = 1;
