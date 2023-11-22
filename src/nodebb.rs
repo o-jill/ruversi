@@ -1604,18 +1604,6 @@ impl NodeBB {
         let mut newalpha = alpha;
         let mut depth = node.depth;
         // println!("d:{}",depth);
-        if ban.nblank() == 0 {
-            node.kyokumen = 1;
-            return ban.countf32();
-        }
-        if ban.is_passpass() {
-            node.kyokumen = 1;
-            return -ban.countf32();
-        }
-        if depth == 0 {
-            node.kyokumen = 1;
-            return -NodeBB::evaluate(&ban);
-        }
         let teban = ban.teban;
         // let sum = 0;
         let moves = ban.genmove();
@@ -1638,12 +1626,32 @@ impl NodeBB {
             });
         }
 
+        let fteban = -teban as f32;  // = newban.teban
         for (mvx, mvy) in moves {
             let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let mut ch = &mut node.child[idx];
-            let val = -NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha);
+            let val =
+                if newban.nblank() == 0 {
+                    ch.kyokumen = 1;
+                    // newban.countf32() * -fteban
+                    // newban.countf32()
+                    -newban.countf32()
+                    // newban.countf32() * fteban
+                } else if newban.is_passpass() {
+                    ch.kyokumen = 1;
+                    // newban.countf32() * -fteban
+                    // newban.countf32()
+                    -newban.countf32()
+                    // newban.countf32() * fteban
+                } else if depth <= 1 {
+                    ch.kyokumen = 1;
+                    NodeBB::evaluate(&newban) * -fteban
+                // } else {
+                } else {
+                    -NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha)
+                };
             ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_mut();
