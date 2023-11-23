@@ -9,7 +9,7 @@ $owner = "o-jill"
 $repo = "ruversi"
 $logfile = "ikkatsu.log"
 $archive = "archive/"
-$narchive = 10  # 99999999
+$narchive = 13  # 99999999
 
 def download(url, fn)
   FileUtils.mkpath($archive + File.dirname(fn))
