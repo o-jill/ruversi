@@ -59,7 +59,7 @@ File.open($logfile, mode = "rt"){|f|
   f.each_line{|line|
     # puts line
     # "name": "kifu-N9_20220720154803",
-    n = line.match(/name": "(k.+)",/)
+    n = line.match(/name": "(.+)",/)
     if n
       fname = n[1] + ".zip"
       next
@@ -69,6 +69,7 @@ File.open($logfile, mode = "rt"){|f|
     m = line.match(/archive_download_url": "(http.+zip)/)
     next unless m
 
+    next if fname == ""
     # puts m[1]
     download(m[1], fname)
     unzip(fname)
