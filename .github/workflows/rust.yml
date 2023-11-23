@@ -34,7 +34,7 @@ jobs:
       id: releaserun
       run: |
         echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release -- --genkifu ${{ matrix.kifu }} --depth 8
+        cargo run --release -- --genkifu ${{ matrix.kifu }} --depth 9
     - name: Learn
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaselearn
