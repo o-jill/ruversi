@@ -2,10 +2,6 @@ use super::*;
 use std::fs::OpenOptions;
 // use std::io::{self, Write};
 
-fn not_implemented_yet() {
-    unimplemented!()
-}
-
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 #[derive(PartialEq)]
@@ -297,6 +293,7 @@ impl GTP {
         self.resp = resp;
     }
 
+    #[allow(dead_code)]
     pub fn ng_respond1(&mut self, id : &str, arg : &str) {
         let resp = format!("? {id} {arg}");
         println!("{resp}\n");

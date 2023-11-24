@@ -585,7 +585,7 @@ impl NodeBB {
 
 
     #[allow(dead_code)]
-    pub fn thinko_ab_simple(ban : &bitboard::BitBoard, mut depth : u8)
+    pub fn thinko_ab_simple(ban : &bitboard::BitBoard, depth : u8)
             -> Option<(f32, &NodeBB)> {
         if depth == 0 {
             return None;
@@ -1648,13 +1648,11 @@ impl NodeBB {
                 } else if depth <= 1 {
                     ch.kyokumen = 1;
                     NodeBB::evaluate(&newban) * -fteban
-                // } else {
                 } else {
                     -NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha)
                 };
             ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
-            let best = node.best.as_mut();
             if newalpha < val {
                 newalpha = val;
                 node.best = Some(Best::new(val, mvx, mvy));

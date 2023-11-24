@@ -92,6 +92,7 @@ impl BitBoard {
         Ok(ret)
     }
 
+    #[allow(dead_code)]
     pub fn from_obf(obf : &str) -> BitBoard {
         let elem = obf.split(" ").collect::<Vec<_>>();
         let mut ret = BitBoard {
