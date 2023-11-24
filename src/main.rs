@@ -619,7 +619,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 /// - duellv : duel level.
 /// - depth : searching depth.
 fn duel_vs_edax(duellv : i8, depth : u8) {
-    if duellv < 3 || 13 < duellv {
+    if duellv < 1 || 13 < duellv {
         panic!("duel level:{duellv} is not supported...");
     }
 
