@@ -20,6 +20,7 @@ downloadkifu
 
 # ETA=0.01
 DEPTH=7
+DUELLVL=5
 
 # start learning
 # original
@@ -36,10 +37,10 @@ BASEWEIGHT=data/evaltable.txt
 ARRETA=(0.0007 0.0005 0.0003 0.0001)
 LENETA=${#ARRETA[@]}
 ARRREPEAT=(1000 1400 2000 3000 5000)
-PROGRESS="1000,1400,2000,3000"
 LENREPEAT=${#ARRREPEAT[@]}
 LENREPEATM1=$((${LENREPEAT} - 1))
 REPEAT=${ARRREPEAT[${LENREPEATM1}]}
+PROGRESS=`echo "${ARRREPEAT[*]}" | cut -d " " -f 1-${LENREPEATM1} | sed 's/ /,/g'`
 
 # $1: eta
 learn_duel() {
@@ -53,7 +54,7 @@ cp -f ${FILE} kifu/newevaltable-e$1-r${REPEAT}.txt
 
 # check if learned well
 for ((j=0;j<${LENREPEAT};j++)) do
-  RUSTFLAGS="-Ctarget-cpu=native" cargo run --release --features=avx -- --duel --ev1 ${BASEWEIGHT} --ev2 kifu/newevaltable-e$1-r${ARRREPEAT[$j]}.txt --depth ${DEPTH}| tee duel-$1-o-${ARRREPEAT[$j]}.txt
+  RUSTFLAGS="-Ctarget-cpu=native" cargo run --release --features=avx -- --duel ${DUELLVL} --ev1 ${BASEWEIGHT} --ev2 kifu/newevaltable-e$1-r${ARRREPEAT[$j]}.txt --depth ${DEPTH}| tee duel-$1-o-${ARRREPEAT[$j]}.txt
 done
 }
 
