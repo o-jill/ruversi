@@ -573,7 +573,11 @@ impl Trainer {
                     break;
                 }
                 let weight = rxprogress.recv().unwrap();
-                weight.writev4(&format!("kifu/newevaltable.r{prgs}.txt"));
+                if cfg!(feature="nnv4") {
+                    weight.writev4(&format!("kifu/newevaltable.r{prgs}.txt"));
+                } else {
+                    weight.writev5(&format!("kifu/newevaltable.r{prgs}.txt"));
+                }
             }
         });
 

@@ -436,9 +436,8 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
 
     // put new eval table
     if tr.need_save() {
-        let newevalfile = format!("./kifu/newevaltable.txt");
-        println!("save result to {newevalfile}");
         let fname = "./kifu/newevaltable.txt";
+        println!("save result to {fname}");
         unsafe {
             if cfg!(feature="bitboard") {
                 if cfg!(feature="nnv3") {
