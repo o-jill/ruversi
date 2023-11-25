@@ -9,7 +9,7 @@ use std::arch::x86_64;
  * output: 1
  */
 const N_INPUT : usize = board::CELL_2D + 1 + 2;
-const N_HIDDEN : usize = 8;
+const N_HIDDEN : usize = 16;
 const N_OUTPUT : usize = 1;
 const N_WEIGHT: usize = (N_INPUT + 1) * N_HIDDEN + N_HIDDEN + 1;
 
@@ -18,7 +18,8 @@ const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + 4 + 1;
 #[allow(dead_code)]
 const WSZV2 : usize = WSZV1;
 const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * 4 + 4 + 1;
-const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
+const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * 8 + 8 + 1;
+const WSZV5 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
 
 // v2
 // 8/8/1A6/2Ab3/2C3/8/8/8 w
@@ -33,6 +34,7 @@ enum EvalFile{
     V2,
     V3,
     V4,
+    V5,
 }
 
 impl EvalFile {
@@ -43,6 +45,7 @@ impl EvalFile {
             EvalFile::V2 => {"# 64+1-4-1"},
             EvalFile::V3 => {"# 64+1+2-4-1"},
             EvalFile::V4 => {"# 64+1+2-8-1"},
+            EvalFile::V5 => {"# 64+1+2-16-1"},
         }
     }
 
@@ -52,6 +55,7 @@ impl EvalFile {
             "# 64+1-4-1" => Some(EvalFile::V2),
             "# 64+1+2-4-1" => Some(EvalFile::V3),
             "# 64+1+2-8-1" => Some(EvalFile::V4),
+            "# 64+1+2-16-1" => Some(EvalFile::V5),
             _ => None
         }
     }
@@ -112,6 +116,7 @@ impl Weight {
                         EvalFile::V2 => {return self.readv2(&l)},
                         EvalFile::V3 => {return self.readv3(&l)},
                         EvalFile::V4 => {return self.readv4(&l)},
+                        EvalFile::V5 => {return self.readv5(&l)},
                         _ => {}
                     }
                 },
@@ -137,7 +142,7 @@ impl Weight {
         if WSZV3 != nsz {
             return Err(format!("size mismatch {WSZV3} != {nsz}"));
         }
-        self.fromv3tov4(&newtable);
+        self.fromv3tov5(&newtable);
         // println!("v3:{:?}", self.weight);
         Ok(())
     }
@@ -149,8 +154,20 @@ impl Weight {
         if WSZV4 != nsz {
             return Err(String::from("size mismatch"));
         }
-        self.weight = newtable;
+        self.fromv4tov5(&newtable);
         // println!("v4:{:?}", self.weight);
+        Ok(())
+    }
+
+    fn readv5(&mut self, line : &str) -> Result<(), String> {
+        let csv = line.split(",").collect::<Vec<_>>();
+        let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+        let nsz = newtable.len();
+        if WSZV5 != nsz {
+            return Err(String::from("size mismatch"));
+        }
+        self.weight = newtable;
+        // println!("v5:{:?}", self.weight);
         Ok(())
     }
 
@@ -178,9 +195,15 @@ impl Weight {
         Weight::write(&mut f, &self.weight, &EvalFile::V3);
     }
 
+    #[allow(dead_code)]
     pub fn writev4(&self, path : &str) {
         let mut f = fs::File::create(path).unwrap();
         Weight::write(&mut f, &self.weight, &EvalFile::V4);
+    }
+
+    pub fn writev5(&self, path : &str) {
+        let mut f = fs::File::create(path).unwrap();
+        Weight::write(&mut f, &self.weight, &EvalFile::V5);
     }
 
     pub fn writev1asv2(&self, path : &str) {
@@ -333,6 +356,84 @@ impl Weight {
         self.weight[idx4] =  tbl[idx3];
         // println!("tbl:{tbl:?}");
         // println!("we:{:?}", self.weight);
+    }
+
+
+    /// copy v3 data into v4.
+    fn convert(&mut self, tbl : &Vec<f32>, nhid : usize) {
+        self.weight = vec![0.0 ; N_WEIGHT];
+        // ban
+        let n = nhid * board::CELL_2D;
+        let we = &mut self.weight[0..n];
+        let tb = &tbl[0..n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // teban
+        let idx3 = nhid * board::CELL_2D;
+        let idx4 = N_HIDDEN * board::CELL_2D;
+        let n = nhid;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // fixed stone
+        let idx3 = nhid * (board::CELL_2D + 1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1);
+        let n = nhid;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+        let idx3 = nhid * (board::CELL_2D + 1 + 1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 1);
+        let n = nhid;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // dc
+        let idx3 = nhid * (board::CELL_2D + 1 + 2);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 2);
+        let n = nhid;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // w2
+        let idx3 = nhid * (board::CELL_2D + 1 + 2 + 1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 2 + 1);
+        let n = nhid;
+        let we = &mut self.weight[idx4..idx4 + n];
+        let tb = &tbl[idx3..idx3 + n];
+        for (w, t) in we.iter_mut().zip(tb.iter()) {
+            *w = *t;
+        }
+
+        // dc2
+        let idx3 = nhid * (board::CELL_2D + 1 + 2 + 1 + 1);
+        let idx4 = N_HIDDEN * (board::CELL_2D + 1 + 2 + 1 + 1);
+        self.weight[idx4] =  tbl[idx3];
+        // println!("tbl:{tbl:?}");
+        // println!("we:{:?}", self.weight);
+    }
+
+    /// copy v3 data into v5.
+    fn fromv3tov5(&mut self, tbl : &Vec<f32>) {
+        self.convert(tbl, 4);
+    }
+
+    /// copy v4 data into v5.
+    fn fromv4tov5(&mut self, tbl : &Vec<f32>) {
+        self.convert(tbl, 8);
     }
 
     pub fn evaluatev1(&self, ban : &board::Board) -> f32 {

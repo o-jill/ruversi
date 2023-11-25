@@ -346,8 +346,10 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
             if cfg!(feature="bitboard") {
                 if cfg!(feature="nnv3") {
                     nodebb::WEIGHT.as_ref().unwrap().writev3(&newevalfile);
-                } else {
+                } else if cfg!(feature="nnv4") {
                     nodebb::WEIGHT.as_ref().unwrap().writev4(&newevalfile);
+                } else {
+                    nodebb::WEIGHT.as_ref().unwrap().writev5(&newevalfile);
                 }
             } else {
                 if cfg!(feature="nnv1") {
@@ -436,22 +438,25 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
     if tr.need_save() {
         let newevalfile = format!("./kifu/newevaltable.txt");
         println!("save result to {newevalfile}");
+        let fname = "./kifu/newevaltable.txt";
         unsafe {
             if cfg!(feature="bitboard") {
                 if cfg!(feature="nnv3") {
-                    nodebb::WEIGHT.as_ref().unwrap().writev3("./kifu/newevaltable.txt");
+                    nodebb::WEIGHT.as_ref().unwrap().writev3(fname);
+                } else if cfg!(feature="nnv4") {
+                    nodebb::WEIGHT.as_ref().unwrap().writev4(fname);
                 } else {
-                    nodebb::WEIGHT.as_ref().unwrap().writev4("./kifu/newevaltable.txt");
+                    nodebb::WEIGHT.as_ref().unwrap().writev5(fname);
                 }
             } else {
                 if cfg!(feature="nnv1") {
-                    node::WEIGHT.as_ref().unwrap().writev1asv2("./kifu/newevaltable.txt");
+                    node::WEIGHT.as_ref().unwrap().writev1asv2(fname);
                 } else if cfg!(feature="nnv2") {
-                    node::WEIGHT.as_ref().unwrap().writev2asv3("./kifu/newevaltable.txt");
+                    node::WEIGHT.as_ref().unwrap().writev2asv3(fname);
                 } else if cfg!(feature="nnv3") {
-                    node::WEIGHT.as_ref().unwrap().writev3("./kifu/newevaltable.txt");
+                    node::WEIGHT.as_ref().unwrap().writev3(fname);
                 } else {
-                    node::WEIGHT.as_ref().unwrap().writev4("./kifu/newevaltable.txt");
+                    node::WEIGHT.as_ref().unwrap().writev4(fname);
                 }
             }
         }

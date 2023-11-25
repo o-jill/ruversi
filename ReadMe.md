@@ -59,7 +59,11 @@ NO Warranty.
   evaluate with neural network version 1.  
 * nnv2  
   evaluate with neural network version 2.  
-* (reserved)nnv3  
+* nnv3  
+  evaluate with neural network version 3.  
+* nnv4  
+  evaluate with neural network version 4.  
+* (reserved)nnv5  
 * avx  
   use AVX floating-point SIMD instructions.  
 * bitboard (default)  
