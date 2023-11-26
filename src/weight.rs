@@ -2297,7 +2297,13 @@ impl Weight {
 
             self.learnbb(&ban, winner, eta);
 
+            let ban = ban.rotate90();
+            self.learnbb(&ban, winner, eta);
+
             let ban = ban.rotate180();
+            self.learnbb(&ban, winner, eta);
+
+            let ban = ban.rotate90();
             self.learnbb(&ban, winner, eta);
         } else {
             let ban = match board::Board::from(rfen) {
