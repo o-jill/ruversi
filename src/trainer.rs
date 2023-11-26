@@ -615,7 +615,11 @@ impl Trainer {
                 if bitboard::count_emptycells(&rfen).unwrap() < 10 {
                     continue;
                 }
-                unsafe {RFENCACHE.push((rfen, score));}
+                unsafe {RFENCACHE.push((rfen.clone(), score));}
+                if score.abs() > 32 {
+                    // 大差がついている棋譜は多めに覚える
+                    unsafe {RFENCACHE.push((rfen, score));}
+                }
             }
 
             self.total += 1;
