@@ -28,6 +28,8 @@ DUELLVL=5
 # BASEWEIGHT=kifu/newevaltable.txt.orig
 # mv kifu/newevaltable.txt ${BASEWEIGHT}
 # RUSTFLAGS="-Ctarget-cpu=native" cargo run --release --features=avx -- --duel --ev1 RANDOM --ev2 ${BASEWEIGHT} --depth ${DEPTH}| tee duel-${ETA}-r-orig.txt
+# SOURCEWEIGHT=RANDOM
+SOURCEWEIGHT=data/evaltable.txt
 BASEWEIGHT=data/evaltable.txt
 # BASECOMMAND=RUSTFLAGS="-Ctarget-cpu=native" cargo run --release --features=avx --
 # ARRETA=(0.19 0.51 0.23 0.1123)
@@ -45,7 +47,7 @@ PROGRESS=`echo "${ARRREPEAT[*]}" | cut -d " " -f 1-${LENREPEATM1} | sed 's/ /,/g
 # $1: eta
 learn_duel() {
 # learn
-RUSTFLAGS="-Ctarget-cpu=native" cargo run --release --features=avx -- --learn --eta $1 --repeat ${REPEAT} --ev1 ${BASEWEIGHT} --progress ${PROGRESS}
+RUSTFLAGS="-Ctarget-cpu=native" cargo run --release --features=avx -- --learn --eta $1 --repeat ${REPEAT} --ev1 ${SOURCEWEIGHT} --progress ${PROGRESS}
 # rename weights
 for ((j=0;j<${LENREPEATM1};j++)) do
   mv -f kifu/newevaltable.r${ARRREPEAT[$j]}.txt kifu/newevaltable-e$1-r${ARRREPEAT[$j]}.txt
