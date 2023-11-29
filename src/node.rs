@@ -161,7 +161,7 @@ impl Node {
                         Node::think_internal(
                             &mut node2.child[idx], &newban)
                     };
-                let mut ch = &mut node2.child[idx];
+                let ch = &mut node2.child[idx];
                 ch.hyoka = val;
                 node2.kyokumen += ch.kyokumen;
                 let best = node2.best.as_ref();
@@ -198,7 +198,7 @@ impl Node {
                         &mut node.child[idx], &newban)
                 };
 
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -264,7 +264,7 @@ impl Node {
             let val = Node::think_internal(
                 &mut node.child[idx], &newban);
 
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -317,7 +317,7 @@ impl Node {
             let val = Node::think_internal_tt(
                 &mut node.child[idx], &newban, tt);
 
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -399,7 +399,7 @@ impl Node {
                             &mut node2.child[idx], &newban, alpha, beta)
                     };
 
-                let mut ch = &mut node2.child[idx];
+                let ch = &mut node2.child[idx];
                 ch.hyoka = val;
                 node2.kyokumen += ch.kyokumen;
                 let best = node2.best.as_ref();
@@ -449,7 +449,7 @@ impl Node {
                         &mut node.child[idx], &newban, alpha, beta)
                 };
 
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -563,7 +563,7 @@ impl Node {
                 let newban = ban2.r#move(x1, y1).unwrap();
                 let newban2 = newban.r#move(x2, y2).unwrap();
 
-                let mut nd1 = match node2.child.iter_mut().find(
+                let nd1 = match node2.child.iter_mut().find(
                         |a| a.x == x1 && a.y == y1) {
                         None => {
                             node2.child.push(Node::new(x1, y1, depth - 1, teban));
@@ -628,7 +628,7 @@ impl Node {
             let newban = ban.r#move(x1, y1).unwrap();
             let newban2 = newban.r#move(x2, y2).unwrap();
 
-            let mut nd1 = match node.child.iter_mut().find(
+            let nd1 = match node.child.iter_mut().find(
                     |a| a.x == x1 && a.y == y1) {
                     None => {
                         node.child.push(Node::new(x1, y1, depth - 1, teban));
@@ -726,7 +726,7 @@ impl Node {
             node.child.push(Node::new(x, y, depth - 1, teban));
             let val = Node::think_internal_ab_tt(
                 &mut node.child[idx], &newban, -beta, -alpha, tt);
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -794,7 +794,7 @@ impl Node {
             node.child.push(Node::new(x, y, depth - 1, teban));
             let val = Node::think_internal_ab(
                 &mut node.child[idx], &newban, -beta, -alpha);
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -862,7 +862,7 @@ impl Node {
             let val = Node::vb_think_internal_ab(
                 &mut node.child[idx], &newban, alpha, beta);
     println!("({},{})@{} {:?}", x, y, depth - 1, val);
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -933,7 +933,7 @@ impl Node {
             let val = Node::vb_think_internal_ab(
                 &mut node.child[idx], &newban, -beta, -alpha);
     println!("({},{})@{} {:?} {}", x, y, depth-1, val, ban.to_str());
-                let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
