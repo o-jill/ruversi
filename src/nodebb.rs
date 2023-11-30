@@ -181,7 +181,7 @@ impl NodeBB {
                 if nd.is_none() {
                     panic!("node2.child.iter_mut().find(|a|");
                 }
-                let mut nd = nd.unwrap();
+                let nd = nd.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
                 let val = NodeBB::think_internal(nd, &newban);
                 nd.hyoka = val;
@@ -267,7 +267,7 @@ impl NodeBB {
                         NodeBB::think_internal(
                             &mut node2.child[idx], &newban)
                     };
-                let mut ch = &mut node2.child[idx];
+                let ch = &mut node2.child[idx];
                 ch.hyoka = val;
                 node2.kyokumen += ch.kyokumen;
                 let best = node2.best.as_ref();
@@ -302,7 +302,7 @@ impl NodeBB {
                         &mut node.child[idx], &newban)
                 };
 
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -367,7 +367,7 @@ impl NodeBB {
             let val = NodeBB::think_internal(
                 &mut node.child[idx], &newban);
 
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -419,7 +419,7 @@ impl NodeBB {
             let val = NodeBB::think_internal_tt(
                 &mut node.child[idx], &newban, tt);
 
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -500,7 +500,7 @@ impl NodeBB {
                             &mut node2.child[idx], &newban, alpha, beta)
                     };
 
-                let mut ch = &mut node2.child[idx];
+                let ch = &mut node2.child[idx];
                 let val = if teban == bitboard::SENTE {val} else {-val};
                 ch.hyoka = Some(val);
                 node2.kyokumen += ch.kyokumen;
@@ -547,7 +547,7 @@ impl NodeBB {
                         &mut node.child[idx], &newban, alpha, beta)
                 };
 
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             let val = if teban == bitboard::SENTE {val} else {-val};
             ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
@@ -688,7 +688,7 @@ impl NodeBB {
                 // if nd.is_none() {
                 //     panic!("node2.child.iter_mut().find(|a|");
                 // }
-                let mut nd = nd.unwrap();
+                let nd = nd.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
                 let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
                 let val = val * teban as f32;
@@ -736,7 +736,7 @@ impl NodeBB {
             // if nd.is_none() {
             //     panic!("node2.child.iter_mut().find(|a|");
             // }
-            let mut nd = nd.unwrap();
+            let nd = nd.unwrap();
             let newban = ban.r#move(mvx, mvy).unwrap();
             let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
             let val = if teban == bitboard::SENTE {val} else {-val};
@@ -900,7 +900,7 @@ impl NodeBB {
                 // if nd.is_none() {
                 //     panic!("node2.child.iter_mut().find(|a|");
                 // }
-                let mut nd = nd2.unwrap();
+                let nd = nd2.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
                 let newban = newban.r#move(mvx2, mvy2).unwrap();
                 let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
@@ -952,7 +952,7 @@ impl NodeBB {
             // if nd.is_none() {
             //     panic!("node2.child.iter_mut().find(|a|");
             // }
-            let mut nd = nd2.unwrap();
+            let nd = nd2.unwrap();
             let newban = ban.r#move(mvx, mvy).unwrap();
             let newban = newban.r#move(mvx2, mvy2).unwrap();
             let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
@@ -1386,7 +1386,7 @@ impl NodeBB {
                 let newban3 = newban2.r#move(x3, y3).unwrap();
                 let teban2 = -teban;
                 let teban3 = teban;
-                let mut nd1 = match node2.child.iter_mut().find(
+                let nd1 = match node2.child.iter_mut().find(
                         |a| a.x == x1 && a.y == y1) {
                     None => {
                         node2.child.push(NodeBB::new(x1, y1, depth - 1, teban));
@@ -1394,7 +1394,7 @@ impl NodeBB {
                     },
                     Some(n) => n,
                 };
-                let mut nd2 = match nd1.child.iter_mut().find(
+                let nd2 = match nd1.child.iter_mut().find(
                         |a| a.x == x2 && a.y == y2) {
                     None => {
                         nd1.child.push(NodeBB::new(x2, y2, depth - 2, teban2));
@@ -1462,7 +1462,7 @@ impl NodeBB {
 
             let teban2 = -teban;
             let teban3 = teban;
-            let mut nd1 = match node.child.iter_mut().find(
+            let nd1 = match node.child.iter_mut().find(
                     |a| a.x == x1 && a.y == y1) {
                 None => {
                     node.child.push(NodeBB::new(x1, y1, depth - 1, teban));
@@ -1470,7 +1470,7 @@ impl NodeBB {
                 },
                 Some(n) => n,
             };
-            let mut nd2 = match nd1.child.iter_mut().find(
+            let nd2 = match nd1.child.iter_mut().find(
                     |a| a.x == x2 && a.y == y2) {
                 None => {
                     nd1.child.push(NodeBB::new(x2, y2, depth - 2, teban2));
@@ -1576,7 +1576,7 @@ impl NodeBB {
             let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             let val = -NodeBB::think_internal_ab_tt(
                 ch, &newban, -beta, -newalpha, tt);
             ch.hyoka = Some(val);
@@ -1631,7 +1631,7 @@ impl NodeBB {
             let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             let val =
                 if newban.nblank() == 0 {
                     ch.kyokumen = 1;
@@ -1709,7 +1709,7 @@ impl NodeBB {
             let val = NodeBB::vb_think_internal_ab(
                 &mut node.child[idx], &newban, alpha, beta);
     println!("({mvx},{mvy})@{} {:?}", depth - 1, val);
-            let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -1777,7 +1777,7 @@ impl NodeBB {
             let val = NodeBB::vb_think_internal_ab(
                 &mut node.child[idx], &newban, -beta, -alpha);
     println!("({mvx},{mvy})@{} {:?} {}", depth-1, val, ban.to_str());
-                let mut ch = &mut node.child[idx];
+            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
