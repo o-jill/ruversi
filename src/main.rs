@@ -236,7 +236,7 @@ fn verbose(rfen : &str, depth : u8) {
 
 /// generate kifu
 /// # Arguments
-/// - n : None or Some(0 - 9). index in 10 group.
+/// - n : None or Some(0 - 19). index in 20 group.
 fn gen_kifu(n : Option<usize>, depth : u8) {
     let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     let rfentbl =
@@ -247,11 +247,11 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
         grp = 0;
         &rfentbl
     } else {
-        let n = n.unwrap();
-        grp = n;
+        let group = 20;
+        grp = n.unwrap();
         let sz = rfentbl.len();
-        let b = sz * n / 10;
-        let e = sz * (n + 1) / 10;
+        let b = sz * grp / group;
+        let e = sz * (grp + 1) / group;
         &rfentbl[b..e]
     };
 
@@ -297,7 +297,7 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
         }
 
         // store kifu
-        let kifuname = format!("./kifu/kifu{}{:06}.txt", grp, idx);
+        let kifuname = format!("./kifu/kifu{:02}{:05}.txt", grp, idx);
         let mut f = File::create(kifuname).unwrap();
         let content = format!("{}{}", kifu::HEADER, kifutxt);
         f.write(content.as_bytes()).unwrap();
