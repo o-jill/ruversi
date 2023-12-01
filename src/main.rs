@@ -497,7 +497,7 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
 fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
-    if duellv < 1 || 13 < duellv {
+    if duellv < 1 || 14 < duellv {
         panic!("duel level:{duellv} is not supported...");
     }
 
@@ -623,7 +623,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 /// - duellv : duel level.
 /// - depth : searching depth.
 fn duel_vs_edax(duellv : i8, depth : u8) {
-    if duellv < 1 || 13 < duellv {
+    if duellv < 1 || 14 < duellv {
         panic!("duel level:{duellv} is not supported...");
     }
 
