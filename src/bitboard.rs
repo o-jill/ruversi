@@ -358,139 +358,115 @@ impl BitBoard {
         let mut revall = 0;
 
         // 下
-        let mut bit : u64 = pos << 1;
+        let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         for _i in y..NUMCELL {
-            if (mine & bit) != 0 {
-                revall |= rev;
-                break;
-            } else if (oppo & bit) != 0 {
-                rev |= bit;
-            } else {
-                break;
-            }
-
             bit <<= 1;
+            if (oppo & bit) == 0 {break;}
+
+            rev |= bit;
+        }
+        if (mine & bit) != 0 {
+            revall |= rev;
         }
 
         // 上
-        let mut bit : u64 = pos >> 1;
+        let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         for _i in 0..y {
-            if (mine & bit) != 0 {
-                revall |= rev;
-                break;
-            } else if (oppo & bit) != 0 {
-                rev |= bit;
-            } else {
-                break;
-            }
-
             bit >>= 1;
+            if (oppo & bit) == 0 {break;}
+
+            rev |= bit;
+        }
+        if (mine & bit) != 0 {
+            revall |= rev;
         }
 
         // 右
-        let mut bit : u64 = pos << NUMCELL;
+        let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         for _i in x..NUMCELL {
-            if (mine & bit) != 0 {
-                revall |= rev;
-                break;
-            } else if (oppo & bit) != 0 {
-                rev |= bit;
-            } else {
-                break;
-            }
-
             bit <<= NUMCELL;
+            if (oppo & bit) == 0 {break;}
+
+            rev |= bit;
+        }
+        if (mine & bit) != 0 {
+            revall |= rev;
         }
 
         // 左
-        let mut bit : u64 = pos >> NUMCELL;
+        let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         for _i in 0..x {
-            if (mine & bit) != 0 {
-                revall |= rev;
-                break;
-            } else if (oppo & bit) != 0 {
-                rev |= bit;
-            } else {
-                break;
-            }
-
             bit >>= NUMCELL;
+            if (oppo & bit) == 0 {break;}
+
+            rev |= bit;
+        }
+        if (mine & bit) != 0 {
+            revall |= rev;
         }
 
         // 右下
-        let mut bit : u64 = pos << (NUMCELL + 1);
+        let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
         for _i in 0..sz {
-            if (mine & bit) != 0 {
-                revall |= rev;
-                break;
-            } else if (oppo & bit) != 0 {
-                rev |= bit;
-            } else {
-                break;
-            }
-
             bit <<= NUMCELL + 1;
+            if (oppo & bit) == 0 {break;}
+
+            rev |= bit;
+        }
+        if (mine & bit) != 0 {
+            revall |= rev;
         }
 
         // 右上
-        let mut bit : u64 = pos << (NUMCELL - 1);
+        let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         let xx = NUMCELL - 1 - x;
         let yy = y;
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
-            if (mine & bit) != 0 {
-                revall |= rev;
-                break;
-            } else if (oppo & bit) != 0 {
-                rev |= bit;
-            } else {
-                break;
-            }
-
             bit <<= NUMCELL - 1;
+            if (oppo & bit) == 0 {break;}
+
+            rev |= bit;
+        }
+        if (mine & bit) != 0 {
+            revall |= rev;
         }
 
         // 左上
-        let mut bit : u64 = pos >> (NUMCELL + 1);
+        let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         let sz = if x < y {x} else {y};
         for _i in 0..sz {
-            if (mine & bit) != 0 {
-                revall |= rev;
-                break;
-            } else if (oppo & bit) != 0 {
-                rev |= bit;
-            } else {
-                break;
-            }
-
             bit >>= NUMCELL + 1;
+            if (oppo & bit) == 0 {break;}
+
+            rev |= bit;
+        }
+        if (mine & bit) != 0 {
+            revall |= rev;
         }
 
         // 左下
-        let mut bit : u64 = pos >> (NUMCELL - 1);
+        let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         let xx = x;
         let yy = NUMCELL - 1 - y;
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
-            if (mine & bit) != 0 {
-                revall |= rev;
-                break;
-            } else if (oppo & bit) != 0 {
-                rev |= bit;
-            } else {
-                break;
-            }
-
             bit >>= NUMCELL - 1;
+            if (oppo & bit) == 0 {break;}
+
+            rev |= bit;
+        }
+        if (mine & bit) != 0 {
+            revall |= rev;
         }
 
         if color == SENTE {
