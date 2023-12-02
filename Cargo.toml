@@ -21,4 +21,4 @@ nnv4 = []
 withtt = []  # use transposition table
 bitboard = []
 byteboard = []
-avx = ["bitboard"]
+avx = ["bitboard"] ## including AVX and BMI2

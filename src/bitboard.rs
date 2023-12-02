@@ -1,4 +1,4 @@
-// use std::arch::x86_64;
+use std::arch::x86_64;
 
 pub const SENTE : i8 = 1;
 pub const BLANK : i8 = 0;
@@ -504,34 +504,60 @@ impl BitBoard {
         let mbits = (mine << shift) & mask;
         let m = mbits << o;  // その先の自分の石
         // let obito = (oppo << shift) & mask;
-        // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
+        // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & MSB) != 0");
         // 相手の石が並んでいて、そのすぐ先に自分の石がある
         if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
 
-        // 右
-        let mut bit = pos;
-        let mut rev = false;
-        for _i in x..NUMCELL {
-            bit <<= NUMCELL;
-            if (oppo & bit) == 0 {break;}
+        if cfg!(feature="avx") {
+            let gather = 0x0101010101010101 << y;
+            let oppon = unsafe {x86_64::_pext_u64(oppo, gather)};
+            let minee = unsafe {x86_64::_pext_u64(mine, gather)};
+            // 右
+            let shift = x + 1;
+            let mask = (1u64 << (NUMCELL - 1 - x)) - 1;
+            let obits = (oppon >> shift) ^ mask;
+            let o = obits.trailing_zeros();
+            let mbits = (minee >> shift) & mask;
+            let m = mbits >> o;  // その先の自分の石
+            // let obito = (oppo >> shift) & mask;
+            // println!("(x{x},y{y}), {shift} {mask:x} {oppon:x} {minee:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
+            // 相手の石が並んでいて、そのすぐ先に自分の石がある
+            if o > 0 && (m & 0x1) != 0 {return true;}
 
-            rev = true;
-        }
-        if rev && (mine & bit) != 0 {
-            return true;
-        }
+            // 左
+            // x = 0のときに64シフトになってシフトできないので63+1に分割
+            let shift = 63 - x;
+            let mask = 0xffu64;
+            let obits = (oppon ^ mask) << shift;  // 石のあるところがゼロになる
+            let o = (obits << 1).leading_zeros();  // 相手の石が並んでいる数
+            let mbits = (minee & mask) << shift;
+            let m = (mbits << 1) << o;  // その先の自分の石
+            // let obito = (oppo & mask) << shift;
+            // println!("(x{x},y{y}), {shift} {mask:x} {oppon:x} {minee:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m:x} & MSB) != 0");
+            // 相手の石が並んでいて、そのすぐ先に自分の石がある
+            if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
+        } else {
+            // 右
+            let mut bit = pos;
+            let mut rev = false;
+            for _i in x..NUMCELL {
+                bit <<= NUMCELL;
+                if (oppo & bit) == 0 {break;}
+                
+                rev = true;
+            }
+            if rev && (mine & bit) != 0 {return true;}
 
-        // 左
-        let mut bit = pos;
-        let mut rev = false;
-        for _i in 0..x {
-            bit >>= NUMCELL;
-            if (oppo & bit) == 0 {break;}
+            // 左
+            let mut bit = pos;
+            let mut rev = false;
+            for _i in 0..x {
+                bit >>= NUMCELL;
+                if (oppo & bit) == 0 {break;}
 
-            rev = true;
-        }
-        if rev && (mine & bit) != 0 {
-            return true;
+                rev = true;
+            }
+            if rev && (mine & bit) != 0 {return true;}
         }
 
         // 右下
@@ -544,9 +570,7 @@ impl BitBoard {
 
             rev = true;
         }
-        if rev && (mine & bit) != 0 {
-            return true;
-        }
+        if rev && (mine & bit) != 0 {return true;}
 
         // 右上
         let mut bit = pos;
@@ -560,9 +584,7 @@ impl BitBoard {
 
             rev = true;
         }
-        if rev && (mine & bit) != 0 {
-            return true;
-        }
+        if rev && (mine & bit) != 0 {return true;}
 
         // 左上
         let mut bit = pos;
@@ -574,9 +596,7 @@ impl BitBoard {
 
             rev = true;
         }
-        if rev && (mine & bit) != 0 {
-            return true;
-        }
+        if rev && (mine & bit) != 0 {return true;}
 
         // 左下
         let mut bit = pos;
@@ -590,9 +610,7 @@ impl BitBoard {
 
             rev = true;
         }
-        if rev && (mine & bit) != 0 {
-            return true;
-        }
+        if rev && (mine & bit) != 0 {return true;}
 
         false
     }
