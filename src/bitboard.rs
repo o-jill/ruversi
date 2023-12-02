@@ -497,27 +497,16 @@ impl BitBoard {
         if o > 0 && (m & 0x1) != 0 {return true;}
 
         // 上
-        let mut bit = pos;
-        let mut rev = false;
-        for _i in 0..y {
-            bit >>= 1;
-            if (oppo & bit) == 0 {break;}
-
-            rev = true;
-        }
-        if rev && (mine & bit) != 0 {
-            return true;
-        }
-        // let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
-        // let mask = 0xffu64 << (56 + NUMCELL - y);  // y = 7 -> (1<<7 ) - 1 = 0x80 - 1 = 0x7F
-        // let obits = (oppo << shift) ^ mask;  // 石のあるところがゼロになる
-        // let o = obits.leading_zeros();  // 相手の石が並んでいる数
-        // let mbits = (mine << shift) & mask;
-        // let m = mbits << o;  // その先の自分の石
-        // // let obito = (oppo << shift) & mask;
-        // // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
-        // // 相手の石が並んでいて、そのすぐ先に自分の石がある
-        // if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
+        let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
+        let mask = 0xff00000000000000u64 << (NUMCELL - y);
+        let obits = (oppo << shift) ^ mask;  // 石のあるところがゼロになる
+        let o = obits.leading_zeros();  // 相手の石が並んでいる数
+        let mbits = (mine << shift) & mask;
+        let m = mbits << o;  // その先の自分の石
+        // let obito = (oppo << shift) & mask;
+        // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
+        // 相手の石が並んでいて、そのすぐ先に自分の石がある
+        if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
 
         // 右
         let mut bit = pos;
