@@ -507,20 +507,18 @@ impl BitBoard {
         let mine = if color == SENTE {self.black} else {self.white};
         let oppo = if color == SENTE {self.white} else {self.black};
         let pos = LSB_CELL << BitBoard::index(x, y);
+
         // 下
         let mut bit = pos;
         let mut rev = false;
         for _i in y..NUMCELL {
             bit <<= 1;
-            if (mine & bit) != 0 {
-                if rev {return true;}
+            if (oppo & bit) == 0 {break;}
 
-                break;
-            } else if (oppo & bit) != 0 {
-                rev = true;
-            } else {
-                break;
-            }
+            rev = true;
+        }
+        if rev && (mine & bit) != 0 {
+            return true;
         }
 
         // 上
@@ -528,15 +526,12 @@ impl BitBoard {
         let mut rev = false;
         for _i in 0..y {
             bit >>= 1;
-            if (mine & bit) != 0 {
-                if rev {return true;}
+            if (oppo & bit) == 0 {break;}
 
-                break;
-            } else if (oppo & bit) != 0 {
-                rev = true;
-            } else {
-                break;
-            }
+            rev = true;
+        }
+        if rev && (mine & bit) != 0 {
+            return true;
         }
 
         // 右
@@ -544,15 +539,12 @@ impl BitBoard {
         let mut rev = false;
         for _i in x..NUMCELL {
             bit <<= NUMCELL;
-            if (mine & bit) != 0 {
-                if rev {return true;}
+            if (oppo & bit) == 0 {break;}
 
-                break;
-            } else if (oppo & bit) != 0 {
-                rev = true;
-            } else {
-                break;
-            }
+            rev = true;
+        }
+        if rev && (mine & bit) != 0 {
+            return true;
         }
 
         // 左
@@ -560,15 +552,12 @@ impl BitBoard {
         let mut rev = false;
         for _i in 0..x {
             bit >>= NUMCELL;
-            if (mine & bit) != 0 {
-                if rev {return true;}
+            if (oppo & bit) == 0 {break;}
 
-                break;
-            } else if (oppo & bit) != 0 {
-                rev = true;
-            } else {
-                break;
-            }
+            rev = true;
+        }
+        if rev && (mine & bit) != 0 {
+            return true;
         }
 
         // 右下
@@ -577,15 +566,12 @@ impl BitBoard {
         let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
         for _i in 0..sz {
             bit <<= NUMCELL + 1;
-            if (mine & bit) != 0 {
-                if rev {return true;}
+            if (oppo & bit) == 0 {break;}
 
-                break;
-            } else if (oppo & bit) != 0 {
-                rev = true;
-            } else {
-                break;
-            }
+            rev = true;
+        }
+        if rev && (mine & bit) != 0 {
+            return true;
         }
 
         // 右上
@@ -596,15 +582,12 @@ impl BitBoard {
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
             bit <<= NUMCELL - 1;
-            if (mine & bit) != 0 {
-                if rev {return true;}
+            if (oppo & bit) == 0 {break;}
 
-                break;
-            } else if (oppo & bit) != 0 {
-                rev = true;
-            } else {
-                break;
-            }
+            rev = true;
+        }
+        if rev && (mine & bit) != 0 {
+            return true;
         }
 
         // 左上
@@ -613,15 +596,12 @@ impl BitBoard {
         let sz = if x < y {x} else {y};
         for _i in 0..sz {
             bit >>= NUMCELL + 1;
-            if (mine & bit) != 0 {
-                if rev {return true;}
+            if (oppo & bit) == 0 {break;}
 
-                break;
-            } else if (oppo & bit) != 0 {
-                rev = true;
-            } else {
-                break;
-            }
+            rev = true;
+        }
+        if rev && (mine & bit) != 0 {
+            return true;
         }
 
         // 左下
@@ -632,15 +612,12 @@ impl BitBoard {
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
             bit >>= NUMCELL - 1;
-            if (mine & bit) != 0 {
-                if rev {return true;}
+            if (oppo & bit) == 0 {break;}
 
-                break;
-            } else if (oppo & bit) != 0 {
-                rev = true;
-            } else {
-                break;
-            }
+            rev = true;
+        }
+        if rev && (mine & bit) != 0 {
+            return true;
         }
 
         false
