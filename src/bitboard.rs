@@ -360,7 +360,7 @@ impl BitBoard {
         // 下
         let mut bit : u64 = pos;
         let mut rev : u64 = 0;
-        for _i in y..NUMCELL {
+        for _i in y..(NUMCELL - 1) {
             bit <<= 1;
             if (oppo & bit) == 0 {break;}
 
@@ -386,7 +386,7 @@ impl BitBoard {
         // 右
         let mut bit : u64 = pos;
         let mut rev : u64 = 0;
-        for _i in x..NUMCELL {
+        for _i in x..(NUMCELL - 1) {
             bit <<= NUMCELL;
             if (oppo & bit) == 0 {break;}
 
