@@ -5844,4 +5844,25 @@ fn testbitbrd() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
     }
+
+    let ban0 = BitBoard::from("7A/8/8/6a1/6a1/6a1/6a1/6a1 b").unwrap();
+    assert!(!ban0.checkreverse(7 - 1, 3 - 1));
+    let ban = ban0.r#move(7, 3).unwrap();
+    assert_eq!(ban.black.count_ones(), 2);
+    assert_eq!(ban.white.count_ones(), 5);
+    let ban90 = ban0.rotate90();
+    assert!(!ban90.checkreverse(3 - 1, 2 - 1));
+    let ban = ban90.r#move(3, 2).unwrap();
+    assert_eq!(ban.black.count_ones(), 2);
+    assert_eq!(ban.white.count_ones(), 5);
+    let ban180 = ban90.rotate90();
+    assert!(!ban180.checkreverse(2 - 1, 6 - 1));
+    let ban = ban180.r#move(2, 6).unwrap();
+    assert_eq!(ban.black.count_ones(), 2);
+    assert_eq!(ban.white.count_ones(), 5);
+    let banm90 = ban180.rotate90();
+    assert!(!banm90.checkreverse(6 - 1, 7 - 1));
+    let ban = banm90.r#move(6, 7).unwrap();
+    assert_eq!(ban.black.count_ones(), 2);
+    assert_eq!(ban.white.count_ones(), 5);
 }
