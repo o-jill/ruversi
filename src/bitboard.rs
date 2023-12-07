@@ -359,7 +359,7 @@ impl BitBoard {
 
         // 下
         let usetzcnt = false;
-        let usetzcnt = true;
+        // let usetzcnt = true;
         if usetzcnt {
             let shift = BitBoard::index(x, y) + 1;
             let mask = (1u64 << (NUMCELL - 1 - y)) - 1;
