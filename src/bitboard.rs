@@ -391,16 +391,37 @@ impl BitBoard {
             }
         }
         // 上
-        let mut bit : u64 = pos;
-        let mut rev : u64 = 0;
-        for _i in 0..y {
-            bit >>= 1;
-            if (oppo & bit) == 0 {break;}
+        let uselzcnt = false;
+        // let uselzcnt = true;
+        if uselzcnt {
+            let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
+            let mask = 0xfe00000000000000u64 << (NUMCELL - 1 - y);
+            let obits = (oppo << shift) ^ mask;  // 石のあるところがゼロになる
+            let o = obits.leading_zeros();  // 相手の石が並んでいる数
+            let mbits = (mine << shift) & mask;
+            let m = mbits << o;  // その先の自分の石
+            // let obito = (oppo << shift) & mask;
+            // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m:x} & MSB) != 0");
+            // 相手の石が並んでいて、そのすぐ先に自分の石がある
+            if o > 0 && (m & (0x1 << 63)) != 0 {
+                let rev = (1u64 << o) - 1;
+                let rev = rev << BitBoard::index(x, y - o as usize);
+                revall |= rev;
+                // println!("reva:{revall:x} rev:{rev:x} sh:{}", BitBoard::index(x, y - o as usize));
+                // println!("mi:{:x} op:{:x}", mine | revall | pos, oppo ^ revall);
+            }
+        } else {
+            let mut bit : u64 = pos;
+            let mut rev : u64 = 0;
+            for _i in 0..y {
+                bit >>= 1;
+                if (oppo & bit) == 0 {break;}
 
-            rev |= bit;
-        }
-        if (mine & bit) != 0 {
-            revall |= rev;
+                rev |= bit;
+            }
+            if (mine & bit) != 0 {
+                revall |= rev;
+            }
         }
 
         // 右
