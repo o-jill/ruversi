@@ -527,7 +527,7 @@ impl BitBoard {
 
         // 下
         let usetzcnt = false;
-        let usetzcnt = true;
+        // let usetzcnt = true;
         if usetzcnt {
             let shift = BitBoard::index(x, y) + 1;
             let mask = (1u64 << (NUMCELL - 1 - y)) - 1;
@@ -553,7 +553,7 @@ impl BitBoard {
 
         // 上
         let uselzcnt = false;
-        let uselzcnt = true;
+        // let uselzcnt = true;
         if uselzcnt {
             let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
             let mask = 0xff00000000000000u64 << (NUMCELL - y);
@@ -577,7 +577,7 @@ impl BitBoard {
             if rev && (mine & bit) != 0 {return true;}
         }
 
-        if cfg!(feature="avx") {
+        if false && cfg!(feature="avx") {
             let gather = 0x0101010101010101 << y;
             let oppon = unsafe {x86_64::_pext_u64(oppo, gather)};
             let minee = unsafe {x86_64::_pext_u64(mine, gather)};
