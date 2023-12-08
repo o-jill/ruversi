@@ -526,28 +526,56 @@ impl BitBoard {
         let pos = LSB_CELL << BitBoard::index(x, y);
 
         // 下
-        let shift = BitBoard::index(x, y) + 1;
-        let mask = (1u64 << (NUMCELL - 1 - y)) - 1;
-        let obits = (oppo >> shift) ^ mask;
-        let o = obits.trailing_zeros();
-        let mbits = (mine >> shift) & mask;
-        let m = mbits >> o;  // その先の自分の石
-        // let obito = (oppo >> shift) & mask;
-        // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
-        // 相手の石が並んでいて、そのすぐ先に自分の石がある
-        if o > 0 && (m & 0x1) != 0 {return true;}
+        let usetzcnt = false;
+        let usetzcnt = true;
+        if usetzcnt {
+            let shift = BitBoard::index(x, y) + 1;
+            let mask = (1u64 << (NUMCELL - 1 - y)) - 1;
+            let obits = (oppo >> shift) ^ mask;
+            let o = obits.trailing_zeros();
+            let mbits = (mine >> shift) & mask;
+            let m = mbits >> o;  // その先の自分の石
+            // let obito = (oppo >> shift) & mask;
+            // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
+            // 相手の石が並んでいて、そのすぐ先に自分の石がある
+            if o > 0 && (m & 0x1) != 0 {return true;}
+        } else {
+            let mut bit = pos;
+            let mut rev = false;
+            for _i in y..(NUMCELL - 1) {
+                bit <<= 1;
+                if (oppo & bit) == 0 {break;}
+
+                rev = true;
+            }
+            if rev && (mine & bit) != 0 {return true;}
+        }
 
         // 上
-        let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
-        let mask = 0xff00000000000000u64 << (NUMCELL - y);
-        let obits = (oppo << shift) ^ mask;  // 石のあるところがゼロになる
-        let o = obits.leading_zeros();  // 相手の石が並んでいる数
-        let mbits = (mine << shift) & mask;
-        let m = mbits << o;  // その先の自分の石
-        // let obito = (oppo << shift) & mask;
-        // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & MSB) != 0");
-        // 相手の石が並んでいて、そのすぐ先に自分の石がある
-        if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
+        let uselzcnt = false;
+        let uselzcnt = true;
+        if uselzcnt {
+            let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
+            let mask = 0xff00000000000000u64 << (NUMCELL - y);
+            let obits = (oppo << shift) ^ mask;  // 石のあるところがゼロになる
+            let o = obits.leading_zeros();  // 相手の石が並んでいる数
+            let mbits = (mine << shift) & mask;
+            let m = mbits << o;  // その先の自分の石
+            // let obito = (oppo << shift) & mask;
+            // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & MSB) != 0");
+            // 相手の石が並んでいて、そのすぐ先に自分の石がある
+            if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
+        } else {
+            let mut bit = pos;
+            let mut rev = false;
+            for _i in 0..y {
+                bit >>= 1;
+                if (oppo & bit) == 0 {break;}
+
+                rev = true;
+            }
+            if rev && (mine & bit) != 0 {return true;}
+        }
 
         if cfg!(feature="avx") {
             let gather = 0x0101010101010101 << y;
@@ -581,7 +609,7 @@ impl BitBoard {
             // 右
             let mut bit = pos;
             let mut rev = false;
-            for _i in x..NUMCELL {
+            for _i in x..(NUMCELL - 1) {
                 bit <<= NUMCELL;
                 if (oppo & bit) == 0 {break;}
                 
@@ -5887,6 +5915,7 @@ fn testbitbrd() {
     }
 
     let ban0 = BitBoard::from("7A/8/8/6a1/6a1/6a1/6a1/6a1 b").unwrap();
+    ban0.put();
     assert!(!ban0.checkreverse(7 - 1, 3 - 1));
     let ban = ban0.r#move(7, 3).unwrap();
     assert_eq!(ban.black.count_ones(), 2);
