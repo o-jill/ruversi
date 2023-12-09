@@ -616,10 +616,10 @@ impl Trainer {
                     continue;
                 }
                 unsafe {RFENCACHE.push((rfen.clone(), score));}
-                if score.abs() > 32 {
+                /*if score.abs() > 32 {
                     // 大差がついている棋譜は多めに覚える
                     unsafe {RFENCACHE.push((rfen, score));}
-                }
+                }*/
             }
 
             self.total += 1;
