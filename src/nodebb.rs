@@ -600,6 +600,18 @@ impl NodeBB {
             return None;
         }
 
+        let yomikiri = 12;
+        let yose = 18;
+        let nblank = ban.nblank();
+        let depth =
+            if nblank <= yomikiri {
+                yomikiri as u8
+            } else if nblank <= yose {
+                depth + 2
+            } else {
+                depth
+            };
+
         let node;
         unsafe {
             ND_ROOT = Some(NodeBB::new(0, 0, depth, bitboard::NONE));
