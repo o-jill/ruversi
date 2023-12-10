@@ -952,11 +952,6 @@ impl NodeBB {
         }
         let ban2 = ban.clone();
 
-        // let salpha = Arc::new(std::sync::Mutex::new(-100000.0 as f32));
-        // let sbeta = Arc::new(std::sync::Mutex::new(100000.0 as f32));
-        // let sal = salpha.clone();
-        // let sbe = sbeta.clone();
-
         let sub =
                 thread::spawn(move || {
             moves1.sort_by(|a, b| {
@@ -964,15 +959,13 @@ impl NodeBB {
                 let pb = move_priority2(&b);
                 pa.partial_cmp(&pb).unwrap()
             });
-            let teban = -ban2.teban;
+            let teban = ban2.teban;
             let node2;
             unsafe {
                 node2 = ND_ROOT.as_mut().unwrap();
             }
             let mut alpha : f32 = -100000.0;
             let mut beta : f32 = 100000.0;
-            // let mut alpha : f32 = *sal.lock().unwrap();
-            // let mut beta : f32 = *sbe.lock().unwrap();
             for (mvx, mvy, mvx2, mvy2) in moves1 {
                 let nd = node2.child.iter_mut().find(|a| {
                         a.x == mvx && a.y == mvy
@@ -987,30 +980,16 @@ impl NodeBB {
                 let newban = ban2.r#move(mvx, mvy).unwrap();
                 let newban = newban.r#move(mvx2, mvy2).unwrap();
                 let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
-                let val = if teban == bitboard::SENTE {val} else {-val};
+                let val = val * teban as f32;
                 nd.hyoka = Some(val);
                 if teban == bitboard::SENTE {
                     if val > alpha {
                         alpha = val;
                     }
-                    // let mut sa = sal.lock().unwrap();
-                    // if val > *sa {
-                    //     *sa = val;
-                    //     alpha = val;
-                    // } else {
-                    //     alpha = *sa;
-                    // }
                 } else if teban == bitboard::GOTE {
                     if val < beta {
                         beta = val;
                     }
-                    // let mut sb = sbe.lock().unwrap();
-                    // if val < *sb {
-                    //     *sb = val;
-                    //     beta = val;
-                    // } else {
-                    //     beta = *sb;
-                    // }
                 }
             }
         });
@@ -1022,9 +1001,7 @@ impl NodeBB {
         });
         let mut alpha : f32 = -100000.0;
         let mut beta : f32 = 100000.0;
-        // let mut alpha : f32 = *salpha.lock().unwrap();
-        // let mut beta : f32 = *sbeta.lock().unwrap();
-        let teban = -ban.teban;
+        let teban = ban.teban;
         for (mvx, mvy, mvx2, mvy2) in moves2 {
             let nd = node.child.iter_mut().find(|a| {
                     a.x == mvx && a.y == mvy
@@ -1039,30 +1016,16 @@ impl NodeBB {
             let newban = ban.r#move(mvx, mvy).unwrap();
             let newban = newban.r#move(mvx2, mvy2).unwrap();
             let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
-            let val = if teban == bitboard::SENTE {val} else {-val};
+            let val = val * teban as f32;
             nd.hyoka = Some(val);
             if teban == bitboard::SENTE {
                 if val > alpha {
                     alpha = val;
                 }
-                // let mut sa = salpha.lock().unwrap();
-                // if val > *sa {
-                //     *sa = val;
-                //     alpha = val;
-                // } else {
-                //     alpha = *sa;
-                // }
             } else if teban == bitboard::GOTE {
                 if val < beta {
                     beta = val;
                 }
-                // let mut sb = sbeta.lock().unwrap();
-                // if val < *sb {
-                //     *sb = val;
-                //     beta = val;
-                // } else {
-                //     beta = *sb;
-                // }
             }
         }
         sub.join().unwrap();
