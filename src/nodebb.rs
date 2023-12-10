@@ -835,7 +835,7 @@ impl NodeBB {
                 let newban = ban2.r#move(mvx, mvy).unwrap();
                 let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
                 let val = val * teban as f32;
-                println!("{val:+3.1}");
+                // println!("{val:+3.1}");
                 nd.hyoka = Some(val);
                 if teban == bitboard::SENTE {
                     if val > alpha {
