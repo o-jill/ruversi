@@ -212,6 +212,7 @@ fn verbose(rfen : &str, depth : u8) {
                 let st = Instant::now();
                 let (val, node) =
                     nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                    // nodebb::NodeBB::thinko_ab_single(&ban, depth).unwrap();
                     // nodebb::NodeBB::thinko_ab(&ban, depth).unwrap();
                     // nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
                 let ft = st.elapsed();
