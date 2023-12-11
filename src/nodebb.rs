@@ -1000,14 +1000,21 @@ impl NodeBB {
                 let nd = nd2.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
                 let newban = newban.r#move(mvx2, mvy2).unwrap();
-                let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
-                let val = val * teban as f32;
+                let val =
+                    if newban.nblank() == 0 || newban.is_passpass() {
+                        nd.kyokumen = 1;
+                        newban.countf32()
+                    } else {
+                        let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
+                        val * teban as f32
+                    };
                 nd.hyoka = Some(val);
-                if teban == bitboard::SENTE {
+                let teban1 = 0;  // for not to update alpha nor beta. // teban;
+                if teban1 == bitboard::SENTE {
                     if val > alpha {
                         alpha = val;
                     }
-                } else if teban == bitboard::GOTE {
+                } else if teban1 == bitboard::GOTE {
                     if val < beta {
                         beta = val;
                     }
@@ -1036,14 +1043,21 @@ impl NodeBB {
             let nd = nd2.unwrap();
             let newban = ban.r#move(mvx, mvy).unwrap();
             let newban = newban.r#move(mvx2, mvy2).unwrap();
-            let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
-            let val = val * teban as f32;
+            let val =
+                if newban.nblank() == 0 || newban.is_passpass() {
+                    nd.kyokumen = 1;
+                    newban.countf32()
+                } else {
+                    let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
+                    val * teban as f32
+                };
             nd.hyoka = Some(val);
-            if teban == bitboard::SENTE {
+            let teban1 = 0;  // for not to update alpha nor beta. // teban;
+            if teban1 == bitboard::SENTE {
                 if val > alpha {
                     alpha = val;
                 }
-            } else if teban == bitboard::GOTE {
+            } else if teban1 == bitboard::GOTE {
                 if val < beta {
                     beta = val;
                 }
@@ -1067,6 +1081,7 @@ impl NodeBB {
                 }
 
                 let chyoka = c2.hyoka.unwrap();
+                // print!("{chyoka:+5.1} ");
                 if hyoka * fteban2 < chyoka * fteban2 {
                     hyoka = chyoka;
                     be = Some(Best::new(hyoka, c2.x, c2.y));
@@ -1076,6 +1091,7 @@ impl NodeBB {
             c.best = be;
             c.kyokumen = km;
             km += km2;
+            // print!(",");
         }
 
         let fteban = teban as f32;
@@ -1089,6 +1105,7 @@ impl NodeBB {
             }
 
             let chyoka = c.hyoka.unwrap();
+            // print!("{chyoka:+5.1}_");
             if hyoka * fteban < chyoka * fteban {
                 // println!("update hyoka");
                 hyoka = chyoka;
@@ -1679,7 +1696,7 @@ impl NodeBB {
         if moves.is_none() {
             panic!("moves.is_none() nblank == 0 should work!");
             // node.kyokumen = 1;
-            // return -ban.countf32();
+            // return ban.countf32() * teban as f32;
         }
         let mut moves = moves.unwrap();
         if moves.len() == 0 {  // pass
