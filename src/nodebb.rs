@@ -695,8 +695,15 @@ impl NodeBB {
                 // }
                 let nd = nd.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
-                let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
-                let val = val * teban as f32;
+                let val =
+                    if newban.nblank() == 0 || newban.is_passpass() {
+                        nd.kyokumen = 1;
+                        newban.countf32()
+                    } else {
+                        let val = NodeBB::think_internal_ab(
+                                nd, &newban, alpha, beta);
+                        val * teban as f32
+                    };
                 nd.hyoka = Some(val);
                 if teban == bitboard::SENTE {
                     if val > alpha {
@@ -727,8 +734,15 @@ impl NodeBB {
             // }
             let nd = nd.unwrap();
             let newban = ban.r#move(mvx, mvy).unwrap();
-            let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
-            let val = if teban == bitboard::SENTE {val} else {-val};
+            let val =
+                if newban.nblank() == 0 || newban.is_passpass() {
+                    nd.kyokumen = 1;
+                    newban.countf32()
+                } else {
+                    let val = NodeBB::think_internal_ab(
+                            nd, &newban, alpha, beta);
+                    val * teban as f32
+                };
             nd.hyoka = Some(val);
             if teban == bitboard::SENTE {
                 if val > alpha {
@@ -833,8 +847,15 @@ impl NodeBB {
                 // }
                 let nd = nd.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
-                let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
-                let val = val * teban as f32;
+                let val =
+                    if newban.nblank() == 0 || newban.is_passpass() {
+                        nd.kyokumen = 1;
+                        newban.countf32()
+                    } else {
+                        let val = NodeBB::think_internal_ab(
+                                nd, &newban, alpha, beta);
+                        val * teban as f32
+                    };
                 // println!("{val:+3.1}");
                 nd.hyoka = Some(val);
                 if teban == bitboard::SENTE {
