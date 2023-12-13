@@ -1,0 +1,160 @@
+<html>
+<head>
+ <title>rfen to obf converter</title>
+<script type="text/javascript">
+const FMT_NONE = 0;
+const FMT_OBF = 1;
+const FMT_RFEN = 2;
+
+function readrfen(rfen) {
+    let board = new Array(64);
+    let el = rfen.split(' ');
+    let turn = el[1];
+    let y = 0;
+    for (const row of el[0].split('/')) {
+        let x = 0;
+        for (const ch of row) {
+            let n = "12345678".indexOf(ch);
+            if (n >= 0) {
+                for (let _i = 0; _i <= n; ++_i) {
+                    board[x + y * 8] = '-';
+                    ++x;
+                }
+                continue;
+            }
+            let s = "ABCDEFGH".indexOf(ch);
+            if (s >= 0) {
+                for (let _i = 0; _i <= s; ++_i) {
+                    board[x + y * 8] = 'X';
+                    ++x;
+                }
+                continue;
+            }
+            let g = "abcdefgh".indexOf(ch);
+            if (g >= 0) {
+                for (let _i = 0; _i <= g; ++_i) {
+                    board[x + y * 8] = 'o';
+                    ++x;
+                }
+                continue;
+            }
+        }
+        ++y;
+    }
+    if (turn == 'b') {
+        return board.join('') + " X";
+    } else {
+        return board.join('') + " O";
+    }
+}
+
+function readobf(line) {
+    let board = new Array(64);
+    for (y = 0; y < 8; ++y) {
+        for (x = 0; x < 8; ++x) {
+            let ch = line[y * 8 + x];
+            if (ch == '-' || ch == 'o' || ch == 'x'
+                    || ch == 'O' || ch == 'X') {
+                board[y * 8 + x] = ch.toUpperCase();
+                continue;
+            }
+
+            return ("[" + ch + "] is invalid...");
+        }
+    }
+    let turn;
+    let ch = line[65].toUpperCase();
+    if (ch == 'O' || ch == 'X' || ch == 'o' || ch == 'x') {
+        turn = ch.toUpperCase();
+    } else {
+        return ("[" + ch + "] is invalid....");
+    }
+    let ABC=" ABCDEFGH";
+    let abc = " abcdefgh"
+    let rfen = new Array(8);
+    for (y = 0; y < 8; ++y) {
+        let txt = "";
+        let ch = board[y * 8];
+        let n = 1;
+        for (x = 1; x < 8; ++x) {
+            if (ch == board[y * 8 + x]) {
+                ++n;
+                continue;
+            }
+
+            if (ch == '-') {
+                txt += n;
+            } else if (ch == 'X') {
+                txt += ABC[n];
+            } else {  // 'O'
+                txt += abc[n];
+            }
+            ch = board[y * 8 + x];
+            n = 1;
+        }
+        if (ch == '-') {
+            txt += n;
+        } else if (ch == 'X') {
+            txt += ABC[n];
+        } else {  // 'O'
+            txt += abc[n];
+        }
+
+        rfen[y] = txt;
+    }
+
+    if (turn == 'X') {
+        return rfen.join('/') + " b";
+    } else {
+        return rfen.join('/') + " w";
+    }
+}
+
+function checkfmt(line) {
+    if (line.length == 0) return FMT_NONE;
+
+    let ch = line[0];
+    if (ch == '-' || ch == 'o' || ch == 'x' || ch == 'O' || ch == 'X')
+        return FMT_OBF;
+
+    return FMT_RFEN;
+}
+
+function cnvt(line) {
+    if (line.length == 0) return "-";
+
+    if (checkfmt(line) == FMT_OBF) return readobf(line);
+
+    return readrfen(line);
+}
+
+function read(lines) {
+    let ret = lines .map((line) => cnvt(line)).join('<br>');
+    return ret;
+}
+
+function run() {
+  let txt = document.getElementById('input').value.split('\n');
+  // console.log(txt);
+  let out = document.getElementById('output');
+  out.innerHTML = read(txt);
+}
+</script>
+<style type="text/css">
+table {border:1px solid; margin:1px;}
+/*table tr td{border:1px solid;}*/
+td, tr {padding:0;}
+.grp {display:flex;}
+</style>
+</head>
+<body>
+<button onclick='run();'>convert to the other format.</button>
+<br>
+<textarea id='input'>
+8/8/8/3Aa3/3aA3/8/8/8 b
+---------------------------xo------ox--------------------------- x</textarea>
+<br>
+<span id='output'>result will bel here.</span>
+<!-- pre id='output'>result will bel here.</pre-->
+</body>
+</html>
