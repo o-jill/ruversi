@@ -327,6 +327,11 @@ impl BitBoard {
         if cb {SENTE} else if cw {GOTE} else {BLANK}
     }
 
+    pub fn isfilled(&self, x: u8, y: u8) -> bool {
+        let bit : u64 = LSB_CELL << BitBoard::index(x as usize, y as usize);
+        (bit & (self.black | self.white)) != 0
+    }
+
     #[allow(dead_code)]
     pub fn set(&mut self, x : u8, y : u8) {
         let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
@@ -697,9 +702,8 @@ impl BitBoard {
 
         let xc = x - 1;
         let yc = y - 1;
-        if self.at(xc, yc) != BLANK {
-            return Err("stone exists.");
-        }
+        if self.isfilled(xc, yc) {return Err("stone exists.");}
+
         let mut ban = self.clone();
         // ban.set(xc, yc);
         ban.reverse(xc as usize, yc as usize);
