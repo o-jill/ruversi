@@ -139,15 +139,120 @@ function run() {
   let out = document.getElementById('output');
   out.innerHTML = read(txt);
 }
+
+function genboard(board, turn) {
+    let ret = "<table border='1' bgcolor='darkgreen' cellspacing='0'>";
+    for (y = 0; y < 8; ++y) {
+        let txt = "<tr>";
+        for (x = 0; x < 8; ++x) {
+            txt += "<td width='20'>";
+            if (board[x + y * 8] == 'X') {
+                txt += "<span style='color:black;'>●</span>";
+            } else if (board[x + y * 8] == 'O') {
+                txt += "<span style='color:white;'>●</span>";
+            } else {
+                txt += "&nbsp;";
+            }
+            txt += "</td>";
+        }
+        ret += txt + "</tr>";
+    }
+    if (turn == 'X' || turn == 'b') {
+        return ret + "<caption>black's turn.</caption></table>";
+    } else {
+        return ret + "<caption>white's turn.</caption></table>";
+    }
+}
+
+function readrfen2d(rfen) {
+    let board = new Array(64);
+    let el = rfen.split(' ');
+    let turn = el[1];
+    let y = 0;
+    for (const row of el[0].split('/')) {
+        let x = 0;
+        for (const ch of row) {
+            let n = "12345678".indexOf(ch);
+            if (n >= 0) {
+                for (let _i = 0; _i <= n; ++_i) {
+                    board[x + y * 8] = '-';
+                    ++x;
+                }
+                continue;
+            }
+            let s = "ABCDEFGH".indexOf(ch);
+            if (s >= 0) {
+                for (let _i = 0; _i <= s; ++_i) {
+                    board[x + y * 8] = 'X';
+                    ++x;
+                }
+                continue;
+            }
+            let g = "abcdefgh".indexOf(ch);
+            if (g >= 0) {
+                for (let _i = 0; _i <= g; ++_i) {
+                    board[x + y * 8] = 'O';
+                    ++x;
+                }
+                continue;
+            }
+        }
+        ++y;
+    }
+    return genboard(board, turn);
+}
+
+function readobf2d(line) {
+    let board = new Array(64);
+    for (y = 0; y < 8; ++y) {
+        for (x = 0; x < 8; ++x) {
+            let ch = line[y * 8 + x];
+            if (ch == '-' || ch == 'o' || ch == 'x'
+                    || ch == 'O' || ch == 'X') {
+                board[y * 8 + x] = ch.toUpperCase();
+                continue;
+            }
+
+            return ("[" + ch + "] is invalid...");
+        }
+    }
+    let turn;
+    let ch = line[65];
+    if (ch == 'O' || ch == 'X' || ch == 'o' || ch == 'x') {
+        turn = ch.toUpperCase();
+    } else {
+        return ("[" + ch + "] is invalid....");
+    }
+
+    return genboard(board, turn);
+}
+
+function cvt22d(txt) {
+    if (txt.length == 0) return "-";
+
+    if (checkfmt(txt) == FMT_OBF) return readobf2d(txt);
+
+    return readrfen2d(txt);
+}
+
+function to2d() {
+  let txt = document.getElementById('fmt').value;
+  // console.log(txt);
+  let out = document.getElementById('output2d');
+  out.innerHTML = cvt22d(txt);
+}
 </script>
 <style type="text/css">
-table {border:1px solid; margin:1px;}
+table {border:1px solid; margin:1px; font-size:1.5em;}
 /*table tr td{border:1px solid;}*/
 td, tr {padding:0;}
-.grp {display:flex;}
 </style>
 </head>
 <body>
+<button onclick='to2d();'>read </button>
+<input type="text" id="fmt" size="80" value="XOXOXOXOOXOXOXOXXOXOXOXOOXOXOXOXXOXOXOXOOXOXOXOXXOXOXOXOOXOXOXOX X" /><br>
+<span id='output2d'>result will bel here.</span>
+<hr>
 <button onclick='run();'>convert to the other format.</button>
 <br>
 <textarea id='input'>
