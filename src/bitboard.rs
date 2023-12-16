@@ -16,6 +16,7 @@ const LT_CELL : u64 = LSB_CELL;
 const RT_CELL : u64 = 0x0100000000000000;
 const LB_CELL : u64 = 0x0000000000000080;
 const RB_CELL : u64 = 0x8000000000000000;
+const CORNER_CELL : u64 = 0x8100000000000081;
 const BITPTN : [u64 ; 9] = [
     0, 0x1, 0x101, 0x10101, 0x1010101, 0x101010101, 0x10101010101,
     0x1010101010101, 0x101010101010101,
@@ -801,7 +802,9 @@ impl BitBoard {
         let mut fcellsw : u64 = 0;
         let black = self.black;
         let white = self.white;
-    
+
+        if ((black | white) & CORNER_CELL) == 0 { return (0, 0);}
+
         // 四隅と辺
         let mut bit = LT_CELL;
         if (black & bit) != 0 {
