@@ -1,3 +1,4 @@
+#!/bin/bash
 #!/bin/bash -x
 
 # REPEAT=5
@@ -16,11 +17,14 @@ RFENS=("8/8/8/3Aa3/3aA3/8/8/8 b" "8/8/8/3aA3/3Aa3/8/8/8 b" "A1A1A3/1c4/Aa1dA/1c4
 LENRFENS=${#RFENS[@]}
 
 for ((i=0;i<${LENRFENS};i++)) do
+  echo -n "Begin RFEN:${RFENS[$i]}"
   echo "Begin RFEN:${RFENS[$i]}" >> ${RESULT}
   for ((j=0;j<${REPEAT};j++)) do
     RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --rfen "${RFENS[$i]}" ${SDEPTH} >> ${RESULT} 2>/dev/null
+    echo -n " ${j}"
   done
   echo "End RFEN:${RFENS[$i]}" >> ${RESULT}
+  echo "End RFEN:${RFENS[$i]}"
 done
 
 cat ${RESULT} | ruby ./tools/speedcheck.rb search
@@ -58,14 +62,14 @@ DUELLV=2
 
 RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES}
 
-STARTDT=`date +%s`
+STARTDT=`date +%s.%3N`
 
 # for ((j=0;j<${REPEAT};j++)) do
 RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --duel "${DUELLV}" ${SDEPTH} --ev1 data/evaltable.txt --ev2 data/evaltable.txt >> ${RESULT} 2>/dev/null
 # done
 
-FINISHDT=`date +%s`
-DURATION=$((FINISHDT - STARTDT))
+FINISHDT=`date +%s.%3N`
+DURATION=`echo "scale=3; ${FINISHDT} - ${STARTDT}" | bc`  # $((FINISHDT - STARTDT))
 echo "duration: ${DURATION} sec." >> ${RESULT}
 tail -n 6 ${RESULT} | ruby ./tools/speedcheck.rb game
 }
