@@ -2296,6 +2296,63 @@ impl Weight {
             if ban.nblank() < mid {return Ok(());}
 
             self.learnbb(&ban, winner, eta);
+        } else {
+            let ban = match board::Board::from(rfen) {
+                Ok(b) => {b},
+                Err(e) => {return Err(e)}
+            };
+            if ban.nblank() < mid {return Ok(());}
+
+            self.learn(&ban, winner, eta);
+
+            let ban = ban.rotate180();
+            self.learn(&ban, winner, eta);
+        }
+        Ok(())
+    }
+
+    /// train weights
+    /// 
+    /// # Arguments
+    /// - `self` : self
+    /// - `ban` : Bitboard
+    /// - `winner` : winner or # of stones.
+    /// - `eta` : learning ratio.
+    /// - `mid` : last (mid) moves will not be used. all rfen will be used w/ zero.
+    /// 
+    /// # Returns
+    /// - OK(()) if succeeded.
+    /// - Err(String) if some error happened.
+    pub fn train_bitboard(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32, mid : u32)
+             -> Result<(), String> {
+        if ban.nblank() < mid {return Ok(());}
+
+        self.learnbb(&ban, winner, eta);
+        Ok(())
+    }
+
+    /// train weights
+    /// 
+    /// # Arguments
+    /// - `self` : self
+    /// - `rfen` : RFEN
+    /// - `winner` : winner or # of stones.
+    /// - `eta` : learning ratio.
+    /// - `mid` : last (mid) moves will not be used. all rfen will be used w/ zero.
+    /// 
+    /// # Returns
+    /// - OK(()) if succeeded.
+    /// - Err(String) if some error happened.
+    pub fn train_rotate(&mut self, rfen : &str, winner : i8, eta : f32, mid : u32)
+             -> Result<(), String> {
+        if cfg!(feature="bitboard") {
+            let ban = match bitboard::BitBoard::from(rfen) {
+                Ok(b) => {b},
+                Err(e) => {return Err(e)}
+            };
+            if ban.nblank() < mid {return Ok(());}
+
+            self.learnbb(&ban, winner, eta);
 
             let ban = ban.rotate90();
             self.learnbb(&ban, winner, eta);

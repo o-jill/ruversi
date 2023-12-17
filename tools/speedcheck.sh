@@ -45,8 +45,10 @@ RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES}
   fi
 #  echo "a kifu file was found."
   for ((j=0;j<${REPEAT};j++)) do
+    echo -n " ${j}"
     RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --learn ${LREPEAT} >> ${RESULT} 2>/dev/null
   done
+  echo " ${REPEAT}"
 
 cat ${RESULT} | ruby ./tools/speedcheck.rb learn
 }
