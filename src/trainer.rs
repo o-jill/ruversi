@@ -15,16 +15,16 @@ const STOP : u32 = 0xffffffff_u32;
 const PROGRESS : u32 = 0xfffffffe_u32;
 
 pub struct Trainer {
-    eta: f32,
-    repeat: usize,
-    path: String,
-    progress: Vec<u32>,
-    pub nfiles: usize,
-    pub total: i32,
-    pub win: i32,
-    pub draw: i32,
-    pub lose: i32,
-    pub output: u32,
+    eta: f32,  // 学習率
+    repeat: usize,  // 学習回数
+    path: String,  // 評価関数ファイルパス
+    progress: Vec<u32>,  // 途中経過出力回数
+    pub nfiles: usize,  // 棋譜ファイル数
+    pub total: i32,  // 棋譜ファイル数
+    pub win: i32,  // 先手勝ち数
+    pub draw: i32,  // 引き分け数
+    pub lose: i32,  // 先手負け数
+    pub output: u32,  // 出力設定
 }
 
 impl Trainer {
