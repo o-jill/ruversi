@@ -124,10 +124,10 @@ impl GameBB {
             // self.ban.put();
             // println!("{}", self.ban.to_str());
             // think
-            let st = Instant::now();
-            let val = f(&self.ban, depth, &mut node).unwrap();
+            // let st = Instant::now();
+            let _val = f(&self.ban, depth, &mut node).unwrap();
 
-            let ft = st.elapsed();
+            // let ft = st.elapsed();
             // println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.as_ref().unwrap();
             let x = best.x;
