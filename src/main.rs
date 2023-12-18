@@ -234,27 +234,7 @@ fn verbose(rfen : &str, depth : u8) {
     }
 }
 
-/// generate kifu
-/// # Arguments
-/// - n : None or Some(0 - 19). index in 20 group.
-fn gen_kifu(n : Option<usize>, depth : u8) {
-    let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
-    let rfentbl =
-            ip.rfens_uniq(&["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"]);
-
-    let grp;
-    let rfentbl = if n.is_none() {
-        grp = 0;
-        &rfentbl
-    } else {
-        let group = 20;
-        grp = n.unwrap();
-        let sz = rfentbl.len();
-        let b = sz * grp / group;
-        let e = sz * (grp + 1) / group;
-        &rfentbl[b..e]
-    };
-
+fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
     for (idx, rfen) in rfentbl.iter().enumerate() {
         let kifutxt;
         if cfg!(feature="bitboard") {
@@ -297,11 +277,38 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
         }
 
         // store kifu
-        let kifuname = format!("./kifu/kifu{:02}{:05}.txt", grp, idx);
+        let kifuname = format!("./kifu/kifu{grp}{idx:05}.txt");
         let mut f = File::create(kifuname).unwrap();
         let content = format!("{}{}", kifu::HEADER, kifutxt);
         f.write(content.as_bytes()).unwrap();
     }
+}
+
+fn genkifu_para(rfentbl : &[String]) {
+}
+
+/// generate kifu
+/// # Arguments
+/// - n : None or Some(0 - 19). index in 20 group.
+fn gen_kifu(n : Option<usize>, depth : u8) {
+    let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
+    let rfentbl =
+            ip.rfens_uniq(&["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"]);
+
+    let grp;
+    let rfentbl = if n.is_none() {
+        grp = 0;
+        &rfentbl
+    } else {
+        let group = 20;
+        grp = n.unwrap();
+        let sz = rfentbl.len();
+        let b = sz * grp / group;
+        let e = sz * (grp + 1) / group;
+        &rfentbl[b..e]
+    };
+
+    genkifu_single(&rfentbl, depth, &format!("{grp:02}"));
 }
 
 /// training a weight.
