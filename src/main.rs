@@ -248,7 +248,8 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
                     //     // nodebb::NodeBB::think_ab_extract2,
                     //     nodebb::NodeBB::think_ab,
                     //     depth).unwrap()
-                    g.starto(nodebb::NodeBB::thinko_ab_simple, depth).unwrap();
+                    g.startgk(nodebb::NodeBB::thinko_ab_simple_gk, depth).unwrap();
+                    //g.starto(nodebb::NodeBB::thinko_ab_simple, depth).unwrap();
                     // g.starto(nodebb::NodeBB::thinko_ab_extract2, depth).unwrap();
                 },
                 "all" => {

@@ -116,6 +116,50 @@ impl GameBB {
         Ok(())
     }
 
+    pub fn startgk(&mut self, f : fn(&bitboard::BitBoard, u8, &mut nodebb::NodeBB) -> Option<f32>, depth : u8)
+            -> Result<(), String> {
+        loop {
+            let mut node = nodebb::NodeBB::new(0, 0, depth, bitboard::NONE);
+            // show
+            // self.ban.put();
+            // println!("{}", self.ban.to_str());
+            // think
+            let st = Instant::now();
+            let val = f(&self.ban, depth, &mut node).unwrap();
+
+            let ft = st.elapsed();
+            // println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+            let best = node.best.as_ref().unwrap();
+            let x = best.x;
+            let y = best.y;
+            // apply move
+            let ban = self.ban.r#move(x, y).unwrap();
+            let rfen = self.ban.to_str();
+            let teban = self.ban.teban;
+            self.ban = ban;
+
+            // save to kifu
+            self.kifu.append(x as usize, y as usize, teban, rfen);
+
+            // check finished
+            if self.ban.is_passpass() {
+                break;
+            }
+            if self.ban.is_full() {
+                let rfen = self.ban.to_str();
+                let teban = self.ban.teban;
+                self.kifu.append(0, 0, teban, rfen);
+                break;
+            }
+        }
+        // check who won
+        self.kifu.winneris(self.ban.count());
+        println!("{}", self.kifu.to_str());
+        // show
+        self.ban.put();
+        Ok(())
+    }
+
     #[allow(dead_code)]
     pub fn startsh(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<RwLock<shnode::ShNode>>)>, depth : u8)
             -> Result<(), String> {
