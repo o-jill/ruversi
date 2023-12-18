@@ -237,11 +237,11 @@ fn verbose(rfen : &str, depth : u8) {
 fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
     for (idx, rfen) in rfentbl.iter().enumerate() {
         let kifutxt;
+        let think = MYOPT.get().unwrap().think.as_str();
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
             // play
-            let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
                     // g.start(
@@ -262,7 +262,6 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
             // prepare game
             let mut g = game::Game::from(rfen);
             // play
-            let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
                     // g.start(node::Node::think_ab_extract2, depth).unwrap()
@@ -284,7 +283,19 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
     }
 }
 
-fn genkifu_para(rfentbl : &[String]) {
+fn genkifu_para(rfentbl : &[String], depth : u8, grp : &str) {
+    let n = rfentbl.len();
+    let rfentbl1 = rfentbl[0..n/2].to_vec();
+    let rfentbl2 = &rfentbl[n/2..];
+
+    let grp1 = format!("{grp}0");
+    let sub = thread::spawn(move || {
+            genkifu_single(&rfentbl1, depth, &grp1);
+        });
+
+    genkifu_single(&rfentbl2, depth, &format!("{grp}1"));
+
+    sub.join().unwrap();
 }
 
 /// generate kifu
@@ -308,7 +319,8 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
         &rfentbl[b..e]
     };
 
-    genkifu_single(&rfentbl, depth, &format!("{grp:02}"));
+    genkifu_para(&rfentbl, depth, &format!("{grp:02}"));
+    // genkifu_single(&rfentbl, depth, &format!("{grp:02}"));
 }
 
 /// training a weight.
