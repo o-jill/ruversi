@@ -583,7 +583,6 @@ impl NodeBB {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
-
     #[allow(dead_code)]
     pub fn thinko_ab_simple(ban : &bitboard::BitBoard, depth : u8)
             -> Option<(f32, &NodeBB)> {
@@ -624,6 +623,44 @@ impl NodeBB {
         let val = val * ban.teban as f32;
 
         Some((val, node))
+    }
+
+    #[allow(dead_code)]
+    pub fn thinko_ab_simple_gk(ban : &bitboard::BitBoard, depth : u8, nd : &mut NodeBB)
+            -> Option<f32> {
+        if depth == 0 {
+            return None;
+        }
+        if ban.is_passpass() {
+            return None;
+        }
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            return None;
+        }
+
+        let mut node = nd;
+
+        let yomikiri = 12;
+        let yose = 18;
+        let nblank = ban.nblank();
+        node.depth =
+            if nblank <= yomikiri {
+                yomikiri as u8
+            } else if nblank <= yose {
+                depth + 2
+            } else {
+                depth
+            };
+
+        let alpha : f32 = -123456.7;
+        let beta : f32 = 123456.7;
+        let val = NodeBB::think_internal_ab(&mut node, &ban, alpha, beta);
+        let val = val * ban.teban as f32;
+
+        Some(val)
     }
 
     #[allow(dead_code)]
