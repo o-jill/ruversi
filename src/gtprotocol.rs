@@ -154,7 +154,8 @@ impl GTP {
                 let depth = 7;
                 let st = Instant::now();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_extract2(&self.ban, depth).unwrap();
+                    nodebb::NodeBB::thinko_ab_simple(&self.ban, depth).unwrap();
+                    // nodebb::NodeBB::thinko_ab_extract2(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
                 eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let best = node.best.as_ref().unwrap();
