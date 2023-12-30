@@ -1945,56 +1945,22 @@ impl Weight {
                 bit8 <<= 1;
 
                 unsafe {
-                    x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
+                    let c1 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b81 as i64), x86_64::_mm_set1_epi64x(w81 as i64));
+                    let c2 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b82 as i64), x86_64::_mm_set1_epi64x(w82 as i64));
+                    let c3 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b83 as i64), x86_64::_mm_set1_epi64x(w83 as i64));
+                    let c4 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b84 as i64), x86_64::_mm_set1_epi64x(w84 as i64));
 
-                    // 0x00000000ffeeddcc000000007766554400000000bbaa99880000000033221100
-                    let b32 = x86_64::_mm256_set_epi64x(
-                        (b82 >> 32) as i64, (b81 >> 32) as i64,
-                        (b82 & 0xffffffff) as i64, (b81 & 0xffffffff) as i64);
-                    let w32 = x86_64::_mm256_set_epi64x(
-                        (w82 >> 32) as i64, (w81 >> 32) as i64,
-                        (w82 & 0xffffffff) as i64, (w81 & 0xffffffff) as i64);
-                    let b322 = x86_64::_mm256_set_epi64x(
-                        (b84 >> 32) as i64, (b83 >> 32) as i64,
-                        (b84 & 0xffffffff) as i64, (b83 & 0xffffffff) as i64);
-                    let w322 = x86_64::_mm256_set_epi64x(
-                        (w84 >> 32) as i64, (w83 >> 32) as i64,
-                        (w84 & 0xffffffff) as i64, (w83 & 0xffffffff) as i64);
-                    let c321 = x86_64::_mm256_sub_epi8(b32, w32);
-                    let c322 = x86_64::_mm256_sub_epi8(b322, w322);
-
-                    let zero = x86_64::_mm256_setzero_si256();
-                    // to i16
-                    let s321 = x86_64::_mm256_cmpgt_epi8(zero, c321);
-                    // 0x0000000000000000777766665555444400000000000000003333222211110000
-                    let c161 = x86_64::_mm256_unpacklo_epi8(c321, s321);
-                    // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
-                    let c162 = x86_64::_mm256_unpackhi_epi8(c321, s321);
-                    let s322 = x86_64::_mm256_cmpgt_epi8(zero, c322);
-                    // 0x0000000000000000777766665555444400000000000000003333222211110000
-                    let c163 = x86_64::_mm256_unpacklo_epi8(c322, s322);
-                    // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
-                    let c164 = x86_64::_mm256_unpackhi_epi8(c322, s322);
-
-                    // to i32
-                    // 0x7777777766666666555555554444444433333333222222221111111100000000
-                    let s161 = x86_64::_mm256_cmpgt_epi16(zero, c161);
-                    let c81 = x86_64::_mm256_unpacklo_epi16(c161, s161);
-                    // 0xffffffffeeeeeeeeddddddddccccccccbbbbbbbbaaaaaaaa9999999988888888
-                    let s162 = x86_64::_mm256_cmpgt_epi16(zero, c162);
-                    let c82 = x86_64::_mm256_unpacklo_epi16(c162, s162);
-                    // 0x7777777766666666555555554444444433333333222222221111111100000000
-                    let s163 = x86_64::_mm256_cmpgt_epi16(zero, c163);
-                    let c83 = x86_64::_mm256_unpacklo_epi16(c163, s163);
-                    // 0xffffffffeeeeeeeeddddddddccccccccbbbbbbbbaaaaaaaa9999999988888888
-                    let s164 = x86_64::_mm256_cmpgt_epi16(zero, c164);
-                    let c84 = x86_64::_mm256_unpacklo_epi16(c164, s164);
+                    let c81 = x86_64::_mm256_cvtepi8_epi32(c1);
+                    let c82 = x86_64::_mm256_cvtepi8_epi32(c2);
+                    let c83 = x86_64::_mm256_cvtepi8_epi32(c3);
+                    let c84 = x86_64::_mm256_cvtepi8_epi32(c4);
 
                     let f81 = x86_64::_mm256_cvtepi32_ps(c81);
                     let f82 = x86_64::_mm256_cvtepi32_ps(c82);
                     let f83 = x86_64::_mm256_cvtepi32_ps(c83);
                     let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
+                    x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
                     let x81 = x86_64::_mm256_loadu_ps(w1.add(idx));
                     let x82 = x86_64::_mm256_loadu_ps(w1.add(idx + 8));
                     let x83 = x86_64::_mm256_loadu_ps(w1.add(idx + 16));
@@ -2093,54 +2059,22 @@ impl Weight {
                     bit8 <<= 1;
 
                     unsafe {
-                        // 0x00000000ffeeddcc000000007766554400000000bbaa99880000000033221100
-                        let b32 = x86_64::_mm256_set_epi64x(
-                            (b82 >> 32) as i64, (b81 >> 32) as i64,
-                            (b82 & 0xffffffff) as i64, (b81 & 0xffffffff) as i64);
-                        let w32 = x86_64::_mm256_set_epi64x(
-                            (w82 >> 32) as i64, (w81 >> 32) as i64,
-                            (w82 & 0xffffffff) as i64, (w81 & 0xffffffff) as i64);
-                        let b322 = x86_64::_mm256_set_epi64x(
-                            (b84 >> 32) as i64, (b83 >> 32) as i64,
-                            (b84 & 0xffffffff) as i64, (b83 & 0xffffffff) as i64);
-                        let w322 = x86_64::_mm256_set_epi64x(
-                            (w84 >> 32) as i64, (w83 >> 32) as i64,
-                            (w84 & 0xffffffff) as i64, (w83 & 0xffffffff) as i64);
-                        let c321 = x86_64::_mm256_sub_epi8(b32, w32);
-                        let c322 = x86_64::_mm256_sub_epi8(b322, w322);
+                        let c1 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b81 as i64), x86_64::_mm_set1_epi64x(w81 as i64));
+                        let c2 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b82 as i64), x86_64::_mm_set1_epi64x(w82 as i64));
+                        let c3 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b83 as i64), x86_64::_mm_set1_epi64x(w83 as i64));
+                        let c4 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b84 as i64), x86_64::_mm_set1_epi64x(w84 as i64));
 
-                        let zero = x86_64::_mm256_setzero_si256();
-                        // to i16
-                        let s321 = x86_64::_mm256_cmpgt_epi8(zero, c321);
-                        // 0x0000000000000000777766665555444400000000000000003333222211110000
-                        let c161 = x86_64::_mm256_unpacklo_epi8(c321, s321);
-                        // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
-                        let c162 = x86_64::_mm256_unpackhi_epi8(c321, s321);
-                        let s322 = x86_64::_mm256_cmpgt_epi8(zero, c322);
-                        // 0x0000000000000000777766665555444400000000000000003333222211110000
-                        let c163 = x86_64::_mm256_unpacklo_epi8(c322, s322);
-                        // 0x0000000000000000ffffeeeeddddcccc0000000000000000bbbbaaaa99998888
-                        let c164 = x86_64::_mm256_unpackhi_epi8(c322, s322);
-
-                        // to i32
-                        // 0x7777777766666666555555554444444433333333222222221111111100000000
-                        let s161 = x86_64::_mm256_cmpgt_epi16(zero, c161);
-                        let c81 = x86_64::_mm256_unpacklo_epi16(c161, s161);
-                        // 0xffffffffeeeeeeeeddddddddccccccccbbbbbbbbaaaaaaaa9999999988888888
-                        let s162 = x86_64::_mm256_cmpgt_epi16(zero, c162);
-                        let c82 = x86_64::_mm256_unpacklo_epi16(c162, s162);
-                        // 0x7777777766666666555555554444444433333333222222221111111100000000
-                        let s163 = x86_64::_mm256_cmpgt_epi16(zero, c163);
-                        let c83 = x86_64::_mm256_unpacklo_epi16(c163, s163);
-                        // 0xffffffffeeeeeeeeddddddddccccccccbbbbbbbbaaaaaaaa9999999988888888
-                        let s164 = x86_64::_mm256_cmpgt_epi16(zero, c164);
-                        let c84 = x86_64::_mm256_unpacklo_epi16(c164, s164);
+                        let c81 = x86_64::_mm256_cvtepi8_epi32(c1);
+                        let c82 = x86_64::_mm256_cvtepi8_epi32(c2);
+                        let c83 = x86_64::_mm256_cvtepi8_epi32(c3);
+                        let c84 = x86_64::_mm256_cvtepi8_epi32(c4);
 
                         let f81 = x86_64::_mm256_cvtepi32_ps(c81);
                         let f82 = x86_64::_mm256_cvtepi32_ps(c82);
                         let f83 = x86_64::_mm256_cvtepi32_ps(c83);
                         let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
+                        x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
                         let x81 = x86_64::_mm256_loadu_ps(w1.add(idx));
                         let x82 = x86_64::_mm256_loadu_ps(w1.add(idx + 8));
                         let x83 = x86_64::_mm256_loadu_ps(w1.add(idx + 16));
