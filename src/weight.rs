@@ -1087,18 +1087,26 @@ impl Weight {
                         let x43 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 8));
                         let x44 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 12));
                         let minus = x86_64::_mm_set1_ps(-0.0);
-                        let mn1 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm1), minus);
-                        let mn2 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm2), minus);
-                        let mn3 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm3), minus);
-                        let mn4 = x86_64::_mm_and_ps(x86_64::_mm_castsi128_ps(wm4), minus);
+                        let mn1 = x86_64::_mm_and_ps(
+                                x86_64::_mm_castsi128_ps(wm1), minus);
+                        let mn2 = x86_64::_mm_and_ps(
+                                x86_64::_mm_castsi128_ps(wm2), minus);
+                        let mn3 = x86_64::_mm_and_ps(
+                                x86_64::_mm_castsi128_ps(wm3), minus);
+                        let mn4 = x86_64::_mm_and_ps(
+                                x86_64::_mm_castsi128_ps(wm4), minus);
                         let m41 = x86_64::_mm_xor_ps(x41, mn1);
                         let m42 = x86_64::_mm_xor_ps(x42, mn2);
                         let m43 = x86_64::_mm_xor_ps(x43, mn3);
                         let m44 = x86_64::_mm_xor_ps(x44, mn4);
-                        let w1 = x86_64::_mm_and_ps(m41, x86_64::_mm_castsi128_ps(ex1));
-                        let w2 = x86_64::_mm_and_ps(m42, x86_64::_mm_castsi128_ps(ex2));
-                        let w3 = x86_64::_mm_and_ps(m43, x86_64::_mm_castsi128_ps(ex3));
-                        let w4 = x86_64::_mm_and_ps(m44, x86_64::_mm_castsi128_ps(ex4));
+                        let w1 = x86_64::_mm_and_ps(
+                                m41, x86_64::_mm_castsi128_ps(ex1));
+                        let w2 = x86_64::_mm_and_ps(
+                                m42, x86_64::_mm_castsi128_ps(ex2));
+                        let w3 = x86_64::_mm_and_ps(
+                                m43, x86_64::_mm_castsi128_ps(ex3));
+                        let w4 = x86_64::_mm_and_ps(
+                                m44, x86_64::_mm_castsi128_ps(ex4));
 
                         let sum12 = x86_64::_mm_add_ps(w1, w2);
                         let sum34 = x86_64::_mm_add_ps(w3, w4);
@@ -1211,10 +1219,18 @@ impl Weight {
                     bit8 <<= 1;
 
                     unsafe {
-                        let c1 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b81 as i64), x86_64::_mm_set1_epi64x(w81 as i64));
-                        let c2 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b82 as i64), x86_64::_mm_set1_epi64x(w82 as i64));
-                        let c3 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b83 as i64), x86_64::_mm_set1_epi64x(w83 as i64));
-                        let c4 = x86_64::_mm_sub_epi8(x86_64::_mm_set1_epi64x(b84 as i64), x86_64::_mm_set1_epi64x(w84 as i64));
+                        let c1 = x86_64::_mm_sub_epi8(
+                                x86_64::_mm_set1_epi64x(b81 as i64),
+                                x86_64::_mm_set1_epi64x(w81 as i64));
+                        let c2 = x86_64::_mm_sub_epi8(
+                                x86_64::_mm_set1_epi64x(b82 as i64),
+                                x86_64::_mm_set1_epi64x(w82 as i64));
+                        let c3 = x86_64::_mm_sub_epi8(
+                                x86_64::_mm_set1_epi64x(b83 as i64),
+                                x86_64::_mm_set1_epi64x(w83 as i64));
+                        let c4 = x86_64::_mm_sub_epi8(
+                                x86_64::_mm_set1_epi64x(b84 as i64),
+                                x86_64::_mm_set1_epi64x(w84 as i64));
 
                         let c81 = x86_64::_mm256_cvtepi8_epi32(c1);
                         let c82 = x86_64::_mm256_cvtepi8_epi32(c2);
@@ -1226,10 +1242,14 @@ impl Weight {
                         let f83 = x86_64::_mm256_cvtepi32_ps(c83);
                         let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
-                        let x81 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx));
-                        let x82 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx + 8));
-                        let x83 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx + 16));
-                        let x84 = x86_64::_mm256_loadu_ps(w1.as_ptr().add(idx + 24));
+                        let x81 = x86_64::_mm256_loadu_ps(
+                            w1.as_ptr().add(idx));
+                        let x82 = x86_64::_mm256_loadu_ps(
+                            w1.as_ptr().add(idx + 8));
+                        let x83 = x86_64::_mm256_loadu_ps(
+                            w1.as_ptr().add(idx + 16));
+                        let x84 = x86_64::_mm256_loadu_ps(
+                            w1.as_ptr().add(idx + 24));
 
                         if true {  // fma
                             sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
@@ -1318,7 +1338,7 @@ impl Weight {
     }
 
     pub fn forwardv1(&self, ban : &board::Board)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
+            -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -1347,7 +1367,7 @@ impl Weight {
     }
 
     pub fn forwardv1_simd(&self, ban : &board::Board)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
+            -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -1417,7 +1437,7 @@ impl Weight {
     }
 
     pub fn forwardv2(&self, ban : &board::Board)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
+            -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -1447,7 +1467,7 @@ impl Weight {
     }
 
     pub fn forwardv2_simd(&self, ban : &board::Board)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
+            -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -1522,7 +1542,7 @@ impl Weight {
 
     #[allow(dead_code)]
     pub fn forwardv2_simd2(&self, ban : &board::Board)
-        -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT]) {
+         -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -1643,7 +1663,7 @@ impl Weight {
     }
 
     pub fn forwardv3(&self, ban : &board::Board)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+         -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -1678,7 +1698,7 @@ impl Weight {
     }
 
     pub fn forwardv3_simd(&self, ban : &board::Board)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+         -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -1764,7 +1784,7 @@ impl Weight {
     }
 
     pub fn forwardv3bb(&self, ban : &bitboard::BitBoard)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+         -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -1807,7 +1827,7 @@ impl Weight {
     }
 
     pub fn forwardv3bb_simd(&self, ban : &bitboard::BitBoard)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+         -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -1842,7 +1862,8 @@ impl Weight {
                 bit8 <<= 1;
 
                 unsafe {
-                    x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
+                    x86_64::_mm_prefetch(
+                            w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
 
                     let b16 = x86_64::_mm_set_epi64x(b82 as i64, b81 as i64);
                     let w16 = x86_64::_mm_set_epi64x(w82 as i64, w81 as i64);
@@ -1906,7 +1927,7 @@ impl Weight {
     }
 
     pub fn forwardv3bb_simdavx2(&self, ban : &bitboard::BitBoard)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+         -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -2006,7 +2027,7 @@ impl Weight {
 
     // note: calc hidden layer w/ simd is slow now...
     pub fn forwardv3bb_simdavx(&self, ban : &bitboard::BitBoard)
-            -> ([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8)) {
+         -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut hidsig : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
         let mut output : [f32 ; N_OUTPUT] = [0.0 ; N_OUTPUT];
@@ -2223,7 +2244,8 @@ impl Weight {
     /// # Returns
     /// - OK(()) if succeeded.
     /// - Err(String) if some error happened.
-    pub fn train_bitboard(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32, mid : u32)
+    pub fn train_bitboard(&mut self,
+            ban : &bitboard::BitBoard, winner : i8, eta : f32, mid : u32)
              -> Result<(), String> {
         if ban.nblank() < mid {return Ok(());}
 
@@ -2279,7 +2301,8 @@ impl Weight {
 
     fn backwardv1(&mut self,
             ban : &board::Board, winner : i8, eta : f32,
-            hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN], output : &[f32 ; N_OUTPUT]) {
+            hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN],
+            output : &[f32 ; N_OUTPUT]) {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
 
@@ -2333,8 +2356,9 @@ impl Weight {
     }
 
     fn backwardv2(&mut self,
-        ban : &board::Board, winner : i8, eta : f32,
-        hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN], output : &[f32 ; N_OUTPUT]) {
+            ban : &board::Board, winner : i8, eta : f32,
+            hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN],
+            output : &[f32 ; N_OUTPUT]) {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
 
@@ -2385,7 +2409,8 @@ impl Weight {
                 for j in 0..board::CELL_2D / 16 {
                     let idx = j * 16;
                     unsafe {
-                        let c8 = x86_64::_mm_load_si128(cells[idx..].as_ptr() as *const x86_64::__m128i);
+                        let c8 = x86_64::_mm_load_si128(
+                            cells[idx..].as_ptr() as *const x86_64::__m128i);
                         let zero = x86_64::_mm_setzero_si128();
                         // to i16
                         let s16 = x86_64::_mm_cmpgt_epi8(zero, c8);
@@ -2432,7 +2457,8 @@ impl Weight {
 
     pub fn backwardv3(&mut self,
         ban : &board::Board, winner : i8, eta : f32,
-        (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
+        (hidden , hidsig , output , fs)
+            : &([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8))) {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
 
@@ -2483,7 +2509,8 @@ impl Weight {
                 for j in 0..board::CELL_2D / 16 {
                     let idx = j * 16;
                     unsafe {
-                        let c8 = x86_64::_mm_load_si128(cells[idx..].as_ptr() as *const x86_64::__m128i);
+                        let c8 = x86_64::_mm_load_si128(
+                            cells[idx..].as_ptr() as *const x86_64::__m128i);
                         let zero = x86_64::_mm_setzero_si128();
                         // to i16
                         let s16 = x86_64::_mm_cmpgt_epi8(zero, c8);
@@ -2534,7 +2561,8 @@ impl Weight {
 
     pub fn backwardv3bb(&mut self,
         ban : &bitboard::BitBoard, winner : i8, eta : f32,
-        (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
+        (hidden , hidsig , output , fs)
+            : &([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8))) {
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
@@ -2589,7 +2617,8 @@ impl Weight {
 
     pub fn backwardv3bb_simd(&mut self,
         ban : &bitboard::BitBoard, winner : i8, eta : f32,
-        (hidden , hidsig , output , fs) : &([f32;N_HIDDEN], [f32;N_HIDDEN], [f32;N_OUTPUT], (i8, i8))) {
+        (hidden , hidsig , output , fs)
+            : &([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8))) {
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
@@ -2658,7 +2687,8 @@ impl Weight {
         //             let hid42 = x86_64::_mm256_extractf128_ps(hid4, 1);
         //             let emx1 = Weight::expmx_ps_simd(hid41);
         //             let emx2 = Weight::expmx_ps_simd(hid42);
-        //             let emx = x86_64::_mm256_insertf128_ps(x86_64::_mm256_setzero_ps(), emx1, 0);
+        //             let emx = x86_64::_mm256_insertf128_ps(
+        //                     x86_64::_mm256_setzero_ps(), emx1, 0);
         //             let emx = x86_64::_mm256_insertf128_ps(emx, emx2, 1);
         //             let onemx = x86_64::_mm256_add_ps(one, emx);
         //             let sig = x86_64::_mm256_div_ps(one, onemx);
@@ -2673,8 +2703,10 @@ impl Weight {
         // }
 
         let wtbn = unsafe {ow.as_mut_ptr().add(board::CELL_2D * N_HIDDEN)};
-        let wfs = unsafe {ow.as_mut_ptr().add((board::CELL_2D + 1) * N_HIDDEN)};
-        let wdc = unsafe {ow.as_mut_ptr().add((board::CELL_2D + 1 + 2) * N_HIDDEN)};
+        let wfs =
+            unsafe {ow.as_mut_ptr().add((board::CELL_2D + 1) * N_HIDDEN)};
+        let wdc =
+            unsafe {ow.as_mut_ptr().add((board::CELL_2D + 1 + 2) * N_HIDDEN)};
 
         // back to input
         // for (i, h) in dhid.iter().enumerate() {
@@ -2761,7 +2793,8 @@ impl Weight {
                     x86_64::_mm256_storeu_ps(wfs.add(k * 8), fs0);
                     let fs1 = x86_64::_mm256_set1_ps(fs.1 as f32);
                     let hfs1 = x86_64::_mm256_mul_ps(fs1, heta);
-                    let fs1 = x86_64::_mm256_loadu_ps(wfs.add(k * 8 + N_HIDDEN));
+                    let fs1 = x86_64::_mm256_loadu_ps(
+                            wfs.add(k * 8 + N_HIDDEN));
                     let fs1 = x86_64::_mm256_sub_ps(fs1, hfs1);
                     x86_64::_mm256_storeu_ps(wfs.add(k * 8 + N_HIDDEN), fs1);
                     let dc = x86_64::_mm256_loadu_ps(wdc.add(k * 8));
@@ -2795,7 +2828,8 @@ impl Weight {
                     let hfs11 = x86_64::_mm_mul_ps(fs1, heta1);
                     let hfs12 = x86_64::_mm_mul_ps(fs1, heta2);
                     let fs11 = x86_64::_mm_loadu_ps(wfs.add(k * 8 + N_HIDDEN));
-                    let fs12 = x86_64::_mm_loadu_ps(wfs.add(k * 8 + N_HIDDEN + 4));
+                    let fs12 = x86_64::_mm_loadu_ps(
+                            wfs.add(k * 8 + N_HIDDEN + 4));
                     let fs11 = x86_64::_mm_sub_ps(fs11, hfs11);
                     let fs12 = x86_64::_mm_sub_ps(fs12, hfs12);
                     x86_64::_mm_storeu_ps(wfs.add(k * 8 + N_HIDDEN), fs11);
