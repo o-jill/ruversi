@@ -52,9 +52,9 @@ def learn(lines)
     vari = values.map {|elem| elem * elem}.sum.fdiv(values.length) - avg * avg
     sd = Math.sqrt(vari)
     min, max = values.minmax
-    puts "#{'%.1f' % avg } ± #{'%.1f' % sd} sec (#{min} -- #{max}) for #{files} files x #{repeat} repeats"
+    puts "#{'%.2f' % avg } ± #{'%.2f' % sd} sec (#{min} -- #{max}) for #{files} files x #{repeat} repeats"
     print "speed: #{'%.1f' % (avg * 1000.0 / repeat)} msec/batch, "
-    puts "#{'%.1f' % (avg * 1000000.0 / repeat / files)} usec/file"
+    puts "#{'%.2f' % (avg * 1000000.0 / repeat / files)} usec/file"
 end
 
 # total,8,win,4,draw,0,lose,4,balance,0,8,50.00%,R,+0.0
