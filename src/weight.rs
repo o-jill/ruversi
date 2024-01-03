@@ -2780,26 +2780,35 @@ impl Weight {
                 if cfg!(feature="avx") {
                     let hid = x86_64::_mm256_loadu_ps(dhid[k * 8..].as_ptr());
                     let eta = x86_64::_mm256_set1_ps(eta);
-                    let heta = x86_64::_mm256_mul_ps(hid, eta);
+                    let heta8 = x86_64::_mm256_mul_ps(hid, eta);
                     let tbn = x86_64::_mm256_set1_ps(teban);
-                    let htbn = x86_64::_mm256_mul_ps(tbn, heta);
+                    let htbn = x86_64::_mm256_mul_ps(tbn, heta8);
                     let tbn = x86_64::_mm256_loadu_ps(wtbn.add(k * 8));
                     let tbn = x86_64::_mm256_sub_ps(tbn, htbn);
                     x86_64::_mm256_storeu_ps(wtbn.add(k * 8), tbn);
                     let fs0 = x86_64::_mm256_set1_ps(fs.0 as f32);
-                    let hfs0 = x86_64::_mm256_mul_ps(fs0, heta);
+                    let hfs0 = x86_64::_mm256_mul_ps(fs0, heta8);
                     let fs0 = x86_64::_mm256_loadu_ps(wfs.add(k * 8));
                     let fs0 = x86_64::_mm256_sub_ps(fs0, hfs0);
                     x86_64::_mm256_storeu_ps(wfs.add(k * 8), fs0);
                     let fs1 = x86_64::_mm256_set1_ps(fs.1 as f32);
-                    let hfs1 = x86_64::_mm256_mul_ps(fs1, heta);
+                    let hfs1 = x86_64::_mm256_mul_ps(fs1, heta8);
                     let fs1 = x86_64::_mm256_loadu_ps(
                             wfs.add(k * 8 + N_HIDDEN));
                     let fs1 = x86_64::_mm256_sub_ps(fs1, hfs1);
                     x86_64::_mm256_storeu_ps(wfs.add(k * 8 + N_HIDDEN), fs1);
                     let dc = x86_64::_mm256_loadu_ps(wdc.add(k * 8));
-                    let dc = x86_64::_mm256_sub_ps(dc, heta);
+                    let dc = x86_64::_mm256_sub_ps(dc, heta8);
                     x86_64::_mm256_storeu_ps(wdc.add(k * 8), dc);
+                } else if cfg!(feature="nosimd") {
+                    for n in 0..8 {
+                        let idx = k * 8 + n;
+                        let heta = dhid[idx] * eta;
+                        *wtbn.add(idx) -= teban * heta;
+                        *wfs.add(idx) -= fs.0 as f32 * heta;
+                        *wfs.add(idx + N_HIDDEN) -= fs.1 as f32 * heta;
+                        *wdc.add(idx) -= heta;
+                    }
                 } else {
                     let hid1 = x86_64::_mm_loadu_ps(dhid[k * 8..].as_ptr());
                     let hid2 = x86_64::_mm_loadu_ps(dhid[k * 8 + 4..].as_ptr());
@@ -2834,16 +2843,13 @@ impl Weight {
                     let fs12 = x86_64::_mm_sub_ps(fs12, hfs12);
                     x86_64::_mm_storeu_ps(wfs.add(k * 8 + N_HIDDEN), fs11);
                     x86_64::_mm_storeu_ps(wfs.add(k * 8 + N_HIDDEN + 4), fs12);
-                    let dc = x86_64::_mm_loadu_ps(wdc.add(k * 8));
-                    let dc1 = x86_64::_mm_sub_ps(dc, heta1);
-                    let dc2 = x86_64::_mm_sub_ps(dc, heta2);
+                    let dc1 = x86_64::_mm_loadu_ps(wdc.add(k * 8));
+                    let dc2 = x86_64::_mm_loadu_ps(wdc.add(k * 8 + 4));
+                    let dc1 = x86_64::_mm_sub_ps(dc1, heta1);
+                    let dc2 = x86_64::_mm_sub_ps(dc2, heta2);
                     x86_64::_mm_storeu_ps(wdc.add(k * 8), dc1);
                     x86_64::_mm_storeu_ps(wdc.add(k * 8 + 4), dc2);
                 }
-                // *wtbn.add(i) -= teban * heta;
-                // *wfs.add(i) -= fs.0 as f32 * heta;
-                // *wfs.add(i + N_HIDDEN) -= fs.1 as f32 * heta;
-                // *wdc.add(i) -= heta;
             }
         }
     }
