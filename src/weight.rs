@@ -2712,11 +2712,11 @@ impl Weight {
         // for (i, h) in dhid.iter().enumerate() {
         for k in 0..N_HIDDEN / 8 {
             for i in 0..8 {
-                let idx = k * 8 + i;
-                let heta = dhid[idx] * eta;
-                let w1 = unsafe {ow.as_mut_ptr().add(idx * board::CELL_2D)};
+                let hidx = k * 8 + i;
+                let heta = dhid[hidx] * eta;
+                let w1 = unsafe {ow.as_mut_ptr().add(hidx * board::CELL_2D)};
                 let heta8 = unsafe {x86_64::_mm256_set1_ps(heta)};
-                let mut bit8 = 0x0101010101010101;
+                let mut bit8 = 0x0101010101010101u64;
                 for j in 0..board::CELL_2D / 32 {
                     let idx = j * 32;
                     let b81 = (bit8 & black) >> (4 * j);
@@ -2760,19 +2760,19 @@ impl Weight {
                         let df3 = x86_64::_mm256_mul_ps(mul3, heta8);
                         let df4 = x86_64::_mm256_mul_ps(mul4, heta8);
                         // w = x - h x eta x sengo
-                        x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
-                        let x41 = x86_64::_mm256_loadu_ps(w1.add(idx));
-                        let x42 = x86_64::_mm256_loadu_ps(w1.add(idx + 8));
-                        let x43 = x86_64::_mm256_loadu_ps(w1.add(idx + 16));
-                        let x44 = x86_64::_mm256_loadu_ps(w1.add(idx + 24));
+                        x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_NTA);
+                        let x41 = x86_64::_mm256_load_ps(w1.add(idx));
+                        let x42 = x86_64::_mm256_load_ps(w1.add(idx + 8));
+                        let x43 = x86_64::_mm256_load_ps(w1.add(idx + 16));
+                        let x44 = x86_64::_mm256_load_ps(w1.add(idx + 24));
                         let w41 = x86_64::_mm256_sub_ps(x41, df1);
                         let w42 = x86_64::_mm256_sub_ps(x42, df2);
                         let w43 = x86_64::_mm256_sub_ps(x43, df3);
                         let w44 = x86_64::_mm256_sub_ps(x44, df4);
-                        x86_64::_mm256_storeu_ps(w1.add(idx), w41);
-                        x86_64::_mm256_storeu_ps(w1.add(idx + 8), w42);
-                        x86_64::_mm256_storeu_ps(w1.add(idx + 16), w43);
-                        x86_64::_mm256_storeu_ps(w1.add(idx + 24), w44);
+                        x86_64::_mm256_store_ps(w1.add(idx), w41);
+                        x86_64::_mm256_store_ps(w1.add(idx + 8), w42);
+                        x86_64::_mm256_store_ps(w1.add(idx + 16), w43);
+                        x86_64::_mm256_store_ps(w1.add(idx + 24), w44);
                     }
                 }
             }
