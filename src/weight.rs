@@ -61,14 +61,15 @@ impl EvalFile {
     }
 }
 
+#[repr(align(32))]
 pub struct Weight {
-    pub weight : Vec<f32>
+    pub weight : [f32 ; N_WEIGHT]
 }
 
 impl Weight {
     pub fn new() -> Weight {
         Weight {
-            weight: vec![0.0 ; N_WEIGHT]
+            weight: [0.0 ; N_WEIGHT]
         }
     }
 
@@ -166,12 +167,12 @@ impl Weight {
         if WSZV5 != nsz {
             return Err(String::from("size mismatch"));
         }
-        self.weight = newtable;
+        self.weight.copy_from_slice(&newtable);
         // println!("v5:{:?}", self.weight);
         Ok(())
     }
 
-    fn write(f : &mut File, w : &Vec<f32>, ver : &EvalFile) {
+    fn write(f : &mut File, w : &[f32], ver : &EvalFile) {
         let sv = w.iter().map(|a| a.to_string()).collect::<Vec<String>>();
         f.write(format!("{}\n", ver.to_str()).as_bytes()).unwrap();
         f.write(sv.join(",").as_bytes()).unwrap();
@@ -226,7 +227,7 @@ impl Weight {
         }
     }
 
-    fn fromv1tov2(&mut self, tbl : &Vec<f32>) {
+    fn fromv1tov2(&mut self, tbl : &[f32]) {
         // ban
         for i in 0..N_HIDDEN {
             let we = &mut self.weight[i * board::CELL_2D..(i + 1) * board::CELL_2D];
@@ -248,7 +249,7 @@ impl Weight {
     }
 
     #[allow(dead_code)]
-    fn fromv1tov3(&mut self, tbl : &Vec<f32>) {
+    fn fromv1tov3(&mut self, tbl : &[f32]) {
         // ban
         for i in 0..N_HIDDEN {
             let we = &mut self.weight[i * board::CELL_2D..(i + 1) * board::CELL_2D];
@@ -271,7 +272,7 @@ impl Weight {
         *self.weight.last_mut().unwrap() = *tbl.last().unwrap();
     }
 
-    fn fromv2tov3(&mut self, tbl : &Vec<f32>) {
+    fn fromv2tov3(&mut self, tbl : &[f32]) {
         // ban + teban
         let we = &mut self.weight[0..N_HIDDEN * (board::CELL_2D + 1)];
         let tb = &tbl[0 .. N_HIDDEN * (board::CELL_2D + 1)];
@@ -292,8 +293,8 @@ impl Weight {
     }
 
     /// copy v3 data into v4.
-    fn fromv3tov4(&mut self, tbl : &Vec<f32>) {
-        self.weight = vec![0.0 ; N_WEIGHT];
+    fn fromv3tov4(&mut self, tbl : &[f32]) {
+        self.weight = [0.0 ; N_WEIGHT];
         // ban
         let n = 4 * board::CELL_2D;
         let we = &mut self.weight[0..n];
@@ -361,7 +362,7 @@ impl Weight {
 
     /// copy v3 data into v4.
     fn convert(&mut self, tbl : &Vec<f32>, nhid : usize) {
-        self.weight = vec![0.0 ; N_WEIGHT];
+        self.weight = [0.0 ; N_WEIGHT];
         // ban
         let n = nhid * board::CELL_2D;
         let we = &mut self.weight[0..n];
@@ -1242,13 +1243,13 @@ impl Weight {
                         let f83 = x86_64::_mm256_cvtepi32_ps(c83);
                         let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
-                        let x81 = x86_64::_mm256_loadu_ps(
+                        let x81 = x86_64::_mm256_load_ps(
                             w1.as_ptr().add(idx));
-                        let x82 = x86_64::_mm256_loadu_ps(
+                        let x82 = x86_64::_mm256_load_ps(
                             w1.as_ptr().add(idx + 8));
-                        let x83 = x86_64::_mm256_loadu_ps(
+                        let x83 = x86_64::_mm256_load_ps(
                             w1.as_ptr().add(idx + 16));
-                        let x84 = x86_64::_mm256_loadu_ps(
+                        let x84 = x86_64::_mm256_load_ps(
                             w1.as_ptr().add(idx + 24));
 
                         if true {  // fma
@@ -1982,10 +1983,10 @@ impl Weight {
                     let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
                     x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
-                    let x81 = x86_64::_mm256_loadu_ps(w1.add(idx));
-                    let x82 = x86_64::_mm256_loadu_ps(w1.add(idx + 8));
-                    let x83 = x86_64::_mm256_loadu_ps(w1.add(idx + 16));
-                    let x84 = x86_64::_mm256_loadu_ps(w1.add(idx + 24));
+                    let x81 = x86_64::_mm256_load_ps(w1.add(idx));
+                    let x82 = x86_64::_mm256_load_ps(w1.add(idx + 8));
+                    let x83 = x86_64::_mm256_load_ps(w1.add(idx + 16));
+                    let x84 = x86_64::_mm256_load_ps(w1.add(idx + 24));
 
                     if true {  // fma
                         sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
@@ -2096,10 +2097,10 @@ impl Weight {
                         let f84 = x86_64::_mm256_cvtepi32_ps(c84);
 
                         x86_64::_mm_prefetch(w1.add(idx) as *const i8, x86_64::_MM_HINT_T0);
-                        let x81 = x86_64::_mm256_loadu_ps(w1.add(idx));
-                        let x82 = x86_64::_mm256_loadu_ps(w1.add(idx + 8));
-                        let x83 = x86_64::_mm256_loadu_ps(w1.add(idx + 16));
-                        let x84 = x86_64::_mm256_loadu_ps(w1.add(idx + 24));
+                        let x81 = x86_64::_mm256_load_ps(w1.add(idx));
+                        let x82 = x86_64::_mm256_load_ps(w1.add(idx + 8));
+                        let x83 = x86_64::_mm256_load_ps(w1.add(idx + 16));
+                        let x84 = x86_64::_mm256_load_ps(w1.add(idx + 24));
 
                         if true {  // fma
                             sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
@@ -2783,21 +2784,21 @@ impl Weight {
                     let heta8 = x86_64::_mm256_mul_ps(hid, eta);
                     let tbn = x86_64::_mm256_set1_ps(teban);
                     let htbn = x86_64::_mm256_mul_ps(tbn, heta8);
-                    let tbn = x86_64::_mm256_loadu_ps(wtbn.add(k * 8));
+                    let tbn = x86_64::_mm256_load_ps(wtbn.add(k * 8));
                     let tbn = x86_64::_mm256_sub_ps(tbn, htbn);
                     x86_64::_mm256_storeu_ps(wtbn.add(k * 8), tbn);
                     let fs0 = x86_64::_mm256_set1_ps(fs.0 as f32);
                     let hfs0 = x86_64::_mm256_mul_ps(fs0, heta8);
-                    let fs0 = x86_64::_mm256_loadu_ps(wfs.add(k * 8));
+                    let fs0 = x86_64::_mm256_load_ps(wfs.add(k * 8));
                     let fs0 = x86_64::_mm256_sub_ps(fs0, hfs0);
                     x86_64::_mm256_storeu_ps(wfs.add(k * 8), fs0);
                     let fs1 = x86_64::_mm256_set1_ps(fs.1 as f32);
                     let hfs1 = x86_64::_mm256_mul_ps(fs1, heta8);
-                    let fs1 = x86_64::_mm256_loadu_ps(
+                    let fs1 = x86_64::_mm256_load_ps(
                             wfs.add(k * 8 + N_HIDDEN));
                     let fs1 = x86_64::_mm256_sub_ps(fs1, hfs1);
                     x86_64::_mm256_storeu_ps(wfs.add(k * 8 + N_HIDDEN), fs1);
-                    let dc = x86_64::_mm256_loadu_ps(wdc.add(k * 8));
+                    let dc = x86_64::_mm256_load_ps(wdc.add(k * 8));
                     let dc = x86_64::_mm256_sub_ps(dc, heta8);
                     x86_64::_mm256_storeu_ps(wdc.add(k * 8), dc);
                 } else if cfg!(feature="nosimd") {
@@ -2818,8 +2819,8 @@ impl Weight {
                     let tbn = x86_64::_mm_set1_ps(teban);
                     let htbn1 = x86_64::_mm_mul_ps(tbn, heta1);
                     let htbn2 = x86_64::_mm_mul_ps(tbn, heta2);
-                    let tbn1 = x86_64::_mm_loadu_ps(wtbn.add(k * 8));
-                    let tbn2 = x86_64::_mm_loadu_ps(wtbn.add(k * 8 + 4));
+                    let tbn1 = x86_64::_mm_load_ps(wtbn.add(k * 8));
+                    let tbn2 = x86_64::_mm_load_ps(wtbn.add(k * 8 + 4));
                     let tbn1 = x86_64::_mm_sub_ps(tbn1, htbn1);
                     let tbn2 = x86_64::_mm_sub_ps(tbn2, htbn2);
                     x86_64::_mm_storeu_ps(wtbn.add(k * 8), tbn1);
@@ -2827,8 +2828,8 @@ impl Weight {
                     let fs0 = x86_64::_mm_set1_ps(fs.0 as f32);
                     let hfs01 = x86_64::_mm_mul_ps(fs0, heta1);
                     let hfs02 = x86_64::_mm_mul_ps(fs0, heta2);
-                    let fs01 = x86_64::_mm_loadu_ps(wfs.add(k * 8));
-                    let fs02 = x86_64::_mm_loadu_ps(wfs.add(k * 8 + 4));
+                    let fs01 = x86_64::_mm_load_ps(wfs.add(k * 8));
+                    let fs02 = x86_64::_mm_load_ps(wfs.add(k * 8 + 4));
                     let fs01 = x86_64::_mm_sub_ps(fs01, hfs01);
                     let fs02 = x86_64::_mm_sub_ps(fs02, hfs02);
                     x86_64::_mm_storeu_ps(wfs.add(k * 8), fs01);
@@ -2836,15 +2837,15 @@ impl Weight {
                     let fs1 = x86_64::_mm_set1_ps(fs.1 as f32);
                     let hfs11 = x86_64::_mm_mul_ps(fs1, heta1);
                     let hfs12 = x86_64::_mm_mul_ps(fs1, heta2);
-                    let fs11 = x86_64::_mm_loadu_ps(wfs.add(k * 8 + N_HIDDEN));
-                    let fs12 = x86_64::_mm_loadu_ps(
+                    let fs11 = x86_64::_mm_load_ps(wfs.add(k * 8 + N_HIDDEN));
+                    let fs12 = x86_64::_mm_load_ps(
                             wfs.add(k * 8 + N_HIDDEN + 4));
                     let fs11 = x86_64::_mm_sub_ps(fs11, hfs11);
                     let fs12 = x86_64::_mm_sub_ps(fs12, hfs12);
                     x86_64::_mm_storeu_ps(wfs.add(k * 8 + N_HIDDEN), fs11);
                     x86_64::_mm_storeu_ps(wfs.add(k * 8 + N_HIDDEN + 4), fs12);
-                    let dc1 = x86_64::_mm_loadu_ps(wdc.add(k * 8));
-                    let dc2 = x86_64::_mm_loadu_ps(wdc.add(k * 8 + 4));
+                    let dc1 = x86_64::_mm_load_ps(wdc.add(k * 8));
+                    let dc2 = x86_64::_mm_load_ps(wdc.add(k * 8 + 4));
                     let dc1 = x86_64::_mm_sub_ps(dc1, heta1);
                     let dc2 = x86_64::_mm_sub_ps(dc2, heta2);
                     x86_64::_mm_storeu_ps(wdc.add(k * 8), dc1);
