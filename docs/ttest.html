@@ -6,7 +6,29 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
 <script type="text/javascript">
-function calc() {
+function calc1() {
+    let res1 = document.getElementById("res1").value.split('±');
+    let a1 = res1[0].trim() - 0;
+    let sd1 = res1[1].trim() - 0;
+    let N1 = document.getElementById("N1").value - 0;
+
+    let res2 = document.getElementById("res2").value.split('±');
+    let a2 = res2[0].trim() - 0;
+    let sd2 = res2[1].trim() - 0;
+    let N2 = document.getElementById("N2").value - 0;
+
+    let s2 = (sd1 * sd1 * N1 + sd2 * sd2 * N2) / (N1 + N2 - 2);
+    let t = (a1 - a2) / (Math.sqrt(s2 * (1.0 / N1 + 1.0 / N2)));
+    let p = jStat.studentt.pdf(t, N1 + N2 - 2);
+
+    document.getElementById("tval").value = t;
+    document.getElementById("pval").value = p;
+    let thr = document.getElementById("thr").value - 0;
+    document.getElementById("result").innerHTML =
+        (p < thr) ? "<span style='color:red;font-size:3em;'>different</span>"
+                  : "<span style='color:green;font-size:3em;'>not different</span>";
+}
+function calc2() {
     let a1 = document.getElementById("avg1").value - 0;
     let sd1 = document.getElementById("sd1").value - 0;
     let N1 = document.getElementById("N1").value - 0;
@@ -39,14 +61,16 @@ input {
 <h1>unpaired t test</h1>
 S.D. can be sample standard deviation.(let's forget degree of freedom(= N-1)!)
 <h2>a:</h2>
-<input id="avg1" value="960.8" size="10"> ±<input id="sd1" value="18.43" size="10"> (N=<input id="N1" value="30" size="5">)
+<input id="res1" value="960.8 ± 18.43" size="10"> or <input id="avg1" value="960.8" size="6"> ±<input id="sd1" value="18.43" size="5"><br>
+(N=<input id="N1" value="30" size="5">)
 <h2>b:</h2>
-<input id="avg2" value="968.57" size="10"> ±<input id="sd2" value="7.99" size="10"> (N=<input id="N2" value="30" size="5">)
+<input id="res2" value="968.57 ± 7.99" size="10"> or <input id="avg2" value="968.57" size="6"> ±<input id="sd2" value="7.99" size="5"><br>
+(N=<input id="N2" value="30" size="5">)
 <h2>threshold:</h2>
-<input id="thr" value="0.05" size="10">
+<input id="thr" value="0.05" size="5">
 <h2>result:</h2>
-<div><input type="button" onclick="calc();" value="- - calculate - -"> <span id="result"></span></div>
-t:<input id="tval" size="5">, p:<input id="pval" size="5">
+<div><input type="button" onclick="calc1();" value="- - calculate - -"> or <input type="button" onclick="calc2();" value="- - calculate - -"> <span id="result"></span></div>
+t:<input id="tval" size="5">, p:<input id="pval" size="10">
 
 </body>
 </html>
