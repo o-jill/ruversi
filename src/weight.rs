@@ -2786,21 +2786,21 @@ impl Weight {
                     let htbn = x86_64::_mm256_mul_ps(tbn, heta8);
                     let tbn = x86_64::_mm256_load_ps(wtbn.add(k * 8));
                     let tbn = x86_64::_mm256_sub_ps(tbn, htbn);
-                    x86_64::_mm256_storeu_ps(wtbn.add(k * 8), tbn);
+                    x86_64::_mm256_store_ps(wtbn.add(k * 8), tbn);
                     let fs0 = x86_64::_mm256_set1_ps(fs.0 as f32);
                     let hfs0 = x86_64::_mm256_mul_ps(fs0, heta8);
                     let fs0 = x86_64::_mm256_load_ps(wfs.add(k * 8));
                     let fs0 = x86_64::_mm256_sub_ps(fs0, hfs0);
-                    x86_64::_mm256_storeu_ps(wfs.add(k * 8), fs0);
+                    x86_64::_mm256_store_ps(wfs.add(k * 8), fs0);
                     let fs1 = x86_64::_mm256_set1_ps(fs.1 as f32);
                     let hfs1 = x86_64::_mm256_mul_ps(fs1, heta8);
                     let fs1 = x86_64::_mm256_load_ps(
                             wfs.add(k * 8 + N_HIDDEN));
                     let fs1 = x86_64::_mm256_sub_ps(fs1, hfs1);
-                    x86_64::_mm256_storeu_ps(wfs.add(k * 8 + N_HIDDEN), fs1);
+                    x86_64::_mm256_store_ps(wfs.add(k * 8 + N_HIDDEN), fs1);
                     let dc = x86_64::_mm256_load_ps(wdc.add(k * 8));
                     let dc = x86_64::_mm256_sub_ps(dc, heta8);
-                    x86_64::_mm256_storeu_ps(wdc.add(k * 8), dc);
+                    x86_64::_mm256_store_ps(wdc.add(k * 8), dc);
                 } else if cfg!(feature="nosimd") {
                     for n in 0..8 {
                         let idx = k * 8 + n;
@@ -2823,8 +2823,8 @@ impl Weight {
                     let tbn2 = x86_64::_mm_load_ps(wtbn.add(k * 8 + 4));
                     let tbn1 = x86_64::_mm_sub_ps(tbn1, htbn1);
                     let tbn2 = x86_64::_mm_sub_ps(tbn2, htbn2);
-                    x86_64::_mm_storeu_ps(wtbn.add(k * 8), tbn1);
-                    x86_64::_mm_storeu_ps(wtbn.add(k * 8 + 4), tbn2);
+                    x86_64::_mm_store_ps(wtbn.add(k * 8), tbn1);
+                    x86_64::_mm_store_ps(wtbn.add(k * 8 + 4), tbn2);
                     let fs0 = x86_64::_mm_set1_ps(fs.0 as f32);
                     let hfs01 = x86_64::_mm_mul_ps(fs0, heta1);
                     let hfs02 = x86_64::_mm_mul_ps(fs0, heta2);
@@ -2832,8 +2832,8 @@ impl Weight {
                     let fs02 = x86_64::_mm_load_ps(wfs.add(k * 8 + 4));
                     let fs01 = x86_64::_mm_sub_ps(fs01, hfs01);
                     let fs02 = x86_64::_mm_sub_ps(fs02, hfs02);
-                    x86_64::_mm_storeu_ps(wfs.add(k * 8), fs01);
-                    x86_64::_mm_storeu_ps(wfs.add(k * 8 + 4), fs02);
+                    x86_64::_mm_store_ps(wfs.add(k * 8), fs01);
+                    x86_64::_mm_store_ps(wfs.add(k * 8 + 4), fs02);
                     let fs1 = x86_64::_mm_set1_ps(fs.1 as f32);
                     let hfs11 = x86_64::_mm_mul_ps(fs1, heta1);
                     let hfs12 = x86_64::_mm_mul_ps(fs1, heta2);
@@ -2842,14 +2842,14 @@ impl Weight {
                             wfs.add(k * 8 + N_HIDDEN + 4));
                     let fs11 = x86_64::_mm_sub_ps(fs11, hfs11);
                     let fs12 = x86_64::_mm_sub_ps(fs12, hfs12);
-                    x86_64::_mm_storeu_ps(wfs.add(k * 8 + N_HIDDEN), fs11);
-                    x86_64::_mm_storeu_ps(wfs.add(k * 8 + N_HIDDEN + 4), fs12);
+                    x86_64::_mm_store_ps(wfs.add(k * 8 + N_HIDDEN), fs11);
+                    x86_64::_mm_store_ps(wfs.add(k * 8 + N_HIDDEN + 4), fs12);
                     let dc1 = x86_64::_mm_load_ps(wdc.add(k * 8));
                     let dc2 = x86_64::_mm_load_ps(wdc.add(k * 8 + 4));
                     let dc1 = x86_64::_mm_sub_ps(dc1, heta1);
                     let dc2 = x86_64::_mm_sub_ps(dc2, heta2);
-                    x86_64::_mm_storeu_ps(wdc.add(k * 8), dc1);
-                    x86_64::_mm_storeu_ps(wdc.add(k * 8 + 4), dc2);
+                    x86_64::_mm_store_ps(wdc.add(k * 8), dc1);
+                    x86_64::_mm_store_ps(wdc.add(k * 8 + 4), dc2);
                 }
             }
         }
