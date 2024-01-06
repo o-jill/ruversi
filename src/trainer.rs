@@ -806,14 +806,22 @@ impl Trainer {
                 let b90 = b.rotate90();
                 let b180 = b.rotate180();
                 let b270 = b90.rotate180();
-                unsafe {BOARDCACHE.push((b, score));}
-                unsafe {BOARDCACHE.push((b90, score));}
-                unsafe {BOARDCACHE.push((b180, score));}
-                unsafe {BOARDCACHE.push((b270, score));}
+                unsafe {
+                    BOARDCACHE.push((b, score));
+                    BOARDCACHE.push((b90, score));
+                    BOARDCACHE.push((b180, score));
+                    BOARDCACHE.push((b270, score));
+                }
                 /*if score.abs() > 32 {
                     // 大差がついている棋譜は多めに覚える
                     unsafe {RFENCACHE.push((rfen, score));}
                 }*/
+            }
+            unsafe {
+                BOARDCACHE.sort_by(|a, b| {
+                    a.0.black.cmp(&b.0.black).then(a.0.white.cmp(&b.0.white))});
+                BOARDCACHE.dedup_by(|a, b| {
+                    a.0.black == b.0.black && a.0.white == b.0.white && a.0.teban == b.0.teban});
             }
 
             self.total += 1;
@@ -834,7 +842,7 @@ impl Trainer {
         if showprgs {println!("");}
 
         let n = unsafe {BOARDCACHE.len()};
-        // println!("{n} rfens.");
+        println!("{n} rfens.");
         let mut numbers : Vec<u32> = Vec::with_capacity(n);
         unsafe { numbers.set_len(n); }
         // for (i, it) in numbers.iter_mut().enumerate() {
