@@ -868,9 +868,9 @@ impl Weight {
         for i in 0..N_HIDDEN {
             let w1 = &ow[i * bitboard::CELL_2D .. (i + 1) * bitboard::CELL_2D];
             let mut hidsum : f32 = wdc[i];
-            for y in 0..bitboard::NUMCELL {
-                let mut bit = bitboard::LSB_CELL << y;
-                for x in 0..bitboard::NUMCELL {
+            let mut bit = bitboard::LSB_CELL;
+            for x in 0..bitboard::NUMCELL {
+                for y in 0..bitboard::NUMCELL {
                     let w = w1[x + y * bitboard::NUMCELL];
                     // let idx = x * bitboard::NUMCELL + y;
                     // let diff = ((bit & black) >> idx) as i32 - ((bit & white) >> idx) as i32;
@@ -880,7 +880,7 @@ impl Weight {
                         if (bit & black) != 0 {w}
                         else if (bit & white) != 0 {-w}
                         else {0.0};
-                    bit <<= bitboard::NUMCELL;
+                    bit <<= 1;
                 }
             }
             hidsum += teban * wtbn[i];
@@ -1806,14 +1806,14 @@ impl Weight {
         for i in 0..N_HIDDEN {
             let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let mut hidsum : f32 = wdc[i];
+            let mut bit = bitboard::LSB_CELL;
             for y in 0..bitboard::NUMCELL {
-                let mut bit = bitboard::LSB_CELL << y;
                 for x in 0..bitboard::NUMCELL {
                     let w = w1[x + y * bitboard::NUMCELL];
                     let cb = (black & bit) != 0;
                     let cw = (white & bit) != 0;
                     hidsum += if cb {w} else if cw {-w} else {0.0};
-                    bit <<= bitboard::NUMCELL;
+                    bit <<= 1;
                 }
             }
             hidsum += teban * wtbn[i];
@@ -2595,8 +2595,8 @@ impl Weight {
             let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
             let heta = *h * eta;
 
+            let mut bit = bitboard::LSB_CELL;
             for y in 0..bitboard::NUMCELL {
-                let mut bit = bitboard::LSB_CELL << y;
                 for x in 0..bitboard::NUMCELL {
                     // let w = w1[x + y * bitboard::NUMCELL];
                     let cb = (black & bit) != 0;
@@ -2604,7 +2604,7 @@ impl Weight {
                     let diff = if cb {heta} else if cw {-heta} else {0.0};
                     w1[x + y * bitboard::NUMCELL] -= diff;
 
-                    bit <<= bitboard::NUMCELL;
+                    bit <<= 1;
                 }
             }
 
