@@ -260,7 +260,7 @@ impl BitBoard {
         let black = self.black;
         let white = self.white;
         let mut bit : u64 = LSB_CELL;
-        for y in 0..NUMCELL {
+        for _y in 0..NUMCELL {
             let mut line = String::new();
             for _x in 0..NUMCELL {
                 let cb = (bit & black) != 0;
@@ -626,7 +626,7 @@ impl BitBoard {
             let mut bit = pos;
             let mut rev = false;
             for _i in 0..x {
-                bit >>= NUMCELL;
+                bit >>= 1;
                 if (oppo & bit) == 0 {break;}
 
                 rev = true;
@@ -639,7 +639,7 @@ impl BitBoard {
         let mut rev = false;
         let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
         for _i in 0..sz {
-            bit >>= NUMCELL + 1;
+            bit <<= NUMCELL + 1;
             if (oppo & bit) == 0 {break;}
 
             rev = true;
@@ -653,7 +653,7 @@ impl BitBoard {
         let yy = y;
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
-            bit <<= NUMCELL - 1;
+            bit >>= NUMCELL - 1;
             if (oppo & bit) == 0 {break;}
 
             rev = true;
@@ -665,7 +665,7 @@ impl BitBoard {
         let mut rev = false;
         let sz = if x < y {x} else {y};
         for _i in 0..sz {
-            bit <<= NUMCELL + 1;
+            bit >>= NUMCELL + 1;
             if (oppo & bit) == 0 {break;}
 
             rev = true;
@@ -679,7 +679,7 @@ impl BitBoard {
         let yy = NUMCELL - 1 - y;
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
-            bit >>= NUMCELL - 1;
+            bit <<= NUMCELL - 1;
             if (oppo & bit) == 0 {break;}
 
             rev = true;
@@ -813,7 +813,7 @@ impl BitBoard {
                 count += 1;
                 if (black & bit) == 0 {break;}
             }
-            let mut bit = LT_CELL << 1;
+            let mut bit = LT_CELL << NUMCELL;
             for _i in 1..7 {  // ↓
                 if (black & bit) == 0 {break;}
 
@@ -828,7 +828,7 @@ impl BitBoard {
                 count += 1;
                 if (white & bit) == 0 {break;}
             }
-            let mut bit = LT_CELL << 1;
+            let mut bit = LT_CELL << NUMCELL;
             for _i in 1..7 {  // ↓
                 if (white & bit) == 0 {break;}
 
@@ -845,7 +845,7 @@ impl BitBoard {
                 count += 1;
                 if (black & bit) == 0 {break;}
             }
-            let mut bit = RT_CELL << 1;
+            let mut bit = RT_CELL << NUMCELL;
             for _i in 1..7 {  // ↓
                 if (black & bit) == 0 {break;}
 
@@ -860,7 +860,7 @@ impl BitBoard {
                 count += 1;
                 if (white & bit) == 0 {break;}
             }
-            let mut bit = RT_CELL << 1;
+            let mut bit = RT_CELL << NUMCELL;
             for _i in 1..7 {  // ↓
                 if (white & bit) == 0 {break;}
 
@@ -877,7 +877,7 @@ impl BitBoard {
                 count += 1;
                 if (black & bit) == 0 {break;}
             }
-            let mut bit = LB_CELL >> 1;
+            let mut bit = LB_CELL >> NUMCELL;
             for _i in 1..7 {  // ↑
                 if (black & bit) == 0 {break;}
 
@@ -892,7 +892,7 @@ impl BitBoard {
                 count += 1;
                 if (white & bit) == 0 {break;}
             }
-            let mut bit = LB_CELL >> 1;
+            let mut bit = LB_CELL >> NUMCELL;
             for _i in 1..7 {  // ↑
                 if (white & bit) == 0 {break;}
 
@@ -909,7 +909,7 @@ impl BitBoard {
                 count += 1;
                 if (black & bit) == 0 {break;}
             }
-            let mut bit = RB_CELL >> 1;
+            let mut bit = RB_CELL >> NUMCELL;
             for _i in 1..7 {  // ↑
                 if (black & bit) == 0 {break;}
 
@@ -924,7 +924,7 @@ impl BitBoard {
                 count += 1;
                 if (white & bit) == 0 {break;}
             }
-            let mut bit = RB_CELL >> 1;
+            let mut bit = RB_CELL >> NUMCELL;
             for _i in 1..7 {  // ↑
                 if (white & bit) == 0 {break;}
 
@@ -1308,7 +1308,7 @@ fn testbitbrd() {
     assert_eq!(b.to_obf(),
         "---------------------------XO------OX--------------------------- X");
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(3, 5), (4, 6), (5, 3), (6, 4)]));
+    assert_eq!(mv, Some(vec![(5, 3), (6, 4), (3, 5), (4, 6)]));
     let b = BitBoard::from("H/H/H/H/H/H/H/H b").unwrap();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);
@@ -1366,8 +1366,8 @@ fn testbitbrd() {
     let b90 = b.rotate90();
     // b90.put();
     assert_eq!(b90.to_str(), "h/AeAa/AdAb/AcAc/AbAd/AaAe/Bf/1Fa w");
-    assert_eq!(b90.black, 0x0082848890A0C07E);
-    assert_eq!(b90.white, 0xFF7D7B776F5F3F01);
+    assert_eq!(b90.black, 0x7E03050911214100);
+    assert_eq!(b90.white, 0x80FCFAF6EEDEBEFF);
     assert_eq!(b90.fixedstones(), (0, 15));
     let br = b90.r#move(1, 8);
     assert!(br.is_ok());
@@ -1390,8 +1390,8 @@ fn testbitbrd() {
     b.put();
     println!("b.black:0x{:016X}", b.black);
     println!("b.white:0x{:016X}", b.white);
-    assert_eq!(b.black, 0x80FCFAF6EEDEBEFF);
-    assert_eq!(b.white, 0x7E03050911214100);
+    assert_eq!(b.black, 0xFF7D7B776F5F3F01);
+    assert_eq!(b.white, 0x0082848890A0C07E);
     assert!(b.checkreverse(7, 0));
     assert_eq!(b.fixedstones(), (15, 0));
     assert_eq!(b.count(),
@@ -1421,8 +1421,8 @@ fn testbitbrd() {
     assert_eq!(br.count(), 64);
     let b180 = b.rotate180();
     // b.put();
-    assert_eq!(b180.black, (0x80FCFAF6EEDEBEFF as u64).reverse_bits());
-    assert_eq!(b180.white, (0x7E03050911214100 as u64).reverse_bits());
+    assert_eq!(b180.black, 0xFF7D7B776F5F3F01u64.reverse_bits());
+    assert_eq!(b180.white, 0x0082848890A0C07Eu64.reverse_bits());
     assert!(b180.checkreverse(0, 7));
     assert_eq!(b180.fixedstones(), (15, 0));
     assert_eq!(b180.count(),
@@ -1442,7 +1442,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (36, 0));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "A7/B6/C5/D4/E3/F2/G1/H w");
-    assert_eq!(b90.black, 0x80C0E0F0F8FCFEFF);
+    assert_eq!(b90.black, 0xFF7F3F1F0F070301);
     assert_eq!(b90.white, 0x0);
     assert_eq!(b90.fixedstones(), (36, 0));
     let b180 = b.rotate180();
@@ -1464,7 +1464,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (8, 0));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "A7/A7/A7/A7/A7/A7/A7/A7 b");
-    assert_eq!(b90.black, 0xFF);
+    assert_eq!(b90.black, 0x0101010101010101);
     assert_eq!(b90.white, 0x0);
     assert_eq!(b90.fixedstones(), (8, 0));
     let b180 = b.rotate180();
@@ -1478,7 +1478,7 @@ fn testbitbrd() {
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "8/8/8/8/8/8/8/h b");
     assert_eq!(b90.black, 0x0);
-    assert_eq!(b90.white, 0x8080808080808080);
+    assert_eq!(b90.white, 0xFF00000000000000);
     assert_eq!(b90.fixedstones(), (0, 8));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1490,8 +1490,8 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (32, 32));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "H/H/H/H/h/h/h/h b");
-    assert_eq!(b90.black, 0x0F0F0F0F0F0F0F0F);
-    assert_eq!(b90.white, 0xF0F0F0F0F0F0F0F0);
+    assert_eq!(b90.black, 0x00000000FFFFFFFF);
+    assert_eq!(b90.white, 0xFFFFFFFF00000000);
     assert_eq!(b90.fixedstones(), (32, 32));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1503,8 +1503,8 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (32, 32));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "dD/dD/dD/dD/dD/dD/dD/dD b");
-    assert_eq!(b90.black, 0xFFFFFFFF00000000);
-    assert_eq!(b90.white, 0xFFFFFFFF);
+    assert_eq!(b90.black, 0xF0F0F0F0F0F0F0F0);
+    assert_eq!(b90.white, 0x0F0F0F0F0F0F0F0F);
     assert_eq!(b90.fixedstones(), (32, 32));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1516,8 +1516,8 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (16, 16));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "b4B/b4B/b4B/b4B/b4B/b4B/b4B/b4B b");
-    assert_eq!(b90.black, 0xFFFF000000000000);
-    assert_eq!(b90.white, 0xFFFF);
+    assert_eq!(b90.black, 0xC0C0C0C0C0C0C0C0);
+    assert_eq!(b90.white, 0x0303030303030303);
     assert_eq!(b90.fixedstones(), (16, 16));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1529,8 +1529,8 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (16, 16));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "H/H/8/8/8/8/h/h w");
-    assert_eq!(b90.black, 0x0303030303030303);
-    assert_eq!(b90.white, 0xC0C0C0C0C0C0C0C0);
+    assert_eq!(b90.black, 0x000000000000FFFF);
+    assert_eq!(b90.white, 0xFFFF000000000000);
     assert_eq!(b90.fixedstones(), (16, 16));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1543,7 +1543,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 4 - 10);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(2, 2), (3, 4), (4, 3)]));
+    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
     let b = b.r#move(2, 2);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1557,12 +1557,12 @@ fn testbitbrd() {
     let b90 = b.rotate90();
     b90.put();
     assert_eq!(b90.to_str(), "1A6/1a6/1a6/1a6/1a6/1a6/A1eA/1A6 b");
-    assert_eq!(b90.black, 0x4000000000008140);
-    assert_eq!(b90.white, 0x0040404040403E00);
+    assert_eq!(b90.black, 0x0281000000000002);
+    assert_eq!(b90.white, 0x007C020202020200);
     assert_eq!(b90.fixedstones(), (0, 0));
     assert!(b90.checkreverse(1, 6));
     let mv = b90.genmove();
-    assert_eq!(mv, Some(vec![(2, 7), (3, 5), (4, 6)]));
+    assert_eq!(mv, Some(vec![(3, 5), (4, 6), (2, 7)]));
     let br = b90.r#move(2, 7);
     assert!(br.is_ok());
     let br = br.unwrap();
@@ -1576,7 +1576,7 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (0, 0));
     assert_eq!(b180.count(), 4 - 10);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![(5, 6), (6, 5), (7, 7)]));
+    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
     let b = b180.r#move(7, 7);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1629,7 +1629,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 6 - 15);
     b.put();
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(2, 2), (3, 4), (4, 3)]));
+    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
     let b = b.r#move(2, 2);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1647,7 +1647,7 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (4, 0));
     assert_eq!(b180.count(), 6 - 15);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![(5, 6), (6, 5), (7, 7)]));
+    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
     let b = b180.r#move(7, 7);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1665,7 +1665,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 8 - 17);
     let mv = b.genmove();
     // b.put();
-    assert_eq!(mv, Some(vec![(3, 3), (4, 6), (6, 4)]));
+    assert_eq!(mv, Some(vec![(3, 3), (6, 4), (4, 6)]));
     let b = b.r#move(3, 3);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1683,7 +1683,7 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (2, 0));
     assert_eq!(b180.count(), 8 - 17);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![(3, 5), (5, 3), (6, 6)]));
+    assert_eq!(mv, Some(vec![(5, 3), (3, 5), (6, 6)]));
     let b = b180.r#move(6, 6);
     assert!(b.is_ok());
     let b = b.unwrap();
