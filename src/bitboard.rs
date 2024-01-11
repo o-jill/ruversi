@@ -798,139 +798,147 @@ impl BitBoard {
     pub fn fixedstones(&self) -> (i8, i8) {
         // return (0, 0);  // この関数が遅いのかを見極める用
         let mut count = 0;
-        let mut fcellsb : u64 = 0;
-        let mut fcellsw : u64 = 0;
         let black = self.black;
         let white = self.white;
+        let mut fcellsb : u64 = black & CORNER_CELL;
+        let mut fcellsw : u64 = white & CORNER_CELL;
 
-        if ((black | white) & CORNER_CELL) == 0 {return (0, 0);}
+        if (fcellsb | fcellsw) == 0 {return (0, 0);}
 
         // 四隅と辺
         let mut bit = LT_CELL;
         if (black & bit) != 0 {
-            for _i in 0..7 {  // →
-                fcellsb |= bit;
+            for _i in 1..7 {  // →
                 bit <<= NUMCELL;
-                count += 1;
-                if (black & bit) == 0 {break;}
-            }
-            let mut bit = LT_CELL << 1;
-            for _i in 1..7 {  // ↓
                 if (black & bit) == 0 {break;}
 
                 fcellsb |= bit;
+                count += 1;
+            }
+            let mut bit = LT_CELL;
+            for _i in 1..7 {  // ↓
                 bit <<= 1;
+                if (black & bit) == 0 {break;}
+
+                fcellsb |= bit;
                 count += 1;
             }
         } else if (white & bit) != 0 {
-            for _i in 0..7 {  // →
-                fcellsw |= bit;
+            for _i in 1..7 {  // →
                 bit <<= NUMCELL;
-                count += 1;
-                if (white & bit) == 0 {break;}
-            }
-            let mut bit = LT_CELL << 1;
-            for _i in 1..7 {  // ↓
                 if (white & bit) == 0 {break;}
 
                 fcellsw |= bit;
+                count += 1;
+            }
+            let mut bit = LT_CELL;
+            for _i in 1..7 {  // ↓
                 bit <<= 1;
+                if (white & bit) == 0 {break;}
+
+                fcellsw |= bit;
                 count += 1;
             }
         }
         let mut bit = RT_CELL;
         if (black & bit) != 0 {
-            for _i in 0..7 {  // ←
-                fcellsb |= bit;
+            for _i in 1..7 {  // ←
                 bit >>= NUMCELL;
-                count += 1;
-                if (black & bit) == 0 {break;}
-            }
-            let mut bit = RT_CELL << 1;
-            for _i in 1..7 {  // ↓
                 if (black & bit) == 0 {break;}
 
                 fcellsb |= bit;
+                count += 1;
+            }
+            let mut bit = RT_CELL;
+            for _i in 1..7 {  // ↓
                 bit <<= 1;
+                if (black & bit) == 0 {break;}
+
+                fcellsb |= bit;
                 count += 1;
             }
         } else if (white & bit) != 0 {
-            for _i in 0..7 {  // ←
-                fcellsw |= bit;
+            for _i in 1..7 {  // ←
                 bit >>= NUMCELL;
-                count += 1;
-                if (white & bit) == 0 {break;}
-            }
-            let mut bit = RT_CELL << 1;
-            for _i in 1..7 {  // ↓
                 if (white & bit) == 0 {break;}
 
                 fcellsw |= bit;
+                count += 1;
+            }
+            let mut bit = RT_CELL;
+            for _i in 1..7 {  // ↓
                 bit <<= 1;
+                if (white & bit) == 0 {break;}
+
+                fcellsw |= bit;
                 count += 1;
             }
         }
         let mut bit = LB_CELL;
         if (black & bit) != 0 {
-            for _i in 0..7 {  // →
-                fcellsb |= bit;
+            for _i in 1..7 {  // →
                 bit <<= NUMCELL;
-                count += 1;
-                if (black & bit) == 0 {break;}
-            }
-            let mut bit = LB_CELL >> 1;
-            for _i in 1..7 {  // ↑
                 if (black & bit) == 0 {break;}
 
                 fcellsb |= bit;
+                count += 1;
+            }
+            let mut bit = LB_CELL;
+            for _i in 1..7 {  // ↑
                 bit >>= 1;
+                if (black & bit) == 0 {break;}
+
+                fcellsb |= bit;
                 count += 1;
             }
         } else if (white & bit) != 0 {
-            for _i in 0..7 {  // →
-                fcellsw |= bit;
+            for _i in 1..7 {  // →
                 bit <<= NUMCELL;
-                count += 1;
-                if (white & bit) == 0 {break;}
-            }
-            let mut bit = LB_CELL >> 1;
-            for _i in 1..7 {  // ↑
                 if (white & bit) == 0 {break;}
 
                 fcellsw |= bit;
+                count += 1;
+            }
+            let mut bit = LB_CELL;
+            for _i in 1..7 {  // ↑
                 bit >>= 1;
+                if (white & bit) == 0 {break;}
+
+                fcellsw |= bit;
                 count += 1;
             }
         }
         let mut bit = RB_CELL;
         if (black & bit) != 0 {
-            for _i in 0..7 {  // ←
-                fcellsb |= bit;
+            for _i in 1..7 {  // ←
                 bit >>= NUMCELL;
-                count += 1;
-                if (black & bit) == 0 {break;}
-            }
-            let mut bit = RB_CELL >> 1;
-            for _i in 1..7 {  // ↑
                 if (black & bit) == 0 {break;}
 
                 fcellsb |= bit;
+                count += 1;
+            }
+            let mut bit = RB_CELL;
+            for _i in 1..7 {  // ↑
                 bit >>= 1;
+                if (black & bit) == 0 {break;}
+
+                fcellsb |= bit;
                 count += 1;
             }
         } else if (white & bit) != 0 {
-            for _i in 0..7 {  // ←
-                fcellsw |= bit;
+            for _i in 1..7 {  // ←
                 bit >>= NUMCELL;
-                count += 1;
-                if (white & bit) == 0 {break;}
-            }
-            let mut bit = RB_CELL >> 1;
-            for _i in 1..7 {  // ↑
                 if (white & bit) == 0 {break;}
 
                 fcellsw |= bit;
+                count += 1;
+            }
+            let mut bit = RB_CELL;
+            for _i in 1..7 {  // ↑
                 bit >>= 1;
+                if (white & bit) == 0 {break;}
+
+                fcellsw |= bit;
                 count += 1;
             }
         }
