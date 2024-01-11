@@ -913,19 +913,20 @@ impl BitBoard {
                     // println!("if (cb | cw) == false");
                     break;
                 }
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     // println!("if fcb | fcw");
                     bit <<= 1;
                     wbit <<= 1;
                     continue;
                 }
+
                 if cb {
                     if (fcellsb & wbit) != wbit {
                         // println!("fcellsb : {:b}", fcellsb);
                         break;
                     }
+
                     fcellsb |= bit;
                     cnt += 1;
                     // println!("fcellsb : {:b}, {}", fcellsb, cnt);
@@ -934,6 +935,7 @@ impl BitBoard {
                         // println!("fcellsw : {:b}", fcellsw);
                         break;
                     }
+
                     fcellsw |= bit;
                     cnt += 1;
                 } else {
@@ -951,9 +953,7 @@ impl BitBoard {
                 let cw = (bit & white) != 0;
                 if (cb | cw) == false {break;}
 
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= 1;
                     wbit >>= 1;
                     continue;
@@ -992,13 +992,12 @@ impl BitBoard {
                 let cw = (bit & white) != 0;
                 if (cb | cw) == false {break;}
 
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit <<= NUMCELL;
                     wbit <<= NUMCELL;
                     continue;
                 }
+
                 if cb {
                     if (fcellsb & wbit) != wbit {break;}
 
@@ -1022,13 +1021,12 @@ impl BitBoard {
                 let cw = (bit & white) != 0;
                 if (cb | cw) == false {break;}
 
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= NUMCELL;
                     wbit >>= NUMCELL;
                     continue;
                 }
+
                 if cb {
                     if (fcellsb & wbit) != wbit {break;}
 
@@ -1060,13 +1058,12 @@ impl BitBoard {
                 let cw = (bit & white) != 0;
                 if (cb | cw) == false {break;}
 
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit <<= 1;
                     wbit <<= 1;
                     continue;
                 }
+
                 if cb {
                     if (fcellsb & wbit) != wbit {break;}
 
@@ -1090,13 +1087,12 @@ impl BitBoard {
                 let cw = (bit & white) != 0;
                 if (cb | cw) == false {break;}
 
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= 1;
                     wbit >>= 1;
                     continue;
                 }
+
                 if cb {
                     if (fcellsb & wbit) != wbit {break;}
 
@@ -1129,13 +1125,12 @@ impl BitBoard {
                 let cw = (bit & white) != 0;
                 if (cb | cw) == false {break;}
 
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit <<= NUMCELL;
                     wbit <<= NUMCELL;
                     continue;
                 }
+
                 if cb {
                     if (fcellsb & wbit) != wbit {break;}
 
@@ -1160,13 +1155,12 @@ impl BitBoard {
                 let cw = (bit & white) != 0;
                 if (cb | cw) == false {break;}
 
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= NUMCELL;
                     wbit >>= NUMCELL;
                     continue;
                 }
+
                 if cb {
                     if (fcellsb & wbit) != wbit {break;}
 
