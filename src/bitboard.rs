@@ -795,6 +795,58 @@ impl BitBoard {
         b
     }
 
+    fn fixstones_right(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
+        let mut fcells = 0u64;
+        let mut bit = startbit;
+        for _i in 1..7 {  // →
+            bit <<= NUMCELL;
+            if (tgt & bit) == 0 {return fcells;}
+
+            fcells |= bit;
+            *count = *count + 1;
+        }
+        fcells
+    }
+
+    fn fixstones_left(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
+        let mut fcells = 0u64;
+        let mut bit = startbit;
+        for _i in 1..7 {  // →
+            bit >>= NUMCELL;
+            if (tgt & bit) == 0 {return fcells;}
+
+            fcells |= bit;
+            *count = *count + 1;
+        }
+        fcells
+    }
+
+    fn fixstones_up(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
+        let mut fcells = 0u64;
+        let mut bit = startbit;
+        for _i in 1..7 {  // ↓
+            bit >>= 1;
+            if (tgt & bit) == 0 {return fcells;}
+
+            fcells |= bit;
+            *count = *count + 1;
+        }
+        fcells
+    }
+
+    fn fixstones_down(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
+        let mut fcells = 0u64;
+        let mut bit = startbit;
+        for _i in 1..7 {  // ↓
+            bit <<= 1;
+            if (tgt & bit) == 0 {return fcells;}
+
+            fcells |= bit;
+            *count = *count + 1;
+        }
+        fcells
+    }
+
     pub fn fixedstones(&self) -> (i8, i8) {
         // return (0, 0);  // この関数が遅いのかを見極める用
         let mut count = 0;
@@ -806,141 +858,37 @@ impl BitBoard {
         if (fcellsb | fcellsw) == 0 {return (0, 0);}
 
         // 四隅と辺
-        let mut bit = LT_CELL;
+        let bit = LT_CELL;
         if (black & bit) != 0 {
-            for _i in 1..7 {  // →
-                bit <<= NUMCELL;
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                count += 1;
-            }
-            let mut bit = LT_CELL;
-            for _i in 1..7 {  // ↓
-                bit <<= 1;
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                count += 1;
-            }
+            fcellsb |= Self::fixstones_right(bit, black, &mut count);
+            fcellsb |= Self::fixstones_down(bit, black, &mut count);
         } else if (white & bit) != 0 {
-            for _i in 1..7 {  // →
-                bit <<= NUMCELL;
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                count += 1;
-            }
-            let mut bit = LT_CELL;
-            for _i in 1..7 {  // ↓
-                bit <<= 1;
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                count += 1;
-            }
+            fcellsw |= Self::fixstones_right(bit, white, &mut count);
+            fcellsw |= Self::fixstones_down(bit, white, &mut count);
         }
-        let mut bit = RT_CELL;
+        let bit = RT_CELL;
         if (black & bit) != 0 {
-            for _i in 1..7 {  // ←
-                bit >>= NUMCELL;
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                count += 1;
-            }
-            let mut bit = RT_CELL;
-            for _i in 1..7 {  // ↓
-                bit <<= 1;
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                count += 1;
-            }
+            fcellsb |= Self::fixstones_left(bit, black, &mut count);
+            fcellsb |= Self::fixstones_down(bit, black, &mut count);
         } else if (white & bit) != 0 {
-            for _i in 1..7 {  // ←
-                bit >>= NUMCELL;
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                count += 1;
-            }
-            let mut bit = RT_CELL;
-            for _i in 1..7 {  // ↓
-                bit <<= 1;
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                count += 1;
-            }
+            fcellsw |= Self::fixstones_left(bit, white, &mut count);
+            fcellsw |= Self::fixstones_down(bit, white, &mut count);
         }
-        let mut bit = LB_CELL;
+        let bit = LB_CELL;
         if (black & bit) != 0 {
-            for _i in 1..7 {  // →
-                bit <<= NUMCELL;
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                count += 1;
-            }
-            let mut bit = LB_CELL;
-            for _i in 1..7 {  // ↑
-                bit >>= 1;
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                count += 1;
-            }
+            fcellsb |= Self::fixstones_right(bit, black, &mut count);
+            fcellsb |= Self::fixstones_up(bit, black, &mut count);
         } else if (white & bit) != 0 {
-            for _i in 1..7 {  // →
-                bit <<= NUMCELL;
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                count += 1;
-            }
-            let mut bit = LB_CELL;
-            for _i in 1..7 {  // ↑
-                bit >>= 1;
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                count += 1;
-            }
+            fcellsw |= Self::fixstones_right(bit, white, &mut count);
+            fcellsw |= Self::fixstones_up(bit, white, &mut count);
         }
-        let mut bit = RB_CELL;
+        let bit = RB_CELL;
         if (black & bit) != 0 {
-            for _i in 1..7 {  // ←
-                bit >>= NUMCELL;
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                count += 1;
-            }
-            let mut bit = RB_CELL;
-            for _i in 1..7 {  // ↑
-                bit >>= 1;
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                count += 1;
-            }
+            fcellsb |= Self::fixstones_left(bit, black, &mut count);
+            fcellsb |= Self::fixstones_up(bit, black, &mut count);
         } else if (white & bit) != 0 {
-            for _i in 1..7 {  // ←
-                bit >>= NUMCELL;
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                count += 1;
-            }
-            let mut bit = RB_CELL;
-            for _i in 1..7 {  // ↑
-                bit >>= 1;
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                count += 1;
-            }
+            fcellsw |= Self::fixstones_left(bit, white, &mut count);
+            fcellsw |= Self::fixstones_up(bit, white, &mut count);
         }
         if count < 4 {
             return (fcellsb.count_ones() as i8, fcellsw.count_ones() as i8);
