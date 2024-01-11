@@ -293,6 +293,7 @@ impl Weight {
     }
 
     /// copy v3 data into v4.
+    #[allow(dead_code)]
     fn fromv3tov4(&mut self, tbl : &[f32]) {
         self.weight = [0.0 ; N_WEIGHT];
         // ban

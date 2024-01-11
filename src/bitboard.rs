@@ -320,6 +320,7 @@ impl BitBoard {
         x * NUMCELL + y
     }
 
+    #[allow(dead_code)]
     pub fn at(&self, x: u8, y: u8) -> i8 {
         let bit : u64 = LSB_CELL << BitBoard::index(x as usize, y as usize);
         let cb = (bit & self.black) != 0;
