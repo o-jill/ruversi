@@ -320,6 +320,7 @@ impl BitBoard {
         x * NUMCELL + y
     }
 
+    #[allow(dead_code)]
     pub fn at(&self, x: u8, y: u8) -> i8 {
         let bit : u64 = LSB_CELL << BitBoard::index(x as usize, y as usize);
         let cb = (bit & self.black) != 0;
@@ -795,144 +796,100 @@ impl BitBoard {
         b
     }
 
+    fn fixstones_right(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
+        let mut fcells = 0u64;
+        let mut bit = startbit;
+        for _i in 1..7 {  // →
+            bit <<= NUMCELL;
+            if (tgt & bit) == 0 {return fcells;}
+
+            fcells |= bit;
+            *count = *count + 1;
+        }
+        fcells
+    }
+
+    fn fixstones_left(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
+        let mut fcells = 0u64;
+        let mut bit = startbit;
+        for _i in 1..7 {  // →
+            bit >>= NUMCELL;
+            if (tgt & bit) == 0 {return fcells;}
+
+            fcells |= bit;
+            *count = *count + 1;
+        }
+        fcells
+    }
+
+    fn fixstones_up(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
+        let mut fcells = 0u64;
+        let mut bit = startbit;
+        for _i in 1..7 {  // ↓
+            bit >>= 1;
+            if (tgt & bit) == 0 {return fcells;}
+
+            fcells |= bit;
+            *count = *count + 1;
+        }
+        fcells
+    }
+
+    fn fixstones_down(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
+        let mut fcells = 0u64;
+        let mut bit = startbit;
+        for _i in 1..7 {  // ↓
+            bit <<= 1;
+            if (tgt & bit) == 0 {return fcells;}
+
+            fcells |= bit;
+            *count = *count + 1;
+        }
+        fcells
+    }
+
     pub fn fixedstones(&self) -> (i8, i8) {
         // return (0, 0);  // この関数が遅いのかを見極める用
         let mut count = 0;
-        let mut fcellsb : u64 = 0;
-        let mut fcellsw : u64 = 0;
         let black = self.black;
         let white = self.white;
+        let mut fcellsb : u64 = black & CORNER_CELL;
+        let mut fcellsw : u64 = white & CORNER_CELL;
 
-        if ((black | white) & CORNER_CELL) == 0 {return (0, 0);}
+        if (fcellsb | fcellsw) == 0 {return (0, 0);}
 
         // 四隅と辺
-        let mut bit = LT_CELL;
+        let bit = LT_CELL;
         if (black & bit) != 0 {
-            for _i in 0..7 {  // →
-                fcellsb |= bit;
-                bit <<= NUMCELL;
-                count += 1;
-                if (black & bit) == 0 {break;}
-            }
-            let mut bit = LT_CELL << 1;
-            for _i in 1..7 {  // ↓
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                bit <<= 1;
-                count += 1;
-            }
+            fcellsb |= Self::fixstones_right(bit, black, &mut count);
+            fcellsb |= Self::fixstones_down(bit, black, &mut count);
         } else if (white & bit) != 0 {
-            for _i in 0..7 {  // →
-                fcellsw |= bit;
-                bit <<= NUMCELL;
-                count += 1;
-                if (white & bit) == 0 {break;}
-            }
-            let mut bit = LT_CELL << 1;
-            for _i in 1..7 {  // ↓
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                bit <<= 1;
-                count += 1;
-            }
+            fcellsw |= Self::fixstones_right(bit, white, &mut count);
+            fcellsw |= Self::fixstones_down(bit, white, &mut count);
         }
-        let mut bit = RT_CELL;
+        let bit = RT_CELL;
         if (black & bit) != 0 {
-            for _i in 0..7 {  // ←
-                fcellsb |= bit;
-                bit >>= NUMCELL;
-                count += 1;
-                if (black & bit) == 0 {break;}
-            }
-            let mut bit = RT_CELL << 1;
-            for _i in 1..7 {  // ↓
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                bit <<= 1;
-                count += 1;
-            }
+            fcellsb |= Self::fixstones_left(bit, black, &mut count);
+            fcellsb |= Self::fixstones_down(bit, black, &mut count);
         } else if (white & bit) != 0 {
-            for _i in 0..7 {  // ←
-                fcellsw |= bit;
-                bit >>= NUMCELL;
-                count += 1;
-                if (white & bit) == 0 {break;}
-            }
-            let mut bit = RT_CELL << 1;
-            for _i in 1..7 {  // ↓
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                bit <<= 1;
-                count += 1;
-            }
+            fcellsw |= Self::fixstones_left(bit, white, &mut count);
+            fcellsw |= Self::fixstones_down(bit, white, &mut count);
         }
-        let mut bit = LB_CELL;
+        let bit = LB_CELL;
         if (black & bit) != 0 {
-            for _i in 0..7 {  // →
-                fcellsb |= bit;
-                bit <<= NUMCELL;
-                count += 1;
-                if (black & bit) == 0 {break;}
-            }
-            let mut bit = LB_CELL >> 1;
-            for _i in 1..7 {  // ↑
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                bit >>= 1;
-                count += 1;
-            }
+            fcellsb |= Self::fixstones_right(bit, black, &mut count);
+            fcellsb |= Self::fixstones_up(bit, black, &mut count);
         } else if (white & bit) != 0 {
-            for _i in 0..7 {  // →
-                fcellsw |= bit;
-                bit <<= NUMCELL;
-                count += 1;
-                if (white & bit) == 0 {break;}
-            }
-            let mut bit = LB_CELL >> 1;
-            for _i in 1..7 {  // ↑
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                bit >>= 1;
-                count += 1;
-            }
+            fcellsw |= Self::fixstones_right(bit, white, &mut count);
+            fcellsw |= Self::fixstones_up(bit, white, &mut count);
         }
-        let mut bit = RB_CELL;
+        let bit = RB_CELL;
         if (black & bit) != 0 {
-            for _i in 0..7 {  // ←
-                fcellsb |= bit;
-                bit >>= NUMCELL;
-                count += 1;
-                if (black & bit) == 0 {break;}
-            }
-            let mut bit = RB_CELL >> 1;
-            for _i in 1..7 {  // ↑
-                if (black & bit) == 0 {break;}
-
-                fcellsb |= bit;
-                bit >>= 1;
-                count += 1;
-            }
+            fcellsb |= Self::fixstones_left(bit, black, &mut count);
+            fcellsb |= Self::fixstones_up(bit, black, &mut count);
         } else if (white & bit) != 0 {
-            for _i in 0..7 {  // ←
-                fcellsw |= bit;
-                bit >>= NUMCELL;
-                count += 1;
-                if (white & bit) == 0 {break;}
-            }
-            let mut bit = RB_CELL >> 1;
-            for _i in 1..7 {  // ↑
-                if (white & bit) == 0 {break;}
-
-                fcellsw |= bit;
-                bit >>= 1;
-                count += 1;
-            }
+            fcellsw |= Self::fixstones_left(bit, white, &mut count);
+            fcellsw |= Self::fixstones_up(bit, white, &mut count);
         }
         if count < 4 {
             return (fcellsb.count_ones() as i8, fcellsw.count_ones() as i8);
@@ -950,38 +907,35 @@ impl BitBoard {
             let mut wbit = 0x0000000000000107 << BitBoard::index(x - 1, 0);
             for _y in 0..6 {
                 // println!("bit:{:b}, wbit:{:b}", bit, wbit);
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                if (cb | cw) == false {
-                    // println!("if (cb | cw) == false");
-                    break;
-                }
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
-                    // println!("if fcb | fcw");
+
+                if (bit & (fcellsb | fcellsw)) != 0 {
+                   // println!("if fcb | fcw");
                     bit <<= 1;
                     wbit <<= 1;
                     continue;
                 }
-                if cb {
+
+                if (bit & black) != 0 {
                     if (fcellsb & wbit) != wbit {
                         // println!("fcellsb : {:b}", fcellsb);
                         break;
                     }
+
                     fcellsb |= bit;
                     cnt += 1;
                     // println!("fcellsb : {:b}, {}", fcellsb, cnt);
-                } else if cw {
+                } else if (bit & white) != 0 {
                     if (fcellsw & wbit) != wbit {
                         // println!("fcellsw : {:b}", fcellsw);
                         break;
                     }
+
                     fcellsw |= bit;
                     cnt += 1;
                 } else {
-                    println!("cb : {}, cw : {}", cb, cw);
+                    break;
                 }
+
                 bit <<= 1;
                 wbit <<= 1;
             }
@@ -990,24 +944,18 @@ impl BitBoard {
             let mut bit = LSB_CELL << BitBoard::index(x, NUMCELL - 2);
             let mut wbit = 0x0000000000000407 << BitBoard::index(x - 1, NUMCELL - 3);
             for _y in (0..6).rev() {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                if (cb | cw) == false {break;}
-
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= 1;
                     wbit >>= 1;
                     continue;
                 }
 
-                if cb {
+                if (bit & black) != 0 {
                     if (fcellsb & wbit) != wbit {break;}
 
                     fcellsb |= bit;
                     cnt += 1;
-                } else if cw {
+                } else if (bit & white) != 0 {
                     if (fcellsw & wbit) != wbit {break;}
 
                     fcellsw |= bit;
@@ -1015,7 +963,10 @@ impl BitBoard {
                     // println!("xy: {:x}, {:x}", x, _y);
                     // println!("bit:{:x}, wbit:{:x}", bit, wbit);
                     // println!("fcellsw : {:b}, {}", fcellsw, cnt);
+                } else {
+                    break;
                 }
+
                 bit >>= 1;
                 wbit >>= 1;
             }
@@ -1031,28 +982,26 @@ impl BitBoard {
             let mut bit : u64 = LSB_CELL << BitBoard::index(1, y);
             let mut wbit = 0x0000000000010103 << BitBoard::index(0, y - 1);
             for _x in 1..7 {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                if (cb | cw) == false {break;}
-
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit <<= NUMCELL;
                     wbit <<= NUMCELL;
                     continue;
                 }
-                if cb {
+
+                if (bit & black) != 0 {
                     if (fcellsb & wbit) != wbit {break;}
 
                     fcellsb |= bit;
                     cnt += 1;
-                } else if cw {
+                } else if (bit & white) != 0 {
                     if (fcellsw & wbit) != wbit {break;}
 
                     fcellsw |= bit;
                     cnt += 1;
+                } else {
+                    break;
                 }
+
                 bit <<= NUMCELL;
                 wbit <<= NUMCELL;
             }
@@ -1061,28 +1010,26 @@ impl BitBoard {
             let mut bit : u64 = LSB_CELL << BitBoard::index(NUMCELL - 2, y);
             let mut wbit = 0x0000000000030101 << BitBoard::index(NUMCELL - 3, y - 1);
             for _x in (1..7).rev() {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                if (cb | cw) == false {break;}
-
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= NUMCELL;
                     wbit >>= NUMCELL;
                     continue;
                 }
-                if cb {
+
+                if (bit & black) != 0 {
                     if (fcellsb & wbit) != wbit {break;}
 
                     fcellsb |= bit;
                     cnt += 1;
-                } else if cw {
+                } else if (bit & white) != 0 {
                     if (fcellsw & wbit) != wbit {break;}
 
                     fcellsw |= bit;
                     cnt += 1;
+                } else {
+                    break;
                 }
+
                 bit >>= NUMCELL;
                 wbit >>= NUMCELL;
             }
@@ -1099,28 +1046,26 @@ impl BitBoard {
             let mut bit : u64 = LSB_CELL << BitBoard::index(x, 1);
             let mut wbit = 0x0000000000070100 << BitBoard::index(x - 1, 0);
             for _y in 1..7 {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                if (cb | cw) == false {break;}
-
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit <<= 1;
                     wbit <<= 1;
                     continue;
                 }
-                if cb {
+
+                if (bit & black) != 0 {
                     if (fcellsb & wbit) != wbit {break;}
 
                     fcellsb |= bit;
                     cnt += 1;
-                } else if cw {
+                } else if (bit & white) != 0 {
                     if (fcellsw & wbit) != wbit {break;}
 
                     fcellsw |= bit;
                     cnt += 1;
+                } else {
+                    break;
                 }
+
                 bit <<= 1;
                 wbit <<= 1;
             }
@@ -1129,28 +1074,26 @@ impl BitBoard {
             let mut bit : u64 = LSB_CELL << BitBoard::index(x, NUMCELL - 2);
             let mut wbit = 0x0000000000070400 << BitBoard::index(x - 1, NUMCELL - 3);
             for _y in (1..7).rev() {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                if (cb | cw) == false {break;}
-
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= 1;
                     wbit >>= 1;
                     continue;
                 }
-                if cb {
+
+                if (bit & black) != 0 {
                     if (fcellsb & wbit) != wbit {break;}
 
                     fcellsb |= bit;
                     cnt += 1;
-                } else if cw {
+                } else if (bit & white) != 0 {
                     if (fcellsw & wbit) != wbit {break;}
 
                     fcellsw |= bit;
                     cnt += 1;
+                } else {
+                    break;
                 }
+
                 bit >>= 1;
                 wbit >>= 1;
             }
@@ -1168,29 +1111,28 @@ impl BitBoard {
             let mut wbit = 0x0000000000040406 << BitBoard::index(0, y - 1);
             for _x in 1..7 {
                 // println!("bit:{:08x}, wbit:{:08x}", bit, wbit);
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                if (cb | cw) == false {break;}
 
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit <<= NUMCELL;
                     wbit <<= NUMCELL;
                     continue;
                 }
-                if cb {
+
+                if (bit & black) != 0 {
                     if (fcellsb & wbit) != wbit {break;}
 
                     fcellsb |= bit;
                     cnt += 1;
-                } else if cw {
+                } else if (bit & white) != 0 {
                     if (fcellsw & wbit) != wbit {break;}
 
                     fcellsw |= bit;
                     cnt += 1;
                     // println!("fcellsw : {:08x}, {}", fcellsw, cnt);
+                } else {
+                    break;
                 }
+
                 bit <<= NUMCELL;
                 wbit <<= NUMCELL;
             }
@@ -1203,24 +1145,26 @@ impl BitBoard {
                 let cw = (bit & white) != 0;
                 if (cb | cw) == false {break;}
 
-                let fcb = (bit & fcellsb) != 0;
-                let fcw = (bit & fcellsw) != 0;
-                if fcb | fcw {
+                if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= NUMCELL;
                     wbit >>= NUMCELL;
                     continue;
                 }
-                if cb {
+
+                if (bit & black) != 0 {
                     if (fcellsb & wbit) != wbit {break;}
 
                     fcellsb |= bit;
                     cnt += 1;
-                } else if cw {
+                } else if (bit & white) != 0 {
                     if (fcellsw & wbit) != wbit {break;}
 
                     fcellsw |= bit;
                     cnt += 1;
+                } else {
+                    break;
                 }
+
                 bit >>= NUMCELL;
                 wbit >>= NUMCELL;
             }
