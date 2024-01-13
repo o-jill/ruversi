@@ -146,24 +146,24 @@ impl BitBoard {
                     continue;
                 }
 
-                if old == SENTE {
-                    line += &STR_SENTE.chars().nth(count).unwrap().to_string();
+                if old == BLANK {
+                    line.push(STR_NUM.chars().nth(count).unwrap());
+                } else if old == SENTE {
+                    line.push(STR_SENTE.chars().nth(count).unwrap());
                 } else if old == GOTE {
-                    line += &STR_GOTE.chars().nth(count).unwrap().to_string();
-                } else if old == BLANK {
-                    line += &STR_NUM.chars().nth(count).unwrap().to_string();
+                    line.push(STR_GOTE.chars().nth(count).unwrap());
                 }
 
                 old = c;
                 count = 1;
             }
 
-            if old == SENTE {
-                line += &STR_SENTE.chars().nth(count).unwrap().to_string();
+            if old == BLANK {
+                line.push(STR_NUM.chars().nth(count).unwrap());
+            } else if old == SENTE {
+                line.push(STR_SENTE.chars().nth(count).unwrap());
             } else if old == GOTE {
-                line += &STR_GOTE.chars().nth(count).unwrap().to_string();
-            } else if old == BLANK {
-                line += &STR_NUM.chars().nth(count).unwrap().to_string();
+                line.push(STR_GOTE.chars().nth(count).unwrap());
             }
 
             ban.push(line);
