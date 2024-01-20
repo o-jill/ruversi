@@ -3069,18 +3069,41 @@ impl Weight {
                 wh[i] -= hidsig[i] * deta;
             }
         // } else if cfg!(feature="avx") {
-        // impossible for N_HIDDEN:4
-        //     for i in 0..N_HIDDEN / 8 {
-        //         let hidx = i * 8;
-        //         unsafe {
-        //             let w4 = x86_64::_mm256_load_ps(wh[hidx..].as_ptr());
-        //             let h4 = x86_64::_mm256_load_ps(hidsig[hidx..].as_ptr());
-        //             let deta4 = x86_64::_mm256_set1_ps(deta);
-        //             let hdeta = x86_64::_mm256_mul_ps(deta4, h4);
-        //             let y4 = x86_64::_mm256_sub_ps(w4, hdeta);
-        //             x86_64::_mm256_store_ps(wh[hidx..].as_mut_ptr(), y4);
-        //         }
-        //     }
+        // } else {  // sse
+            // // impossible for N_HIDDEN:8
+            // for i in 0..N_HIDDEN / 16 {
+            //     let hidx = i * 16;
+            //     unsafe {
+            //         // if true {
+            //         //     let h41 = x86_64::_mm256_load_ps(hidsig[hidx..].as_ptr());
+            //         //     let w41 = x86_64::_mm256_load_ps(wh[hidx..].as_ptr());
+            //         //     let h42 =
+            //         //     x86_64::_mm256_load_ps(hidsig[hidx + 8..].as_ptr());
+            //         //     let w42 = x86_64::_mm256_load_ps(wh[hidx + 8..].as_ptr());
+            //         //     // -a x b + c;
+            //         //     let deta4 = x86_64::_mm256_set1_ps(deta);
+            //         //     let y41 = x86_64::_mm256_fnmadd_ps(deta4, h41, w41);
+            //         //     let y42 = x86_64::_mm256_fnmadd_ps(deta4, h42, w42);
+            //         //     x86_64::_mm256_store_ps(wh[hidx..].as_mut_ptr(), y41);
+            //         //     x86_64::_mm256_store_ps(
+            //         //             wh[hidx + 8..].as_mut_ptr(), y42);
+            //         // } else {
+            //         //     let h41 = x86_64::_mm256_load_ps(hidsig[hidx..].as_ptr());
+            //         //     let h42 =
+            //         //         x86_64::_mm256_load_ps(hidsig[hidx + 8..].as_ptr());
+            //         //     let w41 = x86_64::_mm256_load_ps(wh[hidx..].as_ptr());
+            //         //     let w42 = x86_64::_mm256_load_ps(wh[hidx + 8..].as_ptr());
+            //         //     let deta4 = x86_64::_mm256_set1_ps(deta);
+            //         //     let hdeta1 = x86_64::_mm256_mul_ps(deta4, h41);
+            //         //     let hdeta2 = x86_64::_mm256_mul_ps(deta4, h42);
+            //         //     let y41 = x86_64::_mm256_sub_ps(w41, hdeta1);
+            //         //     let y42 = x86_64::_mm256_sub_ps(w42, hdeta2);
+            //         //     x86_64::_mm256_store_ps(wh[hidx..].as_mut_ptr(), y41);
+            //         //     x86_64::_mm256_store_ps(
+            //         //             wh[hidx + 8..].as_mut_ptr(), y42);
+            //         // }
+            //     }
+            // }
         // } else {  // sse
         // slow for N_HIDDEN:4
         //     for i in 0..N_HIDDEN / 4 {
