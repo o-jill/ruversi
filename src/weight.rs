@@ -3098,7 +3098,36 @@ impl Weight {
         wh[N_HIDDEN] -= deta;
 
         let mut dhid = [0.0 as f32 ; N_HIDDEN];
-        // if cfg!(feature="nosimd") {
+        if cfg!(feature="avx") {
+            unsafe {
+                let diff4 = x86_64::_mm256_set1_ps(diff);
+                let one = x86_64::_mm256_set1_ps(1.0);
+                for i in 0..N_HIDDEN / 8 {
+                    let idx = i * 8;
+                    let wh4 = x86_64::_mm256_loadu_ps(wh[idx..].as_ptr());
+                    // tmp = wh x diff
+                    let tmp = x86_64::_mm256_mul_ps(wh4, diff4);
+                    // sig = 1 / (1 + exp(-hidden[i]))
+                    let hid4 = x86_64::_mm256_loadu_ps(hidden[idx..].as_ptr());
+                    let emx = Weight::expmx_ps_simd256(hid4);
+                    let onemx = x86_64::_mm256_add_ps(one, emx);
+
+                    // let sig = x86_64::_mm256_div_ps(one, onemx);
+                    let rcp = x86_64::_mm256_rcp_ps(onemx);
+                    let sqrcp = x86_64::_mm256_mul_ps(rcp, rcp);
+                    let rcp2rcp = x86_64::_mm256_mul_ps(onemx, sqrcp);
+                    let rcp2 = x86_64::_mm256_add_ps(rcp, rcp);
+                    let sig = x86_64::_mm256_sub_ps(rcp2, rcp2rcp);
+
+                    // h = wh x diff x sig x (1 - sig)
+                    let tmp2 = x86_64::_mm256_mul_ps(tmp, sig);
+                    let onessig = x86_64::_mm256_sub_ps(one, sig);
+                    let h4 = x86_64::_mm256_mul_ps(tmp2, onessig);
+
+                    x86_64::_mm256_storeu_ps(dhid[idx..].as_mut_ptr(), h4);
+                }
+            }
+        } else {
             for (i, h) in dhid.iter_mut().enumerate() {
                 // tmp = wo x diff
                 let tmp = wh[i] * diff;
@@ -3107,36 +3136,7 @@ impl Weight {
                 // h = wo x diff x sig x (1 - sig)
                 *h = tmp * sig * (1.0 - sig);
             }
-        // } else {
-        //     // slow for N_HIDDEN:4, 8 and 16
-        //     unsafe {
-        //         let diff4 = x86_64::_mm256_set1_ps(diff);
-        //         let one = x86_64::_mm256_set1_ps(1.0);
-        //         for i in 0..N_HIDDEN / 8 {
-        //             let idx = i * 8;
-        //             let wh4 = x86_64::_mm256_loadu_ps(wh[idx..].as_ptr());
-        //             // tmp = wh x diff
-        //             let tmp = x86_64::_mm256_mul_ps(wh4, diff4);
-        //             // sig = 1 / (1 + exp(-hidden[i]))
-        //             let hid4 = x86_64::_mm256_loadu_ps(hidden[idx..].as_ptr());
-        //             let hid41 = x86_64::_mm256_extractf128_ps(hid4, 0);
-        //             let hid42 = x86_64::_mm256_extractf128_ps(hid4, 1);
-        //             let emx1 = Weight::expmx_ps_simd(hid41);
-        //             let emx2 = Weight::expmx_ps_simd(hid42);
-        //             let emx = x86_64::_mm256_insertf128_ps(
-        //                     x86_64::_mm256_setzero_ps(), emx1, 0);
-        //             let emx = x86_64::_mm256_insertf128_ps(emx, emx2, 1);
-        //             let onemx = x86_64::_mm256_add_ps(one, emx);
-        //             let sig = x86_64::_mm256_div_ps(one, onemx);
-        //             // h = wh x diff x sig x (1 - sig)
-        //             let tmp2 = x86_64::_mm256_mul_ps(tmp, sig);
-        //             let onessig = x86_64::_mm256_sub_ps(one, sig);
-        //             let h4 = x86_64::_mm256_mul_ps(tmp2, onessig);
-
-        //             x86_64::_mm256_storeu_ps(dhid[idx..].as_mut_ptr(), h4);
-        //         }
-        //     }
-        // }
+        }
 
         let wtbn = unsafe {ow.as_mut_ptr().add(board::CELL_2D * N_HIDDEN)};
         let wfs =
@@ -3355,6 +3355,15 @@ fn dbg_assert_eq_vec(va : &[f32], vb : &[f32]) -> bool {
     true
 }
 
+#[allow(dead_code)]
+fn dbg_assert_eq(a : &f32, b : &f32) -> bool {
+    if (a - b).abs() >= 2e-6 {
+        println!("| {a} - {b} | >= 2e-6...");
+        return false;
+    }
+    true
+}
+
 #[test]
 fn testweight() {
     let rfens = [
@@ -3450,8 +3459,8 @@ fn testweight() {
             let res_nosimde3 = w2.evaluatev3bb(&bban);
             let res_nosimde4 = w3.evaluatev3bb(&bban);
             // println!("{res_nosimde} -> {res_nosimde2}");
-            assert_eq!(res_nosimde2, res_nosimde3);
-            assert_eq!(res_nosimde2, res_nosimde4);
+            assert!(dbg_assert_eq(&res_nosimde2, &res_nosimde3));
+            assert!(dbg_assert_eq(&res_nosimde2, &res_nosimde4));
             let before = (winner as f32 - res_nosimde).abs();
             assert!(before > (winner as f32 - res_nosimde2).abs());
             // assert!(before > (winner as f32 - res_nosimde3).abs());
