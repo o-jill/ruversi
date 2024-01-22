@@ -21,12 +21,12 @@ function calc1() {
     let t = (a1 - a2) / (Math.sqrt(s2 * (1.0 / N1 + 1.0 / N2)));
     let p = jStat.studentt.pdf(t, N1 + N2 - 2);
 
-    document.getElementById("tval").value = t;
-    document.getElementById("pval").value = p;
     let thr = document.getElementById("thr").value - 0;
     document.getElementById("result").innerHTML =
         (p < thr) ? "<span style='color:red;font-size:3em;'>different</span>"
                   : "<span style='color:green;font-size:3em;'>not different</span>";
+    document.getElementById("result").innerHTML +=
+                  " t:" + t + " p:" + p;
 }
 function calc2() {
     let a1 = document.getElementById("avg1").value - 0;
@@ -41,12 +41,66 @@ function calc2() {
     let t = (a1 - a2) / (Math.sqrt(s2 * (1.0 / N1 + 1.0 / N2)));
     let p = jStat.studentt.pdf(t, N1 + N2 - 2);
 
-    document.getElementById("tval").value = t;
-    document.getElementById("pval").value = p;
     let thr = document.getElementById("thr").value - 0;
     document.getElementById("result").innerHTML =
         (p < thr) ? "<span style='color:red;font-size:3em;'>different</span>"
                   : "<span style='color:green;font-size:3em;'>not different</span>";
+    document.getElementById("result").innerHTML +=
+                  " t:" + t + " p:" + p;
+}
+
+function readdataarray(txt) {
+    let sep = " ";
+    if (txt.includes(",")) {
+        sep = ",";
+    } else if (txt.includes("\t")) {
+        sep = "\t";
+    } else if (txt.includes("\n")) {
+        sep = "\n";
+    }
+    let elements = txt.split(sep);
+    return elements.map((e) => e.trim() - 0);
+}
+
+function calcavgvar(arr) {
+    let sum = 0;
+    let sqsum = 0;
+    let n = arr.length;
+
+    for (const e of arr) {
+        sum += e;
+        sqsum += e * e;
+    }
+    let avg = sum / n;
+    return [avg, sqsum / n - avg * avg];
+}
+
+function calc3() {
+    let d1 = readdataarray(document.getElementById("data1").value);
+    let d2 = readdataarray(document.getElementById("data2").value);
+    // console.log(d1); console.log(d2);
+    let N1 = d1.length;
+    let N2 = d2.length;
+    if (N1 <= 1 || N2 <= 1) {
+        document.getElementById("result3").innerHTML =
+            "<span style='color:red;font-size:3em;'>invalid data...</span>";
+        return;
+    }
+
+    let avgvar1 = calcavgvar(d1);
+    let avgvar2 = calcavgvar(d2);
+    // console.log(avgvar1); console.log(avgvar2);
+    let s2 = (avgvar1[1] * N1 + avgvar2[1] * N2) / (N1 + N2 - 2);
+    let t = (avgvar1[0] - avgvar2[0]) / (Math.sqrt(s2 * (1.0 / N1 + 1.0 / N2)));
+    let p = jStat.studentt.pdf(t, N1 + N2 - 2);
+    let thr = document.getElementById("thr3").value - 0;
+    document.getElementById("result3").innerHTML =
+        (p < thr) ? "<span style='color:red;font-size:3em;'>different</span>"
+                  : "<span style='color:green;font-size:3em;'>not different</span>";
+    document.getElementById("stats3").innerHTML =
+        "d1:" + avgvar1[0] + " ± " + Math.sqrt(avgvar1[1]) + " N=" + d1.length
+      + "<br>d2:" + avgvar2[0] + " ± " + Math.sqrt(avgvar2[1]) + " N=" + d2.length
+      + "<br>t:" + t + " p:" + p;
 }
 </script>
 <style type="text/css">
@@ -62,15 +116,20 @@ input {
 S.D. can be sample standard deviation.(let's forget degree of freedom(= N-1)!)
 <h2>a:</h2>
 <input id="res1" value="960.8 ± 18.43" size="10"> or <input id="avg1" value="960.8" size="6"> ±<input id="sd1" value="18.43" size="5"><br>
-(N=<input id="N1" value="30" size="5">)
+(N=<input id="N1" value="30" size="5">)<br>
 <h2>b:</h2>
 <input id="res2" value="968.57 ± 7.99" size="10"> or <input id="avg2" value="968.57" size="6"> ±<input id="sd2" value="7.99" size="5"><br>
-(N=<input id="N2" value="30" size="5">)
-<h2>threshold:</h2>
-<input id="thr" value="0.05" size="5">
+(N=<input id="N2" value="30" size="5">)<br>
+<label>threshold:<input id="thr" value="0.05" size="5"></label><br>
 <h2>result:</h2>
-<div><input type="button" onclick="calc1();" value="- - calculate - -"> or <input type="button" onclick="calc2();" value="- - calculate - -"> <span id="result"></span></div>
-t:<input id="tval" size="5">, p:<input id="pval" size="10">
+<div><input type="button" onclick="calc1();" value="- - calculate - -"> or <input type="button" onclick="calc2();" value="- - calculate - -"></div>
+<span id="result"></span>
 
+<hr>
+
+<textarea id="data1" rows="10" cols="20" placeholder="0,1,2,3,..."></textarea>
+<textarea id="data2" rows="10" cols="20" placeholder="a separator can be on of TAB(\t), LF(\n), comma(,) or SPACE( )."></textarea><br>
+<label>threshold:<input id="thr3" value="0.05" size="5"></label>&nbsp;<input type="button" onclick="calc3();" value="- - calculate - -"><span id="result3"></span><br>
+<div id="stats3">stats will be here.</div>
 </body>
 </html>
