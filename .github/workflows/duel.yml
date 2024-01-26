@@ -34,6 +34,7 @@ jobs:
       id: duel-result
       run: |
         tail -n 5 kifu/log.txt
+        tail -n 5 >> $GITHUB_STEP_SUMMARY
         cat tools/header.txt > kifu/summary.html
         cat kifu/log.txt >> kifu/summary.html
         cat tools/footer.txt >> kifu/summary.html
