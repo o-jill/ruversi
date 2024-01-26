@@ -43,7 +43,7 @@ jobs:
         TZ: 'Asia/Tokyo' # タイムゾーン指定
       run: echo "CURRENT_DATETIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
     - name: Save artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: kifu${{ matrix.kifu }}_${{ env.CURRENT_DATETIME }}
         path: |
