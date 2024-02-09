@@ -399,10 +399,8 @@ impl GameBB {
                     x = movable[0].0;
                     y = movable[0].1;
                 } else {
-                    // println!("put board to a file...");
-                    er.obf2file(&self.ban.to_obf());
                     // launch edax
-                    match er.run() {
+                    match er.run(&self.ban.to_obf()) {
                         Ok((pos, _)) => {
                             x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                             y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
@@ -479,10 +477,8 @@ impl GameBB {
                     x = movable[0].0;
                     y = movable[0].1;
                 } else {
-                    // println!("put board to a file...");
-                    er.obf2file(&self.ban.to_obf());
                     // launch edax
-                    match er.run() {
+                    match er.run(&self.ban.to_obf()) {
                         Ok((pos, _)) => {
                             x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                             y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
@@ -879,10 +875,8 @@ impl Game {
                     x = movable[0].0;
                     y = movable[0].1;
                 } else {
-                    // println!("put board to a file...");
-                    er.obf2file(&self.ban.to_obf());
                     // launch edax
-                    match er.run() {
+                    match er.run(&self.ban.to_obf()) {
                         Ok((pos, _)) => {
                             x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                             y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;

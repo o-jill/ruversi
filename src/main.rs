@@ -1025,10 +1025,8 @@ fn equalrfen() -> Result<(), String> {
     for rfen in rfentbl.iter() {
         // println!("rfen:{rfen}");
         let ban = bitboard::BitBoard::from(rfen).unwrap();
-        er.obf2file(&ban.to_obf());
-
         // launch edax
-        match er.run() {
+        match er.run(&ban.to_obf()) {
             Ok((_, score)) => {
                 // println!("score:{score}");
                 match ["-01", "+00", "+01"].iter().position(|&x| x == score) {
