@@ -20,6 +20,7 @@ pub enum Opponent {
     None,
     CUI,
     Edax,
+    Ruversi,
 }
 
 /// Options specified in command line args.
@@ -183,7 +184,11 @@ impl MyOption {
                     old = e;
                 } else if e == "--Edax" {
                     opt.opponent = Opponent::Edax;
+                } else if e == "--Ruversi" {
+                    opt.opponent = Opponent::Ruversi;
                 } else if e == "--Edconf" {
+                    old = e;
+                } else if e == "--Ruconf" {
                     old = e;
                 } else if e == "--gtp" {
                     opt.mode = Mode::GTP;
@@ -213,7 +218,7 @@ impl MyOption {
                         e.split(",").collect::<Vec<&str>>().iter().map(|&a| {
                             a.parse::<u32>().unwrap()}).collect();
                     old.clear();
-                } else if old == "--Edconf" {
+                } else if old == "--Edconf" || old == "--Ruconf" {
                     if std::path::Path::new(&e).exists() {
                         opt.edaxconfig = e;
                     } else {
