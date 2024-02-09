@@ -932,6 +932,50 @@ fn edax(depth : u8, turnh: i8) {
     }
 }
 
+/// play a game ruversi vs another ruversi.
+/// # Arguments
+/// - depth : depth to think.
+/// - turnh : another ruversi's turn.
+fn vs_ruversi(depth : u8, turnh: i8) {
+    if cfg!(feature="bitboard") {
+        // prepare game
+        let mut g = game::GameBB::new();
+        // play
+        let econf = MYOPT.get().unwrap().edaxconfig.as_str();
+        let think = MYOPT.get().unwrap().think.as_str();
+        g.starto_against_ruversi(
+            match think {
+                "" | "ab" => {
+                    // nodebb::NodeBB::think_ab_extract2
+                    nodebb::NodeBB::thinko_ab_simple
+                    // nodebb::NodeBB::thinko_ab_extract2
+                },
+                "all" => {
+                    nodebb::NodeBB::thinko
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, depth, turnh, econf).unwrap();
+    } else {
+        panic!("byteboard is not supported...");
+
+        // // prepare game
+        // let mut g = game::Game::new();
+        // // play
+        // let think = MYOPT.get().unwrap().think.as_str();
+        // g.start_against_ruversi(
+        // match think {
+        //     "" | "ab" => {
+        //         // node::Node::think_ab_extract2
+        //         node::Node::think_ab
+        //     },
+        //     "all" => {
+        //         node::Node::think
+        //     },
+        //     _ => { panic!("unknown thinking method.") }
+        // }, depth, turnh).unwrap();
+    }
+}
+
 /// show command options and exit(1).
 fn help() {
     myoption::showhelp("a reversi program written in rust.");
@@ -1159,6 +1203,16 @@ fn main() {
             },
             myoption::Opponent::Edax => {
                 edax(
+                    depth,
+                    if turn == board::NONE {
+                        let mut rng = rand::thread_rng();
+                        if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
+                    } else {
+                        turn
+                    });
+            },
+            myoption::Opponent::Ruversi => {
+                vs_ruversi(
                     depth,
                     if turn == board::NONE {
                         let mut rng = rand::thread_rng();

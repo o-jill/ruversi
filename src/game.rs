@@ -524,6 +524,83 @@ impl GameBB {
         Ok(())
     }
 
+    /// play a game against another Ruversi.  
+    /// # Arguments  
+    /// - f : fn for searching.  
+    /// - depth : searching depth.  
+    /// - turnin : another Ruversi's turn.  
+    /// # Returns  
+    /// () or Error message.
+    pub fn starto_against_ruversi(&mut self,
+        f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
+        depth : u8, turnin : i8, econf : &str) -> Result<(), String> {
+        let rr = match edaxrunner::RuversiRunner::from_config(econf) {
+            Ok(e) => e,
+            Err(msg) => return Err(msg),
+        };
+        loop {
+            // show
+            println!("{}", self.ban.to_str());
+            let x;
+            let y;
+            if self.ban.teban == turnin {
+                // self.ban.put();
+                let movable = self.ban.genmove().unwrap();
+                if movable.is_empty() {
+                    println!("auto pass.");
+                    x = 0;
+                    y = 0;
+                } else if movable.len() == 1 {
+                    x = movable[0].0;
+                    y = movable[0].1;
+                } else {
+                    // launch another Ruversi
+                    match rr.run(&self.ban.to_str()) {
+                        Ok((pos, _)) => {
+                            x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
+                            y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                        },
+                        Err(msg) => panic!("error running ruversi... [{msg}]"),
+                    }
+                }
+            } else {
+                // think
+                let st = Instant::now();
+                let (val, node) = f(&self.ban, depth).unwrap();
+                let ft = st.elapsed();
+                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                let best = node.best.as_ref().unwrap();
+                x = best.x;
+                y = best.y;
+            }
+            // apply move
+            let ban = self.ban.r#move(x, y).unwrap();
+            let rfen = self.ban.to_str();
+            let teban = self.ban.teban;
+            self.ban = ban;
+
+            // save to kifu
+            self.kifu.append(x as usize, y as usize, teban, rfen);
+
+            // check finished
+            if self.ban.is_passpass() {
+                break;
+            }
+            if self.ban.is_full() {
+                let rfen = self.ban.to_str();
+                let teban = self.ban.teban;
+                self.kifu.append(0, 0, teban, rfen);
+                break;
+            }
+        }
+        // check who won
+        self.kifu.winneris(self.ban.count());
+        println!("{}", self.kifu.to_str());
+        // show
+        self.ban.put();
+        Ok(())
+    }
+
     #[allow(dead_code)]
     pub fn start_with_2et(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>,
