@@ -451,7 +451,8 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
     let mut tr = trainer::Trainer::new(eta, repeat, "./kifu/");
     tr.read_opt_out(opt);
     tr.set_progress(prgs);
-    tr.learn_stones_para_boardgrp();
+    // tr.learn_stones_para_boardgrp();
+    tr.learn_stones_para_boardgrp_minibatch();
     // tr.learn_stones_para_rfengrp();
     // tr.learn_stones_para();
 
