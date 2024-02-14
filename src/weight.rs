@@ -98,6 +98,11 @@ impl Weight {
         }
     }
 
+    /// fill zero.
+    pub fn clear(&mut self) {
+        self.weight.iter_mut().for_each(|m| *m = 0.0);
+    }
+
     /// read eval table from a file.
     /// 
     /// # Arguments
@@ -2689,6 +2694,24 @@ impl Weight {
         Ok(())
     }
 
+    /// train weights w/ mini batch
+    /// 
+    /// # Arguments
+    /// - `self` : self
+    /// - `banscores` : Bitboard and result(# of stones)
+    /// - `eta` : learning ratio.
+    /// - `dfw` : buffer to store weight difference.
+    /// 
+    /// # Returns
+    /// - OK(()) if succeeded.
+    /// - Err(String) if some error happened.
+    pub fn train_bitboard_mb(&mut self,
+        banscores : &[&(bitboard::BitBoard, i8)], eta : f32, dfw : &mut Weight)
+         -> Result<(), String> {
+        self.learnbbminib(banscores, eta, dfw);
+        Ok(())
+    }
+
     /// train weights
     /// 
     /// # Arguments
@@ -3313,6 +3336,80 @@ impl Weight {
         }
     }
 
+    pub fn updatemb(&mut self, dfw : &Weight, n : usize) {
+        if cfg!(feature="nosimd") {
+            for (wi, wo) in dfw.weight.iter().zip(self.weight.iter_mut()) {
+                *wo += *wi / n as f32;
+            }
+        } else if cfg!(feature="avx") {
+            let m = N_WEIGHT / 32;
+            let wi = &dfw.weight;
+            let wo = &mut self.weight;
+            for i in 0..m {
+                let idx = i * 32;
+                unsafe {
+                    let i1 = x86_64::_mm256_loadu_ps(wi.as_ptr().add(idx));
+                    let i2 = x86_64::_mm256_loadu_ps(wi.as_ptr().add(idx + 8));
+                    let i3 = x86_64::_mm256_loadu_ps(wi.as_ptr().add(idx + 16));
+                    let i4 = x86_64::_mm256_loadu_ps(wi.as_ptr().add(idx + 24));
+                    let nn = x86_64::_mm256_set1_ps(1.0 / n as f32);
+                    let in1 = x86_64::_mm256_mul_ps(i1, nn);
+                    let in2 = x86_64::_mm256_mul_ps(i2, nn);
+                    let in3 = x86_64::_mm256_mul_ps(i3, nn);
+                    let in4 = x86_64::_mm256_mul_ps(i4, nn);
+                    let o1 = x86_64::_mm256_loadu_ps(wo.as_ptr().add(idx));
+                    let o2 = x86_64::_mm256_loadu_ps(wo.as_ptr().add(idx + 8));
+                    let o3 = x86_64::_mm256_loadu_ps(wo.as_ptr().add(idx + 16));
+                    let o4 = x86_64::_mm256_loadu_ps(wo.as_ptr().add(idx + 24));
+                    let nw1 = x86_64::_mm256_add_ps(o1, in1);
+                    let nw2 = x86_64::_mm256_add_ps(o2, in2);
+                    let nw3 = x86_64::_mm256_add_ps(o3, in3);
+                    let nw4 = x86_64::_mm256_add_ps(o4, in4);
+                    x86_64::_mm256_storeu_ps(wo.as_mut_ptr().add(idx), nw1);
+                    x86_64::_mm256_storeu_ps(wo.as_mut_ptr().add(idx + 8), nw2);
+                    x86_64::_mm256_storeu_ps(wo.as_mut_ptr().add(idx + 16), nw3);
+                    x86_64::_mm256_storeu_ps(wo.as_mut_ptr().add(idx + 24), nw4);
+                }
+            }
+            for i in m * 32..N_WEIGHT {
+                wo[i] += wi[i] / n as f32;
+            }
+        } else {
+            let m = N_WEIGHT / 16;
+            let wi = &dfw.weight;
+            let wo = &mut self.weight;
+            for i in 0..m {
+                let idx = i * 16;
+                unsafe {
+                    let i1 = x86_64::_mm_loadu_ps(wi.as_ptr().add(idx));
+                    let i2 = x86_64::_mm_loadu_ps(wi.as_ptr().add(idx + 4));
+                    let i3 = x86_64::_mm_loadu_ps(wi.as_ptr().add(idx + 8));
+                    let i4 = x86_64::_mm_loadu_ps(wi.as_ptr().add(idx + 12));
+                    let nn = x86_64::_mm_set1_ps(1.0 / n as f32);
+                    let in1 = x86_64::_mm_mul_ps(i1, nn);
+                    let in2 = x86_64::_mm_mul_ps(i2, nn);
+                    let in3 = x86_64::_mm_mul_ps(i3, nn);
+                    let in4 = x86_64::_mm_mul_ps(i4, nn);
+                    let o1 = x86_64::_mm_loadu_ps(wo.as_ptr().add(idx));
+                    let o2 = x86_64::_mm_loadu_ps(wo.as_ptr().add(idx + 4));
+                    let o3 = x86_64::_mm_loadu_ps(wo.as_ptr().add(idx + 8));
+                    let o4 = x86_64::_mm_loadu_ps(wo.as_ptr().add(idx + 12));
+                    let nw1 = x86_64::_mm_add_ps(o1, in1);
+                    let nw2 = x86_64::_mm_add_ps(o2, in2);
+                    let nw3 = x86_64::_mm_add_ps(o3, in3);
+                    let nw4 = x86_64::_mm_add_ps(o4, in4);
+                    x86_64::_mm_storeu_ps(wo.as_mut_ptr().add(idx), nw1);
+                    x86_64::_mm_storeu_ps(wo.as_mut_ptr().add(idx + 4), nw2);
+                    x86_64::_mm_storeu_ps(wo.as_mut_ptr().add(idx + 8), nw3);
+                    x86_64::_mm_storeu_ps(wo.as_mut_ptr().add(idx + 12), nw4);
+                }
+            }
+            for i in m * 16..N_WEIGHT {
+                wo[i] += wi[i] / n as f32;
+            }
+        }
+    }
+
     fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
         if cfg!(feature="nnv1") {
             // forward
@@ -3363,6 +3460,30 @@ impl Weight {
             self.backwardv3bb(ban, winner, eta, &res);
         } else {
             self.backwardv3bb_simd(ban, winner, eta, &res);
+        }
+    }
+
+    fn learnbbdiff(&self, ban : &bitboard::BitBoard, winner : i8, eta : f32, dfw : &mut Weight) {
+        // forward
+        let res = if cfg!(feature="nosimd") {
+                self.forwardv3bb(&ban)  // 27s(w/ h8)
+            } else if cfg!(feature="avx") {
+                self.forwardv3bb_simdavx3(&ban)  // 15s(w/ h8)
+                // self.forwardv3bb_simdavx2(&ban)  // 15s(w/ h8)
+                // self.forwardv3bb_simdavx(&ban)  // 28s(w/ h8)
+            } else {
+                self.forwardv3bb_simd(&ban)  // 15s(w/ h8)
+            };
+        // backward
+        if cfg!(feature="nosimd") {
+            dfw.backwardv3bb(ban, winner, eta, &res);
+        } else {
+            dfw.backwardv3bb_simd(ban, winner, eta, &res);
+        }
+    }
+    fn learnbbminib(&self, banscores : &[&(bitboard::BitBoard, i8)], eta : f32, dfw : &mut Weight) {
+        for (ban , winner) in banscores.iter() {
+            self.learnbbdiff(ban, *winner, eta, dfw);
         }
     }
 }
