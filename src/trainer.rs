@@ -935,16 +935,47 @@ impl Trainer {
                             continue;
                         }
                         //
-                        let mut banscores = Vec::with_capacity(rfenidxgrp.len());
-                        for i in rfenidxgrp {
-                            banscores.push(unsafe {&BOARDCACHE[i as usize]});
+                        let n = rfenidxgrp.len();
+let use_subthread = false;
+// let use_subthread = true;
+if use_subthread {
+                        let mut banscores = Vec::with_capacity(n / 2 + 1);
+                        let mut banscores2 = Vec::with_capacity(n / 2 + 1);
+                        for i in 0..n / 2 {
+                            banscores.push(unsafe {&BOARDCACHE[rfenidxgrp[i] as usize]});
                         }
+                        for i in n / 2..n {
+                            banscores2.push(unsafe {&BOARDCACHE[rfenidxgrp[i] as usize]});
+                        }
+
+                        let subsub = std::thread::spawn(move || {
+                            let weight = unsafe {nodebb::WEIGHT.as_mut().unwrap()};
+                            let mut bufweight2 = weight::Weight::new();
+                            // bufweight2.clear();
+                            if weight.train_bitboard_mb(&banscores2, eta, &mut bufweight2).is_err() {
+                                println!("error while training");
+                            }
+                            weight.updatemb(&bufweight2, n);
+                        });
+
                         bufweight.clear();
                         if weight.train_bitboard_mb(&banscores, eta, &mut bufweight).is_err() {
                             println!("error while training");
                             break;
                         }
-                        weight.updatemb(&bufweight, banscores.len());
+                        subsub.join().unwrap();
+} else {
+    let mut banscores = Vec::with_capacity(n);
+    for i in rfenidxgrp {
+        banscores.push(unsafe {&BOARDCACHE[i as usize]});
+    }
+    bufweight.clear();
+    if weight.train_bitboard_mb(&banscores, eta, &mut bufweight).is_err() {
+        println!("error while training");
+        break;
+    }
+}
+                        weight.updatemb(&bufweight, n);
                     },
                     Err(e) => {panic!("{}", e.to_string())}
                 }
