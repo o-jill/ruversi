@@ -1068,7 +1068,7 @@ impl Trainer {
                     },
                 }
             }*/
-            const MB_SIZE : usize = 10;
+            const MB_SIZE : usize = 128;
             let mut j = MB_SIZE;
             while j < numbers.len() {
                 let grp = numbers[j - MB_SIZE .. j].to_vec();
