@@ -453,6 +453,7 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
     tr.set_progress(prgs);
     // tr.learn_stones_para_boardgrp();
     tr.learn_stones_para_boardgrp_minibatch();
+    // tr.learn_stones_para_boardgrp_minibatch2();
     // tr.learn_stones_para_rfengrp();
     // tr.learn_stones_para();
 
