@@ -17,6 +17,8 @@ const STOP : u32 = 0xffffffff_u32;
 const PROGRESS : u32 = 0xfffffffe_u32;
 const MB_SIZE : usize = 128;
 
+pub static mut WEIGHTBUFFER : Option<weight::Weight> = None;
+
 pub struct Trainer {
     eta: f32,  // 学習率
     repeat: usize,  // 学習回数
@@ -1114,13 +1116,15 @@ impl Trainer {
         let (tomain, frsub) = std::sync::mpsc::channel::<()>();
         let (txprogress, rxprogress) = std::sync::mpsc::channel();
         let eta = self.eta;
-        let updated = Arc::new((Mutex::new(0), Condvar::new(), Mutex::new(weight::Weight::new())));
+        let updated = Arc::new((Mutex::new(0), Condvar::new()));
         let updated2 = Arc::clone(&updated);
+        unsafe {WEIGHTBUFFER = Some(weight::Weight::new());};
 
         let sub = std::thread::spawn(move || {
             let weight = unsafe {nodebb::WEIGHT.as_mut().unwrap()};
             let mut bufweight = weight::Weight::new();
-            let (status, cdvar, bufweight2) = &*updated;
+            let bufweight2 = unsafe {WEIGHTBUFFER.as_mut().unwrap()};
+            let (status, cdvar) = &*updated;
             let mut banscores = Vec::with_capacity(MB_SIZE / 2);
 
             tomain.send(()).unwrap();
@@ -1156,7 +1160,7 @@ impl Trainer {
                         banscores.clear();
                         {
                             let mut _upd = status.lock().unwrap();
-                            weight.updatemb2(&bufweight, &bufweight2.lock().unwrap(), MB_SIZE);
+                            weight.updatemb2(&bufweight, &bufweight2, MB_SIZE);
                         }
                         {let mut _uupd = cdvar.wait_while(status.lock().unwrap(), |upd| {
                             let notready = *upd == 0;
@@ -1173,8 +1177,9 @@ impl Trainer {
         });
         let sub2 = std::thread::spawn(move || {
             let weight = unsafe {nodebb::WEIGHT.as_mut().unwrap()};
+            let bufweight = unsafe {WEIGHTBUFFER.as_mut().unwrap()};
             // let mut bufweight = weight::Weight::new();
-            let (status, cdvar, bufweight) = &*updated2;
+            let (status, cdvar) = &*updated2;
             let mut banscores = Vec::with_capacity(MB_SIZE / 2);
 
             //tomain.send(()).unwrap();
@@ -1195,12 +1200,11 @@ impl Trainer {
                             *upd != 0
                         }).unwrap();}
 
-                        {let mut bufweight = bufweight.lock().unwrap();
                         bufweight.clear();
-                        if weight.train_bitboard_mb(&banscores, eta, &mut bufweight).is_err() {
+                        if weight.train_bitboard_mb(&banscores, eta, bufweight).is_err() {
                             println!("error while training");
                             break;
-                        }}
+                        }
                         banscores.clear();
 
                         {
