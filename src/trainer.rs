@@ -14,6 +14,7 @@ static mut RFENCACHE : Vec<(String, i8)> = Vec::new();
 static mut BOARDCACHE : Vec<(bitboard::BitBoard, i8)> = Vec::new();
 const STOP : u32 = 0xffffffff_u32;
 const PROGRESS : u32 = 0xfffffffe_u32;
+const MB_SIZE : usize = 128;
 
 pub struct Trainer {
     eta: f32,  // 学習率
@@ -1099,7 +1100,6 @@ if use_subthread {
                     },
                 }
             }*/
-            const MB_SIZE : usize = 128;
             let mut j = MB_SIZE;
             while j < numbers.len() {
                 let grp = numbers[j - MB_SIZE .. j].to_vec();
