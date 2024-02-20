@@ -825,7 +825,8 @@ impl Trainer {
                 BOARDCACHE.sort_by(|a, b| {
                     a.0.black.cmp(&b.0.black).then(a.0.white.cmp(&b.0.white))});
                 BOARDCACHE.dedup_by(|a, b| {
-                    a.0.black == b.0.black && a.0.white == b.0.white && a.0.teban == b.0.teban});
+                    a.0.black == b.0.black && a.0.white == b.0.white
+                        && a.0.teban == b.0.teban});
             }
 
             self.total += 1;
@@ -944,7 +945,8 @@ impl Trainer {
                             banscores.push(unsafe {&BOARDCACHE[i as usize]});
                         }
                         bufweight.clear();
-                        if weight.train_bitboard_mb(&banscores, eta, &mut bufweight).is_err() {
+                        if weight.train_bitboard_mb(
+                                &banscores, eta, &mut bufweight).is_err() {
                             println!("error while training");
                             break;
                         }
@@ -1025,7 +1027,8 @@ impl Trainer {
                 BOARDCACHE.sort_by(|a, b| {
                     a.0.black.cmp(&b.0.black).then(a.0.white.cmp(&b.0.white))});
                 BOARDCACHE.dedup_by(|a, b| {
-                    a.0.black == b.0.black && a.0.white == b.0.white && a.0.teban == b.0.teban});
+                    a.0.black == b.0.black && a.0.white == b.0.white
+                        && a.0.teban == b.0.teban});
             }
 
             self.total += 1;
@@ -1153,7 +1156,8 @@ impl Trainer {
                             banscores.push(unsafe {&BOARDCACHE[i as usize]});
                         }
                         bufweight.clear();
-                        if weight.train_bitboard_mb(&banscores, eta, &mut bufweight).is_err() {
+                        if weight.train_bitboard_mb(
+                                &banscores, eta, &mut bufweight).is_err() {
                             println!("error while training");
                             break;
                         }
@@ -1162,14 +1166,17 @@ impl Trainer {
                             let mut _upd = status.lock().unwrap();
                             weight.updatemb2(&bufweight, &bufweight2, MB_SIZE);
                         }
-                        {let mut _uupd = cdvar.wait_while(status.lock().unwrap(), |upd| {
-                            let notready = *upd == 0;
-                            if !notready {
-                                *upd = 0;
-                                cdvar.notify_one();
-                            }
-                            notready
-                        }).unwrap();}
+                        {
+                            let mut _uupd = cdvar.wait_while(
+                                status.lock().unwrap(), |upd| {
+                                let notready = *upd == 0;
+                                if !notready {
+                                    *upd = 0;
+                                    cdvar.notify_one();
+                                }
+                                notready
+                            }).unwrap();
+                        }
                     },
                     Err(e) => {panic!("{}", e.to_string())}
                 }
@@ -1201,7 +1208,8 @@ impl Trainer {
                         }).unwrap();}
 
                         bufweight.clear();
-                        if weight.train_bitboard_mb(&banscores, eta, bufweight).is_err() {
+                        if weight.train_bitboard_mb(
+                                &banscores, eta, bufweight).is_err() {
                             println!("error while training");
                             break;
                         }
@@ -1288,7 +1296,8 @@ impl Trainer {
                 BOARDCACHE.sort_by(|a, b| {
                     a.0.black.cmp(&b.0.black).then(a.0.white.cmp(&b.0.white))});
                 BOARDCACHE.dedup_by(|a, b| {
-                    a.0.black == b.0.black && a.0.white == b.0.white && a.0.teban == b.0.teban});
+                    a.0.black == b.0.black && a.0.white == b.0.white
+                      && a.0.teban == b.0.teban});
             }
 
             self.total += 1;
