@@ -15,7 +15,6 @@ static mut RFENCACHE : Vec<(String, i8)> = Vec::new();
 static mut BOARDCACHE : Vec<(bitboard::BitBoard, i8)> = Vec::new();
 const STOP : u32 = 0xffffffff_u32;
 const PROGRESS : u32 = 0xfffffffe_u32;
-const MB_SIZE : usize = 128;
 
 pub static mut WEIGHTBUFFER : Option<weight::Weight> = None;
 
@@ -909,7 +908,7 @@ impl Trainer {
      * minibatch版
      */
     #[allow(dead_code)]
-    pub fn learn_stones_para_boardgrp_minibatch(&mut self) {
+    pub fn learn_stones_para_boardgrp_minibatch(&mut self, mbsize : usize) {
         let (tosub, frmain) = std::sync::mpsc::channel::<Vec<u32>>();
         let (tomain, frsub) = std::sync::mpsc::channel::<()>();
         let (txprogress, rxprogress) = std::sync::mpsc::channel();
@@ -918,7 +917,7 @@ impl Trainer {
         let sub = std::thread::spawn(move || {
             let weight = unsafe {nodebb::WEIGHT.as_mut().unwrap()};
             let mut bufweight = weight::Weight::new();
-            let mut banscores = Vec::with_capacity(MB_SIZE);
+            let mut banscores = Vec::with_capacity(mbsize);
 
             tomain.send(()).unwrap();
 
@@ -950,7 +949,7 @@ impl Trainer {
                             println!("error while training");
                             break;
                         }
-                        weight.updatemb(&bufweight, MB_SIZE);
+                        weight.updatemb(&bufweight, mbsize);
                         banscores.clear();
                     },
                     Err(e) => {panic!("{}", e.to_string())}
@@ -1067,16 +1066,16 @@ impl Trainer {
                 std::io::stdout().flush().unwrap();
             }
             numbers.shuffle(&mut rng);
-            let mut j = MB_SIZE;
+            let mut j = mbsize;
             while j < numbers.len() {
-                let grp1 = numbers[j - MB_SIZE .. j].to_vec();
+                let grp1 = numbers[j - mbsize .. j].to_vec();
                 match tosub.send(grp1) {
                     Ok(_) => {},
                     Err(e) => {
                         panic!("{}", e.to_string());
                     },
                 }
-                j += MB_SIZE;
+                j += mbsize;
             }
             match tosub.send(Vec::new()) {
                 Ok(_) => {}
@@ -1113,7 +1112,7 @@ impl Trainer {
      * minibatch 2スレ版
      */
     #[allow(dead_code)]
-    pub fn learn_stones_para_boardgrp_minibatch2(&mut self) {
+    pub fn learn_stones_para_boardgrp_minibatch2(&mut self, mbsize : usize) {
         let (tosub, frmain) = std::sync::mpsc::channel::<Vec<u32>>();
         let (tosub2, frmain2) = std::sync::mpsc::channel::<Vec<u32>>();
         let (tomain, frsub) = std::sync::mpsc::channel::<()>();
@@ -1128,7 +1127,7 @@ impl Trainer {
             let mut bufweight = weight::Weight::new();
             let bufweight2 = unsafe {WEIGHTBUFFER.as_mut().unwrap()};
             let (status, cdvar) = &*updated;
-            let mut banscores = Vec::with_capacity(MB_SIZE / 2);
+            let mut banscores = Vec::with_capacity(mbsize / 2);
 
             tomain.send(()).unwrap();
 
@@ -1164,7 +1163,7 @@ impl Trainer {
                         banscores.clear();
                         {
                             let mut _upd = status.lock().unwrap();
-                            weight.updatemb2(&bufweight, &bufweight2, MB_SIZE);
+                            weight.updatemb2(&bufweight, &bufweight2, mbsize);
                         }
                         {
                             let mut _uupd = cdvar.wait_while(
@@ -1187,7 +1186,7 @@ impl Trainer {
             let bufweight = unsafe {WEIGHTBUFFER.as_mut().unwrap()};
             // let mut bufweight = weight::Weight::new();
             let (status, cdvar) = &*updated2;
-            let mut banscores = Vec::with_capacity(MB_SIZE / 2);
+            let mut banscores = Vec::with_capacity(mbsize / 2);
 
             //tomain.send(()).unwrap();
 
@@ -1336,10 +1335,10 @@ impl Trainer {
                 std::io::stdout().flush().unwrap();
             }
             numbers.shuffle(&mut rng);
-            let mut j = MB_SIZE;
+            let mut j = mbsize;
             while j < numbers.len() {
-                let grp1 = numbers[j - MB_SIZE .. j - MB_SIZE / 2].to_vec();
-                let grp2 = numbers[j - MB_SIZE / 2 .. j].to_vec();
+                let grp1 = numbers[j - mbsize .. j - mbsize / 2].to_vec();
+                let grp2 = numbers[j - mbsize / 2 .. j].to_vec();
                 match tosub.send(grp1) {
                     Ok(_) => {},
                     Err(e) => {
@@ -1352,7 +1351,7 @@ impl Trainer {
                         panic!("{}", e.to_string());
                     },
                 }
-                j += MB_SIZE;
+                j += mbsize;
             }
             match tosub.send(Vec::new()) {
                 Ok(_) => {}

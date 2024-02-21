@@ -31,7 +31,8 @@ cat ${RESULT} | ruby ./tools/speedcheck.rb search
 }
 
 learn() {
-LREPEAT="--repeat 20"
+LREPEAT="--repeat 1000"
+# LREPEAT="--repeat 1000 --minibatch"
 KIFUFILE="kifu/kifu00000000.txt"
 # FEATURES=""  # sse
 FEATURES="--features=avx"
