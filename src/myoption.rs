@@ -309,6 +309,9 @@ pub fn showhelp(msg : &str) {
   Duel:
     --ev1 <path>  a file for board evaluation.
     --ev2 <path>  a file for board evaluation.
+  DuelExt:
+    --Edconf <path>  a file for edax(or ruversi) path configuration.
+    --Ruversi  play against another Ruversi, not against Edax.
   GenKifu:
     -Nx  initial board group x for generating kifu. 0~9.
         all of the initial board positions will be used when this option is not specified.
@@ -325,7 +328,7 @@ pub fn showhelp(msg : &str) {
     --progress <numbers>  storing weight after some iterations as newevaltable.rN.txt.
         default: nothing.
   Play:
-    --Edax  play against Edax instead of you. please use with --play(bw).
+    --Edax     play against Edax instead of you. please use with --play(bw).
     --Edconf <path>  a file for edax path configuration.
 ");
 }
