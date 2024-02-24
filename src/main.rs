@@ -440,8 +440,8 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
 /// # Arguments
 /// - repeat : Number of repeat. None as 10000.
 /// - eta : learning ratio. None as 0.0001.
-fn training_para(repeat : Option<usize>, eta : Option<f32>,
-        opt : &str, prgs : &Vec<u32>) {
+fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str,
+        prgs : &Vec<u32>, trmd : &myoption::TrainingMode, mbsize : usize) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.1);
     println!("eta:{eta}");
@@ -451,9 +451,15 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>,
     let mut tr = trainer::Trainer::new(eta, repeat, "./kifu/");
     tr.read_opt_out(opt);
     tr.set_progress(prgs);
-    tr.learn_stones_para_boardgrp();
-    // tr.learn_stones_para_rfengrp();
-    // tr.learn_stones_para();
+    println!("training mode: {:?}", *trmd);
+    if *trmd == myoption::TrainingMode::OneByOne {
+        tr.learn_stones_para_boardgrp();
+        // tr.learn_stones_para_rfengrp();
+        // tr.learn_stones_para();
+    } else {
+        tr.learn_stones_para_boardgrp_minibatch(mbsize);
+        // tr.learn_stones_para_boardgrp_minibatch2(mbsize);
+    }
 
     // put new eval table
     if tr.need_save() {
@@ -1287,8 +1293,10 @@ fn main() {
         let eta = MYOPT.get().unwrap().eta;
         let tropt = &MYOPT.get().unwrap().outtrain;
         let prgs = &MYOPT.get().unwrap().progress;
+        let trmd = &MYOPT.get().unwrap().trmode;
+        let mbs = MYOPT.get().unwrap().minibsize;
         // training(repeat, eta, &tropt);
-        training_para(repeat, eta, &tropt, prgs);
+        training_para(repeat, eta, &tropt, prgs, trmd, mbs);
     }
     if *mode == myoption::Mode::Duel {
         let ev1 = &MYOPT.get().unwrap().evaltable1;

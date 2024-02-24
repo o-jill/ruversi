@@ -23,6 +23,12 @@ pub enum Opponent {
     Ruversi,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum TrainingMode {
+    OneByOne,  // "Oneline" in other words
+    MiniBatch,
+}
+
 /// Options specified in command line args.
 /// See 'options:' section in Readme.md.
 #[derive(Debug)]
@@ -43,6 +49,8 @@ pub struct MyOption {
     pub think : String,  // "all", "ab"
     pub outtrain : String,  // progress,exrfens,summary
     pub turn : i8,  // SENTE, GOTE
+    pub trmode : TrainingMode,
+    pub minibsize : usize,
 }
 
 impl MyOption {
@@ -68,6 +76,7 @@ impl MyOption {
     /// - repeat: None
     /// - rfen: ""
     /// - think: ""
+    /// - trmode: OneByOne
     pub fn new(args: Vec<String>) -> Result<MyOption, String> {
         let mut opt = MyOption {
             depth : 7,
@@ -86,6 +95,8 @@ impl MyOption {
             rfen : String::new(),
             think : String::new(),
             turn : board::NONE,
+            trmode : TrainingMode::OneByOne,
+            minibsize : 128,
         };
         let mut old = String::new();
         let mut skip = 0;
@@ -174,6 +185,11 @@ impl MyOption {
                     old = e;
                 } else if e == "--repeat" {
                     old = e;
+                } else if e == "--onebyone" {
+                    opt.trmode = TrainingMode::OneByOne;
+                } else if e == "--minibatch" {
+                    old = e;
+                    opt.trmode = TrainingMode::MiniBatch;
                 } else if e == "--trainout" {
                     old = e;
                 } else if e == "--eta" {
@@ -217,6 +233,14 @@ impl MyOption {
                     opt.progress =
                         e.split(",").collect::<Vec<&str>>().iter().map(|&a| {
                             a.parse::<u32>().unwrap()}).collect();
+                    old.clear();
+                } else if old == "--minibatch" {
+                    let mbs = e.parse::<usize>();
+                    if mbs.is_err() {
+                        return Err(format!("invalid option: {old} {e}"));
+                    } else {
+                        opt.minibsize = mbs.unwrap();
+                    }
                     old.clear();
                 } else if old == "--Edconf" || old == "--Ruconf" {
                     if std::path::Path::new(&e).exists() {
@@ -327,6 +351,9 @@ pub fn showhelp(msg : &str) {
         default: progress,summary,time
     --progress <numbers>  storing weight after some iterations as newevaltable.rN.txt.
         default: nothing.
+    --onebyone  train w/o minibatch. minibatch=1 in other words. default.
+    --minibatch <number>  train w/ minibatch.
+        size of minibatch. default 128.
   Play:
     --Edax     play against Edax instead of you. please use with --play(bw).
     --Edconf <path>  a file for edax path configuration.
