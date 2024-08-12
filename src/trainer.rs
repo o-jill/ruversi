@@ -908,6 +908,7 @@ impl Trainer {
      * minibatch版
      */
     #[allow(dead_code)]
+    #[cfg(target_arch="x86_64")]
     pub fn learn_stones_para_boardgrp_minibatch(&mut self, mbsize : usize) {
         let (tosub, frmain) = std::sync::mpsc::channel::<Vec<u32>>();
         let (tomain, frsub) = std::sync::mpsc::channel::<()>();
@@ -1106,12 +1107,19 @@ impl Trainer {
         sub.join().unwrap();
     }
 
+    #[allow(dead_code)]
+    #[cfg(target_arch="aarch64")]
+    pub fn learn_stones_para_boardgrp_minibatch(&mut self, mbsize : usize) {
+        panic!("not implemented for aarch64.");
+    }
+
     /**
      * 棋譜の読み込みと学習を別スレでやる版
      * boardを纏めてやり取りする版
      * minibatch 2スレ版
      */
     #[allow(dead_code)]
+    #[cfg(target_arch="x86_64")]
     pub fn learn_stones_para_boardgrp_minibatch2(&mut self, mbsize : usize) {
         let (tosub, frmain) = std::sync::mpsc::channel::<Vec<u32>>();
         let (tosub2, frmain2) = std::sync::mpsc::channel::<Vec<u32>>();
@@ -1387,5 +1395,11 @@ impl Trainer {
         subprgs.join().unwrap();
         sub.join().unwrap();
         sub2.join().unwrap();
+    }
+
+    #[allow(dead_code)]
+    #[cfg(target_arch="aarch64")]
+    pub fn learn_stones_para_boardgrp_minibatch2(&mut self, mbsize : usize) {
+        panic!("not implemented for aarch64.");
     }
 }

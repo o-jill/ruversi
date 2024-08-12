@@ -93,6 +93,7 @@ impl ShNode {
     }
 
     #[allow(dead_code)]
+    #[cfg(target_arch="x86_64")]
     fn evaluate(ban : &bitboard::BitBoard) -> f32 {
         // unsafe{ return WEIGHT.as_ref().unwrap().evaluatev3bb(ban)}
         unsafe {
@@ -104,6 +105,11 @@ impl ShNode {
                 WEIGHT.as_ref().unwrap().evaluatev3bb_simd(ban)
             }
         }
+    }
+
+    #[cfg(target_arch="aarch64")]
+    fn evaluate(ban : &bitboard::BitBoard) -> f32 {
+        unsafe {WEIGHT.as_ref().unwrap().evaluatev3bb(ban)}
     }
 
     #[allow(dead_code)]

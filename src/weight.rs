@@ -1,7 +1,6 @@
 use super::*;
 use rand::Rng;
 use std::{fs, io::{BufReader, BufRead}};
-use std::arch::x86_64;
 
 /*
  * input: NUMCELL * NUMCELL + 1(teban) + 2(fixedstones) + 1
@@ -480,7 +479,9 @@ impl Weight {
         sum
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn evaluatev1_simd(&self, ban : &board::Board) -> f32 {
+        use std::arch::x86_64;
         let mut sum : f32;
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -560,6 +561,7 @@ impl Weight {
     }
 
     #[allow(dead_code)]
+    #[cfg(target_arch="x86_64")]
     pub fn evaluatev2_simd(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
@@ -634,6 +636,7 @@ impl Weight {
      * * `x` - [4 ; f32]  
      * * `y` - [exp(-x[0]), exp(-x[1]), exp(-x[2]), exp(-x[3])]  
      */
+    #[cfg(target_arch="x86_64")]
     fn expmx_ps( x : *const f32, y : *mut f32) {
         unsafe {
             let x4 = x86_64::_mm_load_ps(x);
@@ -651,6 +654,7 @@ impl Weight {
      * # Return value  
      * [exp(-x4[0]), exp(-x4[1]), exp(-x4[2]), exp(-x4[3])] as x86_64::__m128.
      */
+    #[cfg(target_arch="x86_64")]
     unsafe fn expmx_ps_simd(x4 : x86_64::__m128) -> x86_64::__m128 {
         // let x4 = x86_64::_mm_load_ps(x);
         // clip x
@@ -723,6 +727,7 @@ impl Weight {
      * # Return value  
      * [exp(-x4[0]), exp(-x4[1]), exp(-x4[2]), exp(-x4[3])] as x86_64::__m128.
      */
+    #[cfg(target_arch="x86_64")]
     unsafe fn expmx_ps_simd256(x4 : x86_64::__m256) -> x86_64::__m256 {
         // let x4 = x86_64::_mm_load_ps(x);
         // clip x
@@ -786,6 +791,7 @@ impl Weight {
         // x86_64::_mm_store_ps(y, y4);
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn evaluatev2_simd2(&self, ban : &board::Board) -> f32 {
         let mut sum : f32;
         let cells = &ban.cells;
@@ -970,6 +976,7 @@ impl Weight {
         sum
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn evaluatev3_simd(&self, ban : &board::Board) -> f32 {
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -1099,6 +1106,7 @@ impl Weight {
         sum
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn evaluatev3bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
         let black = ban.black;
         let white = ban.white;
@@ -1251,6 +1259,7 @@ impl Weight {
         sum
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn evaluatev3bb_simdavx(&self, ban : &bitboard::BitBoard) -> f32 {
         let black = ban.black;
         let white = ban.white;
@@ -1433,6 +1442,7 @@ impl Weight {
         sum
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn evaluatev3bb_simdavx2(&self, ban : &bitboard::BitBoard) -> f32 {
         let black = ban.black;
         let white = ban.white;
@@ -1628,6 +1638,7 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn forwardv1_simd(&self, ban : &board::Board)
             -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1728,6 +1739,7 @@ impl Weight {
         (hidden, hidsig, output)
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn forwardv2_simd(&self, ban : &board::Board)
             -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1803,6 +1815,7 @@ impl Weight {
     }
 
     #[allow(dead_code)]
+    #[cfg(target_arch="x86_64")]
     pub fn forwardv2_simd2(&self, ban : &board::Board)
          -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT]) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -1959,6 +1972,7 @@ impl Weight {
         (hidden, hidsig, output, fs)
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn forwardv3_simd(&self, ban : &board::Board)
          -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -2088,6 +2102,7 @@ impl Weight {
         (hidden, hidsig, output, fs)
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn forwardv3bb_simd(&self, ban : &bitboard::BitBoard)
          -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -2188,6 +2203,7 @@ impl Weight {
         (hidden, hidsig, output, fs)
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn forwardv3bb_simdavx2(&self, ban : &bitboard::BitBoard)
          -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -2287,6 +2303,7 @@ impl Weight {
         (hidden, hidsig, output, fs)
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn forwardv3bb_simdavx3(&self, ban : &bitboard::BitBoard)
          -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -2465,6 +2482,7 @@ impl Weight {
     }
 
     // note: calc hidden layer w/ simd is slow now...
+    #[cfg(target_arch="x86_64")]
     pub fn forwardv3bb_simdavx(&self, ban : &bitboard::BitBoard)
          -> ([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8)) {
         let mut hidden : [f32 ; N_HIDDEN] = [0.0 ; N_HIDDEN];
@@ -2758,6 +2776,7 @@ impl Weight {
         Ok(())
     }
 
+    #[cfg(target_arch="x86_64")]
     fn backwardv1(&mut self,
             ban : &board::Board, winner : i8, eta : f32,
             hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN],
@@ -2814,6 +2833,43 @@ impl Weight {
         }        
     }
 
+    #[cfg(target_arch="aarch64")]
+    fn backwardv1(&mut self,
+            ban : &board::Board, winner : i8, eta : f32,
+            hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN],
+            output : &[f32 ; N_OUTPUT]) {
+        let cells = &ban.cells;
+        let teban = ban.teban as f32;
+
+        let w1sz = board::CELL_2D + 1 + 1;
+        let ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - winner as f32;
+        let w2 = &mut ow[w1sz * 4..];
+        for i in 0..N_HIDDEN {
+            w2[i] -= hidsig[i] * diff * eta;
+        }
+        w2[N_HIDDEN] -= diff * eta;
+
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            let tmp = w2[i] * diff;
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            *h = tmp * sig * (1.0 - sig);
+        }
+        // back to input
+        for (i, h) in dhid.iter().enumerate() {
+            let w1 = &mut ow[i * w1sz .. (i + 1) * w1sz];
+            let heta = *h * eta;
+            for (&c, w) in cells.iter().zip(w1.iter_mut()) {
+                *w -= c as f32 * heta;
+            }
+            w1[board::CELL_2D] -= teban * heta;
+            w1[board::CELL_2D + 1] -= heta;
+        }        
+    }
+
+    #[cfg(target_arch="x86_64")]
     fn backwardv2(&mut self,
             ban : &board::Board, winner : i8, eta : f32,
             hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN],
@@ -2914,6 +2970,45 @@ impl Weight {
         }
     }
 
+    #[cfg(target_arch="aarch64")]
+    fn backwardv2(&mut self,
+        ban : &board::Board, winner : i8, eta : f32,
+        hidden : &[f32 ; N_HIDDEN], hidsig : &[f32 ; N_HIDDEN],
+            output : &[f32 ; N_OUTPUT]) {
+        let cells = &ban.cells;
+        let teban = ban.teban as f32;
+
+        let ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - winner as f32;
+        let w2 = &mut ow[(board::CELL_2D + 2) * N_HIDDEN ..];
+        let deta = diff * eta;
+        for i in 0..N_HIDDEN {
+            w2[i] -= hidsig[i] * deta;
+        }
+        w2[N_HIDDEN] -= deta;
+
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            let tmp = w2[i] * diff;
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            *h = tmp * sig * (1.0 - sig);
+        }
+        // back to input
+        for (i, h) in dhid.iter().enumerate() {
+            let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let heta = *h * eta;
+            for (&c, w) in cells.iter().zip(w1.iter_mut()) {
+                *w -= c as f32 * heta;
+            }
+
+            let tbndc = &mut ow[board::CELL_2D * N_HIDDEN ..];
+            tbndc[i] -= teban * heta;
+            tbndc[i + N_HIDDEN] -= heta;
+        }
+    }
+
+    #[cfg(target_arch="x86_64")]
     pub fn backwardv3(&mut self,
         ban : &board::Board, winner : i8, eta : f32,
         (hidden , hidsig , output , fs)
@@ -3018,6 +3113,47 @@ impl Weight {
         }
     }
 
+    #[cfg(target_arch="aarch64")]
+    pub fn backwardv3(&mut self,
+        ban : &board::Board, winner : i8, eta : f32,
+        (hidden , hidsig , output , fs)
+            : &([f32 ; N_HIDDEN], [f32 ; N_HIDDEN], [f32 ; N_OUTPUT], (i8, i8))) {
+        let cells = &ban.cells;
+        let teban = ban.teban as f32;
+
+        let ow = &mut self.weight;
+        // back to hidden
+        let diff : f32 = output[0] - winner as f32;
+        let wh = &mut ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
+        let deta = diff * eta;
+        for i in 0..N_HIDDEN {
+            wh[i] -= hidsig[i] * deta;
+        }
+        wh[N_HIDDEN] -= deta;
+
+        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        for (i, h) in dhid.iter_mut().enumerate() {
+            let tmp = wh[i] * diff;
+            let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
+            *h = tmp * sig * (1.0 - sig);
+        }
+        // back to input
+        for (i, h) in dhid.iter().enumerate() {
+            let w1 = &mut ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
+            let heta = *h * eta;
+            for (&c, w) in cells.iter().zip(w1.iter_mut()) {
+                *w -= c as f32 * heta;
+            }
+            let wtbn = &mut ow[board::CELL_2D * N_HIDDEN ..];
+            wtbn[i] -= teban * heta;
+            let wfs = &mut ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 1 + 2) * N_HIDDEN];
+            wfs[i] -= fs.0 as f32 * heta;
+            wfs[i + N_HIDDEN] -= fs.1 as f32 * heta;
+            let wdc = &mut ow[(board::CELL_2D + 1 + 2) * N_HIDDEN .. (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN];
+            wdc[i] -= heta;
+        }
+    }
+
     pub fn backwardv3bb(&mut self,
         ban : &bitboard::BitBoard, winner : i8, eta : f32,
         (hidden , hidsig , output , fs)
@@ -3074,6 +3210,7 @@ impl Weight {
         }
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn backwardv3bb_simd(&mut self,
         ban : &bitboard::BitBoard, winner : i8, eta : f32,
         (hidden , hidsig , output , fs)
@@ -3336,6 +3473,7 @@ impl Weight {
         }
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn updatemb(&mut self, dfw : &Weight, n : usize) {
         if cfg!(feature="nosimd") {
             for (wi, wo) in dfw.weight.iter().zip(self.weight.iter_mut()) {
@@ -3410,6 +3548,7 @@ impl Weight {
         }
     }
 
+    #[cfg(target_arch="x86_64")]
     pub fn updatemb2(&mut self, dfw : &Weight, dfw2 : &Weight, n : usize) {
         if cfg!(feature="nosimd") {
             for (wi, (wi2, wo)) in dfw.weight.iter().zip(dfw2.weight.iter().zip(self.weight.iter_mut())) {
@@ -3502,6 +3641,7 @@ impl Weight {
         }
     }
 
+    #[cfg(target_arch="x86_64")]
     fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
         if cfg!(feature="nnv1") {
             // forward
@@ -3536,6 +3676,27 @@ impl Weight {
         }
     }
 
+    #[cfg(target_arch="aarch64")]
+    fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
+        if cfg!(feature="nnv1") {
+            // forward
+            let (hidden, hidsig, output) = self.forwardv1(&ban);
+            // backward
+            self.backwardv1(ban, winner, eta, &hidden, &hidsig, &output);
+        } else if cfg!(feature="nnv2") {
+            // forward
+            let (hidden, hidsig, output) = self.forwardv2(&ban);
+            // backward
+            self.backwardv2(ban, winner, eta, &hidden, &hidsig, &output);
+        } else {
+            // forward
+            let res = self.forwardv3(&ban);
+            // backward
+            self.backwardv3(ban, winner, eta, &res);
+        }
+    }
+
+    #[cfg(target_arch="x86_64")]
     fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
         // forward
         let res = if cfg!(feature="nosimd") {
@@ -3555,6 +3716,15 @@ impl Weight {
         }
     }
 
+    #[cfg(target_arch="aarch64")]
+    fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
+        // forward
+        let res = self.forwardv3bb(&ban);
+        // backward
+        self.backwardv3bb(ban, winner, eta, &res);
+    }
+
+    #[cfg(target_arch="x86_64")]
     fn learnbbdiff(&self, ban : &bitboard::BitBoard, winner : i8, eta : f32, dfw : &mut Weight) {
         // forward
         let res = if cfg!(feature="nosimd") {
@@ -3573,6 +3743,15 @@ impl Weight {
             dfw.backwardv3bb_simd(ban, winner, eta, &res);
         }
     }
+
+    #[cfg(target_arch="aarch64")]
+    fn learnbbdiff(&self, ban : &bitboard::BitBoard, winner : i8, eta : f32, dfw : &mut Weight) {
+        // forward
+        let res = self.forwardv3bb(&ban);
+        // backward
+        dfw.backwardv3bb(ban, winner, eta, &res);
+    }
+
     fn learnbbminib(&self, banscores : &[&(bitboard::BitBoard, i8)], eta : f32, dfw : &mut Weight) {
         for (ban , winner) in banscores.iter() {
             self.learnbbdiff(ban, *winner, eta, dfw);
@@ -3600,6 +3779,7 @@ fn dbg_assert_eq(a : &f32, b : &f32) -> bool {
     true
 }
 
+#[cfg(target_arch="x86_64")]
 #[test]
 fn testweight() {
     let rfens = [
@@ -3679,6 +3859,112 @@ fn testweight() {
             let eta = 0.1;
             w.backwardv3bb(&bban, winner, eta, &res);
             w2.backwardv3bb_simd(&bban, winner, eta, &res);
+            // let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+            // let s = sv.join(",");
+            // let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+            // let s2 = sv2.join(",");
+            // assert_eq!(s, s2);
+            assert!(dbg_assert_eq_vec(&w.weight, &w2.weight));
+            let res = w3.forwardv3(&ban);
+            w3.backwardv3(&ban, winner, eta, &res);
+            // let sv3 = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
+            // let s3 = sv3.join(",");
+            // assert_eq!(s, s3);
+            assert!(dbg_assert_eq_vec(&w.weight, &w3.weight));
+            let res_nosimde2 = w.evaluatev3bb(&bban);
+            let res_nosimde3 = w2.evaluatev3bb(&bban);
+            let res_nosimde4 = w3.evaluatev3bb(&bban);
+            // println!("{res_nosimde} -> {res_nosimde2}");
+            assert!(dbg_assert_eq(&res_nosimde2, &res_nosimde3));
+            assert!(dbg_assert_eq(&res_nosimde2, &res_nosimde4));
+            let before = (winner as f32 - res_nosimde).abs();
+            assert!(before > (winner as f32 - res_nosimde2).abs());
+            // assert!(before > (winner as f32 - res_nosimde3).abs());
+            // assert!(before > (winner as f32 - res_nosimde4).abs());
+        }
+    }
+}
+
+#[cfg(target_arch="aarch64")]
+#[test]
+fn testweight() {
+    let rfens = [
+        "h/H/h/H/h/H/h/H b",
+        "h/H/h/H/h/H/h/H w",
+        "H/h/H/h/H/h/H/h b",
+        "H/h/H/h/H/h/H/h w",
+        "h/H/8/H/h/H/h/H b",
+        "h/H/h/8/h/H/h/H w",
+        "H/h/H/h/8/h/H/h b",
+        "H/h/H/h/H/8/H/h w",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA b",
+        "aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa b",
+        "1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa w",
+        "AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1 w",
+        "A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA b",
+        "aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A b",
+        "aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA w",
+    ];
+    let limit = 2e-6;
+    for rfen in rfens.iter() {
+        for winner in -1..=1 {
+            let bban = bitboard::BitBoard::from(rfen).unwrap();
+            let ban = board::Board::from(rfen).unwrap();
+            ban.put();
+            let mut w = weight::Weight::new();
+            w.init();
+            let mut w2 = weight::Weight::new();
+            w2.copy(&w);
+            let mut w3 = weight::Weight::new();
+            w3.copy(&w);
+            let res_nosimde = w.evaluatev3bb(&bban);
+            // let res_simd = w.evaluatev3bb_simd(&bban);
+            // let res_simdavx = w.evaluatev3bb_simdavx(&bban);
+            // assert!((res_nosimde - res_simd).abs() < limit);
+            // assert!((res_nosimde - res_simdavx).abs() < limit);
+            // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
+            let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
+            // let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simd(&bban);
+            // let (bh_sa, ah_sa, res_simdavx, fssa)
+            //         = w.forwardv3bb_simdavx(&bban);
+            // let (bh_sa2, ah_sa2, res_simdavx2, fssa2)
+            //         = w.forwardv3bb_simdavx3(&bban);
+            // assert!(dbg_assert_eq_vec(&bh_ns, &bh_s));
+            // assert!(dbg_assert_eq_vec(&bh_ns, &bh_sa));
+            // assert!(dbg_assert_eq_vec(&bh_ns, &bh_sa2));
+            // println!("{bh_ns:?} == \n{bh_s:?} == \n{bh_sa:?} ???");
+            // assert!(dbg_assert_eq_vec(&ah_ns, &ah_s));
+            // assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa));
+            // assert!(dbg_assert_eq_vec(&ah_ns, &ah_sa2));
+            // println!("{ah_ns:?} == \n{ah_s:?} == \n{ah_sa:?} ???");
+            assert!((res_nosimde - res_nosimd[0]).abs() < limit);
+            // assert_eq!(res_nosimd, res_simd);
+            // assert!((res_nosimd[0] - res_simd[0]).abs() < limit);
+            // assert_eq!(res_nosimd, res_simdavx);
+            // assert!((res_nosimd[0] - res_simdavx[0]).abs() < limit);
+            // assert_eq!(res_nosimd, res_simdavx2);
+            // assert!((res_nosimd[0] - res_simdavx2[0]).abs() < limit);
+            // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
+            // assert_eq!(fsns, fss);
+            // assert_eq!(fsns, fssa);
+            // assert_eq!(fsns, fssa2);
+            // println!("{fsns:?} == {fss:?} == {fssa:?} ???");
+            let res = w.forwardv3bb(&bban);
+            // let winner = 1;
+            let eta = 0.1;
+            w.backwardv3bb(&bban, winner, eta, &res);
+            // w2.backwardv3bb_simd(&bban, winner, eta, &res);
             // let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
             // let s = sv.join(",");
             // let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();

@@ -114,6 +114,7 @@ impl NodeBB {
         }
     }
 
+    #[cfg(target_arch="x86_64")]
     fn evaluate(ban : &bitboard::BitBoard) -> f32 {
         unsafe {
             if cfg!(feature="nosimd") {
@@ -124,6 +125,11 @@ impl NodeBB {
                 WEIGHT.as_ref().unwrap().evaluatev3bb_simd(ban)
             }
         }
+    }
+
+    #[cfg(target_arch="aarch64")]
+    fn evaluate(ban : &bitboard::BitBoard) -> f32 {
+        unsafe {WEIGHT.as_ref().unwrap().evaluatev3bb(ban)}
     }
 
     fn evalwtt(ban : &bitboard::BitBoard, tt : &mut transptable::TranspositionTable) -> f32 {

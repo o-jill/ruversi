@@ -1,5 +1,3 @@
-use std::arch::x86_64;
-
 pub const SENTE : i8 = 1;
 pub const BLANK : i8 = 0;
 pub const GOTE : i8 = -1;
@@ -157,7 +155,8 @@ impl Board {
     }
 
     pub fn to_id_simd(&self)-> [u8 ; 16] {
-        let mut res : [u8 ; 16] = [0 ; 16];
+        self.to_id()
+        /* let mut res : [u8 ; 16] = [0 ; 16];
         let tbn : i8 = if self.teban == SENTE { 0x00 } else { -128 };
         unsafe {
             let mut sum16 = x86_64::_mm_setzero_si128();
@@ -177,7 +176,7 @@ impl Board {
             x86_64::_mm_store_si128(
                 res.as_mut_ptr() as *mut x86_64::__m128i, sum16);
         }
-        res
+        res */
     }
 
     pub fn put(&self) {
@@ -379,6 +378,7 @@ impl Board {
         }
     }
 
+    //#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     pub fn checkreverse(&self, x : usize, y : usize) -> bool {
         let color = self.teban;
         // 左
