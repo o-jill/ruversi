@@ -952,7 +952,7 @@ impl Weight {
         let wh = &ow[(bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
         for i in 0..N_HIDDEN {
             let w1 = &ow[i * bitboard::CELL_2D .. (i + 1) * bitboard::CELL_2D];
-            let mut hidsum : f32 = wdc[i];
+            let mut hidsum : f32 = 0.0;  // wdc[i];
             for y in 0..bitboard::NUMCELL {
                 let mut bit = bitboard::LSB_CELL << y;
                 for x in 0..bitboard::NUMCELL {
@@ -968,10 +968,11 @@ impl Weight {
                     bit <<= bitboard::NUMCELL;
                 }
             }
-            hidsum += teban * wtbn[i];
-            hidsum += wfs[i] * fs.0 as f32;
-            hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
-            sum += wh[i] / (f32::exp(-hidsum) + 1.0);
+            hidsum = teban.mul_add(wtbn[i], hidsum);
+            hidsum = wfs[i].mul_add(fs.0 as f32, hidsum);
+            hidsum = wfs[i + N_HIDDEN].mul_add(fs.1 as f32, hidsum + wdc[i]);
+            sum = wh[i].mul_add(((-hidsum).exp() + 1.0).recip(), sum);
+            // sum += wh[i] / ((-hidsum).exp() + 1.0);
         }
         sum
     }
