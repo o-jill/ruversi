@@ -2,6 +2,13 @@ use super::*;
 use rand::Rng;
 use std::{fs, io::{BufReader, BufRead}};
 
+#[cfg(target_arch="x86_64")]
+use std::arch::x86_64;
+
+#[cfg(target_arch="aarch64")]
+use std::arch::aarch64::*;
+
+
 /*
  * input: NUMCELL * NUMCELL + 1(teban) + 2(fixedstones) + 1
  * hidden: 8 + 1
@@ -649,6 +656,22 @@ impl Weight {
      * exp(-x)
      * 
      * # Arguments  
+     * * `x` - [4 ; f32]  
+     * * `y` - [exp(-x[0]), exp(-x[1]), exp(-x[2]), exp(-x[3])]  
+     */
+    #[cfg(target_arch="aarch64")]
+    fn expmx_ps( x : *const f32, y : *mut f32) {
+        unsafe {
+            let x4 = vld1q_f32(x);
+            let y4 = Weight::expmx_ps_simd(x4);
+            vst1q_f32(y, y4);
+        }
+    }
+
+    /**
+     * exp(-x)
+     * 
+     * # Arguments  
      * * `x4` - [4 ; f32] as x86_64::__m128
      * 
      * # Return value  
@@ -714,6 +737,79 @@ impl Weight {
         let pow2n = x86_64::_mm_castsi128_ps(emm0);
 
         let y4 = x86_64::_mm_mul_ps(y4, pow2n);
+        y4
+        // x86_64::_mm_store_ps(y, y4);
+    }
+
+    /**
+     * exp(-x)
+     * 
+     * # Arguments  
+     * * `x4` - [4 ; f32] as x86_64::__m128
+     * 
+     * # Return value  
+     * [exp(-x4[0]), exp(-x4[1]), exp(-x4[2]), exp(-x4[3])] as x86_64::__m128.
+     */
+    #[cfg(target_arch="aarch64")]
+    unsafe fn expmx_ps_simd(x4 : float32x4_t) -> float32x4_t {
+        // clip x
+        let max4 = vmovq_n_f32(EXP_HI);
+        let x4 = vminq_f32(x4, max4);
+        let min4 = vmovq_n_f32(EXP_LO);
+        let x4 = vmaxq_f32(x4, min4);
+        let m1 = vmovq_n_f32(-1.0);
+        let x4 = vmulq_f32(x4, m1);
+
+        /* express exp(x) as exp(g + n*log(2)) */
+        let log2ef = vmovq_n_f32(CEPHES_LOG2EF);
+        let fx = vmulq_f32(x4, log2ef);
+        let zp5 = vmovq_n_f32(CEPHES_EXP_P5);
+        let fx = vaddq_f32(fx, zp5);
+        let emm0 = vcvtq_s32_f32(fx);
+        let tmp = vcvtq_f32_s32(emm0);
+
+        let mask = vcgtq_f32(tmp, fx);
+        let one = vmovq_n_f32(1.0);
+        let mask = vreinterpretq_f32_u32(vandq_u32(
+                mask, vreinterpretq_u32_f32(one)));
+        let fx = vsubq_f32(tmp, mask);
+
+        let c1 = vmovq_n_f32(CEPHES_EXP_C1);
+        let tmp = vmulq_f32(fx, c1);
+        let c2 = vmovq_n_f32(CEPHES_EXP_C2);
+        let z4 = vmulq_f32(fx, c2);
+        let x4 = vsubq_f32(x4, tmp);
+        let x4 = vsubq_f32(x4, z4);
+
+        let z4 = vmulq_f32(x4, x4);
+
+        let y4 = vmovq_n_f32(CEPHES_EXP_P0);
+        let y4 = vmulq_f32(y4, x4);
+        let exp_p1 = vmovq_n_f32(CEPHES_EXP_P1);
+        let y4 = vaddq_f32(y4, exp_p1);
+        let y4 = vmulq_f32(y4, x4);
+        let exp_p2 = vmovq_n_f32(CEPHES_EXP_P2);
+        let y4 = vaddq_f32(y4, exp_p2);
+        let y4 = vmulq_f32(y4, x4);
+        let exp_p3 = vmovq_n_f32(CEPHES_EXP_P3);
+        let y4 = vaddq_f32(y4, exp_p3);
+        let y4 = vmulq_f32(y4, x4);
+        let exp_p4 = vmovq_n_f32(CEPHES_EXP_P4);
+        let y4 = vaddq_f32(y4, exp_p4);
+        let y4 = vmulq_f32(y4, x4);
+        let exp_p5 = vmovq_n_f32(CEPHES_EXP_P5);
+        let y4 = vaddq_f32(y4, exp_p5);
+        let y4 = vmulq_f32(y4, z4);
+        let y4 = vaddq_f32(y4, x4);
+        let y4 = vaddq_f32(y4, one);
+
+        let emm0 = vcvtq_s32_f32(fx);
+        let _pi32_0x7f = vmovq_n_s32(0x7f);
+        let emm0 = vaddq_s32(emm0, _pi32_0x7f);
+        let emm0 = vshlq_n_s32(emm0, 23);
+        let pow2n = vreinterpretq_f32_s32(emm0);
+
+        let y4 = vmulq_f32(y4, pow2n);
         y4
         // x86_64::_mm_store_ps(y, y4);
     }
@@ -1339,6 +1435,13 @@ impl Weight {
                 let wdc4 = vld1q_f32(wdc.as_ptr().add(hidx));
                 let sum4 = vaddq_f32(sum4, wdc4);
                 vst1q_f32(sumn.as_mut_ptr(), sum4);
+                // let expmx = Self::expmx_ps_simd(sum4);
+                // let expmx1 = vaddq_f32(expmx, vmovq_n_f32(1.0));
+                // let wh4 = vld1q_f32(wh.as_ptr().add(hidx));
+                // res += vaddvq_f32(vdivq_f32(wh4, expmx1));
+                // let remx = vrecpeq_f32(expmx1);
+                // res += vaddvq_f32(vmulq_f32(remx, wh4));
+                // expmx_ps_simd is slower than exp()x4 on M2 ...
             }
             for n in 0 .. N {
                 let idx = hidx + n;
