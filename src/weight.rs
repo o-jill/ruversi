@@ -811,7 +811,6 @@ impl Weight {
 
         let y4 = vmulq_f32(y4, pow2n);
         y4
-        // x86_64::_mm_store_ps(y, y4);
     }
 
     /**
