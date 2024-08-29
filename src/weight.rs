@@ -1373,12 +1373,11 @@ impl Weight {
         let wh = &ow[(bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN .. ];
         const N : usize = 4;
 
-        for i in 0..N_HIDDEN / N {
-            let hidx = i * N;
+        for i in (0..N_HIDDEN).step_by(N) {
             let mut sumn = [0.0f32 ; N];
 
             for n in 0..N {
-                let w1 = &ow[(hidx + n) * bitboard::CELL_2D .. ];
+                let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
                 const M : usize = 8;
                 let bit8 = 0x0101010101010101u64;
                 for j in 0..bitboard::CELL_2D / M {
@@ -1400,12 +1399,12 @@ impl Weight {
                         let minus = vreinterpretq_s32_f32(vmovq_n_f32(-0.0));
                         let mn1 = vandq_s32(minus, w02);
                         let mn2 = vandq_s32(minus, w12);
-                        let msk1 = vandq_s32(ex1, mn1);
-                        let msk2 = vandq_s32(ex2, mn2);
                         let w41 = vld1q_f32(w1.as_ptr().add(idx));
                         let w42 = vld1q_f32(w1.as_ptr().add(idx + 4));
-                        let w1 = veorq_s32(msk1, vreinterpretq_s32_f32(w41));
-                        let w2 = veorq_s32(msk2, vreinterpretq_s32_f32(w42));
+                        let w1 = veorq_s32(mn1, vreinterpretq_s32_f32(w41));
+                        let w2 = veorq_s32(mn2, vreinterpretq_s32_f32(w42));
+                        let w1 = vandq_s32(ex1, w1);
+                        let w2 = vandq_s32(ex2, w2);
                         let sum = vaddq_f32(vreinterpretq_f32_s32(w1),
                                                         vreinterpretq_f32_s32(w2));
                         let sum = vaddvq_f32(sum);
@@ -1417,36 +1416,38 @@ impl Weight {
                 let sum4 = vld1q_f32(sumn.as_ptr());
 
                 let tbn = vmovq_n_f32(teban);
-                let wtb = vld1q_f32(wtbn.as_ptr().add(hidx));
-                let wtbn4 = vmulq_f32(tbn, wtb);
-                let sum4 = vaddq_f32(sum4, wtbn4);
+                let wtb = vld1q_f32(wtbn.as_ptr().add(i));
+                let sum4 = vmlaq_f32(sum4, tbn, wtb);
 
-                let fsb = vmovq_n_f32(fsb as f32);
-                let wfsb = vld1q_f32(wfs.as_ptr().add(hidx));
-                let wfsb4 = vmulq_f32(fsb, wfsb);
-                let sum4 = vaddq_f32(sum4, wfsb4);
+                let fsb4 = vmovq_n_f32(fsb as f32);
+                let wfsb = vld1q_f32(wfs.as_ptr().add(i));
+                let sum4 = vmlaq_f32(sum4, fsb4, wfsb);
 
-                let fsw = vmovq_n_f32(fsw as f32);
-                let wfsw = vld1q_f32(wfs.as_ptr().add(hidx + N_HIDDEN));
-                let wfsw4 = vmulq_f32(fsw, wfsw);
-                let sum4 = vaddq_f32(sum4, wfsw4);
+                let fsw4 = vmovq_n_f32(fsw as f32);
+                let wfsw = vld1q_f32(wfs.as_ptr().add(i + N_HIDDEN));
+                let sum4 = vmlaq_f32(sum4, fsw4, wfsw);
 
-                let wdc4 = vld1q_f32(wdc.as_ptr().add(hidx));
+                let wdc4 = vld1q_f32(wdc.as_ptr().add(i));
                 let sum4 = vaddq_f32(sum4, wdc4);
                 vst1q_f32(sumn.as_mut_ptr(), sum4);
+
                 // let expmx = Self::expmx_ps_simd(sum4);
                 // let expmx1 = vaddq_f32(expmx, vmovq_n_f32(1.0));
-                // let wh4 = vld1q_f32(wh.as_ptr().add(hidx));
+                // let wh4 = vld1q_f32(wh.as_ptr().add(i));
                 // res += vaddvq_f32(vdivq_f32(wh4, expmx1));
+                // 1950nps
+
+                // let expmx = Self::expmx_ps_simd(sum4);
+                // let expmx1 = vaddq_f32(expmx, vmovq_n_f32(1.0));
                 // let remx = vrecpeq_f32(expmx1);
+                // let wh4 = vld1q_f32(wh.as_ptr().add(i));
                 // res += vaddvq_f32(vmulq_f32(remx, wh4));
                 // expmx_ps_simd is slower than exp()x4 on M2 ...
+                // 1950nps
             }
             for n in 0 .. N {
-                let idx = hidx + n;
-                let hidsum = sumn[n];
-                res = wh[idx].mul_add(((-hidsum).exp() + 1.0).recip(), res);
-            }
+                res += wh[i + n] / ((-sumn[n]).exp() + 1.0);
+            }  // 2050nps
         }
         res
     }
