@@ -762,9 +762,8 @@ impl Weight {
 
         /* express exp(x) as exp(g + n*log(2)) */
         let log2ef = vmovq_n_f32(CEPHES_LOG2EF);
-        let fx = vmulq_f32(x4, log2ef);
         let zp5 = vmovq_n_f32(CEPHES_EXP_P5);
-        let fx = vaddq_f32(fx, zp5);
+        let fx = vmlaq_f32(zp5, x4, log2ef);
         let emm0 = vcvtq_s32_f32(fx);
         let tmp = vcvtq_f32_s32(emm0);
 
@@ -784,23 +783,17 @@ impl Weight {
         let z4 = vmulq_f32(x4, x4);
 
         let y4 = vmovq_n_f32(CEPHES_EXP_P0);
-        let y4 = vmulq_f32(y4, x4);
         let exp_p1 = vmovq_n_f32(CEPHES_EXP_P1);
-        let y4 = vaddq_f32(y4, exp_p1);
-        let y4 = vmulq_f32(y4, x4);
+        let y4 = vmlaq_f32(exp_p1, y4, x4);
         let exp_p2 = vmovq_n_f32(CEPHES_EXP_P2);
-        let y4 = vaddq_f32(y4, exp_p2);
-        let y4 = vmulq_f32(y4, x4);
+        let y4 = vmlaq_f32(exp_p2, y4, x4);
         let exp_p3 = vmovq_n_f32(CEPHES_EXP_P3);
-        let y4 = vaddq_f32(y4, exp_p3);
-        let y4 = vmulq_f32(y4, x4);
+        let y4 = vmlaq_f32(exp_p3, y4, x4);
         let exp_p4 = vmovq_n_f32(CEPHES_EXP_P4);
-        let y4 = vaddq_f32(y4, exp_p4);
-        let y4 = vmulq_f32(y4, x4);
+        let y4 = vmlaq_f32(exp_p4, y4, x4);
         let exp_p5 = vmovq_n_f32(CEPHES_EXP_P5);
-        let y4 = vaddq_f32(y4, exp_p5);
-        let y4 = vmulq_f32(y4, z4);
-        let y4 = vaddq_f32(y4, x4);
+        let y4 = vmlaq_f32(exp_p5, y4, x4);
+        let y4 = vmlaq_f32(x4, y4, z4);
         let y4 = vaddq_f32(y4, one);
 
         let emm0 = vcvtq_s32_f32(fx);
