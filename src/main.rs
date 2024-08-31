@@ -27,6 +27,7 @@ mod weight;
 static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::OnceCell::new();
 
 #[allow(dead_code)]
+#[cfg(target_arch="x86_64")]
 fn trial() {
     if false {
         let rfen = "h/H/h/H/h/H/h/H b";  // same
@@ -196,6 +197,11 @@ fn trial() {
         tr.run4stones(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
         // tr.run4win(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
     }
+}
+
+#[allow(dead_code)]
+#[cfg(target_arch="aarch64")]
+fn trial() {
 }
 
 /// think about a given situation.

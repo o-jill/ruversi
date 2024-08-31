@@ -114,12 +114,24 @@ impl NodeBB {
         }
     }
 
+    #[cfg(target_arch="x86_64")]
     fn evaluate(ban : &bitboard::BitBoard) -> f32 {
         unsafe {
             if cfg!(feature="nosimd") {
                 WEIGHT.as_ref().unwrap().evaluatev3bb(ban)
             } else if cfg!(feature="avx") {
                 WEIGHT.as_ref().unwrap().evaluatev3bb_simdavx(ban)
+            } else {
+                WEIGHT.as_ref().unwrap().evaluatev3bb_simd(ban)
+            }
+        }
+    }
+
+    #[cfg(target_arch="aarch64")]
+    fn evaluate(ban : &bitboard::BitBoard) -> f32 {
+        unsafe {
+            if cfg!(feature="nosimd") {
+                WEIGHT.as_ref().unwrap().evaluatev3bb(ban)
             } else {
                 WEIGHT.as_ref().unwrap().evaluatev3bb_simd(ban)
             }
