@@ -15,7 +15,7 @@ use std::arch::aarch64::*;
  * output: 1
  */
 const N_INPUT : usize = board::CELL_2D + 1 + 2;
-const N_HIDDEN : usize = 16;
+const N_HIDDEN : usize = 32;
 const N_OUTPUT : usize = 1;
 const N_WEIGHT: usize = (N_INPUT + 1) * N_HIDDEN + N_HIDDEN + 1;
 
@@ -25,7 +25,8 @@ const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + 4 + 1;
 const WSZV2 : usize = WSZV1;
 const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * 4 + 4 + 1;
 const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * 8 + 8 + 1;
-const WSZV5 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
+const WSZV5 : usize = (board::CELL_2D + 1 + 2 + 1) * 16 + 16 + 1;
+const WSZV6 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
 
 const EXP_HI : f32 = 88.3762626647949;
 const EXP_LO : f32 = -EXP_HI;
@@ -56,6 +57,7 @@ enum EvalFile{
     V3,
     V4,
     V5,
+    V6,
 }
 
 impl EvalFile {
@@ -67,6 +69,7 @@ impl EvalFile {
             EvalFile::V3 => {"# 64+1+2-4-1"},
             EvalFile::V4 => {"# 64+1+2-8-1"},
             EvalFile::V5 => {"# 64+1+2-16-1"},
+            EvalFile::V6 => {"# 64+1+2-32-1"},
         }
     }
 
@@ -77,6 +80,7 @@ impl EvalFile {
             "# 64+1+2-4-1" => Some(EvalFile::V3),
             "# 64+1+2-8-1" => Some(EvalFile::V4),
             "# 64+1+2-16-1" => Some(EvalFile::V5),
+            "# 64+1+2-32-1" => Some(EvalFile::V6),
             _ => None
         }
     }
@@ -144,6 +148,7 @@ impl Weight {
                         EvalFile::V3 => {return self.readv3(&l)},
                         EvalFile::V4 => {return self.readv4(&l)},
                         EvalFile::V5 => {return self.readv5(&l)},
+                        EvalFile::V6 => {return self.readv6(&l)},
                         _ => {}
                     }
                 },
@@ -169,7 +174,7 @@ impl Weight {
         if WSZV3 != nsz {
             return Err(format!("size mismatch {WSZV3} != {nsz}"));
         }
-        self.fromv3tov5(&newtable);
+        self.fromv3tov6(&newtable);
         // println!("v3:{:?}", self.weight);
         Ok(())
     }
@@ -181,7 +186,7 @@ impl Weight {
         if WSZV4 != nsz {
             return Err(String::from("size mismatch"));
         }
-        self.fromv4tov5(&newtable);
+        self.fromv4tov6(&newtable);
         // println!("v4:{:?}", self.weight);
         Ok(())
     }
@@ -193,8 +198,20 @@ impl Weight {
         if WSZV5 != nsz {
             return Err(String::from("size mismatch"));
         }
-        self.weight.copy_from_slice(&newtable);
+        self.fromv5tov6(&newtable);
         // println!("v5:{:?}", self.weight);
+        Ok(())
+    }
+
+    fn readv6(&mut self, line : &str) -> Result<(), String> {
+        let csv = line.split(",").collect::<Vec<_>>();
+        let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+        let nsz = newtable.len();
+        if WSZV6 != nsz {
+            return Err(String::from("size mismatch"));
+        }
+        self.weight.copy_from_slice(&newtable);
+        // println!("v6:{:?}", self.weight);
         Ok(())
     }
 
@@ -231,6 +248,11 @@ impl Weight {
     pub fn writev5(&self, path : &str) {
         let mut f = fs::File::create(path).unwrap();
         Weight::write(&mut f, &self.weight, &EvalFile::V5);
+    }
+
+    pub fn writev6(&self, path : &str) {
+        let mut f = fs::File::create(path).unwrap();
+        Weight::write(&mut f, &self.weight, &EvalFile::V6);
     }
 
     pub fn writev1asv2(&self, path : &str) {
@@ -386,7 +408,6 @@ impl Weight {
         // println!("we:{:?}", self.weight);
     }
 
-
     /// copy v3 data into v4.
     fn convert(&mut self, tbl : &Vec<f32>, nhid : usize) {
         self.weight = [0.0 ; N_WEIGHT];
@@ -454,14 +475,19 @@ impl Weight {
         // println!("we:{:?}", self.weight);
     }
 
-    /// copy v3 data into v5.
-    fn fromv3tov5(&mut self, tbl : &Vec<f32>) {
+    /// copy v3 data into v6.
+    fn fromv3tov6(&mut self, tbl : &Vec<f32>) {
         self.convert(tbl, 4);
     }
 
-    /// copy v4 data into v5.
-    fn fromv4tov5(&mut self, tbl : &Vec<f32>) {
+    /// copy v4 data into v6.
+    fn fromv4tov6(&mut self, tbl : &Vec<f32>) {
         self.convert(tbl, 8);
+    }
+
+    /// copy v5 data into v6.
+    fn fromv5tov6(&mut self, tbl : &Vec<f32>) {
+        self.convert(tbl, 16);
     }
 
     pub fn evaluatev1(&self, ban : &board::Board) -> f32 {
