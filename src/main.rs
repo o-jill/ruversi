@@ -1294,15 +1294,8 @@ fn main() {
         let n = MYOPT.get().unwrap().n;
         gen_kifu(n, depth);
     }
-    if *mode == myoption::Mode::None || *mode == myoption::Mode::Learn {
-        let repeat = MYOPT.get().unwrap().repeat;
-        let eta = MYOPT.get().unwrap().eta;
-        let tropt = &MYOPT.get().unwrap().outtrain;
-        let prgs = &MYOPT.get().unwrap().progress;
-        let trmd = &MYOPT.get().unwrap().trmode;
-        let mbs = MYOPT.get().unwrap().minibsize;
-        // training(repeat, eta, &tropt);
-        training_para(repeat, eta, &tropt, prgs, trmd, mbs);
+    if *mode == myoption::Mode::Learn {
+        eprintln!("learning was deprecated. please use tigerdenversi instead.");
     }
     if *mode == myoption::Mode::Duel {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
