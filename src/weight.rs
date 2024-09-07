@@ -1390,65 +1390,89 @@ impl Weight {
         let wfs = &ow[(bitboard::CELL_2D + 1) * N_HIDDEN .. ];
         let wdc = &ow[(bitboard::CELL_2D + 1 + 2) * N_HIDDEN .. ];
         let wh = &ow[(bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN .. ];
-        const N : usize = 4;
+        const N : usize = 8;
 
         for i in (0..N_HIDDEN).step_by(N) {
             let mut sumn = [0.0f32 ; N];
 
             for n in 0..N {
                 let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
-                const M : usize = 8;
+                const M : usize = 16;
                 let bit8 = 0x0101010101010101u64;
                 for j in 0..bitboard::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = bit8 & (black >> j);
-                    let w81 = bit8 & (white >> j);
+                    let b81 = bit8 & (black >> j * 2);
+                    let w81 = bit8 & (white >> j * 2);
+                    let b82 = bit8 & (black >> j * 2 + 1);
+                    let w82 = bit8 & (white >> j * 2 + 1);
 
                     unsafe {
                         let b08 = vmov_n_u64(b81 * 0xffu64);
+                        let b082 = vmov_n_u64(b82 * 0xffu64);
                         let w08 = vmov_n_u64(w81 * 0xffu64);
+                        let w082 = vmov_n_u64(w82 * 0xffu64);
                         let b04 = vmovl_s8(vreinterpret_s8_u64(b08));
+                        let b042 = vmovl_s8(vreinterpret_s8_u64(b082));
                         let w04 = vmovl_s8(vreinterpret_s8_u64(w08));
+                        let w042 = vmovl_s8(vreinterpret_s8_u64(w082));
                         let b02 = vmovl_s16(vget_low_s16(b04));
+                        let b022 = vmovl_s16(vget_low_s16(b042));
                         let b12 = vmovl_high_s16(b04);
+                        let b122 = vmovl_high_s16(b042);
                         let w02 = vmovl_s16(vget_low_s16(w04));
+                        let w022 = vmovl_s16(vget_low_s16(w042));
                         let w12 = vmovl_high_s16(w04);
+                        let w122 = vmovl_high_s16(w042);
                         let ex1 = vorrq_s32(b02, w02);
+                        let ex12 = vorrq_s32(b022, w022);
                         let ex2 = vorrq_s32(b12, w12);
+                        let ex22 = vorrq_s32(b122, w122);
                         let minus = vreinterpretq_s32_f32(vmovq_n_f32(-0.0));
                         let mn1 = vandq_s32(minus, w02);
+                        let mn12 = vandq_s32(minus, w022);
                         let mn2 = vandq_s32(minus, w12);
-                        let w41 = vld1q_f32(w1.as_ptr().add(idx));
-                        let w42 = vld1q_f32(w1.as_ptr().add(idx + 4));
-                        let w1 = veorq_s32(mn1, vreinterpretq_s32_f32(w41));
-                        let w2 = veorq_s32(mn2, vreinterpretq_s32_f32(w42));
+                        let mn22 = vandq_s32(minus, w122);
+                        let w41 = vld1q_f32_x4(w1.as_ptr().add(idx));
+                        let w1 = veorq_s32(mn1, vreinterpretq_s32_f32(w41.0));
+                        let w12 = veorq_s32(mn12, vreinterpretq_s32_f32(w41.2));
+                        let w2 = veorq_s32(mn2, vreinterpretq_s32_f32(w41.1));
+                        let w22 = veorq_s32(mn22, vreinterpretq_s32_f32(w41.3));
                         let w1 = vandq_s32(ex1, w1);
+                        let w12 = vandq_s32(ex12, w12);
                         let w2 = vandq_s32(ex2, w2);
+                        let w22 = vandq_s32(ex22, w22);
                         let sum = vaddq_f32(vreinterpretq_f32_s32(w1),
                                                         vreinterpretq_f32_s32(w2));
-                        let sum = vaddvq_f32(sum);
+                        let sum2 = vaddq_f32(vreinterpretq_f32_s32(w12),
+                                                        vreinterpretq_f32_s32(w22));
+                        let sum = vaddvq_f32(vaddq_f32(sum, sum2));
                         sumn[n] += sum;
                     }
                 }
             }
             unsafe {
-                let sum4 = vld1q_f32(sumn.as_ptr());
+                let sum4 = vld1q_f32_x2(sumn.as_ptr());
 
                 let tbn = vmovq_n_f32(teban);
-                let wtb = vld1q_f32(wtbn.as_ptr().add(i));
-                let sum4 = vmlaq_f32(sum4, tbn, wtb);
+                let wtb = vld1q_f32_x2(wtbn.as_ptr().add(i));
+                let sum41 = vmlaq_f32(sum4.0, tbn, wtb.0);
+                let sum42 = vmlaq_f32(sum4.1, tbn, wtb.1);
 
                 let fsb4 = vmovq_n_f32(fsb as f32);
-                let wfsb = vld1q_f32(wfs.as_ptr().add(i));
-                let sum4 = vmlaq_f32(sum4, fsb4, wfsb);
+                let wfsb = vld1q_f32_x2(wfs.as_ptr().add(i));
+                let sum4 = vmlaq_f32(sum41, fsb4, wfsb.0);
+                let sum42 = vmlaq_f32(sum42, fsb4, wfsb.1);
 
                 let fsw4 = vmovq_n_f32(fsw as f32);
-                let wfsw = vld1q_f32(wfs.as_ptr().add(i + N_HIDDEN));
-                let sum4 = vmlaq_f32(sum4, fsw4, wfsw);
+                let wfsw = vld1q_f32_x2(wfs.as_ptr().add(i + N_HIDDEN));
+                let sum4 = vmlaq_f32(sum4, fsw4, wfsw.0);
+                let sum42 = vmlaq_f32(sum42, fsw4, wfsw.1);
 
-                let wdc4 = vld1q_f32(wdc.as_ptr().add(i));
-                let sum4 = vaddq_f32(sum4, wdc4);
+                let wdc4 = vld1q_f32_x2(wdc.as_ptr().add(i));
+                let sum4 = vaddq_f32(sum4, wdc4.0);
+                let sum42 = vaddq_f32(sum42, wdc4.1);
                 vst1q_f32(sumn.as_mut_ptr(), sum4);
+                vst1q_f32(sumn.as_mut_ptr().add(4), sum42);
 
                 // let expmx = Self::expmx_ps_simd(sum4);
                 // let expmx1 = vaddq_f32(expmx, vmovq_n_f32(1.0));
@@ -1465,9 +1489,23 @@ impl Weight {
                 // 1950nps
             }
             for n in 0 .. N {
+                // sumn[n] = (-sumn[n]).exp();
                 res += wh[i + n] / ((-sumn[n]).exp() + 1.0);
             }  // 2050nps
-        }
+            // unsafe {
+            //     let expmx4 = vld1q_f32_x2(sumn.as_ptr());
+            //     // let expmx = vld1q_f32(sumn.as_ptr());
+            //     // let expmx2 = vld1q_f32(sumn.as_ptr().add(4));
+            //     let one = vmovq_n_f32(1.0);
+            //     let expmx1 = vaddq_f32(expmx4.0, one);
+            //     let expmx12 = vaddq_f32(expmx4.1, one);
+            //     let wh4 = vld1q_f32_x2(wh.as_ptr().add(i));
+            //     // let wh4 = vld1q_f32(wh.as_ptr().add(i));
+            //     // let wh42 = vld1q_f32(wh.as_ptr().add(i + 4));
+            //     res += vaddvq_f32(vaddq_f32(vdivq_f32(wh4.0, expmx1),
+            //                              vdivq_f32(wh4.1, expmx12)));
+            // }
+    }
         res
     }
 
