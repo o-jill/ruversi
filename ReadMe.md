@@ -34,11 +34,11 @@ NO Warranty.
 * --thinkall  
   search every node. (no pruning)
 * --learn  
-  set lerning mode.
+  [deprecated] set lerning mode.
 * --repeat \<number>  
-  number of learning. default 10000.
+  [deprecated] number of learning. default 10000.
 * --eta \<ratio>  
-  learning ratio. default 0.0001.
+  [deprecated] learning ratio. default 0.0001.
 * --rfen \<rfen>  
   think from rfen for debug. don't forget putting "" to an RFEN not to be recognized as 2 part.  
 * --help  
@@ -46,8 +46,8 @@ NO Warranty.
 
 | command option | generating kifu | learning |
 |:--------------:|:---------------:|:--------:|
-| none           |             yes |      yes |
-| --learn        |              no |      yes |
+| none           |             yes |       no |
+| [deprecated] --learn |        no |      yes |
 | --genkifu      |             yes |       no |
 | --genkifu --learn |          yes |      yes |
 

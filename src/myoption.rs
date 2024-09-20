@@ -317,14 +317,14 @@ pub fn showhelp(msg : &str) {
   --duelext N   play games from some situations against Edax. N is optional. 1 ~ default 5 ~ 13.
   --genkifu  set generatin kifu mode. default.
   --help or -h  show this help.
-  --learn    set lerning mode. default.
   --play     play a game agaist you. turn is random.
   --playb    play a game agaist you. your turn is black(SENTE).
-             you can use w/ --Edax to make ruversi black.
+  you can use w/ --Edax to make ruversi black.
   --playw    play a game agaist you. your turn is white(GOTE).
-             you can use w/ --Edax to make ruversi white.
+  you can use w/ --Edax to make ruversi white.
   --rfen <rfen>  think from rfen for debug. don't forget \"\" not to be recognized as 2 part.
   --gtp      go text protocol mode.
+  --learn    [deprecated]set lerning mode. default.
 
   Common:
     --thinkab   use alpha-beta pruning. default.
@@ -339,23 +339,23 @@ pub fn showhelp(msg : &str) {
   GenKifu:
     -Nx  initial board group x for generating kifu. 0~9.
         all of the initial board positions will be used when this option is not specified.
-  Learn:
-    --repeat <number>  number of learning. default 10000.
-    --eta <ratio>      learning ratio. default 0.1.
-    --trainout <options>  output control.
+  Play:
+    --Edax     play against Edax instead of you. please use with --play(bw).
+    --Edconf <path>  a file for edax path configuration.
+  [deprecated]Learn:
+    --repeat <number>  [deprecated]number of learning. default 10000.
+    --eta <ratio>      [deprecated]learning ratio. default 0.1.
+    --trainout <options>  [deprecated]output control.
         exrfens  : put RFENs in 2nd moves in every kifus.
         nosave   : skip saving weights.
         progress : show progress
         summary  : show input summary.
         time     : show processing time.
         default: progress,summary,time
-    --progress <numbers>  storing weight after some iterations as newevaltable.rN.txt.
+    --progress <numbers>  [deprecated]storing weight after some iterations as newevaltable.rN.txt.
         default: nothing.
-    --onebyone  train w/o minibatch. minibatch=1 in other words. default.
-    --minibatch <number>  train w/ minibatch.
+    --onebyone  [deprecated]train w/o minibatch. minibatch=1 in other words. default.
+    --minibatch <number>  [deprecated]train w/ minibatch.
         size of minibatch. default 128.
-  Play:
-    --Edax     play against Edax instead of you. please use with --play(bw).
-    --Edconf <path>  a file for edax path configuration.
 ");
 }
