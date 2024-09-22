@@ -618,6 +618,8 @@ impl BitBoard {
         // 下
         let usetzcnt = false;
         // let usetzcnt = true;
+        // let usetableud = false;
+        let usetableud = true;
         if usetzcnt {
             let shift = BitBoard::index(x, y) + 1;
             let mask = (1u64 << (NUMCELL - 1 - y)) - 1;
@@ -629,7 +631,7 @@ impl BitBoard {
             // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
             // 相手の石が並んでいて、そのすぐ先に自分の石がある
             if o > 0 && (m & 0x1) != 0 {return true;}
-        } else if true {
+        } else if usetableud {
             let p = ((mine >> x * 8) & 0xff) >> (y + 1);
             let o = ((oppo >> x * 8) & 0xff) >> (y + 1);
             let idx = p * 127 + o;
@@ -660,6 +662,13 @@ impl BitBoard {
             // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & MSB) != 0");
             // 相手の石が並んでいて、そのすぐ先に自分の石がある
             if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
+        } else if usetableud {
+            let p = ((mine >> x * 8) & 0xff) as u8;
+            let o = ((oppo >> x * 8) & 0xff) as u8;
+            let p = p.reverse_bits() as usize >> (7 - y + 1);
+            let o = o.reverse_bits() as usize >> (7 - y + 1);
+            let idx = p * 127 + o;
+            if TBLCHKREV[idx] != 0 {return true;}
         } else {
             let mut bit = pos;
             let mut rev = false;
