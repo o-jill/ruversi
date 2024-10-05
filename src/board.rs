@@ -33,9 +33,10 @@ impl Board {
     pub fn from(rfen : &str) -> Result<Board, String> {
         let elem = rfen.split_whitespace().collect::<Vec<_>>();
 
-        if elem.len() != 2 || elem[1].find(|c:char| c == 'b' || c == 'f' || c == 'w').is_none() {
+        if elem.len() != 2 {
             return Err(String::from("Invalid rfen"));
         }
+
         let teban;
         match elem[1] {
             "b" => {teban = SENTE},
