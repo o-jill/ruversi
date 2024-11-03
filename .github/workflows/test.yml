@@ -10,13 +10,10 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  build_linux:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
-
     steps:
     - uses: actions/checkout@v4
     - name: cpu
@@ -26,3 +23,14 @@ jobs:
     - name: Run tests
       id: utest
       run: cargo test --verbose --release  # test w/ simd will get error w/o --release.
+
+  build_mac:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --verbose
+    - name: Run clippy
+      run: cargo clippy
+    - name: Run tests
+      run: cargo test --verbose
