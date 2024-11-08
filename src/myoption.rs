@@ -259,7 +259,7 @@ impl MyOption {
                 } else if old == "--ev1" {
                     if std::path::Path::new(&e).exists() {
                         opt.evaltable1 = e;
-                    } else if vec!["RANDOM"].contains(&e.as_str()) {
+                    } else if ["RANDOM"].contains(&e.as_str()) {
                         opt.evaltable1 = e;
                     } else {
                         return Err(format!("failed find \"{e}\"."));
@@ -268,7 +268,7 @@ impl MyOption {
                 } else if old == "--ev2" {
                     if std::path::Path::new(&e).exists() {
                         opt.evaltable2 = e;
-                    } else if vec!["RANDOM"].contains(&e.as_str()) {
+                    } else if ["RANDOM"].contains(&e.as_str()) {
                         opt.evaltable2 = e;
                     } else {
                         return Err(format!("failed find \"{e}\"."));

@@ -172,7 +172,7 @@ impl GTP {
                 self.respond(id);
             }
             "list_commands" => {
-                let supported = vec!["protocol_version", "name", "version",
+                let supported = ["protocol_version", "name", "version",
                     /*"known_command", */"list_commands", "quit", "boardsize",
                     "clear_board", "komi", "play", "genmove", /*"undo",*/
                     /*"time_settings", "time_left", */"set_game", "list_games",

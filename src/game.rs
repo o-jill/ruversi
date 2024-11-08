@@ -218,7 +218,7 @@ impl GameBB {
                 // show
                 self.ban.put();
                 let movable = self.ban.genmove().unwrap();
-                if movable.len() == 0 {
+                if movable.is_empty() {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
@@ -391,7 +391,7 @@ impl GameBB {
                 println!("{}", self.ban.to_str());
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
-                if movable.len() == 0 {
+                if movable.is_empty() {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
@@ -850,7 +850,7 @@ impl Game {
                 // show
                 self.ban.put();
                 let movable = self.ban.genmove().unwrap();
-                if movable.len() == 0 {
+                if movable.is_empty() {
                     println!("auto pass.");
                     x = 0;
                     y = 0;
@@ -944,7 +944,7 @@ impl Game {
                 println!("{}", self.ban.to_str());
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
-                if movable.len() == 0 {
+                if movable.is_empty() {
                     println!("auto pass.");
                     x = 0;
                     y = 0;

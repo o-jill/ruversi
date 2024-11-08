@@ -217,8 +217,8 @@ impl Weight {
 
     fn write(f : &mut File, w : &[f32], ver : &EvalFile) {
         let sv = w.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        f.write(format!("{}\n", ver.to_str()).as_bytes()).unwrap();
-        f.write(sv.join(",").as_bytes()).unwrap();
+        f.write_all(format!("{}\n", ver.to_str()).as_bytes()).unwrap();
+        f.write_all(sv.join(",").as_bytes()).unwrap();
     }
 
     #[allow(dead_code)]
@@ -343,7 +343,7 @@ impl Weight {
     /// copy v3 data into v4.
     #[allow(dead_code)]
     fn fromv3tov4(&mut self, tbl : &[f32]) {
-        self.weight = [0.0 ; N_WEIGHT];
+        self.weight = [0.0f32 ; N_WEIGHT];
         // ban
         let n = 4 * board::CELL_2D;
         let we = &mut self.weight[0..n];
@@ -410,7 +410,7 @@ impl Weight {
 
     /// copy v3 data into v4.
     fn convert(&mut self, tbl : &Vec<f32>, nhid : usize) {
-        self.weight = [0.0 ; N_WEIGHT];
+        self.weight = [0.0f32 ; N_WEIGHT];
         // ban
         let n = nhid * board::CELL_2D;
         let we = &mut self.weight[0..n];
@@ -556,7 +556,7 @@ impl Weight {
                     sum4 = x86_64::_mm_add_ps(sum4, mul);
                 }
             }
-            let mut sumarr : [f32 ; 4] = [0.0 ; 4];
+            let mut sumarr : [f32 ; 4] = [0.0f32 ; 4];
             unsafe {
                 x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
                 // x86_64::_mm_store_ps(sumarr.as_mut_ptr(),
@@ -651,7 +651,7 @@ impl Weight {
                     sum4 = x86_64::_mm_add_ps(sum4, sum1234);
                 }
             }
-            let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
+            let mut sumarr : [f32 ; 4] = [0.0f32 ; 4];
             unsafe {
                 x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
             }
@@ -918,13 +918,13 @@ impl Weight {
         let dc = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
         let w2 = &ow[(board::CELL_2D + 2) * N_HIDDEN ..];
 
-        let mut hidsum : [f32 ; 4] = [0.0 ; 4];
-        let mut emx : [f32 ; 4] = [0.0 ; 4];
-        let mut sumarr : [f32 ; 4] = [0.0 ; 4];
+        let mut hidsum : [f32 ; 4] = [0.0f32 ; 4];
+        let mut emx : [f32 ; 4] = [0.0f32 ; 4];
+        let mut sumarr : [f32 ; 4] = [0.0f32 ; 4];
 
         for i in 0..N_HIDDEN / 4 {
             let hidx = i * 4;
-            let mut sum44 : [f32 ; 4 * 4] = [0.0 ; 4 * 4];
+            let mut sum44 : [f32 ; 4 * 4] = [0.0f32 ; 4 * 4];
 
             for n in 0..4 {
                 let res4 = sum44[n * 4..].as_mut_ptr();
@@ -1107,13 +1107,13 @@ impl Weight {
         let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
 
         const N : usize = 4;
-        let mut hidsum : [f32 ; N] = [0.0 ; N];
-        let mut emx : [f32 ; N] = [0.0 ; N];
-        let mut sumarr : [f32 ; N] = [0.0 ; N];
+        let mut hidsum : [f32 ; N] = [0.0f32 ; N];
+        let mut emx : [f32 ; N] = [0.0f32 ; N];
+        let mut sumarr : [f32 ; N] = [0.0f32 ; N];
 
         for i in 0..N_HIDDEN / N {
             let hidx = i * N;
-            let mut sum44 : [f32 ; N * N] = [0.0 ; N * N];
+            let mut sum44 : [f32 ; N * N] = [0.0f32 ; N * N];
 
             for n in 0..N {
                 let res4 = sum44[n * N..].as_mut_ptr();
@@ -1238,11 +1238,11 @@ impl Weight {
         let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
 
         const N : usize = 4;
-        let mut sumarr : [f32 ; N] = [0.0 ; N];
+        let mut sumarr : [f32 ; N] = [0.0f32 ; N];
 
         for i in 0..N_HIDDEN / N {
             let hidx = i * N;
-            let mut sum44 : [f32 ; N * N] = [0.0 ; N * N];
+            let mut sum44 : [f32 ; N * N] = [0.0f32 ; N * N];
 
             for n in 0..N {
                 let res4 = sum44[n * N..].as_mut_ptr();
@@ -3044,7 +3044,7 @@ impl Weight {
         }
         w2[N_HIDDEN] -= diff * eta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3101,7 +3101,7 @@ impl Weight {
         }
         w2[N_HIDDEN] -= diff * eta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3152,7 +3152,7 @@ impl Weight {
         // }
         w2[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3238,7 +3238,7 @@ impl Weight {
         }
         w2[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3291,7 +3291,7 @@ impl Weight {
         // }
         wh[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = wh[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3381,7 +3381,7 @@ impl Weight {
         }
         wh[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = wh[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3422,7 +3422,7 @@ impl Weight {
         }
         wh[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             // tmp = wo x diff
             let tmp = wh[i] * diff;
@@ -3530,7 +3530,7 @@ impl Weight {
         // }
         wh[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         if cfg!(feature="avx") {
             unsafe {
                 let diff4 = x86_64::_mm256_set1_ps(diff);

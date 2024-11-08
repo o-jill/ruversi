@@ -139,7 +139,7 @@ impl ShNode {
         let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth, bitboard::NONE)));
         // println!("{}", node.lock().unwrap().dump());
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             node.write().unwrap().depth += 1;
             depth += 1;
@@ -239,7 +239,7 @@ impl ShNode {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         }
@@ -298,7 +298,7 @@ impl ShNode {
         }
         // let mut tt = transptable::TranspositionTable::new();
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
             node.write().unwrap().depth += 1;
@@ -471,7 +471,7 @@ impl ShNode {
         }
         // let mut tt = transptable::TranspositionTable::new();
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
             node.write().unwrap().depth += 1;
@@ -729,7 +729,7 @@ impl ShNode {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         } else {

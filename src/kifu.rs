@@ -44,11 +44,7 @@ impl Te {
             y = 0;
         } else {
             let c = elem[2].chars().nth(0).unwrap();
-            let ox = STR_POSX.find(c);
-            if ox.is_none() {
-                return None;
-            }
-            x = ox.unwrap();
+            x = STR_POSX.find(c)?;
             y = elem[2].chars().nth(1).unwrap().to_digit(10).unwrap() as usize;
         }
         let rfen = format!("{} {}", elem[3], elem[4]);
@@ -73,7 +69,7 @@ impl Te {
             i, match self.teban {
                 board::SENTE => { board::STONE_SENTE },
                 board::GOTE => { board::STONE_GOTE },
-                _ => { "  "},
+                _ => { "  " },
             },
             self.pos(), self.rfen)
     }
@@ -146,7 +142,7 @@ impl Kifu {
             score : None,
         };
         for &l in lines {
-            let te = Te::from(&l);
+            let te = Te::from(l);
             if te.is_none() {
                 continue;
             }
@@ -156,10 +152,7 @@ impl Kifu {
         let result = lines.last().unwrap();
         // println!("{:?}", result);
         let score = result.split(" ").collect::<Vec<&str>>();
-        let score = match score.last().unwrap().parse::<i8>() {
-            Ok(n) => n,
-            Err(_) => 0
-        };
+        let score = score.last().unwrap().parse::<i8>().unwrap_or(0);
         ret.winneris(score);
         // if result.find("SENTE won.").is_some() {
         //     ret.score = Some(1);
@@ -237,10 +230,7 @@ impl Kifu {
     }
 
     pub fn winner(&self) -> Option<i8> {
-        if self.score.is_none() {
-            return None;
-        }
-        let score = self.score.unwrap();
+        let score = self.score?;
         if score.is_positive() {
             return Some(SENTEWIN);
         }

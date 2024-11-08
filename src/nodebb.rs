@@ -1114,7 +1114,7 @@ impl NodeBB {
         }
         let mut tt = transptable::TranspositionTable::new();
         let mut moves1 = moves.unwrap();
-        if moves1.len() == 0 {  // pass
+        if moves1.is_empty() {  // pass
             moves1.push((0, 0));
             depth += 1;
             node.depth += 1;
@@ -1622,7 +1622,7 @@ impl NodeBB {
             // return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         } else {
@@ -1676,7 +1676,7 @@ impl NodeBB {
             // return -ban.countf32();
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         } else {
@@ -1749,7 +1749,7 @@ impl NodeBB {
         }
         let mut moves = moves.unwrap();
         // let n = moves.len();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             depth += 1;
             moves.push((0, 0));
             println!("pass");
@@ -1821,7 +1821,7 @@ impl NodeBB {
             return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             depth += 1;
             moves.push((0, 0));
         } else {

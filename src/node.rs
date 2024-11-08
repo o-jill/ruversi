@@ -145,7 +145,7 @@ impl Node {
         }
 
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             node.depth += 1;
             depth += 1;
@@ -264,7 +264,7 @@ impl Node {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         }
@@ -317,7 +317,7 @@ impl Node {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         }
@@ -366,7 +366,7 @@ impl Node {
         }
         let mut tt = transptable::TranspositionTable::new();
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
             node.depth += 1;
@@ -517,7 +517,7 @@ impl Node {
         }
         let mut tt = transptable::TranspositionTable::new();
         let mut moves1 = moves.unwrap();
-        if moves1.len() == 0 {  // pass
+        if moves1.is_empty() {  // pass
             moves1.push((0, 0));
             depth += 1;
             node.depth += 1;
@@ -719,7 +719,7 @@ impl Node {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         } else {
@@ -787,7 +787,7 @@ impl Node {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
         } else {
@@ -851,7 +851,7 @@ impl Node {
         }
         let mut moves = moves.unwrap();
         // let n = moves.len();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             depth += 1;
             moves.push((0, 0));
             println!("pass");
@@ -926,7 +926,7 @@ impl Node {
             return Some(ban.count()  as f32 * 10.0);
         }
         let mut moves = moves.unwrap();
-        if moves.len() == 0 {  // pass
+        if moves.is_empty() {  // pass
             depth += 1;
             moves.push((0, 0));
         } else {
