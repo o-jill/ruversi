@@ -129,16 +129,11 @@ impl ShNode {
             return None;
         }
         // let sum = 0;
-        let moves = ban.genmove();
-
         // no more empty cells
-        if moves.is_none() {
-            return None;
-        }
+        let mut moves = ban.genmove()?;
 
         let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth, bitboard::NONE)));
         // println!("{}", node.lock().unwrap().dump());
-        let mut moves = moves.unwrap();
         if moves.is_empty() {  // pass
             moves.push((0, 0));
             node.write().unwrap().depth += 1;
@@ -227,8 +222,9 @@ impl ShNode {
         }
         if depth == 0 {
             nod.kyokumen = 1;
-            return Some(ShNode::evaluate(&ban));
+            return Some(ShNode::evaluate(ban));
         }
+
         let teban = ban.teban;
         // let sum = 0;
         let moves = ban.genmove();
@@ -290,14 +286,10 @@ impl ShNode {
             return None;
         }
         // let sum = 0;
-        let moves = ban.genmove();
-
         // no more empty cells
-        if moves.is_none() {
-            return None;
-        }
+        let mut moves = ban.genmove()?;
+
         // let mut tt = transptable::TranspositionTable::new();
-        let mut moves = moves.unwrap();
         if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
@@ -323,8 +315,8 @@ impl ShNode {
         let mut leaves1 = Vec::from_iter(leaves[0..n/2].iter().cloned());
         let mut leaves2 = Vec::from_iter(leaves[n/2..].iter().cloned());
         let ban2 = ban.clone();
-        let salpha = Arc::new(std::sync::Mutex::new(-100000.0 as f32));
-        let sbeta = Arc::new(std::sync::Mutex::new(100000.0 as f32));
+        let salpha = Arc::new(std::sync::Mutex::new(-100000.0f32));
+        let sbeta = Arc::new(std::sync::Mutex::new(100000.0f32));
         let sal = salpha.clone();
         let sbe = sbeta.clone();
 
@@ -463,14 +455,11 @@ impl ShNode {
             return None;
         }
         // let sum = 0;
-        let moves = ban.genmove();
 
         // no more empty cells
-        if moves.is_none() {
-            return None;
-        }
+        let mut moves = ban.genmove()?;
+
         // let mut tt = transptable::TranspositionTable::new();
-        let mut moves = moves.unwrap();
         if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
@@ -537,8 +526,8 @@ impl ShNode {
         //     }
         // }
         let ban2 = ban.clone();
-        let salpha = Arc::new(std::sync::Mutex::new(-100000.0 as f32));
-        let sbeta = Arc::new(std::sync::Mutex::new(100000.0 as f32));
+        let salpha = Arc::new(std::sync::Mutex::new(-100000.0f32));
+        let sbeta = Arc::new(std::sync::Mutex::new(100000.0f32));
         let sal = salpha.clone();
         let sbe = sbeta.clone();
         let sub =
@@ -569,7 +558,7 @@ impl ShNode {
                 }
                 let newban = ban2.r#move(*x, *y).unwrap();
                 let newban = newban.r#move(xx, yy).unwrap();
-                let val = ShNode::think_internal_ab(&leaf, &newban, alpha, beta);
+                let val = ShNode::think_internal_ab(leaf, &newban, alpha, beta);
 // if xx == 0 {println!("{x} {y} {xx} {yy} - {:?}", val);}
                 leaf.write().unwrap().hyoka = val;
                 let val = val.unwrap();
@@ -619,7 +608,7 @@ impl ShNode {
             }
             let newban = ban.r#move(*x, *y).unwrap();
             let newban = newban.r#move(xx, yy).unwrap();
-            let val = ShNode::think_internal_ab(&leaf, &newban, alpha, beta);
+            let val = ShNode::think_internal_ab(leaf, &newban, alpha, beta);
 // if xx == 0 {println!("{x} {y} {xx} {yy} + {:?}", val);}
             leaf.write().unwrap().hyoka = val;
             let val = val.unwrap();
@@ -717,7 +706,7 @@ impl ShNode {
         }
         if depth == 0 {
             nod.kyokumen = 1;
-            return Some(ShNode::evaluate(&ban));
+            return Some(ShNode::evaluate(ban));
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -750,7 +739,7 @@ impl ShNode {
                     ShNode::new(mvx, mvy, depth - 1, teban)));
             nod.child.push(leaf.clone());
             let val = ShNode::think_internal_ab(
-                &mut nod.child[idx], &newban, -beta, -newalpha);
+                &nod.child[idx], &newban, -beta, -newalpha);
 
             {
                 let mut lf = leaf.write().unwrap();
