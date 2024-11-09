@@ -51,8 +51,8 @@ pub struct Best {
 
 impl Best {
     #[allow(dead_code)]
-    pub fn new(h : f32, x : u8, y : u8) -> Best {
-        Best { hyoka: h, x: x, y: y }
+    pub fn new(hyoka : f32, x : u8, y : u8) -> Best {
+        Best { hyoka, x, y }
     }
 
     pub fn pos(&self) -> String {
@@ -79,16 +79,16 @@ pub struct ShNode {
 
 impl ShNode {
     #[allow(dead_code)]
-    pub fn new(x : u8, y : u8, depth : u8, t : i8) -> ShNode {
+    pub fn new(x : u8, y : u8, depth : u8, teban : i8) -> ShNode {
         ShNode {
             child : Vec::<Arc<RwLock<ShNode>>>::new(),
             hyoka : None,
             kyokumen : 0,
             best : None,
-            x : x,
-            y : y,
-            depth : depth,
-            teban : t,
+            x,
+            y,
+            depth,
+            teban,
         }
     }
 
@@ -247,7 +247,7 @@ impl ShNode {
             let leaf = Arc::new(RwLock::new(ShNode::new(mvx, mvy, depth - 1, teban)));
             nod.child.push(leaf.clone());
             let val = ShNode::think_internal(
-                &mut nod.child[idx], &newban);
+                &nod.child[idx], &newban);
 
             {
                 let mut lf = leaf.write().unwrap();

@@ -7,8 +7,8 @@ pub enum Mode {
   Learn,
   Duel,
   DuelExt,
-  GTP,
-  RFEN,
+  Gtp,
+  Rfen,
   Play,
   Help,
   InitPos,
@@ -18,7 +18,7 @@ pub enum Mode {
 #[derive(Debug, PartialEq)]
 pub enum Opponent {
     None,
-    CUI,
+    Cui,
     Edax,
     Ruversi,
 }
@@ -105,7 +105,7 @@ impl MyOption {
                 skip -= 1;
                 continue;
             }
-            let e = args.iter().nth(i).unwrap().to_string();
+            let e = args.get(i).unwrap().to_string();
             if e.starts_with("--") {
                 if !old.is_empty() {
                     panic!("\"{old}\" was not specified correctly.");
@@ -116,57 +116,43 @@ impl MyOption {
                     opt.mode = Mode::Learn;
                 } else if e == "--duel" {
                     opt.mode = Mode::Duel;
-                    match args.iter().nth(i + 1) {
-                        Some(lvl) => {
-                            let n = lvl.parse::<i8>();
-                            match n {
-                                Ok(level) => {
-                                    if level > 0 {
-                                        opt.duellv = level;
-                                        skip = 1;
-                                    }
-                                },
-                                _ => {},
+                    if let Some(lvl) = args.get(i + 1) {
+                        if let Ok(level) = lvl.parse::<i8>() {
+                            if level > 0 {
+                                opt.duellv = level;
+                                skip = 1;
                             }
-                        },
-                        _ => {},
+                        }
                     }
                 } else if e == "--duelext" {
                     opt.mode = Mode::DuelExt;
-                    match args.iter().nth(i + 1) {
-                        Some(lvl) => {
-                            let n = lvl.parse::<i8>();
-                            match n {
-                                Ok(level) => {
-                                    if level > 0 {
-                                        opt.duellv = level;
-                                        skip = 1;
-                                    }
-                                },
-                                _ => {},
+                    if let Some(lvl) = args.get(i + 1) {
+                        if let Ok(level) = lvl.parse::<i8>() {
+                            if level > 0 {
+                                opt.duellv = level;
+                                skip = 1;
                             }
-                        },
-                        _ => {},
+                        }
                     }
                 } else if e == "--play" {
                     opt.mode = Mode::Play;
                     if opt.opponent == Opponent::None {
-                        opt.opponent = Opponent::CUI;
+                        opt.opponent = Opponent::Cui;
                     }
                 } else if e == "--playb" {
                     opt.mode = Mode::Play;
                     opt.turn = board::SENTE;
                     if opt.opponent == Opponent::None {
-                        opt.opponent = Opponent::CUI;
+                        opt.opponent = Opponent::Cui;
                     }
                 } else if e == "--playw" {
                     opt.mode = Mode::Play;
                     opt.turn = board::GOTE;
                     if opt.opponent == Opponent::None {
-                        opt.opponent = Opponent::CUI;
+                        opt.opponent = Opponent::Cui;
                     }
                 } else if e == "--rfen" {
-                    opt.mode = Mode::RFEN;
+                    opt.mode = Mode::Rfen;
                     old = e;
                 } else if e == "--depth" {
                     old = e;
@@ -207,11 +193,11 @@ impl MyOption {
                 } else if e == "--Ruconf" {
                     old = e;
                 } else if e == "--gtp" {
-                    opt.mode = Mode::GTP;
+                    opt.mode = Mode::Gtp;
                 } else {
                 }
             } else if old.is_empty() && e.starts_with("-") {
-                if e.find("-N").is_some() {
+                if e.contains("-N") {
                     let n : Vec<&str> = e.split("N").collect();
                     let n = n[1].parse::<usize>();
                     if n.is_ok() {
@@ -257,18 +243,14 @@ impl MyOption {
                     }
                     old.clear();
                 } else if old == "--ev1" {
-                    if std::path::Path::new(&e).exists() {
-                        opt.evaltable1 = e;
-                    } else if ["RANDOM"].contains(&e.as_str()) {
+                    if std::path::Path::new(&e).exists() || "RANDOM" == e {
                         opt.evaltable1 = e;
                     } else {
                         return Err(format!("failed find \"{e}\"."));
                     }
                     old.clear();
                 } else if old == "--ev2" {
-                    if std::path::Path::new(&e).exists() {
-                        opt.evaltable2 = e;
-                    } else if ["RANDOM"].contains(&e.as_str()) {
+                    if std::path::Path::new(&e).exists() || "RANDOM" == e {
                         opt.evaltable2 = e;
                     } else {
                         return Err(format!("failed find \"{e}\"."));
@@ -278,7 +260,7 @@ impl MyOption {
                     opt.rfen = e;
                     old.clear();
                 } else if old == "--depth" {
-                    match i32::from_str_radix(&e, 10) {
+                    match e.parse::<i32>() {
                         Ok(dep) => {
                             if dep <= 0 || dep > 60 {
                                 return Err(format!("depth {dep} is invalid number."));

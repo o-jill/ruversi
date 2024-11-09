@@ -52,8 +52,8 @@ pub struct Best {
 }
 
 impl Best {
-    pub fn new(h : f32, x : u8, y : u8) -> Best {
-        Best { hyoka: h, x: x, y: y }
+    pub fn new(hyoka : f32, x : u8, y : u8) -> Best {
+        Best { hyoka, x, y }
     }
 
     pub fn pos(&self) -> String {
@@ -101,16 +101,16 @@ pub fn init_weight() {
 }
 
 impl NodeBB {
-    pub fn new(x : u8, y : u8, depth : u8, t : i8) -> NodeBB {
+    pub fn new(x : u8, y : u8, depth : u8, teban : i8) -> NodeBB {
         NodeBB {
             child : Vec::<NodeBB>::new(),
             hyoka : None,
             kyokumen : 0,
             best : None,
-            x : x,
-            y : y,
-            depth : depth,
-            teban : t,
+            x,
+            y,
+            depth,
+            teban,
         }
     }
 

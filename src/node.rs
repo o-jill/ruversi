@@ -28,8 +28,8 @@ pub struct Best {
 }
 
 impl Best {
-    pub fn new(h : f32, x : u8, y : u8) -> Best {
-        Best { hyoka: h, x: x, y: y }
+    pub fn new(hyoka : f32, x : u8, y : u8) -> Best {
+        Best { hyoka, x, y }
     }
 
     pub fn pos(&self) -> String {
@@ -72,16 +72,16 @@ pub fn init_weight() {
 }
 
 impl Node {
-    pub fn new(x : u8, y : u8, depth : u8, t : i8) -> Node {
+    pub fn new(x : u8, y : u8, depth : u8, teban : i8) -> Node {
         Node {
             child : Vec::<Node>::new(),
             hyoka : None,
             kyokumen : 0,
             best : None,
-            x : x,
-            y : y,
-            depth : depth,
-            teban : t,
+            x,
+            y,
+            depth,
+            teban,
         }
     }
 
@@ -137,14 +137,9 @@ impl Node {
             return None;
         }
         // let sum = 0;
-        let moves = ban.genmove();
-
         // no more empty cells
-        if moves.is_none() {
-            return None;
-        }
+        let mut moves = ban.genmove()?;
 
-        let mut moves = moves.unwrap();
         if moves.is_empty() {  // pass
             moves.push((0, 0));
             node.depth += 1;
@@ -248,7 +243,7 @@ impl Node {
         let mut depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
-            return Some(Node::evaluate(&ban));
+            return Some(Node::evaluate(ban));
         }
         if ban.is_passpass() {
             node.kyokumen = 1;
@@ -305,7 +300,7 @@ impl Node {
         }
         if depth == 0 {
             node.kyokumen = 1;
-            return Some(Node::evalwtt(&ban, tt));
+            return Some(Node::evalwtt(ban, tt));
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -358,14 +353,10 @@ impl Node {
             return None;
         }
         // let sum = 0;
-        let moves = ban.genmove();
-
         // no more empty cells
-        if moves.is_none() {
-            return None;
-        }
+        let mut moves = ban.genmove()?;
+
         let mut tt = transptable::TranspositionTable::new();
-        let mut moves = moves.unwrap();
         if moves.is_empty() {  // pass
             moves.push((0, 0));
             depth += 1;
@@ -509,14 +500,10 @@ impl Node {
             return None;
         }
         // let sum = 0;
-        let moves = ban.genmove();
-
         // no more empty cells
-        if moves.is_none() {
-            return None;
-        }
+        let mut moves1 = ban.genmove()?;
+
         let mut tt = transptable::TranspositionTable::new();
-        let mut moves1 = moves.unwrap();
         if moves1.is_empty() {  // pass
             moves1.push((0, 0));
             depth += 1;
@@ -570,8 +557,8 @@ impl Node {
             let mut tt = transptable::TranspositionTable::new();
             let teban = ban2.teban;
             let mut node2 = Node::new(0, 0, depth, board::NONE);
-            let mut alpha : f32 = -100000.0;
-            let mut beta : f32 = 100000.0;
+            let mut alpha = -100000.0f32;
+            let mut beta = 100000.0f32;
             for mv in moves1 {
                 let (x1, y1, x2, y2) = mv;
                 let newban = ban2.r#move(x1, y1).unwrap();
@@ -586,16 +573,14 @@ impl Node {
                         Some(n) => n,
                     };
                 nd1.child.push(Node::new(x2, y2, depth - 2, -teban));
-                let mut nd2 = nd1.child.last_mut().unwrap();
+                let nd2 = nd1.child.last_mut().unwrap();
 
                 let val = if cfg!(feature="withtt") {
                         Node::think_internal_ab_tt(
-                            &mut nd2,
-                            &newban2, alpha, beta, &mut tt)
+                            nd2, &newban2, alpha, beta, &mut tt)
                     } else {
                         Node::think_internal_ab(
-                            &mut nd2,
-                            &newban2, alpha, beta)
+                            nd2, &newban2, alpha, beta)
                     };
 
                 nd1.hyoka = val;
@@ -651,13 +636,13 @@ impl Node {
                     Some(n) => n,
                 };
             nd1.child.push(Node::new(x2, y2, depth - 2, -teban));
-            let mut nd2 = nd1.child.last_mut().unwrap();
+            let nd2 = nd1.child.last_mut().unwrap();
             let val = if cfg!(feature="withtt") {
                     Node::think_internal_ab_tt(
-                        &mut nd2, &newban2, alpha, beta, &mut tt)
+                        nd2, &newban2, alpha, beta, &mut tt)
                 } else {
                     Node::think_internal_ab(
-                        &mut nd2, &newban2, alpha, beta)
+                        nd2, &newban2, alpha, beta)
                 };
 
             nd1.hyoka = val;
@@ -707,7 +692,7 @@ impl Node {
         }
         if depth == 0 {
             node.kyokumen = 1;
-            return Some(Node::evalwtt(&ban, tt));
+            return Some(Node::evalwtt(ban, tt));
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -775,7 +760,7 @@ impl Node {
         }
         if depth == 0 {
             node.kyokumen = 1;
-            return Some(Node::evaluate(&ban));
+            return Some(Node::evaluate(ban));
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -843,13 +828,9 @@ impl Node {
             return None;
         }
         // let sum = 0;
-        let moves = ban.genmove();
-
         // no more empty cells
-        if moves.is_none() {
-            return None;
-        }
-        let mut moves = moves.unwrap();
+        let mut moves = ban.genmove()?;
+
         // let n = moves.len();
         if moves.is_empty() {  // pass
             depth += 1;
@@ -864,8 +845,8 @@ impl Node {
                 pa.partial_cmp(&pb).unwrap()
             });
         }
-        let mut alpha : f32 = -100000.0;
-        let mut beta : f32 = 100000.0;
+        let mut alpha = -100000.0f32;
+        let mut beta = 100000.0f32;
         let teban = ban.teban;
         for mv in moves {
             let x = mv.0;
@@ -907,8 +888,8 @@ impl Node {
         if depth == 0 {
             println!("depth zero");
             node.kyokumen = 1;
-            return Some(Node::evaluate(&ban));
-            // return Some(Node::evalwtt(&ban));
+            return Some(Node::evaluate(ban));
+            // return Some(Node::evalwtt(ban));
         }
         if ban.is_passpass() {
             println!("pass pass");

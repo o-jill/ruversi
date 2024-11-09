@@ -1238,7 +1238,7 @@ fn gtp() {
         path = &patha;
     }
 
-    let mut gtp = gtprotocol::GTP::new();
+    let mut gtp = gtprotocol::Gtp::new();
     match gtp.start(path) {
         Err(msg) => panic!("{msg}"),
         Ok(msg) => println!("{msg}"),
@@ -1258,7 +1258,7 @@ fn main() {
     if *mode == myoption::Mode::Help {
         help();
     }
-    if *mode == myoption::Mode::GTP {
+    if *mode == myoption::Mode::Gtp {
         gtp();
     }
 
@@ -1318,7 +1318,7 @@ fn main() {
         let turn = MYOPT.get().unwrap().turn;
         let opp = &MYOPT.get().unwrap().opponent;
         match opp {
-            myoption::Opponent::CUI => {
+            myoption::Opponent::Cui => {
                 play(
                     depth,
                     if turn == board::NONE {
@@ -1351,7 +1351,7 @@ fn main() {
             _ => {panic!("{:?} is not supported yet.", opp)},
         }
     }
-    if *mode == myoption::Mode::RFEN {
+    if *mode == myoption::Mode::Rfen {
         let rfen = &MYOPT.get().unwrap().rfen;
         verbose(rfen, depth);
     }

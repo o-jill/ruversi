@@ -2,7 +2,7 @@ use super::*;
 use std::fs::OpenOptions;
 // use std::io::{self, Write};
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(PartialEq)]
 enum Status {
@@ -11,7 +11,7 @@ enum Status {
     Error,
 }
 
-pub struct GTP {
+pub struct Gtp {
     cmd : String,
     resp : String,
     status : Status,
@@ -20,9 +20,9 @@ pub struct GTP {
     ev: String,
 }
 
-impl GTP {
-    pub fn new() -> GTP {
-        GTP {
+impl Gtp {
+    pub fn new() -> Gtp {
+        Gtp {
             cmd : String::new(),
             resp : String::new(),
             status : Status::Play,
@@ -43,13 +43,13 @@ impl GTP {
     pub fn start(&mut self, path : &str) -> Result<String, String> {
 
         let log = OpenOptions::new()
-                .write(true).append(true).open("/tmp/ruversi.log");
+                .append(true).open("/tmp/ruversi.log");
         if log.is_err() {
             return Err(log.err().unwrap().to_string());
         }
 
         let mut log = log.unwrap();
-        log.write(format!("started!!!\n").as_bytes()).unwrap();
+        log.write_all("started!!!\n".as_bytes()).unwrap();
 
         self.ev = String::from(path);
 
@@ -58,12 +58,12 @@ impl GTP {
             std::io::stdin().read_line(&mut txt).unwrap();
             if txt.is_empty() {continue;}
 
-            log.write(format!("in:{txt}").as_bytes()).unwrap();
-            self.read(&txt.trim_end());
-            log.write(format!("out:{}\n", self.resp).as_bytes()).unwrap();
+            log.write_all(format!("in:{txt}").as_bytes()).unwrap();
+            self.read(txt.trim_end());
+            log.write_all(format!("out:{}\n", self.resp).as_bytes()).unwrap();
             if self.is_error() {
-                log.write(format!("ERROR: {}\n", self.emsg).as_bytes()).unwrap();
-                return Err(format!("{}", self.emsg));
+                log.write_all(format!("ERROR: {}\n", self.emsg).as_bytes()).unwrap();
+                return Err(self.emsg.to_string());
             }
 
             if self.is_quit() {
@@ -74,8 +74,8 @@ impl GTP {
     }
 
     fn readpos(xypos : &str) -> Option<(u8, u8)> {
-        let x = xypos.chars().nth(0).unwrap() as u8 - 'A' as u8 + 1;
-        let y = xypos.chars().nth(1).unwrap() as u8 - '0' as u8;
+        let x = xypos.chars().nth(0).unwrap() as u8 - b'A' + 1;
+        let y = xypos.chars().nth(1).unwrap() as u8 - b'0';
 
         Some((x, y))
     }
@@ -138,14 +138,16 @@ impl GTP {
                                 self.ban.pass();
                             } else {    
                                 self.status = Status::Error;
-                                self.emsg = format!("error: turn mismatch.");
+                                self.emsg =
+                                    "error: turn mismatch.".to_string();
                                 self.ng_respond(id);
                                 return;
                             }
                         },
                         _ => {
                             self.status = Status::Error;
-                            self.emsg = format!("error: no blank cells to play.");
+                            self.emsg =
+                                "error: no blank cells to play.".to_string();
                             self.ng_respond(id);
                             return;
                     }
@@ -192,7 +194,8 @@ impl GTP {
                     "white" => {bitboard::GOTE},
                     _ => {
                         self.status = Status::Error;
-                        self.emsg = format!("error: unknown command [{line}].");
+                        self.emsg =
+                            format!("error: unknown command [{line}].");
                         return;
                     }
                 };
@@ -203,7 +206,7 @@ impl GTP {
                                 self.ban.pass();
                             } else {
                                 self.status = Status::Error;
-                                self.emsg = format!("error: turn mismatch.");
+                                self.emsg = "error: turn mismatch.".to_string();
                                 return;
                             }
                         },
@@ -215,13 +218,14 @@ impl GTP {
                     }
                 }
                 let (x, y);
-                match GTP::readpos(elem[idx + 2]) {
+                match Gtp::readpos(elem[idx + 2]) {
                     Some(xy) => {
                         (x, y) = xy;
                         match self.ban.r#move(x, y) {
                             Err(msg) => {
                                 self.status = Status::Error;
-                                self.emsg = String::from(msg) + &self.ban.to_str();
+                                self.emsg =
+                                    String::from(msg) + &self.ban.to_str();
                             },
                             Ok(b) => {self.ban = b;}
                         }
@@ -255,7 +259,6 @@ impl GTP {
                                 self.status = Status::Error;
                                 self.emsg = format!("{emsg} {}", self.ev);
                                 self.ng_respond(id);
-                                return;
                             },
                             _ => {
                                 // self.emsg = format!("read eval: {}.", &self.ev);

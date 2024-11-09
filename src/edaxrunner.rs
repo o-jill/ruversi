@@ -69,14 +69,14 @@ impl EdaxRunner {
         for line in lines.lines() {
             match line {
                 Ok(l) =>{
-                    if l.starts_with("obf:") {
-                        self.obfpath = String::from(l[4..].trim());
-                    } else if l.starts_with("curdir:") {
-                        self.curdir = String::from(l[7..].trim());
-                    } else if l.starts_with("edax:") {
-                        self.path = String::from(l[5..].trim());
-                    } else if l.starts_with("evfile:") {
-                        self.evfile = String::from(l[7..].trim());
+                    if let Some(obf) = l.strip_prefix("obf:") {
+                        self.obfpath = String::from(obf.trim());
+                    } else if let Some(cd) = l.strip_prefix("curdir:") {
+                        self.curdir = String::from(cd.trim());
+                    } else if let Some(ed) = l.strip_prefix("edax:") {
+                        self.path = String::from(ed.trim());
+                    } else if let Some(evf) = l.strip_prefix("evfile::") {
+                        self.evfile = String::from(evf.trim());
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -94,8 +94,8 @@ impl EdaxRunner {
     pub fn obf2file(&self, obf : &str) {
         // println!("put board to a file...");
         let mut f = File::create(&self.obfpath).unwrap();
-        f.write(obf.as_bytes()).unwrap();
-        f.write("\n".as_bytes()).unwrap();
+        f.write_all(obf.as_bytes()).unwrap();
+        f.write_all("\n".as_bytes()).unwrap();
         f.flush().unwrap();
     }
 
@@ -130,7 +130,7 @@ impl EdaxRunner {
         xtxt.push(lines[2].chars().nth(i + 1).unwrap());
 
         let scoreptn = regex::Regex::new("\\s+([+-]\\d\\d)").unwrap();
-        match scoreptn.captures(&lines[2]) {
+        match scoreptn.captures(lines[2]) {
             Some(cap) => {Ok((xtxt, String::from(&cap[1])))},
             _ => {Err(format!("invalid input from edax. \"{}\" pos{xtxt}", lines[2]))}
         }
@@ -185,12 +185,12 @@ impl RuversiRunner {
         for line in lines.lines() {
             match line {
                 Ok(l) =>{
-                    if l.starts_with("curdir:") {
-                        self.curdir = String::from(l[7..].trim());
-                    } else if l.starts_with("path:") {
-                        self.path = String::from(l[5..].trim());
-                    } else if l.starts_with("evfile:") {
-                        self.evfile = String::from(l[7..].trim());
+                    if let Some(cd) = l.strip_prefix("curdir:") {
+                        self.curdir = String::from(cd.trim());
+                    } else if let Some(ed) = l.strip_prefix("path:") {
+                        self.path = String::from(ed.trim());
+                    } else if let Some(evf) = l.strip_prefix("evfile::") {
+                        self.evfile = String::from(evf.trim());
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -225,18 +225,25 @@ impl RuversiRunner {
         let lines : Vec<_> = txt.split("\n").collect();
         println!("{}", lines[12]);
         let posptn = regex::Regex::new(" (@@|\\[\\])([a-h][1-8])").unwrap();
-        let xtxt;
-        match posptn.captures(&lines[12]) {
-            Some(cap) => {xtxt = String::from(&cap[2]);},
+        let xtxt = match posptn.captures(lines[12]) {
+            Some(cap) => {
+                String::from(&cap[2])
+            },
             _ => {
-                return Err(format!("invalid input from ruversi. \"{}\"", lines[12]));
+                return Err(
+                    format!("invalid input from ruversi. \"{}\"", lines[12]));
             }
         };
 
         let scoreptn = regex::Regex::new("val:(-?\\d+\\.\\d+) ").unwrap();
-        match scoreptn.captures(&lines[12]) {
-            Some(cap) => {Ok((xtxt, String::from(&cap[1])))},
-            _ => {Err(format!("invalid input from edax. \"{}\" pos{xtxt}", lines[2]))}
+        match scoreptn.captures(lines[12]) {
+            Some(cap) => {
+                Ok((xtxt, String::from(&cap[1])))
+            },
+            _ => {
+                Err(format!("invalid input from edax. \"{}\" pos{xtxt}",
+                    lines[2]))
+            }
         }
     }
 }
