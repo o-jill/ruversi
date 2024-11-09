@@ -631,7 +631,7 @@ impl NodeBB {
         // no more empty cells
         let _moves = ban.genmove()?;
 
-        let mut node = nd;
+        let node = nd;
 
         let yomikiri = 12;
         let yose = 18;

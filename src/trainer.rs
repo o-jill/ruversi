@@ -34,8 +34,8 @@ pub struct Trainer {
 impl Trainer {
     pub fn new(eta: f32, repeat: usize, path: &str) -> Trainer {
         Trainer {
-            eta: eta,
-            repeat: repeat,
+            eta,
+            repeat,
             path: String::from(path),
             progress: Vec::new(),
             nfiles: 0,
@@ -175,7 +175,7 @@ impl Trainer {
     /**
      * 読み込んだ棋譜をキャッシュする版
      */
-    pub fn learn_stones_cache(&self, files : &mut Vec<String>) {
+    pub fn learn_stones_cache(&self, files : &mut [String]) {
         let showprgs = self.need_progress();
         let mut rng = rand::thread_rng();
         let mut kifucache : Vec<(String, kifu::Kifu)> = Vec::new();
@@ -188,16 +188,18 @@ impl Trainer {
                 let kifu = kifu::Kifu::from(&lines);
                 let p = String::from(&path);
                 kifucache.push((p, kifu.copy()));
-                unsafe {
-                    match if cfg!(feature="bitboard") {
-                            self.run4stones(&kifu, nodebb::WEIGHT.as_mut().unwrap())
+                if let Err(msg) =
+                    unsafe {
+                        if cfg!(feature="bitboard") {
+                            self.run4stones(
+                                &kifu, nodebb::WEIGHT.as_mut().unwrap())
                         } else {
-                            self.run4stones(&kifu, node::WEIGHT.as_mut().unwrap())
-                        } {
-                        Err(msg) => {panic!("{}", msg);},
-                        _ => {}
-                    }
-                }
+                            self.run4stones(
+                                &kifu, node::WEIGHT.as_mut().unwrap())
+                        }
+                    } {
+                        panic!("{}", msg);
+                    };
             }
             if showprgs {println!();}
         }
@@ -210,18 +212,18 @@ impl Trainer {
             if showprgs {print!("{} / {}\r", i, self.repeat);}
             for idx in numbers.iter() {
                 let (_path, kifu) = kifucache.get(*idx).unwrap();
-                unsafe {
-                    match if cfg!(feature="bitboard") {
-                        self.run4stones(
-                            kifu, nodebb::WEIGHT.as_mut().unwrap())
+                if let Err(msg) =
+                    unsafe {
+                        if cfg!(feature="bitboard") {
+                            self.run4stones(
+                                kifu, nodebb::WEIGHT.as_mut().unwrap())
                         } else {
                             self.run4stones(
                                 kifu, node::WEIGHT.as_mut().unwrap())
-                        } {
-                        Err(msg) => {panic!("{}", msg);},
-                        _ => {}
-                    }
-                }
+                        }
+                    } {
+                        panic!("{}", msg);
+                    };
             }
             if showprgs {println!();}
         }
@@ -291,7 +293,7 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
                 fnm.contains("kifu")
@@ -427,7 +429,7 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
                 fnm.contains("kifu")
@@ -591,7 +593,7 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
                 fnm.contains("kifu")
@@ -738,7 +740,7 @@ impl Trainer {
                         }
                         if rfenidxgrp[0] == PROGRESS {
                             let mut w = weight::Weight::new();
-                            w.copy(&weight);
+                            w.copy(weight);
                             txprogress.send(w).unwrap();
                             continue;
                         }
@@ -777,7 +779,7 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
                 fnm.contains("kifu")
@@ -980,7 +982,7 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
                 fnm.contains("kifu")
@@ -1257,7 +1259,7 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
                 fnm.find("kifu").is_some()

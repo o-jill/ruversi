@@ -16,7 +16,7 @@ pub struct RfenSet {
 impl RfenSet {
   pub fn new(tag : String, rfen : String) -> RfenSet {
       RfenSet {
-          tag : tag,
+          tag,
           rfens : vec![rfen]
       }
   }

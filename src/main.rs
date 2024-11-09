@@ -242,9 +242,8 @@ fn verbose(rfen : &str, depth : u8) {
 
 fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
     for (idx, rfen) in rfentbl.iter().enumerate() {
-        let kifutxt;
         let think = MYOPT.get().unwrap().think.as_str();
-        if cfg!(feature="bitboard") {
+        let kifutxt = if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
             // play
@@ -264,7 +263,7 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
                 },
                 _ => { panic!("unknown thinking method.") }
             }
-            kifutxt = g.kifu.to_str()
+            g.kifu.to_str()
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
@@ -279,8 +278,8 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
                 },
                 _ => { panic!("unknown thinking method.") }
             }
-            kifutxt = g.kifu.to_str()
-        }
+            g.kifu.to_str()
+        };
 
         // store kifu
         let kifuname = format!("./kifu/kifu{grp}{idx:05}.txt");
@@ -347,7 +346,7 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
     let mut files = dir.filter_map(|entry| {
         entry.ok().and_then(|e|
             e.path().file_name().and_then(|n|
-                n.to_str().map(|s| String::from(s))
+                n.to_str().map(String::from)
             )
         )}).collect::<Vec<String>>().iter().filter(|&fnm| {
             fnm.contains("kifu")
@@ -431,7 +430,7 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
         let files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
             fnm.contains("kifu")
@@ -447,7 +446,7 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
 /// - repeat : Number of repeat. None as 10000.
 /// - eta : learning ratio. None as 0.0001.
 fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str,
-        prgs : &Vec<u32>, trmd : &myoption::TrainingMode, mbsize : usize) {
+        prgs : &[u32], trmd : &myoption::TrainingMode, mbsize : usize) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.1);
     println!("eta:{eta}");
@@ -513,7 +512,7 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str,
         let files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
             fnm.contains("kifu")
@@ -936,17 +935,15 @@ fn readeval(path: &str) {
     if cfg!(feature="bitboard") {
         // println!("read weight for bitboard");
         unsafe {
-            match nodebb::WEIGHT.as_mut().unwrap().read(path) {
-                Err(msg) => {panic!("{}", msg)},
-                _ => {}
+            if let Err(msg) = nodebb::WEIGHT.as_mut().unwrap().read(path) {
+                panic!("{}", msg);
             }
         }
     } else {
         // println!("read weight for byteboard");
         unsafe {
-            match node::WEIGHT.as_mut().unwrap().read(path) {
-                Err(msg) => {panic!("{}", msg)},
-                _ => {}
+            if let Err(msg) = node::WEIGHT.as_mut().unwrap().read(path) {
+                panic!("{}", msg);
             }
         }
     }
@@ -1198,13 +1195,10 @@ fn equalrfen() -> Result<(), String> {
         match er.run(&ban.to_obf()) {
             Ok((_, score)) => {
                 // println!("score:{score}");
-                match ["-01", "+00", "+01"].iter().position(|&x| x == score) {
-                    Some(i) => {
-                        res += &format!("{rfen}, {score}\n");
-                        m1_0p1[i] += 1;
-                        count += 1;
-                    },
-                    None => {}
+                if let Some(i) = ["-01", "+00", "+01"].iter().position(|&x| x == score) {
+                    res += &format!("{rfen}, {score}\n");
+                    m1_0p1[i] += 1;
+                    count += 1;
                 }
             },
             Err(msg) => {panic!("{msg}");}

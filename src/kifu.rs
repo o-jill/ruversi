@@ -14,12 +14,12 @@ pub struct Te {
 }
 
 impl Te {
-    pub fn new(x : usize, y : usize, t : i8, rfen : String) -> Te {
+    pub fn new(x : usize, y : usize, teban : i8, rfen : String) -> Te {
         Te {
-            x : x,
-            y : y,
-            teban : t,
-            rfen : rfen
+            x,
+            y,
+            teban,
+            rfen,
         }
     }
 
