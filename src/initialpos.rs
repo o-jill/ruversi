@@ -61,12 +61,9 @@ impl InitialPos {
                 Ok(line) => {
                     // println!("line:{}", line);
                     let tagptn = regex::Regex::new("#\\s+(\\S+) *").unwrap();
-                    match tagptn.captures(&line) {
-                        Some(cap) => {
+                    if let Some(cap) = tagptn.captures(&line) {
                             tag = String::from(&cap[1]);
                             // println!("tag:{}", tag);
-                        },
-                        _ => {}
                     }
                     let rfenptn =
                         regex::Regex::new("^([1-8A-Ha-h/]+ [bw])").unwrap();

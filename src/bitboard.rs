@@ -1052,7 +1052,7 @@ impl BitBoard {
             if (tgt & bit) == 0 {return fcells;}
 
             fcells |= bit;
-            *count = *count + 1;
+            *count += 1;
         }
         fcells
     }
@@ -1065,7 +1065,7 @@ impl BitBoard {
             if (tgt & bit) == 0 {return fcells;}
 
             fcells |= bit;
-            *count = *count + 1;
+            *count += 1;
         }
         fcells
     }
@@ -1078,7 +1078,7 @@ impl BitBoard {
             if (tgt & bit) == 0 {return fcells;}
 
             fcells |= bit;
-            *count = *count + 1;
+            *count += 1;
         }
         fcells
     }
@@ -1091,7 +1091,7 @@ impl BitBoard {
             if (tgt & bit) == 0 {return fcells;}
 
             fcells |= bit;
-            *count = *count + 1;
+            *count += 1;
         }
         fcells
     }

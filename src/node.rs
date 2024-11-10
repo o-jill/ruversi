@@ -85,6 +85,11 @@ impl Node {
         }
     }
 
+    fn asignbest(&mut self, hyoka : f32, x : u8, y : u8) {
+        self.hyoka = Some(hyoka);
+        self.best = Some(Best::new(hyoka, x, y));
+    }
+
     #[cfg(target_arch="x86_64")]
     fn evaluate(ban : &board::Board) -> f32 {
         unsafe {
@@ -176,12 +181,9 @@ impl Node {
                 let best = node2.best.as_ref();
                 let val = val.unwrap();
                 let fteban = teban as f32;
-                if best.is_none() {
-                    node2.best = Some(Best::new(val, x, y));
-                    node2.hyoka = Some(val);
-                } else if fteban * best.unwrap().hyoka < fteban * val {
-                    node2.best = Some(Best::new(val, x, y));
-                    node2.hyoka = Some(val);
+                if best.is_none()
+                    || fteban * best.unwrap().hyoka < fteban * val {
+                    node2.asignbest(val, x, y);
                 } else {
                     // node2.child[node.child.len() - 1].as_ref().unwrap().release();
                     node2.child[idx].release();
@@ -213,14 +215,9 @@ impl Node {
             let best = node.best.as_ref();
             let val = val.unwrap();
             let fteban = teban as f32;
-            if best.is_none() {
-                node.best = Some(Best::new(val, x, y));
-                node.hyoka = Some(val);
-                // println!("best : {}", val);
-            } else if fteban * best.unwrap().hyoka < fteban * val {
-                node.best = Some(Best::new(val, x, y));
-                node.hyoka = Some(val);
-                // println!("best : -> {}", val);
+            if best.is_none()
+                || fteban * best.unwrap().hyoka < fteban * val {
+                node.asignbest(val, x, y);
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
                 node.child[idx].release();
@@ -279,9 +276,8 @@ impl Node {
             let best = node.best.as_ref();
             let val = val.unwrap();
             let fteban = teban as f32;
-            if best.is_none() {
-                node.best = Some(Best::new(val, x, y));
-            } else if best.unwrap().hyoka * fteban < val * fteban {
+            if best.is_none()
+                || best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, x, y));
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
@@ -332,9 +328,8 @@ impl Node {
             let best = node.best.as_ref();
             let val = val.unwrap();
             let fteban = teban as f32;
-            if best.is_none() {
-                node.best = Some(Best::new(val, x, y));
-            } else if best.unwrap().hyoka * fteban < val * fteban {
+            if best.is_none()
+                || best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, x, y));
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
@@ -415,12 +410,9 @@ impl Node {
                 } else if teban == board::GOTE && beta > val {
                     beta = val;
                 }
-                if best.is_none() {
-                    node2.best = Some(Best::new(val, x, y));
-                    node2.hyoka = Some(val);
-                } else if best.unwrap().hyoka * fteban < val * fteban {
-                    node2.best = Some(Best::new(val, x, y));
-                    node2.hyoka = Some(val);
+                if best.is_none()
+                    || best.unwrap().hyoka * fteban < val * fteban {
+                    node2.asignbest(val, x, y);
                 } else {
                     // node2.child[node.child.len() - 1].as_ref().unwrap().release();
                     node2.child[idx].release();
@@ -465,12 +457,9 @@ impl Node {
             } else if teban == board::GOTE && beta > val {
                 beta = val;
             }
-            if best.is_none() {
-                node.best = Some(Best::new(val, x, y));
-                node.hyoka = Some(val);
-            } else if best.unwrap().hyoka * fteban < val * fteban {
-                node.best = Some(Best::new(val, x, y));
-                node.hyoka = Some(val);
+            if best.is_none()
+                || best.unwrap().hyoka * fteban < val * fteban {
+                node.asignbest(val, x, y);
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
                 node.child[idx].release();
@@ -593,11 +582,9 @@ impl Node {
                 } else if teban == board::GOTE && beta > val {
                     beta = val;
                 }
-                if best.is_none() {
-                    node2.best = Some(Best::new(val, x1, y1));
-                    node2.hyoka = Some(val);
-                    nd1.best = Some(Best::new(val, x2, y2));
-                } else if best.unwrap().hyoka * fteban < val * fteban {
+                if best.is_none()
+                    || best.unwrap().hyoka * fteban < val * fteban {
+                    // node2.asignbest(val, x1, y1);
                     node2.best = Some(Best::new(val, x1, y1));
                     node2.hyoka = Some(val);
                     nd1.best = Some(Best::new(val, x2, y2));
@@ -655,11 +642,9 @@ impl Node {
             } else if teban == board::GOTE && beta > val {
                 beta = val;
             }
-            if best.is_none() {
-                node.best = Some(Best::new(val, x1, y1));
-                node.hyoka = Some(val);
-                nd1.best = Some(Best::new(val, x2, y2));
-            } else if best.unwrap().hyoka * fteban < val * fteban {
+            if best.is_none()
+                || best.unwrap().hyoka * fteban < val * fteban {
+                // node.asignbest(val, x1, y1);
                 node.best = Some(Best::new(val, x1, y1));
                 node.hyoka = Some(val);
                 nd1.best = Some(Best::new(val, x2, y2));
@@ -733,12 +718,9 @@ impl Node {
             if newalpha < -val {
                 newalpha = -val;
             }
-            if best.is_none() {
-                node.best = Some(Best::new(val, x, y));
-                continue;
-            }
             let fteban = teban as f32;
-            if best.unwrap().hyoka * fteban < val * fteban {
+            if best.is_none()
+                || best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, x, y));
                 continue;
             }
@@ -801,12 +783,9 @@ impl Node {
             if newalpha < -val {
                 newalpha = -val;
             }
-            if best.is_none() {
-                node.best = Some(Best::new(val, x, y));
-                continue;
-            }
             let fteban = teban as f32;
-            if best.unwrap().hyoka * fteban < val * fteban {
+            if best.is_none()
+                || best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, x, y));
                 continue;
             }
@@ -868,12 +847,9 @@ impl Node {
             } else if teban == board::GOTE && beta > val {
                 beta = val;
             }
-            if best.is_none() {
-                node.best = Some(Best::new(val, x, y));
-                node.hyoka = Some(val);
-            } else if best.unwrap().hyoka * fteban < val * fteban {
-                node.best = Some(Best::new(val, x, y));
-                node.hyoka = Some(val);
+            if best.is_none()
+                || best.unwrap().hyoka * fteban < val * fteban {
+                node.asignbest(val, x, y);
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
                 node.child[idx].release();
@@ -936,12 +912,9 @@ impl Node {
             if newalpha < -val {
                 newalpha = -val;
             }
-            if best.is_none() {
-                node.best = Some(Best::new(val, x, y));
-                continue;
-            }
             let fteban = teban as f32;
-            if best.unwrap().hyoka * fteban < val * fteban {
+            if best.is_none()
+                || best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, x, y));
                 continue;
             }

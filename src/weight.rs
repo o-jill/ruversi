@@ -409,7 +409,7 @@ impl Weight {
     }
 
     /// copy v3 data into v4.
-    fn convert(&mut self, tbl : &Vec<f32>, nhid : usize) {
+    fn convert(&mut self, tbl : &[f32], nhid : usize) {
         self.weight = [0.0f32 ; N_WEIGHT];
         // ban
         let n = nhid * board::CELL_2D;
@@ -476,17 +476,17 @@ impl Weight {
     }
 
     /// copy v3 data into v6.
-    fn fromv3tov6(&mut self, tbl : &Vec<f32>) {
+    fn fromv3tov6(&mut self, tbl : &[f32]) {
         self.convert(tbl, 4);
     }
 
     /// copy v4 data into v6.
-    fn fromv4tov6(&mut self, tbl : &Vec<f32>) {
+    fn fromv4tov6(&mut self, tbl : &[f32]) {
         self.convert(tbl, 8);
     }
 
     /// copy v5 data into v6.
-    fn fromv5tov6(&mut self, tbl : &Vec<f32>) {
+    fn fromv5tov6(&mut self, tbl : &[f32]) {
         self.convert(tbl, 16);
     }
 
@@ -828,8 +828,7 @@ impl Weight {
         let emm0 = vshlq_n_s32(emm0, 23);
         let pow2n = vreinterpretq_f32_s32(emm0);
 
-        let y4 = vmulq_f32(y4, pow2n);
-        y4
+        vmulq_f32(y4, pow2n)
     }
 
     /**
@@ -2958,7 +2957,7 @@ impl Weight {
              -> Result<(), String> {
         if ban.nblank() < mid {return Ok(());}
 
-        self.learnbb(&ban, winner, eta);
+        self.learnbb(ban, winner, eta);
         Ok(())
     }
 
@@ -3897,9 +3896,9 @@ impl Weight {
             // forward
             let (hidden, hidsig, output) =
                 if cfg!(feature="nosimd") {
-                    self.forwardv1(&ban)
+                    self.forwardv1(ban)
                 } else {
-                    self.forwardv1_simd(&ban)
+                    self.forwardv1_simd(ban)
                 };
             // backward
             self.backwardv1(ban, winner, eta, &hidden, &hidsig, &output);
@@ -3907,9 +3906,9 @@ impl Weight {
             // forward
             let (hidden, hidsig, output) =
                 if cfg!(feature="nosimd") {
-                    self.forwardv2(&ban)
+                    self.forwardv2(ban)
                 } else {
-                    self.forwardv2_simd(&ban)
+                    self.forwardv2_simd(ban)
                     // self.forwardv2_simd2(&ban)
                 };
             // backward
@@ -3917,9 +3916,9 @@ impl Weight {
         } else {
             // forward
             let res = if cfg!(feature="nosimd") {
-                    self.forwardv3(&ban)
+                    self.forwardv3(ban)
                 } else {
-                    self.forwardv3_simd(&ban)
+                    self.forwardv3_simd(ban)
                 };
             // backward
             self.backwardv3(ban, winner, eta, &res);
@@ -3930,17 +3929,17 @@ impl Weight {
     fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
         if cfg!(feature="nnv1") {
             // forward
-            let (hidden, hidsig, output) = self.forwardv1(&ban);
+            let (hidden, hidsig, output) = self.forwardv1(ban);
             // backward
             self.backwardv1(ban, winner, eta, &hidden, &hidsig, &output);
         } else if cfg!(feature="nnv2") {
             // forward
-            let (hidden, hidsig, output) = self.forwardv2(&ban);
+            let (hidden, hidsig, output) = self.forwardv2(ban);
             // backward
             self.backwardv2(ban, winner, eta, &hidden, &hidsig, &output);
         } else {
             // forward
-            let res = self.forwardv3(&ban);
+            let res = self.forwardv3(ban);
             // backward
             self.backwardv3(ban, winner, eta, &res);
         }
@@ -3950,13 +3949,13 @@ impl Weight {
     fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
         // forward
         let res = if cfg!(feature="nosimd") {
-                self.forwardv3bb(&ban)  // 27s(w/ h8)
+                self.forwardv3bb(ban)  // 27s(w/ h8)
             } else if cfg!(feature="avx") {
-                self.forwardv3bb_simdavx3(&ban)  // 15s(w/ h8)
+                self.forwardv3bb_simdavx3(ban)  // 15s(w/ h8)
                 // self.forwardv3bb_simdavx2(&ban)  // 15s(w/ h8)
                 // self.forwardv3bb_simdavx(&ban)  // 28s(w/ h8)
             } else {
-                self.forwardv3bb_simd(&ban)  // 15s(w/ h8)
+                self.forwardv3bb_simd(ban)  // 15s(w/ h8)
             };
         // backward
         if cfg!(feature="nosimd") {
@@ -3969,7 +3968,7 @@ impl Weight {
     #[cfg(target_arch="aarch64")]
     fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
         // forward
-        let res = self.forwardv3bb(&ban);
+        let res = self.forwardv3bb(ban);
         // backward
         self.backwardv3bb(ban, winner, eta, &res);
     }
@@ -3978,13 +3977,13 @@ impl Weight {
     fn learnbbdiff(&self, ban : &bitboard::BitBoard, winner : i8, eta : f32, dfw : &mut Weight) {
         // forward
         let res = if cfg!(feature="nosimd") {
-                self.forwardv3bb(&ban)  // 27s(w/ h8)
+                self.forwardv3bb(ban)  // 27s(w/ h8)
             } else if cfg!(feature="avx") {
-                self.forwardv3bb_simdavx3(&ban)  // 15s(w/ h8)
+                self.forwardv3bb_simdavx3(ban)  // 15s(w/ h8)
                 // self.forwardv3bb_simdavx2(&ban)  // 15s(w/ h8)
                 // self.forwardv3bb_simdavx(&ban)  // 28s(w/ h8)
             } else {
-                self.forwardv3bb_simd(&ban)  // 15s(w/ h8)
+                self.forwardv3bb_simd(ban)  // 15s(w/ h8)
             };
         // backward
         if cfg!(feature="nosimd") {
@@ -3997,7 +3996,7 @@ impl Weight {
     #[cfg(target_arch="aarch64")]
     fn learnbbdiff(&self, ban : &bitboard::BitBoard, winner : i8, eta : f32, dfw : &mut Weight) {
         // forward
-        let res = self.forwardv3bb(&ban);
+        let res = self.forwardv3bb(ban);
         // backward
         dfw.backwardv3bb(ban, winner, eta, &res);
     }
