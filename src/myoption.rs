@@ -154,7 +154,10 @@ impl MyOption {
                 } else if e == "--rfen" {
                     opt.mode = Mode::Rfen;
                     old = e;
-                } else if e == "--depth" {
+                } else if [
+                        "--depth", "--Edconf", "--eta", "--ev1", "--ev2",
+                         "--progress", "--Ruconf", "--repeat", "--trainout"
+                    ].contains(&e.as_str()) {
                     old = e;
                 } else if e == "--help" || e == "-h" {
                     opt.mode = Mode::Help;
@@ -167,31 +170,15 @@ impl MyOption {
                     opt.think = "ab".to_string();
                 } else if e == "--thinkall" {
                     opt.think = "all".to_string();
-                } else if e == "--progress" {
-                    old = e;
-                } else if e == "--repeat" {
-                    old = e;
                 } else if e == "--onebyone" {
                     opt.trmode = TrainingMode::OneByOne;
                 } else if e == "--minibatch" {
                     old = e;
                     opt.trmode = TrainingMode::MiniBatch;
-                } else if e == "--trainout" {
-                    old = e;
-                } else if e == "--eta" {
-                    old = e;
-                } else if e == "--ev1" {
-                    old = e;
-                } else if e == "--ev2" {
-                    old = e;
                 } else if e == "--Edax" {
                     opt.opponent = Opponent::Edax;
                 } else if e == "--Ruversi" {
                     opt.opponent = Opponent::Ruversi;
-                } else if e == "--Edconf" {
-                    old = e;
-                } else if e == "--Ruconf" {
-                    old = e;
                 } else if e == "--gtp" {
                     opt.mode = Mode::Gtp;
                 } else {

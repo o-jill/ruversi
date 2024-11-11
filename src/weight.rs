@@ -28,19 +28,20 @@ const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * 8 + 8 + 1;
 const WSZV5 : usize = (board::CELL_2D + 1 + 2 + 1) * 16 + 16 + 1;
 const WSZV6 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
 
-const EXP_HI : f32 = 88.3762626647949;
-const EXP_LO : f32 = -EXP_HI;
+const EXP_HI : f64 = 88.3762626647949;
+const EXP_LO : f64 = -EXP_HI;
 
-const CEPHES_LOG2EF : f32 = 1.44269504088896341;
-const CEPHES_EXP_C1 : f32 = 0.693359375;
-const CEPHES_EXP_C2 : f32 = -2.12194440e-4;
+const CEPHES_LOG2EF : f64 = std::f64::consts::LOG2_E;
+// const CEPHES_LOG2EF : f64 = 1.44269504088896341;
+const CEPHES_EXP_C1 : f64 = 0.693359375;
+const CEPHES_EXP_C2 : f64 = -2.12194440e-4;
 
-const CEPHES_EXP_P0 : f32 = 1.9875691500E-4;
-const CEPHES_EXP_P1 : f32 = 1.3981999507E-3;
-const CEPHES_EXP_P2 : f32 = 8.3334519073E-3;
-const CEPHES_EXP_P3 : f32 = 4.1665795894E-2;
-const CEPHES_EXP_P4 : f32 = 1.6666665459E-1;
-const CEPHES_EXP_P5 : f32 = 5.0000001201E-1;
+const CEPHES_EXP_P0 : f64 = 1.9875691500E-4;
+const CEPHES_EXP_P1 : f64 = 1.3981999507E-3;
+const CEPHES_EXP_P2 : f64 = 8.3334519073E-3;
+const CEPHES_EXP_P3 : f64 = 4.1665795894E-2;
+const CEPHES_EXP_P4 : f64 = 1.6666665459E-1;
+const CEPHES_EXP_P5 : f64 = 5.0000001201E-1;
 
 
 // v2
@@ -707,17 +708,17 @@ impl Weight {
     unsafe fn expmx_ps_simd(x4 : x86_64::__m128) -> x86_64::__m128 {
         // let x4 = x86_64::_mm_load_ps(x);
         // clip x
-        let max4 = x86_64::_mm_set1_ps(EXP_HI);
+        let max4 = x86_64::_mm_set1_ps(EXP_HI as f32);
         let x4 = x86_64::_mm_min_ps(x4, max4);
-        let min4 = x86_64::_mm_set1_ps(EXP_LO);
+        let min4 = x86_64::_mm_set1_ps(EXP_LO as f32);
         let x4 = x86_64::_mm_max_ps(x4, min4);
         let m1 = x86_64::_mm_set1_ps(-1.0);
         let x4 = x86_64::_mm_mul_ps(x4, m1);
 
         /* express exp(x) as exp(g + n*log(2)) */
-        let log2ef = x86_64::_mm_set1_ps(CEPHES_LOG2EF);
+        let log2ef = x86_64::_mm_set1_ps(CEPHES_LOG2EF as f32);
         let fx = x86_64::_mm_mul_ps(x4, log2ef);
-        let zp5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5);
+        let zp5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5 as f32);
         let fx = x86_64::_mm_add_ps(fx, zp5);
         let emm0 = x86_64::_mm_cvtps_epi32(fx);
         let tmp = x86_64::_mm_cvtepi32_ps(emm0);
@@ -727,30 +728,30 @@ impl Weight {
         let mask = x86_64::_mm_and_ps(mask, one);
         let fx = x86_64::_mm_sub_ps(tmp, mask);
 
-        let c1 = x86_64::_mm_set1_ps(CEPHES_EXP_C1);
+        let c1 = x86_64::_mm_set1_ps(CEPHES_EXP_C1 as f32);
         let tmp = x86_64::_mm_mul_ps(fx, c1);
-        let c2 = x86_64::_mm_set1_ps(CEPHES_EXP_C2);
+        let c2 = x86_64::_mm_set1_ps(CEPHES_EXP_C2 as f32);
         let z4 = x86_64::_mm_mul_ps(fx, c2);
         let x4 = x86_64::_mm_sub_ps(x4, tmp);
         let x4 = x86_64::_mm_sub_ps(x4, z4);
 
         let z4 = x86_64::_mm_mul_ps(x4, x4);
 
-        let y4 = x86_64::_mm_set1_ps(CEPHES_EXP_P0);
+        let y4 = x86_64::_mm_set1_ps(CEPHES_EXP_P0 as f32);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p1 = x86_64::_mm_set1_ps(CEPHES_EXP_P1);
+        let exp_p1 = x86_64::_mm_set1_ps(CEPHES_EXP_P1 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p1);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p2 = x86_64::_mm_set1_ps(CEPHES_EXP_P2);
+        let exp_p2 = x86_64::_mm_set1_ps(CEPHES_EXP_P2 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p2);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p3 = x86_64::_mm_set1_ps(CEPHES_EXP_P3);
+        let exp_p3 = x86_64::_mm_set1_ps(CEPHES_EXP_P3 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p3);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p4 = x86_64::_mm_set1_ps(CEPHES_EXP_P4);
+        let exp_p4 = x86_64::_mm_set1_ps(CEPHES_EXP_P4 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p4);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5);
+        let exp_p5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p5);
         let y4 = x86_64::_mm_mul_ps(y4, z4);
         let y4 = x86_64::_mm_add_ps(y4, x4);
@@ -779,16 +780,16 @@ impl Weight {
     #[cfg(target_arch="aarch64")]
     unsafe fn expmx_ps_simd(x4 : float32x4_t) -> float32x4_t {
         // clip x
-        let max4 = vmovq_n_f32(EXP_HI);
+        let max4 = vmovq_n_f32(EXP_HI as f32);
         let x4 = vminq_f32(x4, max4);
-        let min4 = vmovq_n_f32(EXP_LO);
+        let min4 = vmovq_n_f32(EXP_LO as f32);
         let x4 = vmaxq_f32(x4, min4);
         let m1 = vmovq_n_f32(-1.0);
         let x4 = vmulq_f32(x4, m1);
 
         /* express exp(x) as exp(g + n*log(2)) */
-        let log2ef = vmovq_n_f32(CEPHES_LOG2EF);
-        let zp5 = vmovq_n_f32(CEPHES_EXP_P5);
+        let log2ef = vmovq_n_f32(CEPHES_LOG2EF as f32);
+        let zp5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
         let fx = vmlaq_f32(zp5, x4, log2ef);
         let emm0 = vcvtq_s32_f32(fx);
         let tmp = vcvtq_f32_s32(emm0);
@@ -799,25 +800,25 @@ impl Weight {
                 mask, vreinterpretq_u32_f32(one)));
         let fx = vsubq_f32(tmp, mask);
 
-        let c1 = vmovq_n_f32(CEPHES_EXP_C1);
+        let c1 = vmovq_n_f32(CEPHES_EXP_C1 as f32);
         let tmp = vmulq_f32(fx, c1);
-        let c2 = vmovq_n_f32(CEPHES_EXP_C2);
+        let c2 = vmovq_n_f32(CEPHES_EXP_C2 as f32);
         let z4 = vmulq_f32(fx, c2);
         let x4 = vsubq_f32(x4, tmp);
         let x4 = vsubq_f32(x4, z4);
 
         let z4 = vmulq_f32(x4, x4);
 
-        let y4 = vmovq_n_f32(CEPHES_EXP_P0);
-        let exp_p1 = vmovq_n_f32(CEPHES_EXP_P1);
+        let y4 = vmovq_n_f32(CEPHES_EXP_P0 as f32);
+        let exp_p1 = vmovq_n_f32(CEPHES_EXP_P1 as f32);
         let y4 = vmlaq_f32(exp_p1, y4, x4);
-        let exp_p2 = vmovq_n_f32(CEPHES_EXP_P2);
+        let exp_p2 = vmovq_n_f32(CEPHES_EXP_P2 as f32);
         let y4 = vmlaq_f32(exp_p2, y4, x4);
-        let exp_p3 = vmovq_n_f32(CEPHES_EXP_P3);
+        let exp_p3 = vmovq_n_f32(CEPHES_EXP_P3 as f32);
         let y4 = vmlaq_f32(exp_p3, y4, x4);
-        let exp_p4 = vmovq_n_f32(CEPHES_EXP_P4);
+        let exp_p4 = vmovq_n_f32(CEPHES_EXP_P4 as f32);
         let y4 = vmlaq_f32(exp_p4, y4, x4);
-        let exp_p5 = vmovq_n_f32(CEPHES_EXP_P5);
+        let exp_p5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
         let y4 = vmlaq_f32(exp_p5, y4, x4);
         let y4 = vmlaq_f32(x4, y4, z4);
         let y4 = vaddq_f32(y4, one);

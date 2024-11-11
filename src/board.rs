@@ -46,7 +46,7 @@ impl Board {
         }
         let mut ret = Board {
             cells : [BLANK; CELL_2D],
-            teban : teban,
+            teban,
             pass : 0,
         };
         let mut idx = 0;

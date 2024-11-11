@@ -48,12 +48,7 @@ impl Te {
             y = elem[2].chars().nth(1).unwrap().to_digit(10).unwrap() as usize;
         }
         let rfen = format!("{} {}", elem[3], elem[4]);
-        Some(Te {
-            x : x,
-            y : y,
-            teban : teban,
-            rfen : rfen
-        })
+        Some(Te {x, y, teban, rfen})
     }
 
     pub fn pos(&self) -> String {

@@ -90,14 +90,12 @@ impl Gtp {
         if elem.len() == 1 {
             id = "";
             idx = 0;
+        } else if elem[0].chars().nth(0).unwrap().is_ascii_digit() {
+            id = elem[0];
+            idx = 1;
         } else {
-            if elem[0].chars().nth(0).unwrap().is_ascii_digit() {
-                id = elem[0];
-                idx = 1;
-            } else {
-                id = "";
-                idx = 0;
-            }
+            id = "";
+            idx = 0;
         }
         let cmd = elem[idx];
         // eprintln!("id:{id}, cmd:{cmd}");
