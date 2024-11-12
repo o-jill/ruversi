@@ -37,13 +37,12 @@ impl Board {
             return Err(String::from("Invalid rfen"));
         }
 
-        let teban;
-        match elem[1] {
-            "b" => {teban = SENTE},
-            "w" => {teban = GOTE},
-            "f" => {teban = BLANK}
+        let teban = match elem[1] {
+            "b" => {SENTE},
+            "w" => {GOTE},
+            "f" => {BLANK},
             _ => { return Err(format!("Invalid teban: {}", elem[1])); }
-        }
+        };
         let mut ret = Board {
             cells : [BLANK; CELL_2D],
             teban,

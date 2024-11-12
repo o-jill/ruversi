@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use std::thread;
 use std::sync::mpsc;
 use rand::Rng;
-use rand::distributions::Uniform;
+use rand::distributions::{Distribution, Uniform};
 
 mod board;
 mod bitboard;
