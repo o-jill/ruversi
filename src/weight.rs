@@ -1256,11 +1256,11 @@ impl Weight {
                 let mut bit8 : u64 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = (bit8 & black) >> 2 * j;
-                    let w81 = (bit8 & white) >> 2 * j;
+                    let b81 = (bit8 & black) >> (2 * j);
+                    let w81 = (bit8 & white) >> (2 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 2 * j + 1;
-                    let w82 = (bit8 & white) >> 2 * j + 1;
+                    let b82 = (bit8 & black) >> (2 * j + 1);
+                    let w82 = (bit8 & white) >> (2 * j + 1);
                     bit8 <<= 1;
 
                     unsafe {
@@ -1401,10 +1401,10 @@ impl Weight {
                 let bit8 = 0x0101010101010101u64;
                 for j in 0..bitboard::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = bit8 & (black >> j * 2);
-                    let w81 = bit8 & (white >> j * 2);
-                    let b82 = bit8 & (black >> j * 2 + 1);
-                    let w82 = bit8 & (white >> j * 2 + 1);
+                    let b81 = bit8 & (black >> (j * 2));
+                    let w81 = bit8 & (white >> (j * 2));
+                    let b82 = bit8 & (black >> (j * 2 + 1));
+                    let w82 = bit8 & (white >> (j * 2 + 1));
 
                     unsafe {
                         let b08 = vmov_n_u64(b81 * 0xffu64);
@@ -1544,17 +1544,17 @@ impl Weight {
                 let mut bit8 : u64 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = (bit8 & black) >> 4 * j;
-                    let w81 = (bit8 & white) >> 4 * j;
+                    let b81 = (bit8 & black) >> (4 * j);
+                    let w81 = (bit8 & white) >> (4 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 4 * j + 1;
-                    let w82 = (bit8 & white) >> 4 * j + 1;
+                    let b82 = (bit8 & black) >> (4 * j + 1);
+                    let w82 = (bit8 & white) >> (4 * j + 1);
                     bit8 <<= 1;
-                    let b83 = (bit8 & black) >> 4 * j + 2;
-                    let w83 = (bit8 & white) >> 4 * j + 2;
+                    let b83 = (bit8 & black) >> (4 * j + 2);
+                    let w83 = (bit8 & white) >> (4 * j + 2);
                     bit8 <<= 1;
-                    let b84 = (bit8 & black) >> 4 * j + 3;
-                    let w84 = (bit8 & white) >> 4 * j + 3;
+                    let b84 = (bit8 & black) >> (4 * j + 3);
+                    let w84 = (bit8 & white) >> (4 * j + 3);
                     bit8 <<= 1;
 
                     unsafe {
@@ -1727,17 +1727,17 @@ impl Weight {
                 let mut bit8 : u64 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = (bit8 & black) >> 4 * j;
-                    let w81 = (bit8 & white) >> 4 * j;
+                    let b81 = (bit8 & black) >> (4 * j);
+                    let w81 = (bit8 & white) >> (4 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 4 * j + 1;
-                    let w82 = (bit8 & white) >> 4 * j + 1;
+                    let b82 = (bit8 & black) >> (4 * j + 1);
+                    let w82 = (bit8 & white) >> (4 * j + 1);
                     bit8 <<= 1;
-                    let b83 = (bit8 & black) >> 4 * j + 2;
-                    let w83 = (bit8 & white) >> 4 * j + 2;
+                    let b83 = (bit8 & black) >> (4 * j + 2);
+                    let w83 = (bit8 & white) >> (4 * j + 2);
                     bit8 <<= 1;
-                    let b84 = (bit8 & black) >> 4 * j + 3;
-                    let w84 = (bit8 & white) >> 4 * j + 3;
+                    let b84 = (bit8 & black) >> (4 * j + 3);
+                    let w84 = (bit8 & white) >> (4 * j + 3);
                     bit8 <<= 1;
 
                     unsafe {
@@ -2381,11 +2381,11 @@ impl Weight {
             let mut bit8 = 0x0101010101010101;
             for j in 0..board::CELL_2D / 16 {
                 let idx = j * 16;
-                let b81 = (bit8 & black) >> 2 * j;
-                let w81 = (bit8 & white) >> 2 * j;
+                let b81 = (bit8 & black) >> (2 * j);
+                let w81 = (bit8 & white) >> (2 * j);
                 bit8 <<= 1;
-                let b82 = (bit8 & black) >> 2 * j + 1;
-                let w82 = (bit8 & white) >> 2 * j + 1;
+                let b82 = (bit8 & black) >> (2 * j + 1);
+                let w82 = (bit8 & white) >> (2 * j + 1);
                 bit8 <<= 1;
 
                 unsafe {
@@ -2480,17 +2480,17 @@ impl Weight {
             let mut bit8 = 0x0101010101010101;
             for j in 0..board::CELL_2D / M {
                 let idx = j * M;
-                let b81 = (bit8 & black) >> 4 * j;
-                let w81 = (bit8 & white) >> 4 * j;
+                let b81 = (bit8 & black) >> (4 * j);
+                let w81 = (bit8 & white) >> (4 * j);
                 bit8 <<= 1;
-                let b82 = (bit8 & black) >> 4 * j + 1;
-                let w82 = (bit8 & white) >> 4 * j + 1;
+                let b82 = (bit8 & black) >> (4 * j + 1);
+                let w82 = (bit8 & white) >> (4 * j + 1);
                 bit8 <<= 1;
-                let b83 = (bit8 & black) >> 4 * j + 2;
-                let w83 = (bit8 & white) >> 4 * j + 2;
+                let b83 = (bit8 & black) >> (4 * j + 2);
+                let w83 = (bit8 & white) >> (4 * j + 2);
                 bit8 <<= 1;
-                let b84 = (bit8 & black) >> 4 * j + 3;
-                let w84 = (bit8 & white) >> 4 * j + 3;
+                let b84 = (bit8 & black) >> (4 * j + 3);
+                let w84 = (bit8 & white) >> (4 * j + 3);
                 bit8 <<= 1;
 
                 unsafe {
@@ -2585,17 +2585,17 @@ impl Weight {
                 let mut bit8 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = (bit8 & black) >> 4 * j;
-                    let w81 = (bit8 & white) >> 4 * j;
+                    let b81 = (bit8 & black) >> (4 * j);
+                    let w81 = (bit8 & white) >> (4 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 4 * j + 1;
-                    let w82 = (bit8 & white) >> 4 * j + 1;
+                    let b82 = (bit8 & black) >> (4 * j + 1);
+                    let w82 = (bit8 & white) >> (4 * j + 1);
                     bit8 <<= 1;
-                    let b83 = (bit8 & black) >> 4 * j + 2;
-                    let w83 = (bit8 & white) >> 4 * j + 2;
+                    let b83 = (bit8 & black) >> (4 * j + 2);
+                    let w83 = (bit8 & white) >> (4 * j + 2);
                     bit8 <<= 1;
-                    let b84 = (bit8 & black) >> 4 * j + 3;
-                    let w84 = (bit8 & white) >> 4 * j + 3;
+                    let b84 = (bit8 & black) >> (4 * j + 3);
+                    let w84 = (bit8 & white) >> (4 * j + 3);
                     bit8 <<= 1;
 
                     unsafe {
@@ -2772,17 +2772,17 @@ impl Weight {
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
 
-                    let b81 = (bit8 & black) >> 4 * j;
-                    let w81 = (bit8 & white) >> 4 * j;
+                    let b81 = (bit8 & black) >> (4 * j);
+                    let w81 = (bit8 & white) >> (4 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 4 * j + 1;
-                    let w82 = (bit8 & white) >> 4 * j + 1;
+                    let b82 = (bit8 & black) >> (4 * j + 1);
+                    let w82 = (bit8 & white) >> (4 * j + 1);
                     bit8 <<= 1;
-                    let b83 = (bit8 & black) >> 4 * j + 2;
-                    let w83 = (bit8 & white) >> 4 * j + 2;
+                    let b83 = (bit8 & black) >> (4 * j + 2);
+                    let w83 = (bit8 & white) >> (4 * j + 2);
                     bit8 <<= 1;
-                    let b84 = (bit8 & black) >> 4 * j + 3;
-                    let w84 = (bit8 & white) >> 4 * j + 3;
+                    let b84 = (bit8 & black) >> (4 * j + 3);
+                    let w84 = (bit8 & white) >> (4 * j + 3);
                     bit8 <<= 1;
 
                     unsafe {
