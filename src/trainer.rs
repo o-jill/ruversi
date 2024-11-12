@@ -1,5 +1,5 @@
 use rand::prelude::SliceRandom;
-use std::{sync::{Arc, Mutex, Condvar}, collections::VecDeque};
+use std::{sync::Arc, collections::VecDeque};
 
 use super::*;
 
