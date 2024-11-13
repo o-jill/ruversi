@@ -29,8 +29,29 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
+      continue-on-error: true # とにかく最後まで行きたい
+      id: rubuild
       run: cargo build --verbose
     - name: Run clippy
-      run: cargo clippy
+      continue-on-error: true # とにかく最後まで行きたい
+      id: ruclippy
+      run: cargo clippy --all-targets
     - name: Run tests
+      continue-on-error: true # とにかく最後まで行きたい
+      id: rutest
       run: cargo test --verbose
+    - name: check error run build
+      if: ${{ steps.rubuild.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.rubuild.outcome }} == 'failure'
+        exit 1
+    - name: check error run clippy
+      if: ${{ steps.ruclippy.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.ruclippy.outcome }} == 'failure'
+        exit 1
+    - name: check error run test
+      if: ${{ steps.rutest.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.rutest.outcome }} == 'failure'
+        exit 1
