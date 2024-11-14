@@ -204,9 +204,7 @@ impl Trainer {
             if showprgs {println!();}
         }
         let n = files.len();
-        let mut numbers : Vec<usize> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        for (i, it) in numbers.iter_mut().enumerate() {*it = i;}
+        let mut numbers = (0..n).map(|i| i).collect::<Vec<usize>>();
         for i in 1..self.repeat {
             numbers.shuffle(&mut rng);
             if showprgs {print!("{} / {}\r", i, self.repeat);}
@@ -344,14 +342,7 @@ impl Trainer {
 
         let n = kifucache.len();
         // println!("{n} rfens.");
-        let mut numbers : Vec<usize> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i;
-        }
+        let mut numbers = (0..n).map(|i| i).collect::<Vec<usize>>();
         for i in 1..self.repeat {
             if showprgs {
                 print!("{i} / {}\r", self.repeat);
@@ -484,14 +475,7 @@ impl Trainer {
 
         let n = rfencache.len();
         // println!("{n} rfens.");
-        let mut numbers : Vec<usize> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i;
-        }
+        let mut numbers = (0..n).map(|i| i).collect::<Vec<usize>>();
         for i in 1..self.repeat {
             if showprgs {print!("{i} / {}", self.repeat);}
             numbers.shuffle(&mut rng);
@@ -655,14 +639,8 @@ impl Trainer {
 
         let n = unsafe {RFENCACHE.len()};
         // println!("{n} rfens.");
-        let mut numbers : Vec<u32> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i as u32;
-        }
+        let mut numbers =
+            (0..n as u32).map(|i| i).collect::<Vec<u32>>();
         let invalidprogress = 99999999;
         let mut prgs = VecDeque::from(self.progress.clone());
         let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
@@ -850,14 +828,8 @@ impl Trainer {
 
         let n = unsafe {BOARDCACHE.len()};
         println!("{n} rfens.");
-        let mut numbers : Vec<u32> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i as u32;
-        }
+        let mut numbers : Vec<u32> =
+            (0..n as u32).map(|i| i).collect::<Vec<u32>>();
         let invalidprogress = 99999999;
         let mut prgs = VecDeque::from(self.progress.clone());
         let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
@@ -1054,14 +1026,8 @@ impl Trainer {
 
         let n = unsafe {BOARDCACHE.len()};
         println!("{n} rfens.");
-        let mut numbers : Vec<u32> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i as u32;
-        }
+        let mut numbers =
+            (0..n as u32).map(|i| i).collect::<Vec<u32>>();
         let invalidprogress = 99999999;
         let mut prgs = VecDeque::from(self.progress.clone());
         let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
