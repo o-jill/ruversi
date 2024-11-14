@@ -78,7 +78,7 @@ impl Board {
     }
 
     pub fn fromarray(cells : [i8 ; CELL_2D], tbn : i8) -> Board {
-        Board { cells: cells, teban: tbn, pass: 0 }
+        Board { cells, teban: tbn, pass: 0 }
     }
 
     pub fn init() -> Board {
@@ -538,7 +538,7 @@ impl Board {
                     continue;
                 }
                 nblank += 1;
-                if self.checkreverse(x as usize, y as usize) {
+                if self.checkreverse(x, y) {
                     ret.push((x as u8 + 1, y as u8 + 1));
                 }
             }

@@ -4185,7 +4185,7 @@ fn testweight() {
             // assert!((res_nosimde - res_simd).abs() < limit);
             // assert!((res_nosimde - res_simdavx).abs() < limit);
             // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
-            let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
+            let (_bh_ns, _ah_ns, res_nosimd, _fsns) = w.forwardv3bb(&bban);
             // let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simd(&bban);
             // let (bh_sa, ah_sa, res_simdavx, fssa)
             //         = w.forwardv3bb_simdavx(&bban);
@@ -4228,13 +4228,13 @@ fn testweight() {
             // let s3 = sv3.join(",");
             // assert_eq!(s, s3);
             // assert!(dbg_assert_eq_vec(&w.weight, &w3.weight));
-            let res_nosimde2 = w.evaluatev3bb(&bban);
-            let res_nosimde3 = w2.evaluatev3bb(&bban);
-            let res_nosimde4 = w3.evaluatev3bb(&bban);
+            let _res_nosimde2 = w.evaluatev3bb(&bban);
+            let _res_nosimde3 = w2.evaluatev3bb(&bban);
+            let _res_nosimde4 = w3.evaluatev3bb(&bban);
             // println!("{res_nosimde} -> {res_nosimde2}");
             // assert!(dbg_assert_eq(&res_nosimde2, &res_nosimde3));
             // assert!(dbg_assert_eq(&res_nosimde2, &res_nosimde4));
-            let before = (winner as f32 - res_nosimde).abs();
+            let _before = (winner as f32 - res_nosimde).abs();
             // assert!(before > (winner as f32 - res_nosimde2).abs());
             // assert!(before > (winner as f32 - res_nosimde3).abs());
             // assert!(before > (winner as f32 - res_nosimde4).abs());
