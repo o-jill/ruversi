@@ -1569,8 +1569,8 @@ fn testbitbrd() {
     assert_eq!(br.fixedstones(), (0, 64));
     assert_eq!(br.count(), -64);
     let b180 = b.rotate180();
-    assert_eq!(b180.black, (0x004121110905037E as u64).reverse_bits());
-    assert_eq!(b180.white, (0xffbedeeef6fafc80 as u64).reverse_bits());
+    assert_eq!(b180.black, (0x004121110905037Eu64).reverse_bits());
+    assert_eq!(b180.white, (0xffbedeeef6fafc80u64).reverse_bits());
     // b180.put();
     assert_eq!(b180.fixedstones(), (0, 15));
     let b = b180.r#move(8, 8);
@@ -1614,8 +1614,8 @@ fn testbitbrd() {
     assert_eq!(br.count(), 64);
     let b180 = b.rotate180();
     // b.put();
-    assert_eq!(b180.black, (0x80FCFAF6EEDEBEFF as u64).reverse_bits());
-    assert_eq!(b180.white, (0x7E03050911214100 as u64).reverse_bits());
+    assert_eq!(b180.black, (0x80FCFAF6EEDEBEFFu64).reverse_bits());
+    assert_eq!(b180.white, (0x7E03050911214100u64).reverse_bits());
     assert!(b180.checkreverse(0, 7));
     assert_eq!(b180.fixedstones(), (15, 0));
     assert_eq!(b180.count(),
@@ -2011,7 +2011,7 @@ fn testbitbrd() {
         for x in 1..NUMCELL - 1 {
             let mut b = BitBoard::from_obf(
                 "XXXXXXXXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXXXXXXXX X");
-            let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
+            let bit = LSB_CELL << BitBoard::index(x, y);
             let mask = !bit;
             b.white &= mask;
             // assert!(b.checkreverse1(x, y));
@@ -2062,7 +2062,7 @@ fn testbitbrd() {
             // assert!(!b.checkreverse4(x, y));
             let mut b = BitBoard::from_obf(
                 "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X");
-            let bit = LSB_CELL << BitBoard::index(x as usize, y as usize);
+            let bit = LSB_CELL << BitBoard::index(x, y);
             let mask = !bit;
             b.black &= mask;
             // assert!(!b.checkreverse1(x, y));
@@ -5239,7 +5239,7 @@ fn testbitbrd() {
         print!("({}{})", NUMCELL, 1);
         ban90.put();
         assert!(ban90.checkreverse(NUMCELL - 1, 0));
-        let ban = ban90.r#move(NUMCELL as u8, 1 as u8).unwrap();
+        let ban = ban90.r#move(NUMCELL as u8, 1u8).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, yy as u8), SENTE);
         }
@@ -6371,8 +6371,8 @@ fn testbitbrd() {
         // println!("{txt}:{res}");
         let obf =
             txt.chars().map(|ch| {
-                String::from("--") + &ch.to_string() + &"-----"
-            }).collect::<Vec<String>>().join("") + &"-------- X";
+                String::from("--") + &ch.to_string() + "-----"
+            }).collect::<Vec<String>>().join("") + "-------- X";
 
         let ban = BitBoard::from_obf(&obf);
         let result = ban.checkreverse(2, 7);

@@ -204,7 +204,7 @@ impl Trainer {
             if showprgs {println!();}
         }
         let n = files.len();
-        let mut numbers = (0..n).map(|i| i).collect::<Vec<usize>>();
+        let mut numbers = (0..n).collect::<Vec<usize>>();
         for i in 1..self.repeat {
             numbers.shuffle(&mut rng);
             if showprgs {print!("{} / {}\r", i, self.repeat);}
@@ -342,7 +342,7 @@ impl Trainer {
 
         let n = kifucache.len();
         // println!("{n} rfens.");
-        let mut numbers = (0..n).map(|i| i).collect::<Vec<usize>>();
+        let mut numbers = (0..n).collect::<Vec<usize>>();
         for i in 1..self.repeat {
             if showprgs {
                 print!("{i} / {}\r", self.repeat);
@@ -475,7 +475,7 @@ impl Trainer {
 
         let n = rfencache.len();
         // println!("{n} rfens.");
-        let mut numbers = (0..n).map(|i| i).collect::<Vec<usize>>();
+        let mut numbers = (0..n).collect::<Vec<usize>>();
         for i in 1..self.repeat {
             if showprgs {print!("{i} / {}", self.repeat);}
             numbers.shuffle(&mut rng);
@@ -639,8 +639,7 @@ impl Trainer {
 
         let n = unsafe {RFENCACHE.len()};
         // println!("{n} rfens.");
-        let mut numbers =
-            (0..n as u32).map(|i| i).collect::<Vec<u32>>();
+        let mut numbers = (0..n as u32).collect::<Vec<u32>>();
         let invalidprogress = 99999999;
         let mut prgs = VecDeque::from(self.progress.clone());
         let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
@@ -828,8 +827,7 @@ impl Trainer {
 
         let n = unsafe {BOARDCACHE.len()};
         println!("{n} rfens.");
-        let mut numbers : Vec<u32> =
-            (0..n as u32).map(|i| i).collect::<Vec<u32>>();
+        let mut numbers : Vec<u32> = (0..n as u32).collect::<Vec<u32>>();
         let invalidprogress = 99999999;
         let mut prgs = VecDeque::from(self.progress.clone());
         let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
@@ -1026,8 +1024,7 @@ impl Trainer {
 
         let n = unsafe {BOARDCACHE.len()};
         println!("{n} rfens.");
-        let mut numbers =
-            (0..n as u32).map(|i| i).collect::<Vec<u32>>();
+        let mut numbers = (0..n as u32).collect::<Vec<u32>>();
         let invalidprogress = 99999999;
         let mut prgs = VecDeque::from(self.progress.clone());
         let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
