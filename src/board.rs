@@ -141,15 +141,15 @@ impl Board {
     }
 
     pub fn to_id(&self)-> [u8 ; 16] {
-        let mut res : [u8 ; 16] = [0 ; 16];
+        let mut res : [u8 ; CELL_2D / 4] = [0 ; CELL_2D / 4];
         let tbn : u8 = if self.teban == SENTE { 0x00 } else { 0x80 };
-        for i in 0..CELL_2D / 4 {
-            let c = &self.cells[i * 4..];
+        for (i, r) in res.iter_mut().enumerate() {
+            let ce = &self.cells[i * 4..];
             let mut id : u8 = 0;
-            for j in 0..4 {
-                id = id * 3 + (c[j] + 1) as u8;
+            for c in ce.iter().take(4) {
+                id = id * 3 + *c as u8;
             }
-            res[i] = id | tbn;
+            *r = id | tbn;
         }
         res
     }
