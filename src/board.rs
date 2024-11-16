@@ -592,11 +592,11 @@ impl Board {
         if c != BLANK {
             fcells[0] = c;
             count[(c + 1) as usize] += 1;
-            for i in 1..7 {  // →
+            for (i, fc) in fcells.iter_mut().enumerate().skip(1) {  // →
                 if self.at(i, 0) != c {
                     break;
                 }
-                fcells[i] = c;
+                *fc = c;
                 count[(c + 1) as usize] += 1;
             }
             for i in 1..7 {  // ↓

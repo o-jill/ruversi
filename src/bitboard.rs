@@ -2084,8 +2084,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/H/h w", "8/8/8/8/8/H/H/h w", "8/8/8/8/H/H/H/h w",
         "8/8/8/H/H/H/H/h w", "8/8/H/H/H/H/H/h w", "8/H/H/H/H/H/H/h w",
     ];
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         for x in 1..=NUMCELL {
             print!("({x}{})", NUMCELL - 2 - y);
             let ban = ban.r#move(x as u8, (NUMCELL - 2 - y) as u8).unwrap();
@@ -2126,8 +2126,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/h/H b", "8/8/8/8/8/h/h/H b", "8/8/8/8/h/h/h/H b",
         "8/8/8/h/h/h/h/H b", "8/8/h/h/h/h/h/H b", "8/h/h/h/h/h/h/H b",
     ];
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         for x in 1..=NUMCELL {
             print!("({x}{})", NUMCELL - 2 - y);
             assert!(ban.checkreverse(x - 1, NUMCELL - 2 - 1 - y));
@@ -2173,8 +2173,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/8/3dA b", "8/8/8/8/8/8/8/2eA b", "8/8/8/8/8/8/8/1fA b",
     ];
     let x = 7;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2222,8 +2222,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/3dA/8 b", "8/8/8/8/8/8/2eA/8 b", "8/8/8/8/8/8/1fA/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2271,8 +2271,8 @@ fn testbitbrd() {
         "8/8/8/8/8/3dA/8/8 b", "8/8/8/8/8/2eA/8/8 b", "8/8/8/8/8/1fA/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2320,8 +2320,8 @@ fn testbitbrd() {
         "8/8/8/8/3dA/8/8/8 b", "8/8/8/8/2eA/8/8/8 b", "8/8/8/8/1fA/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2369,8 +2369,8 @@ fn testbitbrd() {
         "8/8/8/3dA/8/8/8/8 b", "8/8/8/2eA/8/8/8/8 b", "8/8/8/1fA/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2418,8 +2418,8 @@ fn testbitbrd() {
         "8/8/3dA/8/8/8/8/8 b", "8/8/2eA/8/8/8/8/8 b", "8/8/1fA/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2467,8 +2467,8 @@ fn testbitbrd() {
         "8/3dA/8/8/8/8/8/8 b", "8/2eA/8/8/8/8/8/8 b", "8/1fA/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2516,8 +2516,8 @@ fn testbitbrd() {
         "3dA/8/8/8/8/8/8/8 b", "2eA/8/8/8/8/8/8/8 b", "1fA/8/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2568,8 +2568,8 @@ fn testbitbrd() {
         "7A/6a1/5a2/4a3/3a4/2a5/8/8 b",
         "7A/6a1/5a2/4a3/3a4/2a5/1a6/8 b",
     ];
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, y + 2);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, y + 2));
         ban.put();
@@ -2622,8 +2622,8 @@ fn testbitbrd() {
         "8/1A6/2a5/3a4/4a3/5a2/6a1/8 b",
         "A7/1a6/2a5/3a4/4a3/5a2/6a1/8 b",
     ];
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL, NUMCELL);
         assert!(ban.checkreverse(NUMCELL - 1, NUMCELL - 1));
         ban.put();
@@ -2639,7 +2639,7 @@ fn testbitbrd() {
         print!("({}{})", NUMCELL, 1);
         ban90.put();
         assert!(ban90.checkreverse(NUMCELL - 1, 0));
-        let ban = ban90.r#move(NUMCELL as u8, 1 as u8).unwrap();
+        let ban = ban90.r#move(NUMCELL as u8, 1).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, yy as u8), SENTE);
         }
@@ -2673,8 +2673,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/2eA/2eA b", "8/8/8/8/8/8/1fA/1fA b",
     ];
     let x = 7;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2723,8 +2723,8 @@ fn testbitbrd() {
         "8/8/8/8/8/2eA/2eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2773,8 +2773,8 @@ fn testbitbrd() {
         "8/8/8/8/2eA/2eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2823,8 +2823,8 @@ fn testbitbrd() {
         "8/8/8/2eA/2eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2873,8 +2873,8 @@ fn testbitbrd() {
         "8/8/2eA/2eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2923,8 +2923,8 @@ fn testbitbrd() {
         "8/2eA/2eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -2973,8 +2973,8 @@ fn testbitbrd() {
         "2eA/2eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3023,8 +3023,8 @@ fn testbitbrd() {
         "2eA/8/8/8/8/8/8/2eA b", "1fA/8/8/8/8/8/8/1fA b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3073,8 +3073,8 @@ fn testbitbrd() {
         "2eA/8/8/8/8/8/8/2eA b", "1fA/8/8/8/8/8/8/1fA b",
     ];
     let x = 7;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3123,8 +3123,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/2eA/2eA b", "8/8/8/8/8/8/1fA/1fA b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3173,8 +3173,8 @@ fn testbitbrd() {
         "8/8/8/8/8/2eA/2eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3223,8 +3223,8 @@ fn testbitbrd() {
         "8/8/8/8/2eA/2eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3273,8 +3273,8 @@ fn testbitbrd() {
         "8/8/8/2eA/2eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3323,8 +3323,8 @@ fn testbitbrd() {
         "8/8/2eA/2eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3373,8 +3373,8 @@ fn testbitbrd() {
         "8/2eA/2eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3423,8 +3423,8 @@ fn testbitbrd() {
         "2eA/2eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3473,8 +3473,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/8/B1dA b", "8/8/8/8/8/8/8/A1eA b", "8/8/8/8/8/8/8/1fA b",
     ];
     let x = 7;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3522,8 +3522,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/B1dA/8 b", "8/8/8/8/8/8/A1eA/8 b", "8/8/8/8/8/8/1fA/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3571,8 +3571,8 @@ fn testbitbrd() {
         "8/8/8/8/8/B1dA/8/8 b", "8/8/8/8/8/A1eA/8/8 b", "8/8/8/8/8/1fA/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3620,8 +3620,8 @@ fn testbitbrd() {
         "8/8/8/8/B1dA/8/8/8 b", "8/8/8/8/A1eA/8/8/8 b", "8/8/8/8/1fA/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3669,8 +3669,8 @@ fn testbitbrd() {
         "8/8/8/B1dA/8/8/8/8 b", "8/8/8/A1eA/8/8/8/8 b", "8/8/8/1fA/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3718,8 +3718,8 @@ fn testbitbrd() {
         "8/8/B1dA/8/8/8/8/8 b", "8/8/A1eA/8/8/8/8/8 b", "8/8/1fA/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3767,8 +3767,8 @@ fn testbitbrd() {
         "8/B1dA/8/8/8/8/8/8 b", "8/A1eA/8/8/8/8/8/8 b", "8/1fA/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3816,8 +3816,8 @@ fn testbitbrd() {
         "B1dA/8/8/8/8/8/8/8 b", "A1eA/8/8/8/8/8/8/8 b", "1fA/8/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -3868,8 +3868,8 @@ fn testbitbrd() {
         "7A/6a1/5a2/4a3/3a4/2a5/8/A7 b",
         "7A/6a1/5a2/4a3/3a4/2a5/1a6/8 b",
     ];
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, y + 2);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, y + 2));
         ban.put();
@@ -3922,8 +3922,8 @@ fn testbitbrd() {
         "A7/1A6/2a5/3a4/4a3/5a2/6a1/8 b",
         "A7/1a6/2a5/3a4/4a3/5a2/6a1/8 b",
     ];
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL, NUMCELL);
         assert!(ban.checkreverse(NUMCELL - 1, NUMCELL - 1));
         ban.put();
@@ -3939,7 +3939,7 @@ fn testbitbrd() {
         print!("({}{})", NUMCELL, 1);
         ban90.put();
         assert!(ban90.checkreverse(NUMCELL - 1, 0));
-        let ban = ban90.r#move(NUMCELL as u8, 1 as u8).unwrap();
+        let ban = ban90.r#move(NUMCELL as u8, 1).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, yy as u8), SENTE);
         }
@@ -3973,8 +3973,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/A1eA/A1eA b", "8/8/8/8/8/8/1fA/1fA b",
     ];
     let x = 7;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4023,8 +4023,8 @@ fn testbitbrd() {
         "8/8/8/8/8/A1eA/A1eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4073,8 +4073,8 @@ fn testbitbrd() {
         "8/8/8/8/A1eA/A1eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4123,8 +4123,8 @@ fn testbitbrd() {
         "8/8/8/A1eA/A1eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4173,8 +4173,8 @@ fn testbitbrd() {
         "8/8/A1eA/A1eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4223,8 +4223,8 @@ fn testbitbrd() {
         "8/A1eA/A1eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4273,8 +4273,8 @@ fn testbitbrd() {
         "A1eA/A1eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4323,8 +4323,8 @@ fn testbitbrd() {
         "A1eA/8/8/8/8/8/8/A1eA b", "1fA/8/8/8/8/8/8/1fA b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4373,8 +4373,8 @@ fn testbitbrd() {
         "A1eA/8/8/8/8/8/8/A1eA b", "1fA/8/8/8/8/8/8/1fA b",
     ];
     let x = 7;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4423,8 +4423,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/A1eA/A1eA b", "8/8/8/8/8/8/1fA/1fA b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4473,8 +4473,8 @@ fn testbitbrd() {
         "8/8/8/8/8/A1eA/A1eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4523,8 +4523,8 @@ fn testbitbrd() {
         "8/8/8/8/A1eA/A1eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4573,8 +4573,8 @@ fn testbitbrd() {
         "8/8/8/A1eA/A1eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4623,8 +4623,8 @@ fn testbitbrd() {
         "8/8/A1eA/A1eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4673,8 +4673,8 @@ fn testbitbrd() {
         "8/A1eA/A1eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4723,8 +4723,8 @@ fn testbitbrd() {
         "A1eA/A1eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4773,8 +4773,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/8/b1dA b", "8/8/8/8/8/8/8/a1eA b", "8/8/8/8/8/8/8/1fA b",
     ];
     let x = 7;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4822,8 +4822,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/b1dA/8 b", "8/8/8/8/8/8/a1eA/8 b", "8/8/8/8/8/8/1fA/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4871,8 +4871,8 @@ fn testbitbrd() {
         "8/8/8/8/8/b1dA/8/8 b", "8/8/8/8/8/a1eA/8/8 b", "8/8/8/8/8/1fA/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4920,8 +4920,8 @@ fn testbitbrd() {
         "8/8/8/8/b1dA/8/8/8 b", "8/8/8/8/a1eA/8/8/8 b", "8/8/8/8/1fA/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -4969,8 +4969,8 @@ fn testbitbrd() {
         "8/8/8/b1dA/8/8/8/8 b", "8/8/8/a1eA/8/8/8/8 b", "8/8/8/1fA/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5018,8 +5018,8 @@ fn testbitbrd() {
         "8/8/b1dA/8/8/8/8/8 b", "8/8/a1eA/8/8/8/8/8 b", "8/8/1fA/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5067,8 +5067,8 @@ fn testbitbrd() {
         "8/b1dA/8/8/8/8/8/8 b", "8/a1eA/8/8/8/8/8/8 b", "8/1fA/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5116,8 +5116,8 @@ fn testbitbrd() {
         "b1dA/8/8/8/8/8/8/8 b", "a1eA/8/8/8/8/8/8/8 b", "1fA/8/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5161,15 +5161,12 @@ fn testbitbrd() {
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
     let revchktbl = [
-        "7A/6a1/8/4a3/3a4/2a5/1a6/a7 b",
-        "7A/6a1/5a2/8/3a4/2a5/1a6/a7 b",
-        "7A/6a1/5a2/4a3/8/2a5/1a6/a7 b",
-        "7A/6a1/5a2/4a3/3a4/8/1a6/a7 b",
-        "7A/6a1/5a2/4a3/3a4/2a5/8/a7 b",
-        "7A/6a1/5a2/4a3/3a4/2a5/1a6/8 b",
+        "7A/6a1/8/4a3/3a4/2a5/1a6/a7 b", "7A/6a1/5a2/8/3a4/2a5/1a6/a7 b",
+        "7A/6a1/5a2/4a3/8/2a5/1a6/a7 b", "7A/6a1/5a2/4a3/3a4/8/1a6/a7 b",
+        "7A/6a1/5a2/4a3/3a4/2a5/8/a7 b", "7A/6a1/5a2/4a3/3a4/2a5/1a6/8 b",
     ];
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, y + 2);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, y + 2));
         ban.put();
@@ -5215,15 +5212,12 @@ fn testbitbrd() {
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
     let revchktbl = [
-        "a7/1a6/2a5/3a4/4a3/5A2/6a1/8 b",
-        "a7/1a6/2a5/3a4/4A3/5a2/6a1/8 b",
-        "a7/1a6/2a5/3A4/4a3/5a2/6a1/8 b",
-        "a7/1a6/2A5/3a4/4a3/5a2/6a1/8 b",
-        "a7/1A6/2a5/3a4/4a3/5a2/6a1/8 b",
-        "A7/1a6/2a5/3a4/4a3/5a2/6a1/8 b",
+        "a7/1a6/2a5/3a4/4a3/5A2/6a1/8 b", "a7/1a6/2a5/3a4/4A3/5a2/6a1/8 b",
+        "a7/1a6/2a5/3A4/4a3/5a2/6a1/8 b", "a7/1a6/2A5/3a4/4a3/5a2/6a1/8 b",
+        "a7/1A6/2a5/3a4/4a3/5a2/6a1/8 b", "A7/1a6/2a5/3a4/4a3/5a2/6a1/8 b",
     ];
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL, NUMCELL);
         assert!(ban.checkreverse(NUMCELL - 1, NUMCELL - 1));
         ban.put();
@@ -5273,8 +5267,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/a1eA/a1eA b", "8/8/8/8/8/8/1fA/1fA b",
     ];
     let x = 7;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5323,8 +5317,8 @@ fn testbitbrd() {
         "8/8/8/8/8/a1eA/a1eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5373,8 +5367,8 @@ fn testbitbrd() {
         "8/8/8/8/a1eA/a1eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5423,8 +5417,8 @@ fn testbitbrd() {
         "8/8/8/a1eA/a1eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5473,8 +5467,8 @@ fn testbitbrd() {
         "8/8/a1eA/a1eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5523,8 +5517,8 @@ fn testbitbrd() {
         "8/a1eA/a1eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5573,8 +5567,8 @@ fn testbitbrd() {
         "a1eA/a1eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5623,8 +5617,8 @@ fn testbitbrd() {
         "a1eA/8/8/8/8/8/8/a1eA b", "1fA/8/8/8/8/8/8/1fA b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5673,8 +5667,8 @@ fn testbitbrd() {
         "a1eA/8/8/8/8/8/8/a1eA b", "1fA/8/8/8/8/8/8/1fA b",
     ];
     let x = 7;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5723,8 +5717,8 @@ fn testbitbrd() {
         "8/8/8/8/8/8/a1eA/a1eA b", "8/8/8/8/8/8/1fA/1fA b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5774,8 +5768,8 @@ fn testbitbrd() {
         "8/8/8/8/8/a1eA/a1eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5824,8 +5818,8 @@ fn testbitbrd() {
         "8/8/8/8/a1eA/a1eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5874,8 +5868,8 @@ fn testbitbrd() {
         "8/8/8/a1eA/a1eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5924,8 +5918,8 @@ fn testbitbrd() {
         "8/8/a1eA/a1eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -5974,8 +5968,8 @@ fn testbitbrd() {
         "8/a1eA/a1eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
@@ -6024,8 +6018,8 @@ fn testbitbrd() {
         "a1eA/a1eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
     let x = x - 1;
-    for y in 0..(NUMCELL - 2) {
-        let ban = BitBoard::from(revchktbl[y]).unwrap();
+    for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
+        let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(NUMCELL - 2 - 1 - y, x));
         let ban = ban.r#move((NUMCELL - 2 - y) as u8, (x + 1) as u8).unwrap();
