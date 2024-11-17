@@ -813,8 +813,8 @@ impl BitBoard {
             // 相手の石が並んでいて、そのすぐ先に自分の石がある
             if o > 0 && (m & 0x1) != 0 {return true;}
         } else if usetableud {
-            let p = ((mine >> x * 8) & 0xff) >> (y + 1);
-            let o = ((oppo >> x * 8) & 0xff) >> (y + 1);
+            let p = ((mine >> (x * 8)) & 0xff) >> (y + 1);
+            let o = ((oppo >> (x * 8)) & 0xff) >> (y + 1);
             let idx = p * 127 + o;
             if TBLCHKREV[idx as usize] != 0 {return true;}
         } else {
@@ -844,8 +844,8 @@ impl BitBoard {
             // 相手の石が並んでいて、そのすぐ先に自分の石がある
             if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
         } else if usetableud {
-            let p = ((mine >> x * 8) & 0xff) as u8;
-            let o = ((oppo >> x * 8) & 0xff) as u8;
+            let p = ((mine >> (x * 8)) & 0xff) as u8;
+            let o = ((oppo >> (x * 8)) & 0xff) as u8;
             let p = p.reverse_bits() as usize >> (7 - y + 1);
             let o = o.reverse_bits() as usize >> (7 - y + 1);
             let idx = p * 127 + o;
