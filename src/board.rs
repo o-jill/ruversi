@@ -19,7 +19,7 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         let mut ret = Board {
-            cells : [BLANK; CELL_2D],
+            cells : [BLANK ; CELL_2D],
             teban : SENTE,
             pass : 0,
         };
@@ -44,7 +44,7 @@ impl Board {
             _ => { return Err(format!("Invalid teban: {}", elem[1])); }
         };
         let mut ret = Board {
-            cells : [BLANK; CELL_2D],
+            cells : [BLANK ; CELL_2D],
             teban,
             pass : 0,
         };
@@ -97,6 +97,7 @@ impl Board {
                     count += 1;
                     continue;
                 }
+
                 if old == SENTE {
                     line += &STR_SENTE.chars().nth(count).unwrap().to_string();
                 } else if old == GOTE {
@@ -141,7 +142,7 @@ impl Board {
     }
 
     pub fn to_id(&self)-> [u8 ; 16] {
-        let mut res : [u8 ; CELL_2D / 4] = [0 ; CELL_2D / 4];
+        let mut res = [0u8 ; CELL_2D / 4];
         let tbn : u8 = if self.teban == SENTE { 0x00 } else { 0x80 };
         for (i, r) in res.iter_mut().enumerate() {
             let ce = &self.cells[i * 4..];
@@ -585,14 +586,14 @@ impl Board {
 
     pub fn fixedstones(&self) -> (i8, i8) {
         let mut count = [0 ; 3];
-        let mut fcells = [0;CELL_2D];
+        let mut fcells = [0; CELL_2D];
     
         // 四隅と辺
         let c = self.at(0, 0);
         if c != BLANK {
             fcells[0] = c;
             count[(c + 1) as usize] += 1;
-            for (i, fc) in fcells.iter_mut().enumerate().skip(1) {  // →
+            for (i, fc) in fcells.iter_mut().enumerate().take(7).skip(1) {  // →
                 if self.at(i, 0) != c {
                     break;
                 }
@@ -902,14 +903,14 @@ fn testbrd() {
     assert_eq!(b.pass, 0);
     for (i, c) in b.cells.iter().zip(
         [
-            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
-            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
-            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
-            BLANK,BLANK,BLANK,SENTE,GOTE,BLANK,BLANK,BLANK,
-            BLANK,BLANK,BLANK,GOTE,SENTE,BLANK,BLANK,BLANK,
-            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
-            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,
-            BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,BLANK,].iter()) {
+            BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK,
+            BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK,
+            BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK,
+            BLANK, BLANK, BLANK, SENTE, GOTE,  BLANK, BLANK, BLANK,
+            BLANK, BLANK, BLANK, GOTE,  SENTE, BLANK, BLANK, BLANK,
+            BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK,
+            BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK,
+            BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK,].iter()) {
         assert_eq!(*i, *c);
     }
     assert_eq!(b.fixedstones(), (0, 0));
