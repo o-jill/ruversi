@@ -673,6 +673,7 @@ impl NodeBB {
         }
         let n = moves.len();
         let teban = ban.teban;
+        node.child.reserve(moves.len());
         for (mvx, mvy) in moves.iter() {
             node.child.push(NodeBB::new(*mvx, *mvy, depth - 1, teban));
         }
@@ -1615,12 +1616,12 @@ impl NodeBB {
             });
         }
 
-        let fteban = -teban as f32;  // = newban.teban
+        let fteban = -teban as f32;
+        node.child.reserve(moves.len());
         for (mvx, mvy) in moves {
             let newban = ban.r#move(mvx, mvy).unwrap();
-            let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
-            let ch = &mut node.child[idx];
+            let ch = node.child.last_mut().unwrap();
             let val =
                 if newban.nblank() == 0 || newban.is_passpass() {
                     ch.kyokumen = 1;
