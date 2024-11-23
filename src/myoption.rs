@@ -7,8 +7,8 @@ pub enum Mode {
   Learn,
   Duel,
   DuelExt,
-  GTP,
-  RFEN,
+  Gtp,
+  Rfen,
   Play,
   Help,
   InitPos,
@@ -18,7 +18,7 @@ pub enum Mode {
 #[derive(Debug, PartialEq)]
 pub enum Opponent {
     None,
-    CUI,
+    Cui,
     Edax,
     Ruversi,
 }
@@ -105,7 +105,7 @@ impl MyOption {
                 skip -= 1;
                 continue;
             }
-            let e = args.iter().nth(i).unwrap().to_string();
+            let e = args.get(i).unwrap().to_string();
             if e.starts_with("--") {
                 if !old.is_empty() {
                     panic!("\"{old}\" was not specified correctly.");
@@ -116,59 +116,48 @@ impl MyOption {
                     opt.mode = Mode::Learn;
                 } else if e == "--duel" {
                     opt.mode = Mode::Duel;
-                    match args.iter().nth(i + 1) {
-                        Some(lvl) => {
-                            let n = lvl.parse::<i8>();
-                            match n {
-                                Ok(level) => {
-                                    if level > 0 {
-                                        opt.duellv = level;
-                                        skip = 1;
-                                    }
-                                },
-                                _ => {},
+                    if let Some(lvl) = args.get(i + 1) {
+                        if let Ok(level) = lvl.parse::<i8>() {
+                            if level > 0 {
+                                opt.duellv = level;
+                                skip = 1;
                             }
-                        },
-                        _ => {},
+                        }
                     }
                 } else if e == "--duelext" {
                     opt.mode = Mode::DuelExt;
-                    match args.iter().nth(i + 1) {
-                        Some(lvl) => {
-                            let n = lvl.parse::<i8>();
-                            match n {
-                                Ok(level) => {
-                                    if level > 0 {
-                                        opt.duellv = level;
-                                        skip = 1;
-                                    }
-                                },
-                                _ => {},
+                    if let Some(lvl) = args.get(i + 1) {
+                        if let Ok(level) = lvl.parse::<i8>() {
+                            if level > 0 {
+                                opt.duellv = level;
+                                skip = 1;
                             }
-                        },
-                        _ => {},
+                        }
                     }
                 } else if e == "--play" {
                     opt.mode = Mode::Play;
                     if opt.opponent == Opponent::None {
-                        opt.opponent = Opponent::CUI;
+                        opt.opponent = Opponent::Cui;
                     }
                 } else if e == "--playb" {
                     opt.mode = Mode::Play;
                     opt.turn = board::SENTE;
                     if opt.opponent == Opponent::None {
-                        opt.opponent = Opponent::CUI;
+                        opt.opponent = Opponent::Cui;
                     }
                 } else if e == "--playw" {
                     opt.mode = Mode::Play;
                     opt.turn = board::GOTE;
                     if opt.opponent == Opponent::None {
-                        opt.opponent = Opponent::CUI;
+                        opt.opponent = Opponent::Cui;
                     }
                 } else if e == "--rfen" {
-                    opt.mode = Mode::RFEN;
+                    opt.mode = Mode::Rfen;
                     old = e;
-                } else if e == "--depth" {
+                } else if [
+                        "--depth", "--Edconf", "--eta", "--ev1", "--ev2",
+                         "--progress", "--Ruconf", "--repeat", "--trainout"
+                    ].contains(&e.as_str()) {
                     old = e;
                 } else if e == "--help" || e == "-h" {
                     opt.mode = Mode::Help;
@@ -181,37 +170,21 @@ impl MyOption {
                     opt.think = "ab".to_string();
                 } else if e == "--thinkall" {
                     opt.think = "all".to_string();
-                } else if e == "--progress" {
-                    old = e;
-                } else if e == "--repeat" {
-                    old = e;
                 } else if e == "--onebyone" {
                     opt.trmode = TrainingMode::OneByOne;
                 } else if e == "--minibatch" {
                     old = e;
                     opt.trmode = TrainingMode::MiniBatch;
-                } else if e == "--trainout" {
-                    old = e;
-                } else if e == "--eta" {
-                    old = e;
-                } else if e == "--ev1" {
-                    old = e;
-                } else if e == "--ev2" {
-                    old = e;
                 } else if e == "--Edax" {
                     opt.opponent = Opponent::Edax;
                 } else if e == "--Ruversi" {
                     opt.opponent = Opponent::Ruversi;
-                } else if e == "--Edconf" {
-                    old = e;
-                } else if e == "--Ruconf" {
-                    old = e;
                 } else if e == "--gtp" {
-                    opt.mode = Mode::GTP;
-                } else {
+                    opt.mode = Mode::Gtp;
+                // } else {
                 }
             } else if old.is_empty() && e.starts_with("-") {
-                if e.find("-N").is_some() {
+                if e.contains("-N") {
                     let n : Vec<&str> = e.split("N").collect();
                     let n = n[1].parse::<usize>();
                     if n.is_ok() {
@@ -220,86 +193,80 @@ impl MyOption {
                         return Err(format!("invalid option: {e}"));
                     }
                 }
-            } else  {
-                if old == "--repeat" {
-                    let rpt = e.parse::<usize>();
-                    if rpt.is_err() {
-                        return Err(format!("invalid option: {old} {e}"));
-                    } else {
-                        opt.repeat = Some(rpt.unwrap());
-                    }
-                    old.clear();
-                } else if old == "--progress" {
-                    opt.progress =
-                        e.split(",").collect::<Vec<&str>>().iter().map(|&a| {
-                            a.parse::<u32>().unwrap()}).collect();
-                    old.clear();
-                } else if old == "--minibatch" {
-                    let mbs = e.parse::<usize>();
-                    if mbs.is_err() {
-                        return Err(format!("invalid option: {old} {e}"));
-                    } else {
-                        opt.minibsize = mbs.unwrap();
-                    }
-                    old.clear();
-                } else if old == "--Edconf" || old == "--Ruconf" {
-                    if std::path::Path::new(&e).exists() {
-                        opt.edaxconfig = e;
-                    } else {
-                        return Err(format!("failed find \"{e}\"."));
-                    }
-                } else if old == "--eta" {
-                    let eta = e.parse::<f32>();
-                    if eta.is_err() {
-                        return Err(format!("invalid option: {old} {e}"));
-                    } else {
-                        opt.eta = Some(eta.unwrap());
-                    }
-                    old.clear();
-                } else if old == "--ev1" {
-                    if std::path::Path::new(&e).exists() {
-                        opt.evaltable1 = e;
-                    } else if vec!["RANDOM"].contains(&e.as_str()) {
-                        opt.evaltable1 = e;
-                    } else {
-                        return Err(format!("failed find \"{e}\"."));
-                    }
-                    old.clear();
-                } else if old == "--ev2" {
-                    if std::path::Path::new(&e).exists() {
-                        opt.evaltable2 = e;
-                    } else if vec!["RANDOM"].contains(&e.as_str()) {
-                        opt.evaltable2 = e;
-                    } else {
-                        return Err(format!("failed find \"{e}\"."));
-                    }
-                    old.clear();
-                } else if old == "--rfen" {
-                    opt.rfen = e;
-                    old.clear();
-                } else if old == "--depth" {
-                    match i32::from_str_radix(&e, 10) {
-                        Ok(dep) => {
-                            if dep <= 0 || dep > 60 {
-                                return Err(format!("depth {dep} is invalid number."));
-                            } else {
-                                opt.depth = dep as u8;
-                            }
-                        },
-                        Err(err) => {
-                            return Err(format!("failed read {} {}. ({})", old, e, err));
-                        }
-                    }
-                    old.clear();
-                } else if old == "--initpos" {
-                    opt.initpos = e;
-                    old.clear();
-                } else if old == "--trainout" {
-                    opt.outtrain = e;
-                    old.clear();
+            } else if old == "--repeat" {
+                let rpt = e.parse::<usize>();
+                if rpt.is_err() {
+                    return Err(format!("invalid option: {old} {e}"));
                 } else {
-                    println!("unknown option: {}", e);
+                    opt.repeat = Some(rpt.unwrap());
                 }
+                old.clear();
+            } else if old == "--progress" {
+                opt.progress =
+                    e.split(",").collect::<Vec<&str>>().iter().map(|&a| {
+                        a.parse::<u32>().unwrap()}).collect();
+                old.clear();
+            } else if old == "--minibatch" {
+                let mbs = e.parse::<usize>();
+                if mbs.is_err() {
+                    return Err(format!("invalid option: {old} {e}"));
+                } else {
+                    opt.minibsize = mbs.unwrap();
+                }
+                old.clear();
+            } else if old == "--Edconf" || old == "--Ruconf" {
+                if std::path::Path::new(&e).exists() {
+                    opt.edaxconfig = e;
+                } else {
+                    return Err(format!("failed find \"{e}\"."));
+                }
+            } else if old == "--eta" {
+                let eta = e.parse::<f32>();
+                if eta.is_err() {
+                    return Err(format!("invalid option: {old} {e}"));
+                } else {
+                    opt.eta = Some(eta.unwrap());
+                }
+                old.clear();
+            } else if old == "--ev1" {
+                if std::path::Path::new(&e).exists() || "RANDOM" == e {
+                    opt.evaltable1 = e;
+                } else {
+                    return Err(format!("failed find \"{e}\"."));
+                }
+                old.clear();
+            } else if old == "--ev2" {
+                if std::path::Path::new(&e).exists() || "RANDOM" == e {
+                    opt.evaltable2 = e;
+                } else {
+                    return Err(format!("failed find \"{e}\"."));
+                }
+                old.clear();
+            } else if old == "--rfen" {
+                opt.rfen = e;
+                old.clear();
+            } else if old == "--depth" {
+                match e.parse::<i32>() {
+                    Ok(dep) => {
+                        if dep <= 0 || dep > 60 {
+                            return Err(format!("depth {dep} is invalid number."));
+                        } else {
+                            opt.depth = dep as u8;
+                        }
+                    },
+                    Err(err) => {
+                        return Err(format!("failed read {} {}. ({})", old, e, err));
+                    }
+                }
+                old.clear();
+            } else if old == "--initpos" {
+                opt.initpos = e;
+                old.clear();
+            } else if old == "--trainout" {
+                opt.outtrain = e;
+                old.clear();
+            } else {
+                println!("unknown option: {}", e);
             }
         }
         Ok(opt)

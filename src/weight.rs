@@ -28,19 +28,20 @@ const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * 8 + 8 + 1;
 const WSZV5 : usize = (board::CELL_2D + 1 + 2 + 1) * 16 + 16 + 1;
 const WSZV6 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
 
-const EXP_HI : f32 = 88.3762626647949;
-const EXP_LO : f32 = -EXP_HI;
+const EXP_HI : f64 = 88.3762626647949;
+const EXP_LO : f64 = -EXP_HI;
 
-const CEPHES_LOG2EF : f32 = 1.44269504088896341;
-const CEPHES_EXP_C1 : f32 = 0.693359375;
-const CEPHES_EXP_C2 : f32 = -2.12194440e-4;
+const CEPHES_LOG2EF : f64 = std::f64::consts::LOG2_E;
+// const CEPHES_LOG2EF : f64 = 1.44269504088896341;
+const CEPHES_EXP_C1 : f64 = 0.693359375;
+const CEPHES_EXP_C2 : f64 = -2.12194440e-4;
 
-const CEPHES_EXP_P0 : f32 = 1.9875691500E-4;
-const CEPHES_EXP_P1 : f32 = 1.3981999507E-3;
-const CEPHES_EXP_P2 : f32 = 8.3334519073E-3;
-const CEPHES_EXP_P3 : f32 = 4.1665795894E-2;
-const CEPHES_EXP_P4 : f32 = 1.6666665459E-1;
-const CEPHES_EXP_P5 : f32 = 5.0000001201E-1;
+const CEPHES_EXP_P0 : f64 = 1.9875691500E-4;
+const CEPHES_EXP_P1 : f64 = 1.3981999507E-3;
+const CEPHES_EXP_P2 : f64 = 8.3334519073E-3;
+const CEPHES_EXP_P3 : f64 = 4.1665795894E-2;
+const CEPHES_EXP_P4 : f64 = 1.6666665459E-1;
+const CEPHES_EXP_P5 : f64 = 5.0000001201E-1;
 
 
 // v2
@@ -217,8 +218,8 @@ impl Weight {
 
     fn write(f : &mut File, w : &[f32], ver : &EvalFile) {
         let sv = w.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        f.write(format!("{}\n", ver.to_str()).as_bytes()).unwrap();
-        f.write(sv.join(",").as_bytes()).unwrap();
+        f.write_all(format!("{}\n", ver.to_str()).as_bytes()).unwrap();
+        f.write_all(sv.join(",").as_bytes()).unwrap();
     }
 
     #[allow(dead_code)]
@@ -343,7 +344,7 @@ impl Weight {
     /// copy v3 data into v4.
     #[allow(dead_code)]
     fn fromv3tov4(&mut self, tbl : &[f32]) {
-        self.weight = [0.0 ; N_WEIGHT];
+        self.weight = [0.0f32 ; N_WEIGHT];
         // ban
         let n = 4 * board::CELL_2D;
         let we = &mut self.weight[0..n];
@@ -409,8 +410,8 @@ impl Weight {
     }
 
     /// copy v3 data into v4.
-    fn convert(&mut self, tbl : &Vec<f32>, nhid : usize) {
-        self.weight = [0.0 ; N_WEIGHT];
+    fn convert(&mut self, tbl : &[f32], nhid : usize) {
+        self.weight = [0.0f32 ; N_WEIGHT];
         // ban
         let n = nhid * board::CELL_2D;
         let we = &mut self.weight[0..n];
@@ -476,17 +477,17 @@ impl Weight {
     }
 
     /// copy v3 data into v6.
-    fn fromv3tov6(&mut self, tbl : &Vec<f32>) {
+    fn fromv3tov6(&mut self, tbl : &[f32]) {
         self.convert(tbl, 4);
     }
 
     /// copy v4 data into v6.
-    fn fromv4tov6(&mut self, tbl : &Vec<f32>) {
+    fn fromv4tov6(&mut self, tbl : &[f32]) {
         self.convert(tbl, 8);
     }
 
     /// copy v5 data into v6.
-    fn fromv5tov6(&mut self, tbl : &Vec<f32>) {
+    fn fromv5tov6(&mut self, tbl : &[f32]) {
         self.convert(tbl, 16);
     }
 
@@ -556,7 +557,7 @@ impl Weight {
                     sum4 = x86_64::_mm_add_ps(sum4, mul);
                 }
             }
-            let mut sumarr : [f32 ; 4] = [0.0 ; 4];
+            let mut sumarr : [f32 ; 4] = [0.0f32 ; 4];
             unsafe {
                 x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
                 // x86_64::_mm_store_ps(sumarr.as_mut_ptr(),
@@ -651,7 +652,7 @@ impl Weight {
                     sum4 = x86_64::_mm_add_ps(sum4, sum1234);
                 }
             }
-            let mut sumarr : [f32 ; 4] = [0.0, 0.0, 0.0, 0.0];
+            let mut sumarr : [f32 ; 4] = [0.0f32 ; 4];
             unsafe {
                 x86_64::_mm_store_ps(sumarr.as_mut_ptr(), sum4);
             }
@@ -707,17 +708,17 @@ impl Weight {
     unsafe fn expmx_ps_simd(x4 : x86_64::__m128) -> x86_64::__m128 {
         // let x4 = x86_64::_mm_load_ps(x);
         // clip x
-        let max4 = x86_64::_mm_set1_ps(EXP_HI);
+        let max4 = x86_64::_mm_set1_ps(EXP_HI as f32);
         let x4 = x86_64::_mm_min_ps(x4, max4);
-        let min4 = x86_64::_mm_set1_ps(EXP_LO);
+        let min4 = x86_64::_mm_set1_ps(EXP_LO as f32);
         let x4 = x86_64::_mm_max_ps(x4, min4);
         let m1 = x86_64::_mm_set1_ps(-1.0);
         let x4 = x86_64::_mm_mul_ps(x4, m1);
 
         /* express exp(x) as exp(g + n*log(2)) */
-        let log2ef = x86_64::_mm_set1_ps(CEPHES_LOG2EF);
+        let log2ef = x86_64::_mm_set1_ps(CEPHES_LOG2EF as f32);
         let fx = x86_64::_mm_mul_ps(x4, log2ef);
-        let zp5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5);
+        let zp5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5 as f32);
         let fx = x86_64::_mm_add_ps(fx, zp5);
         let emm0 = x86_64::_mm_cvtps_epi32(fx);
         let tmp = x86_64::_mm_cvtepi32_ps(emm0);
@@ -727,30 +728,30 @@ impl Weight {
         let mask = x86_64::_mm_and_ps(mask, one);
         let fx = x86_64::_mm_sub_ps(tmp, mask);
 
-        let c1 = x86_64::_mm_set1_ps(CEPHES_EXP_C1);
+        let c1 = x86_64::_mm_set1_ps(CEPHES_EXP_C1 as f32);
         let tmp = x86_64::_mm_mul_ps(fx, c1);
-        let c2 = x86_64::_mm_set1_ps(CEPHES_EXP_C2);
+        let c2 = x86_64::_mm_set1_ps(CEPHES_EXP_C2 as f32);
         let z4 = x86_64::_mm_mul_ps(fx, c2);
         let x4 = x86_64::_mm_sub_ps(x4, tmp);
         let x4 = x86_64::_mm_sub_ps(x4, z4);
 
         let z4 = x86_64::_mm_mul_ps(x4, x4);
 
-        let y4 = x86_64::_mm_set1_ps(CEPHES_EXP_P0);
+        let y4 = x86_64::_mm_set1_ps(CEPHES_EXP_P0 as f32);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p1 = x86_64::_mm_set1_ps(CEPHES_EXP_P1);
+        let exp_p1 = x86_64::_mm_set1_ps(CEPHES_EXP_P1 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p1);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p2 = x86_64::_mm_set1_ps(CEPHES_EXP_P2);
+        let exp_p2 = x86_64::_mm_set1_ps(CEPHES_EXP_P2 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p2);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p3 = x86_64::_mm_set1_ps(CEPHES_EXP_P3);
+        let exp_p3 = x86_64::_mm_set1_ps(CEPHES_EXP_P3 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p3);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p4 = x86_64::_mm_set1_ps(CEPHES_EXP_P4);
+        let exp_p4 = x86_64::_mm_set1_ps(CEPHES_EXP_P4 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p4);
         let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5);
+        let exp_p5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5 as f32);
         let y4 = x86_64::_mm_add_ps(y4, exp_p5);
         let y4 = x86_64::_mm_mul_ps(y4, z4);
         let y4 = x86_64::_mm_add_ps(y4, x4);
@@ -779,16 +780,16 @@ impl Weight {
     #[cfg(target_arch="aarch64")]
     unsafe fn expmx_ps_simd(x4 : float32x4_t) -> float32x4_t {
         // clip x
-        let max4 = vmovq_n_f32(EXP_HI);
+        let max4 = vmovq_n_f32(EXP_HI as f32);
         let x4 = vminq_f32(x4, max4);
-        let min4 = vmovq_n_f32(EXP_LO);
+        let min4 = vmovq_n_f32(EXP_LO as f32);
         let x4 = vmaxq_f32(x4, min4);
         let m1 = vmovq_n_f32(-1.0);
         let x4 = vmulq_f32(x4, m1);
 
         /* express exp(x) as exp(g + n*log(2)) */
-        let log2ef = vmovq_n_f32(CEPHES_LOG2EF);
-        let zp5 = vmovq_n_f32(CEPHES_EXP_P5);
+        let log2ef = vmovq_n_f32(CEPHES_LOG2EF as f32);
+        let zp5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
         let fx = vmlaq_f32(zp5, x4, log2ef);
         let emm0 = vcvtq_s32_f32(fx);
         let tmp = vcvtq_f32_s32(emm0);
@@ -799,25 +800,25 @@ impl Weight {
                 mask, vreinterpretq_u32_f32(one)));
         let fx = vsubq_f32(tmp, mask);
 
-        let c1 = vmovq_n_f32(CEPHES_EXP_C1);
+        let c1 = vmovq_n_f32(CEPHES_EXP_C1 as f32);
         let tmp = vmulq_f32(fx, c1);
-        let c2 = vmovq_n_f32(CEPHES_EXP_C2);
+        let c2 = vmovq_n_f32(CEPHES_EXP_C2 as f32);
         let z4 = vmulq_f32(fx, c2);
         let x4 = vsubq_f32(x4, tmp);
         let x4 = vsubq_f32(x4, z4);
 
         let z4 = vmulq_f32(x4, x4);
 
-        let y4 = vmovq_n_f32(CEPHES_EXP_P0);
-        let exp_p1 = vmovq_n_f32(CEPHES_EXP_P1);
+        let y4 = vmovq_n_f32(CEPHES_EXP_P0 as f32);
+        let exp_p1 = vmovq_n_f32(CEPHES_EXP_P1 as f32);
         let y4 = vmlaq_f32(exp_p1, y4, x4);
-        let exp_p2 = vmovq_n_f32(CEPHES_EXP_P2);
+        let exp_p2 = vmovq_n_f32(CEPHES_EXP_P2 as f32);
         let y4 = vmlaq_f32(exp_p2, y4, x4);
-        let exp_p3 = vmovq_n_f32(CEPHES_EXP_P3);
+        let exp_p3 = vmovq_n_f32(CEPHES_EXP_P3 as f32);
         let y4 = vmlaq_f32(exp_p3, y4, x4);
-        let exp_p4 = vmovq_n_f32(CEPHES_EXP_P4);
+        let exp_p4 = vmovq_n_f32(CEPHES_EXP_P4 as f32);
         let y4 = vmlaq_f32(exp_p4, y4, x4);
-        let exp_p5 = vmovq_n_f32(CEPHES_EXP_P5);
+        let exp_p5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
         let y4 = vmlaq_f32(exp_p5, y4, x4);
         let y4 = vmlaq_f32(x4, y4, z4);
         let y4 = vaddq_f32(y4, one);
@@ -828,8 +829,7 @@ impl Weight {
         let emm0 = vshlq_n_s32(emm0, 23);
         let pow2n = vreinterpretq_f32_s32(emm0);
 
-        let y4 = vmulq_f32(y4, pow2n);
-        y4
+        vmulq_f32(y4, pow2n)
     }
 
     /**
@@ -845,17 +845,17 @@ impl Weight {
     unsafe fn expmx_ps_simd256(x4 : x86_64::__m256) -> x86_64::__m256 {
         // let x4 = x86_64::_mm_load_ps(x);
         // clip x
-        let max4 = x86_64::_mm256_set1_ps(EXP_HI);
+        let max4 = x86_64::_mm256_set1_ps(EXP_HI as f32);
         let x4 = x86_64::_mm256_min_ps(x4, max4);
-        let min4 = x86_64::_mm256_set1_ps(EXP_LO);
+        let min4 = x86_64::_mm256_set1_ps(EXP_LO as f32);
         let x4 = x86_64::_mm256_max_ps(x4, min4);
         let m1 = x86_64::_mm256_set1_ps(-1.0);
         let x4 = x86_64::_mm256_mul_ps(x4, m1);
 
         /* express exp(x) as exp(g + n*log(2)) */
-        let log2ef = x86_64::_mm256_set1_ps(CEPHES_LOG2EF);
+        let log2ef = x86_64::_mm256_set1_ps(CEPHES_LOG2EF as f32);
         let fx = x86_64::_mm256_mul_ps(x4, log2ef);
-        let zp5 = x86_64::_mm256_set1_ps(CEPHES_EXP_P5);
+        let zp5 = x86_64::_mm256_set1_ps(CEPHES_EXP_P5 as f32);
         let fx = x86_64::_mm256_add_ps(fx, zp5);
         let emm0 = x86_64::_mm256_cvtps_epi32(fx);
         let tmp = x86_64::_mm256_cvtepi32_ps(emm0);
@@ -865,30 +865,30 @@ impl Weight {
         let mask = x86_64::_mm256_and_ps(mask, one);
         let fx = x86_64::_mm256_sub_ps(tmp, mask);
 
-        let c1 = x86_64::_mm256_set1_ps(CEPHES_EXP_C1);
+        let c1 = x86_64::_mm256_set1_ps(CEPHES_EXP_C1 as f32);
         let tmp = x86_64::_mm256_mul_ps(fx, c1);
-        let c2 = x86_64::_mm256_set1_ps(CEPHES_EXP_C2);
+        let c2 = x86_64::_mm256_set1_ps(CEPHES_EXP_C2 as f32);
         let z4 = x86_64::_mm256_mul_ps(fx, c2);
         let x4 = x86_64::_mm256_sub_ps(x4, tmp);
         let x4 = x86_64::_mm256_sub_ps(x4, z4);
 
         let z4 = x86_64::_mm256_mul_ps(x4, x4);
 
-        let y4 = x86_64::_mm256_set1_ps(CEPHES_EXP_P0);
+        let y4 = x86_64::_mm256_set1_ps(CEPHES_EXP_P0 as f32);
         let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p1 = x86_64::_mm256_set1_ps(CEPHES_EXP_P1);
+        let exp_p1 = x86_64::_mm256_set1_ps(CEPHES_EXP_P1 as f32);
         let y4 = x86_64::_mm256_add_ps(y4, exp_p1);
         let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p2 = x86_64::_mm256_set1_ps(CEPHES_EXP_P2);
+        let exp_p2 = x86_64::_mm256_set1_ps(CEPHES_EXP_P2 as f32);
         let y4 = x86_64::_mm256_add_ps(y4, exp_p2);
         let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p3 = x86_64::_mm256_set1_ps(CEPHES_EXP_P3);
+        let exp_p3 = x86_64::_mm256_set1_ps(CEPHES_EXP_P3 as f32);
         let y4 = x86_64::_mm256_add_ps(y4, exp_p3);
         let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p4 = x86_64::_mm256_set1_ps(CEPHES_EXP_P4);
+        let exp_p4 = x86_64::_mm256_set1_ps(CEPHES_EXP_P4 as f32);
         let y4 = x86_64::_mm256_add_ps(y4, exp_p4);
         let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p5 = x86_64::_mm256_set1_ps(CEPHES_EXP_P5);
+        let exp_p5 = x86_64::_mm256_set1_ps(CEPHES_EXP_P5 as f32);
         let y4 = x86_64::_mm256_add_ps(y4, exp_p5);
         let y4 = x86_64::_mm256_mul_ps(y4, z4);
         let y4 = x86_64::_mm256_add_ps(y4, x4);
@@ -918,13 +918,13 @@ impl Weight {
         let dc = &ow[(board::CELL_2D + 1) * N_HIDDEN .. (board::CELL_2D + 2) * N_HIDDEN];
         let w2 = &ow[(board::CELL_2D + 2) * N_HIDDEN ..];
 
-        let mut hidsum : [f32 ; 4] = [0.0 ; 4];
-        let mut emx : [f32 ; 4] = [0.0 ; 4];
-        let mut sumarr : [f32 ; 4] = [0.0 ; 4];
+        let mut hidsum : [f32 ; 4] = [0.0f32 ; 4];
+        let mut emx : [f32 ; 4] = [0.0f32 ; 4];
+        let mut sumarr : [f32 ; 4] = [0.0f32 ; 4];
 
         for i in 0..N_HIDDEN / 4 {
             let hidx = i * 4;
-            let mut sum44 : [f32 ; 4 * 4] = [0.0 ; 4 * 4];
+            let mut sum44 : [f32 ; 4 * 4] = [0.0f32 ; 4 * 4];
 
             for n in 0..4 {
                 let res4 = sum44[n * 4..].as_mut_ptr();
@@ -1107,13 +1107,13 @@ impl Weight {
         let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
 
         const N : usize = 4;
-        let mut hidsum : [f32 ; N] = [0.0 ; N];
-        let mut emx : [f32 ; N] = [0.0 ; N];
-        let mut sumarr : [f32 ; N] = [0.0 ; N];
+        let mut hidsum : [f32 ; N] = [0.0f32 ; N];
+        let mut emx : [f32 ; N] = [0.0f32 ; N];
+        let mut sumarr : [f32 ; N] = [0.0f32 ; N];
 
         for i in 0..N_HIDDEN / N {
             let hidx = i * N;
-            let mut sum44 : [f32 ; N * N] = [0.0 ; N * N];
+            let mut sum44 : [f32 ; N * N] = [0.0f32 ; N * N];
 
             for n in 0..N {
                 let res4 = sum44[n * N..].as_mut_ptr();
@@ -1238,11 +1238,11 @@ impl Weight {
         let wh = &ow[(board::CELL_2D + 1 + 2 + 1) * N_HIDDEN ..];
 
         const N : usize = 4;
-        let mut sumarr : [f32 ; N] = [0.0 ; N];
+        let mut sumarr : [f32 ; N] = [0.0f32 ; N];
 
         for i in 0..N_HIDDEN / N {
             let hidx = i * N;
-            let mut sum44 : [f32 ; N * N] = [0.0 ; N * N];
+            let mut sum44 : [f32 ; N * N] = [0.0f32 ; N * N];
 
             for n in 0..N {
                 let res4 = sum44[n * N..].as_mut_ptr();
@@ -1256,11 +1256,11 @@ impl Weight {
                 let mut bit8 : u64 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = (bit8 & black) >> 2 * j;
-                    let w81 = (bit8 & white) >> 2 * j;
+                    let b81 = (bit8 & black) >> (2 * j);
+                    let w81 = (bit8 & white) >> (2 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 2 * j + 1;
-                    let w82 = (bit8 & white) >> 2 * j + 1;
+                    let b82 = (bit8 & black) >> (2 * j + 1);
+                    let w82 = (bit8 & white) >> (2 * j + 1);
                     bit8 <<= 1;
 
                     unsafe {
@@ -1401,10 +1401,10 @@ impl Weight {
                 let bit8 = 0x0101010101010101u64;
                 for j in 0..bitboard::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = bit8 & (black >> j * 2);
-                    let w81 = bit8 & (white >> j * 2);
-                    let b82 = bit8 & (black >> j * 2 + 1);
-                    let w82 = bit8 & (white >> j * 2 + 1);
+                    let b81 = bit8 & (black >> (j * 2));
+                    let w81 = bit8 & (white >> (j * 2));
+                    let b82 = bit8 & (black >> (j * 2 + 1));
+                    let w82 = bit8 & (white >> (j * 2 + 1));
 
                     unsafe {
                         let b08 = vmov_n_u64(b81 * 0xffu64);
@@ -1544,17 +1544,17 @@ impl Weight {
                 let mut bit8 : u64 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = (bit8 & black) >> 4 * j;
-                    let w81 = (bit8 & white) >> 4 * j;
+                    let b81 = (bit8 & black) >> (4 * j);
+                    let w81 = (bit8 & white) >> (4 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 4 * j + 1;
-                    let w82 = (bit8 & white) >> 4 * j + 1;
+                    let b82 = (bit8 & black) >> (4 * j + 1);
+                    let w82 = (bit8 & white) >> (4 * j + 1);
                     bit8 <<= 1;
-                    let b83 = (bit8 & black) >> 4 * j + 2;
-                    let w83 = (bit8 & white) >> 4 * j + 2;
+                    let b83 = (bit8 & black) >> (4 * j + 2);
+                    let w83 = (bit8 & white) >> (4 * j + 2);
                     bit8 <<= 1;
-                    let b84 = (bit8 & black) >> 4 * j + 3;
-                    let w84 = (bit8 & white) >> 4 * j + 3;
+                    let b84 = (bit8 & black) >> (4 * j + 3);
+                    let w84 = (bit8 & white) >> (4 * j + 3);
                     bit8 <<= 1;
 
                     unsafe {
@@ -1727,17 +1727,17 @@ impl Weight {
                 let mut bit8 : u64 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = (bit8 & black) >> 4 * j;
-                    let w81 = (bit8 & white) >> 4 * j;
+                    let b81 = (bit8 & black) >> (4 * j);
+                    let w81 = (bit8 & white) >> (4 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 4 * j + 1;
-                    let w82 = (bit8 & white) >> 4 * j + 1;
+                    let b82 = (bit8 & black) >> (4 * j + 1);
+                    let w82 = (bit8 & white) >> (4 * j + 1);
                     bit8 <<= 1;
-                    let b83 = (bit8 & black) >> 4 * j + 2;
-                    let w83 = (bit8 & white) >> 4 * j + 2;
+                    let b83 = (bit8 & black) >> (4 * j + 2);
+                    let w83 = (bit8 & white) >> (4 * j + 2);
                     bit8 <<= 1;
-                    let b84 = (bit8 & black) >> 4 * j + 3;
-                    let w84 = (bit8 & white) >> 4 * j + 3;
+                    let b84 = (bit8 & black) >> (4 * j + 3);
+                    let w84 = (bit8 & white) >> (4 * j + 3);
                     bit8 <<= 1;
 
                     unsafe {
@@ -2381,11 +2381,11 @@ impl Weight {
             let mut bit8 = 0x0101010101010101;
             for j in 0..board::CELL_2D / 16 {
                 let idx = j * 16;
-                let b81 = (bit8 & black) >> 2 * j;
-                let w81 = (bit8 & white) >> 2 * j;
+                let b81 = (bit8 & black) >> (2 * j);
+                let w81 = (bit8 & white) >> (2 * j);
                 bit8 <<= 1;
-                let b82 = (bit8 & black) >> 2 * j + 1;
-                let w82 = (bit8 & white) >> 2 * j + 1;
+                let b82 = (bit8 & black) >> (2 * j + 1);
+                let w82 = (bit8 & white) >> (2 * j + 1);
                 bit8 <<= 1;
 
                 unsafe {
@@ -2480,17 +2480,17 @@ impl Weight {
             let mut bit8 = 0x0101010101010101;
             for j in 0..board::CELL_2D / M {
                 let idx = j * M;
-                let b81 = (bit8 & black) >> 4 * j;
-                let w81 = (bit8 & white) >> 4 * j;
+                let b81 = (bit8 & black) >> (4 * j);
+                let w81 = (bit8 & white) >> (4 * j);
                 bit8 <<= 1;
-                let b82 = (bit8 & black) >> 4 * j + 1;
-                let w82 = (bit8 & white) >> 4 * j + 1;
+                let b82 = (bit8 & black) >> (4 * j + 1);
+                let w82 = (bit8 & white) >> (4 * j + 1);
                 bit8 <<= 1;
-                let b83 = (bit8 & black) >> 4 * j + 2;
-                let w83 = (bit8 & white) >> 4 * j + 2;
+                let b83 = (bit8 & black) >> (4 * j + 2);
+                let w83 = (bit8 & white) >> (4 * j + 2);
                 bit8 <<= 1;
-                let b84 = (bit8 & black) >> 4 * j + 3;
-                let w84 = (bit8 & white) >> 4 * j + 3;
+                let b84 = (bit8 & black) >> (4 * j + 3);
+                let w84 = (bit8 & white) >> (4 * j + 3);
                 bit8 <<= 1;
 
                 unsafe {
@@ -2585,17 +2585,17 @@ impl Weight {
                 let mut bit8 = 0x0101010101010101;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = (bit8 & black) >> 4 * j;
-                    let w81 = (bit8 & white) >> 4 * j;
+                    let b81 = (bit8 & black) >> (4 * j);
+                    let w81 = (bit8 & white) >> (4 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 4 * j + 1;
-                    let w82 = (bit8 & white) >> 4 * j + 1;
+                    let b82 = (bit8 & black) >> (4 * j + 1);
+                    let w82 = (bit8 & white) >> (4 * j + 1);
                     bit8 <<= 1;
-                    let b83 = (bit8 & black) >> 4 * j + 2;
-                    let w83 = (bit8 & white) >> 4 * j + 2;
+                    let b83 = (bit8 & black) >> (4 * j + 2);
+                    let w83 = (bit8 & white) >> (4 * j + 2);
                     bit8 <<= 1;
-                    let b84 = (bit8 & black) >> 4 * j + 3;
-                    let w84 = (bit8 & white) >> 4 * j + 3;
+                    let b84 = (bit8 & black) >> (4 * j + 3);
+                    let w84 = (bit8 & white) >> (4 * j + 3);
                     bit8 <<= 1;
 
                     unsafe {
@@ -2772,17 +2772,17 @@ impl Weight {
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
 
-                    let b81 = (bit8 & black) >> 4 * j;
-                    let w81 = (bit8 & white) >> 4 * j;
+                    let b81 = (bit8 & black) >> (4 * j);
+                    let w81 = (bit8 & white) >> (4 * j);
                     bit8 <<= 1;
-                    let b82 = (bit8 & black) >> 4 * j + 1;
-                    let w82 = (bit8 & white) >> 4 * j + 1;
+                    let b82 = (bit8 & black) >> (4 * j + 1);
+                    let w82 = (bit8 & white) >> (4 * j + 1);
                     bit8 <<= 1;
-                    let b83 = (bit8 & black) >> 4 * j + 2;
-                    let w83 = (bit8 & white) >> 4 * j + 2;
+                    let b83 = (bit8 & black) >> (4 * j + 2);
+                    let w83 = (bit8 & white) >> (4 * j + 2);
                     bit8 <<= 1;
-                    let b84 = (bit8 & black) >> 4 * j + 3;
-                    let w84 = (bit8 & white) >> 4 * j + 3;
+                    let b84 = (bit8 & black) >> (4 * j + 3);
+                    let w84 = (bit8 & white) >> (4 * j + 3);
                     bit8 <<= 1;
 
                     unsafe {
@@ -2958,7 +2958,7 @@ impl Weight {
              -> Result<(), String> {
         if ban.nblank() < mid {return Ok(());}
 
-        self.learnbb(&ban, winner, eta);
+        self.learnbb(ban, winner, eta);
         Ok(())
     }
 
@@ -3044,7 +3044,7 @@ impl Weight {
         }
         w2[N_HIDDEN] -= diff * eta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3101,7 +3101,7 @@ impl Weight {
         }
         w2[N_HIDDEN] -= diff * eta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3152,7 +3152,7 @@ impl Weight {
         // }
         w2[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3238,7 +3238,7 @@ impl Weight {
         }
         w2[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = w2[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3291,7 +3291,7 @@ impl Weight {
         // }
         wh[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = wh[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3381,7 +3381,7 @@ impl Weight {
         }
         wh[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             let tmp = wh[i] * diff;
             let sig = 1.0 / (1.0 + f32::exp(-hidden[i]));
@@ -3422,7 +3422,7 @@ impl Weight {
         }
         wh[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         for (i, h) in dhid.iter_mut().enumerate() {
             // tmp = wo x diff
             let tmp = wh[i] * diff;
@@ -3530,7 +3530,7 @@ impl Weight {
         // }
         wh[N_HIDDEN] -= deta;
 
-        let mut dhid = [0.0 as f32 ; N_HIDDEN];
+        let mut dhid = [0.0f32 ; N_HIDDEN];
         if cfg!(feature="avx") {
             unsafe {
                 let diff4 = x86_64::_mm256_set1_ps(diff);
@@ -3897,9 +3897,9 @@ impl Weight {
             // forward
             let (hidden, hidsig, output) =
                 if cfg!(feature="nosimd") {
-                    self.forwardv1(&ban)
+                    self.forwardv1(ban)
                 } else {
-                    self.forwardv1_simd(&ban)
+                    self.forwardv1_simd(ban)
                 };
             // backward
             self.backwardv1(ban, winner, eta, &hidden, &hidsig, &output);
@@ -3907,9 +3907,9 @@ impl Weight {
             // forward
             let (hidden, hidsig, output) =
                 if cfg!(feature="nosimd") {
-                    self.forwardv2(&ban)
+                    self.forwardv2(ban)
                 } else {
-                    self.forwardv2_simd(&ban)
+                    self.forwardv2_simd(ban)
                     // self.forwardv2_simd2(&ban)
                 };
             // backward
@@ -3917,9 +3917,9 @@ impl Weight {
         } else {
             // forward
             let res = if cfg!(feature="nosimd") {
-                    self.forwardv3(&ban)
+                    self.forwardv3(ban)
                 } else {
-                    self.forwardv3_simd(&ban)
+                    self.forwardv3_simd(ban)
                 };
             // backward
             self.backwardv3(ban, winner, eta, &res);
@@ -3930,17 +3930,17 @@ impl Weight {
     fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
         if cfg!(feature="nnv1") {
             // forward
-            let (hidden, hidsig, output) = self.forwardv1(&ban);
+            let (hidden, hidsig, output) = self.forwardv1(ban);
             // backward
             self.backwardv1(ban, winner, eta, &hidden, &hidsig, &output);
         } else if cfg!(feature="nnv2") {
             // forward
-            let (hidden, hidsig, output) = self.forwardv2(&ban);
+            let (hidden, hidsig, output) = self.forwardv2(ban);
             // backward
             self.backwardv2(ban, winner, eta, &hidden, &hidsig, &output);
         } else {
             // forward
-            let res = self.forwardv3(&ban);
+            let res = self.forwardv3(ban);
             // backward
             self.backwardv3(ban, winner, eta, &res);
         }
@@ -3950,13 +3950,13 @@ impl Weight {
     fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
         // forward
         let res = if cfg!(feature="nosimd") {
-                self.forwardv3bb(&ban)  // 27s(w/ h8)
+                self.forwardv3bb(ban)  // 27s(w/ h8)
             } else if cfg!(feature="avx") {
-                self.forwardv3bb_simdavx3(&ban)  // 15s(w/ h8)
+                self.forwardv3bb_simdavx3(ban)  // 15s(w/ h8)
                 // self.forwardv3bb_simdavx2(&ban)  // 15s(w/ h8)
                 // self.forwardv3bb_simdavx(&ban)  // 28s(w/ h8)
             } else {
-                self.forwardv3bb_simd(&ban)  // 15s(w/ h8)
+                self.forwardv3bb_simd(ban)  // 15s(w/ h8)
             };
         // backward
         if cfg!(feature="nosimd") {
@@ -3969,7 +3969,7 @@ impl Weight {
     #[cfg(target_arch="aarch64")]
     fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
         // forward
-        let res = self.forwardv3bb(&ban);
+        let res = self.forwardv3bb(ban);
         // backward
         self.backwardv3bb(ban, winner, eta, &res);
     }
@@ -3978,13 +3978,13 @@ impl Weight {
     fn learnbbdiff(&self, ban : &bitboard::BitBoard, winner : i8, eta : f32, dfw : &mut Weight) {
         // forward
         let res = if cfg!(feature="nosimd") {
-                self.forwardv3bb(&ban)  // 27s(w/ h8)
+                self.forwardv3bb(ban)  // 27s(w/ h8)
             } else if cfg!(feature="avx") {
-                self.forwardv3bb_simdavx3(&ban)  // 15s(w/ h8)
+                self.forwardv3bb_simdavx3(ban)  // 15s(w/ h8)
                 // self.forwardv3bb_simdavx2(&ban)  // 15s(w/ h8)
                 // self.forwardv3bb_simdavx(&ban)  // 28s(w/ h8)
             } else {
-                self.forwardv3bb_simd(&ban)  // 15s(w/ h8)
+                self.forwardv3bb_simd(ban)  // 15s(w/ h8)
             };
         // backward
         if cfg!(feature="nosimd") {
@@ -3997,7 +3997,7 @@ impl Weight {
     #[cfg(target_arch="aarch64")]
     fn learnbbdiff(&self, ban : &bitboard::BitBoard, winner : i8, eta : f32, dfw : &mut Weight) {
         // forward
-        let res = self.forwardv3bb(&ban);
+        let res = self.forwardv3bb(ban);
         // backward
         dfw.backwardv3bb(ban, winner, eta, &res);
     }
@@ -4185,7 +4185,7 @@ fn testweight() {
             // assert!((res_nosimde - res_simd).abs() < limit);
             // assert!((res_nosimde - res_simdavx).abs() < limit);
             // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
-            let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
+            let (_bh_ns, _ah_ns, res_nosimd, _fsns) = w.forwardv3bb(&bban);
             // let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb_simd(&bban);
             // let (bh_sa, ah_sa, res_simdavx, fssa)
             //         = w.forwardv3bb_simdavx(&bban);
@@ -4228,13 +4228,13 @@ fn testweight() {
             // let s3 = sv3.join(",");
             // assert_eq!(s, s3);
             // assert!(dbg_assert_eq_vec(&w.weight, &w3.weight));
-            let res_nosimde2 = w.evaluatev3bb(&bban);
-            let res_nosimde3 = w2.evaluatev3bb(&bban);
-            let res_nosimde4 = w3.evaluatev3bb(&bban);
+            let _res_nosimde2 = w.evaluatev3bb(&bban);
+            let _res_nosimde3 = w2.evaluatev3bb(&bban);
+            let _res_nosimde4 = w3.evaluatev3bb(&bban);
             // println!("{res_nosimde} -> {res_nosimde2}");
             // assert!(dbg_assert_eq(&res_nosimde2, &res_nosimde3));
             // assert!(dbg_assert_eq(&res_nosimde2, &res_nosimde4));
-            let before = (winner as f32 - res_nosimde).abs();
+            let _before = (winner as f32 - res_nosimde).abs();
             // assert!(before > (winner as f32 - res_nosimde2).abs());
             // assert!(before > (winner as f32 - res_nosimde3).abs());
             // assert!(before > (winner as f32 - res_nosimde4).abs());

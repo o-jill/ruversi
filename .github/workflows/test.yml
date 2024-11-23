@@ -10,13 +10,10 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  build_linux:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
-
     steps:
     - uses: actions/checkout@v4
     - name: cpu
@@ -26,3 +23,35 @@ jobs:
     - name: Run tests
       id: utest
       run: cargo test --verbose --release  # test w/ simd will get error w/o --release.
+
+  build_mac:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      continue-on-error: true # とにかく最後まで行きたい
+      id: rubuild
+      run: cargo build --verbose
+    - name: Run clippy
+      continue-on-error: true # とにかく最後まで行きたい
+      id: ruclippy
+      run: cargo clippy --all-targets
+    - name: Run tests
+      continue-on-error: true # とにかく最後まで行きたい
+      id: rutest
+      run: cargo test --verbose
+    - name: check error run build
+      if: ${{ steps.rubuild.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.rubuild.outcome }} == 'failure'
+        exit 1
+    - name: check error run clippy
+      if: ${{ steps.ruclippy.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.ruclippy.outcome }} == 'failure'
+        exit 1
+    - name: check error run test
+      if: ${{ steps.rutest.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.rutest.outcome }} == 'failure'
+        exit 1

@@ -133,7 +133,7 @@ fn trial() {
                 n.to_str().map(|s| String::from(s))
             )
         )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-            fnm.find(".txt").is_some()
+            fnm.contains(".txt")
         }).cloned().collect::<Vec<String>>();
     println!("{:?}", files);
 
@@ -242,9 +242,8 @@ fn verbose(rfen : &str, depth : u8) {
 
 fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
     for (idx, rfen) in rfentbl.iter().enumerate() {
-        let kifutxt;
         let think = MYOPT.get().unwrap().think.as_str();
-        if cfg!(feature="bitboard") {
+        let kifutxt = if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
             // play
@@ -264,7 +263,7 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
                 },
                 _ => { panic!("unknown thinking method.") }
             }
-            kifutxt = g.kifu.to_str()
+            g.kifu.to_str()
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
@@ -279,14 +278,14 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
                 },
                 _ => { panic!("unknown thinking method.") }
             }
-            kifutxt = g.kifu.to_str()
-        }
+            g.kifu.to_str()
+        };
 
         // store kifu
         let kifuname = format!("./kifu/kifu{grp}{idx:05}.txt");
         let mut f = File::create(kifuname).unwrap();
         let content = format!("{}{}", kifu::HEADER, kifutxt);
-        f.write(content.as_bytes()).unwrap();
+        f.write_all(content.as_bytes()).unwrap();
     }
 }
 
@@ -300,7 +299,7 @@ fn genkifu_para(rfentbl : &[String], depth : u8, grp : &str) {
             genkifu_single(&rfentbl1, depth, &grp1);
         });
 
-    genkifu_single(&rfentbl2, depth, &format!("{grp}1"));
+    genkifu_single(rfentbl2, depth, &format!("{grp}1"));
 
     sub.join().unwrap();
 }
@@ -326,8 +325,8 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
         &rfentbl[b..e]
     };
 
-    genkifu_para(&rfentbl, depth, &format!("{grp:02}"));
-    // genkifu_single(&rfentbl, depth, &format!("{grp:02}"));
+    genkifu_para(rfentbl, depth, &format!("{grp:02}"));
+    // genkifu_single(rfentbl, depth, &format!("{grp:02}"));
 }
 
 /// training a weight.
@@ -347,11 +346,11 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
     let mut files = dir.filter_map(|entry| {
         entry.ok().and_then(|e|
             e.path().file_name().and_then(|n|
-                n.to_str().map(|s| String::from(s))
+                n.to_str().map(String::from)
             )
         )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-            fnm.find("kifu").is_some()
-            // fnm.find(".txt").is_some()
+            fnm.contains("kifu")
+            // fnm.contains(".txt")
         }).cloned().collect::<Vec<String>>();
     // println!("{:?}", files);
 
@@ -431,10 +430,10 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
         let files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-            fnm.find("kifu").is_some()
+            fnm.contains("kifu")
         }).cloned().collect::<Vec<String>>();
         for path in files.iter() {
             extractrfen::extract(&format!("kifu/{}", path));
@@ -447,7 +446,7 @@ fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
 /// - repeat : Number of repeat. None as 10000.
 /// - eta : learning ratio. None as 0.0001.
 fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str,
-        prgs : &Vec<u32>, trmd : &myoption::TrainingMode, mbsize : usize) {
+        prgs : &[u32], trmd : &myoption::TrainingMode, mbsize : usize) {
     let repeat = repeat.unwrap_or(10000);
     let eta = eta.unwrap_or(0.1);
     println!("eta:{eta}");
@@ -513,10 +512,10 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str,
         let files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-            fnm.find("kifu").is_some()
+            fnm.contains("kifu")
         }).cloned().collect::<Vec<String>>();
         for path in files.iter() {
             extractrfen::extract(&format!("kifu/{}", path));
@@ -530,7 +529,7 @@ fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str,
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
 fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
-    if duellv < 1 || 14 < duellv {
+    if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
 
@@ -656,7 +655,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 /// - duellv : duel level.
 /// - depth : searching depth.
 fn duel_vs_edax(duellv : i8, depth : u8) {
-    if duellv < 1 || 14 < duellv {
+    if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
 
@@ -820,7 +819,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
 /// - duellv : duel level.
 /// - depth : searching depth.
 fn duel_vs_ruversi(duellv : i8, depth : u8) {
-    if duellv < 1 || 14 < duellv {
+    if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
 
@@ -936,17 +935,15 @@ fn readeval(path: &str) {
     if cfg!(feature="bitboard") {
         // println!("read weight for bitboard");
         unsafe {
-            match nodebb::WEIGHT.as_mut().unwrap().read(path) {
-                Err(msg) => {panic!("{}", msg)},
-                _ => {}
+            if let Err(msg) = nodebb::WEIGHT.as_mut().unwrap().read(path) {
+                panic!("{}", msg);
             }
         }
     } else {
         // println!("read weight for byteboard");
         unsafe {
-            match node::WEIGHT.as_mut().unwrap().read(path) {
-                Err(msg) => {panic!("{}", msg)},
-                _ => {}
+            if let Err(msg) = node::WEIGHT.as_mut().unwrap().read(path) {
+                panic!("{}", msg);
             }
         }
     }
@@ -1108,7 +1105,7 @@ fn help() {
 }
 
 pub fn postxt(x : u8, y : u8) -> String {
-    if x < 1 || x > 8 || y < 1 || y > 8 {
+    if !(1..=8).contains(&x) || !(1..=8).contains(&y) {
         return String::from("PASS");
     }
 
@@ -1198,13 +1195,10 @@ fn equalrfen() -> Result<(), String> {
         match er.run(&ban.to_obf()) {
             Ok((_, score)) => {
                 // println!("score:{score}");
-                match ["-01", "+00", "+01"].iter().position(|&x| x == score) {
-                    Some(i) => {
-                        res += &format!("{rfen}, {score}\n");
-                        m1_0p1[i] += 1;
-                        count += 1;
-                    },
-                    None => {}
+                if let Some(i) = ["-01", "+00", "+01"].iter().position(|&x| x == score) {
+                    res += &format!("{rfen}, {score}\n");
+                    m1_0p1[i] += 1;
+                    count += 1;
                 }
             },
             Err(msg) => {panic!("{msg}");}
@@ -1224,7 +1218,7 @@ fn gtp() {
     let mut patha;
     let mut path : &str = &MYOPT.get().unwrap().evaltable1;
     if path.is_empty() {
-        patha = format!("{}", std::env::current_exe().unwrap().to_str().unwrap());
+        patha = std::env::current_exe().unwrap().to_str().unwrap().to_string();
         // println!("patha:{patha}");
         match patha.rfind("/") {
             Some(idx) => {
@@ -1238,7 +1232,7 @@ fn gtp() {
         path = &patha;
     }
 
-    let mut gtp = gtprotocol::GTP::new();
+    let mut gtp = gtprotocol::Gtp::new();
     match gtp.start(path) {
         Err(msg) => panic!("{msg}"),
         Ok(msg) => println!("{msg}"),
@@ -1258,7 +1252,7 @@ fn main() {
     if *mode == myoption::Mode::Help {
         help();
     }
-    if *mode == myoption::Mode::GTP {
+    if *mode == myoption::Mode::Gtp {
         gtp();
     }
 
@@ -1318,7 +1312,7 @@ fn main() {
         let turn = MYOPT.get().unwrap().turn;
         let opp = &MYOPT.get().unwrap().opponent;
         match opp {
-            myoption::Opponent::CUI => {
+            myoption::Opponent::Cui => {
                 play(
                     depth,
                     if turn == board::NONE {
@@ -1351,7 +1345,7 @@ fn main() {
             _ => {panic!("{:?} is not supported yet.", opp)},
         }
     }
-    if *mode == myoption::Mode::RFEN {
+    if *mode == myoption::Mode::Rfen {
         let rfen = &MYOPT.get().unwrap().rfen;
         verbose(rfen, depth);
     }

@@ -1,5 +1,5 @@
 use rand::prelude::SliceRandom;
-use std::{sync::{Arc, Mutex, Condvar}, collections::VecDeque};
+use std::{sync::{Arc, Condvar, Mutex}, collections::VecDeque};
 
 use super::*;
 
@@ -34,8 +34,8 @@ pub struct Trainer {
 impl Trainer {
     pub fn new(eta: f32, repeat: usize, path: &str) -> Trainer {
         Trainer {
-            eta: eta,
-            repeat: repeat,
+            eta,
+            repeat,
             path: String::from(path),
             progress: Vec::new(),
             nfiles: 0,
@@ -106,7 +106,7 @@ impl Trainer {
                 self.total, self.win, self.draw, self.lose)
     }
 
-    pub fn set_progress(&mut self, prgs : &Vec<u32>) {
+    pub fn set_progress(&mut self, prgs : &[u32]) {
         self.progress = prgs.to_vec();
     }
 
@@ -125,10 +125,10 @@ impl Trainer {
                 let lines:Vec<&str> = content.split("\n").collect();
                 let kifu = kifu::Kifu::from(&lines);
                 unsafe {
-                    self.run4win(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                    self.run4win(&kifu, node::WEIGHT.as_mut().unwrap()).unwrap();
                 }
             }
-            println!("");
+            println!();
         }
         println!("Done.");
     }
@@ -139,6 +139,7 @@ impl Trainer {
         if winner.is_none() {
             return Err(String::from("invalid kifu."));
         }
+
         let winner = winner.unwrap();
         for l in kifu.list.iter() {
             if weight.train(&l.rfen, winner, self.eta, 10).is_err() {
@@ -163,10 +164,10 @@ impl Trainer {
                 let lines:Vec<&str> = content.split("\n").collect();
                 let kifu = kifu::Kifu::from(&lines);
                 unsafe {
-                    self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
+                    self.run4stones(&kifu, node::WEIGHT.as_mut().unwrap()).unwrap();
                 }
             }
-            println!("");
+            println!();
         }
         println!("Done.");
     }
@@ -174,7 +175,7 @@ impl Trainer {
     /**
      * 読み込んだ棋譜をキャッシュする版
      */
-    pub fn learn_stones_cache(&self, files : &mut Vec<String>) {
+    pub fn learn_stones_cache(&self, files : &mut [String]) {
         let showprgs = self.need_progress();
         let mut rng = rand::thread_rng();
         let mut kifucache : Vec<(String, kifu::Kifu)> = Vec::new();
@@ -187,42 +188,42 @@ impl Trainer {
                 let kifu = kifu::Kifu::from(&lines);
                 let p = String::from(&path);
                 kifucache.push((p, kifu.copy()));
-                unsafe {
-                    match if cfg!(feature="bitboard") {
-                            self.run4stones(&kifu, &mut nodebb::WEIGHT.as_mut().unwrap())
+                if let Err(msg) =
+                    unsafe {
+                        if cfg!(feature="bitboard") {
+                            self.run4stones(
+                                &kifu, nodebb::WEIGHT.as_mut().unwrap())
                         } else {
-                            self.run4stones(&kifu, &mut node::WEIGHT.as_mut().unwrap())
-                        } {
-                        Err(msg) => {panic!("{}", msg);},
-                        _ => {}
-                    }
-                }
+                            self.run4stones(
+                                &kifu, node::WEIGHT.as_mut().unwrap())
+                        }
+                    } {
+                        panic!("{}", msg);
+                    };
             }
-            if showprgs {println!("");}
+            if showprgs {println!();}
         }
         let n = files.len();
-        let mut numbers : Vec<usize> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        for (i, it) in numbers.iter_mut().enumerate() {*it = i;}
+        let mut numbers = (0..n).collect::<Vec<usize>>();
         for i in 1..self.repeat {
             numbers.shuffle(&mut rng);
             if showprgs {print!("{} / {}\r", i, self.repeat);}
             for idx in numbers.iter() {
-                let (_path, kifu) = kifucache.iter().nth(*idx).unwrap();
-                unsafe {
-                    match if cfg!(feature="bitboard") {
-                        self.run4stones(
-                            &kifu, &mut nodebb::WEIGHT.as_mut().unwrap())
+                let (_path, kifu) = kifucache.get(*idx).unwrap();
+                if let Err(msg) =
+                    unsafe {
+                        if cfg!(feature="bitboard") {
+                            self.run4stones(
+                                kifu, nodebb::WEIGHT.as_mut().unwrap())
                         } else {
                             self.run4stones(
-                                &kifu, &mut node::WEIGHT.as_mut().unwrap())
-                        } {
-                        Err(msg) => {panic!("{}", msg);},
-                        _ => {}
-                    }
-                }
+                                kifu, node::WEIGHT.as_mut().unwrap())
+                        }
+                    } {
+                        panic!("{}", msg);
+                    };
             }
-            if showprgs {println!("");}
+            if showprgs {println!();}
         }
         println!("Done.");
     }
@@ -290,11 +291,11 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-                fnm.find("kifu").is_some()
-                // fnm.find(".txt").is_some()
+                fnm.contains("kifu")
+                // fnm.contains(".txt")
             }).cloned().collect::<Vec<String>>();
         // println!("{:?}", files);
 
@@ -336,19 +337,12 @@ impl Trainer {
                 panic!("{}", e.to_string());
             },
         }
-        let _ = frsub.recv().unwrap();
-        if showprgs {println!("");}
+        frsub.recv().unwrap();
+        if showprgs {println!();}
 
         let n = kifucache.len();
         // println!("{n} rfens.");
-        let mut numbers : Vec<usize> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i;
-        }
+        let mut numbers = (0..n).collect::<Vec<usize>>();
         for i in 1..self.repeat {
             if showprgs {
                 print!("{i} / {}\r", self.repeat);
@@ -371,7 +365,7 @@ impl Trainer {
             }
             frsub.recv().unwrap();
         }
-        if showprgs {println!("");}
+        if showprgs {println!();}
         // println!("_ _ _");
         let stop = Arc::new(kifu::Kifu::invalid());
         match tosub.send(stop) {
@@ -426,11 +420,11 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-                fnm.find("kifu").is_some()
-                // fnm.find(".txt").is_some()
+                fnm.contains("kifu")
+                // fnm.contains(".txt")
             }).cloned().collect::<Vec<String>>();
         // println!("{:?}", files);
 
@@ -476,24 +470,17 @@ impl Trainer {
                 panic!("{}", e.to_string());
             },
         }
-        let _ = frsub.recv().unwrap();
-        if showprgs {println!("");}
+        frsub.recv().unwrap();
+        if showprgs {println!();}
 
         let n = rfencache.len();
         // println!("{n} rfens.");
-        let mut numbers : Vec<usize> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i;
-        }
+        let mut numbers = (0..n).collect::<Vec<usize>>();
         for i in 1..self.repeat {
             if showprgs {print!("{i} / {}", self.repeat);}
             numbers.shuffle(&mut rng);
             for idx in numbers.iter() {
-                let (rfen, score) = rfencache.iter().nth(*idx).unwrap();
+                let (rfen, score) = rfencache.get(*idx).unwrap();
                 match tosub.send((rfen.clone(), *score)) {
                     Ok(_) => {},
                     Err(e) => {
@@ -508,7 +495,7 @@ impl Trainer {
                 },
             }
             frsub.recv().unwrap();
-            if showprgs {println!("");}
+            if showprgs {println!();}
         }
         // println!("_ _ _");
         match tosub.send((String::from("stop"), 100)) {
@@ -551,7 +538,7 @@ impl Trainer {
                         }
                         if rfenidxgrp[0] == PROGRESS {
                             let mut w = weight::Weight::new();
-                            w.copy(&weight);
+                            w.copy(weight);
                             txprogress.send(w).unwrap();
                             continue;
                         }
@@ -590,11 +577,11 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-                fnm.find("kifu").is_some()
-                // fnm.find(".txt").is_some()
+                fnm.contains("kifu")
+                // fnm.contains(".txt")
             }).cloned().collect::<Vec<String>>();
         // println!("{:?}", files);
 
@@ -647,19 +634,12 @@ impl Trainer {
                 panic!("{}", e.to_string());
             },
         }
-        let _ = frsub.recv().unwrap();
-        if showprgs {println!("");}
+        frsub.recv().unwrap();
+        if showprgs {println!();}
 
         let n = unsafe {RFENCACHE.len()};
         // println!("{n} rfens.");
-        let mut numbers : Vec<u32> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i as u32;
-        }
+        let mut numbers = (0..n as u32).collect::<Vec<u32>>();
         let invalidprogress = 99999999;
         let mut prgs = VecDeque::from(self.progress.clone());
         let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
@@ -695,7 +675,7 @@ impl Trainer {
             }
             frsub.recv().unwrap();
         }
-        if showprgs {println!("");}
+        if showprgs {println!();}
         // println!("_ _ _");
         match tosub.send(vec![STOP]) {
             Ok(_) => {}
@@ -737,7 +717,7 @@ impl Trainer {
                         }
                         if rfenidxgrp[0] == PROGRESS {
                             let mut w = weight::Weight::new();
-                            w.copy(&weight);
+                            w.copy(weight);
                             txprogress.send(w).unwrap();
                             continue;
                         }
@@ -776,10 +756,10 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-                fnm.find("kifu").is_some()
+                fnm.contains("kifu")
                 // fnm.find(".txt").is_some()
             }).cloned().collect::<Vec<String>>();
         // println!("{:?}", files);
@@ -842,19 +822,12 @@ impl Trainer {
                 panic!("{}", e.to_string());
             },
         }
-        let _ = frsub.recv().unwrap();
-        if showprgs {println!("");}
+        frsub.recv().unwrap();
+        if showprgs {println!();}
 
         let n = unsafe {BOARDCACHE.len()};
         println!("{n} rfens.");
-        let mut numbers : Vec<u32> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i as u32;
-        }
+        let mut numbers : Vec<u32> = (0..n as u32).collect::<Vec<u32>>();
         let invalidprogress = 99999999;
         let mut prgs = VecDeque::from(self.progress.clone());
         let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
@@ -890,7 +863,7 @@ impl Trainer {
             }
             frsub.recv().unwrap();
         }
-        if showprgs {println!("");}
+        if showprgs {println!();}
         // println!("_ _ _");
         match tosub.send(vec![STOP]) {
             Ok(_) => {}
@@ -979,11 +952,11 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-                fnm.find("kifu").is_some()
-                // fnm.find(".txt").is_some()
+                fnm.contains("kifu")
+                // fnm.contains(".txt")
             }).cloned().collect::<Vec<String>>();
         // println!("{:?}", files);
 
@@ -1008,6 +981,7 @@ impl Trainer {
                 if bitboard::count_emptycells(&rfen).unwrap() < 1 {
                     continue;
                 }
+
                 let b = bitboard::BitBoard::from(&rfen).unwrap();
                 let b90 = b.rotate90();
                 let b180 = b.rotate180();
@@ -1046,18 +1020,11 @@ impl Trainer {
             },
         }
         let _ = frsub.recv().unwrap();
-        if showprgs {println!("");}
+        if showprgs {println!();}
 
         let n = unsafe {BOARDCACHE.len()};
         println!("{n} rfens.");
-        let mut numbers : Vec<u32> = Vec::with_capacity(n);
-        unsafe { numbers.set_len(n); }
-        // for (i, it) in numbers.iter_mut().enumerate() {
-        //     *it = i;
-        // }
-        for i in 0..n {
-            numbers[i] = i as u32;
-        }
+        let mut numbers = (0..n as u32).collect::<Vec<u32>>();
         let invalidprogress = 99999999;
         let mut prgs = VecDeque::from(self.progress.clone());
         let mut nprgs = prgs.pop_front().unwrap_or(invalidprogress) as usize;
@@ -1095,7 +1062,7 @@ impl Trainer {
             }
             frsub.recv().unwrap();
         }
-        if showprgs {println!("");}
+        if showprgs {println!();}
         // println!("_ _ _");
         match tosub.send(vec![STOP]) {
             Ok(_) => {}
@@ -1255,7 +1222,7 @@ impl Trainer {
         let mut files = files.filter_map(|entry| {
             entry.ok().and_then(|e|
                 e.path().file_name().and_then(|n|
-                    n.to_str().map(|s| String::from(s))
+                    n.to_str().map(String::from)
                 )
             )}).collect::<Vec<String>>().iter().filter(|&fnm| {
                 fnm.find("kifu").is_some()
@@ -1322,7 +1289,7 @@ impl Trainer {
             },
         }
         let _ = frsub.recv().unwrap();
-        if showprgs {println!("");}
+        if showprgs {println!();}
 
         let n = unsafe {BOARDCACHE.len()};
         println!("{n} rfens.");
@@ -1378,7 +1345,7 @@ impl Trainer {
             }
             frsub.recv().unwrap();
         }
-        if showprgs {println!("");}
+        if showprgs {println!();}
         // println!("_ _ _");
         match tosub2.send(vec![STOP]) {
             Ok(_) => {}

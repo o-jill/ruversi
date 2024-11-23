@@ -7,6 +7,8 @@ REPEAT=20
 DATESTR=`date +%Y%m%d%H%M%S`
 RESULT=speedcheck${DATESTR}.txt
 
+EVFILE=data/evaltable.txt
+
 search() {
 # SDEPTH="--depth 9"
 SDEPTH="--depth 11"
@@ -20,7 +22,7 @@ for ((i=0;i<${LENRFENS};i++)) do
   echo -n "Begin RFEN:${RFENS[$i]}"
   echo "Begin RFEN:${RFENS[$i]}" >> ${RESULT}
   for ((j=0;j<${REPEAT};j++)) do
-    RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --rfen "${RFENS[$i]}" ${SDEPTH} >> ${RESULT} 2>/dev/null
+    RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --rfen "${RFENS[$i]}" ${SDEPTH} --ev1 ${EVFILE} >> ${RESULT} 2>/dev/null
     echo -n " ${j}"
   done
   echo "End RFEN:${RFENS[$i]}" >> ${RESULT}
@@ -68,7 +70,7 @@ RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES}
 STARTDT=`date +%s.%3N`
 
 # for ((j=0;j<${REPEAT};j++)) do
-RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --duel "${DUELLV}" ${SDEPTH} --ev1 data/evaltable.txt --ev2 data/evaltable.txt >> ${RESULT} 2>/dev/null
+RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --duel "${DUELLV}" ${SDEPTH}  --ev1 ${EVFILE} --ev2 ${EVFILE} >> ${RESULT} 2>/dev/null
 # done
 
 FINISHDT=`date +%s.%3N`

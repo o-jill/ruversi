@@ -7,10 +7,10 @@ pub fn extract(path : &str) -> kifu::Kifu {
     let move1 = &kifu.list[0];
     let move2 = &kifu.list[1];
     let rfen = &kifu.list[2].rfen;
-    let n = countmoves(&rfen) as usize;
+    let n = countmoves(rfen) as usize;
     println!("{}\"{}\", // {} {} {}",
         n, rfen, &String::from_utf8(vec![b'*' ; n - 2]).unwrap(), move1.pos(), move2.pos());
-    return kifu;
+    kifu
 }
 
 const BLK : &str = " ABCDEFGH";
