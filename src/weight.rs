@@ -244,7 +244,6 @@ impl Weight {
         if WSZV6 != nsz {
             return Err(String::from("size mismatch"));
         }
-        self.weight.copy_from_slice(&newtable);
         self.fromv6tov7(&newtable);
         // println!("v6:{:?}", self.weight);
         Ok(())
@@ -257,8 +256,8 @@ impl Weight {
         if WSZV7 != nsz {
             return Err(String::from("size mismatch"));
         }
-            self.weight.copy_from_slice(&newtable);
-            // println!("v7:{:?}", self.weight);
+        self.weight.copy_from_slice(&newtable);
+        // println!("v7:{:?}", self.weight);
         Ok(())
     }
 
