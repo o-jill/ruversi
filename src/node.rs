@@ -118,13 +118,7 @@ impl Node {
     #[cfg(target_arch="aarch64")]
     fn evaluate(ban : &board::Board) -> f32 {
         unsafe {
-            if cfg!(feature="nnv1") {
-                WEIGHT.as_ref().unwrap().evaluatev1(ban)
-            } else if cfg!(feature="nnv2") {
-                WEIGHT.as_ref().unwrap().evaluatev2(ban)
-            } else {
-                WEIGHT.as_ref().unwrap().evaluatev3(ban)
-            }
+            WEIGHT.as_ref().unwrap().evaluatev7(ban)
         }
     }
 

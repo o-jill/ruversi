@@ -109,7 +109,7 @@ impl ShNode {
 
     #[cfg(target_arch="aarch64")]
     fn evaluate(ban : &bitboard::BitBoard) -> f32 {
-        unsafe {WEIGHT.as_ref().unwrap().evaluatev3bb(ban)}
+        unsafe {WEIGHT.as_ref().unwrap().evaluatev7bb(ban)}
     }
 
     #[allow(dead_code)]
