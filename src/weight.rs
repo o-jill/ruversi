@@ -1436,6 +1436,7 @@ impl Weight {
         let wh = self.wlayer1();
         let wdc1 = self.wl1bias();
         let wh2 = self.wlayer2();
+        let mut hid2 = [0f32 ; N_HIDDEN2];
         for i in 0..N_HIDDEN2 {
             let mut hidsum = wdc1[i];
             for j in (0..N_HIDDEN).step_by(16) {
@@ -1450,7 +1451,30 @@ impl Weight {
                     hidsum += vaddvq_f32(add4);
                 }
             }
-            res += wh2[i] / ((-hidsum).exp() + 1f32);
+            // res += wh2[i] / ((-hidsum).exp() + 1f32);
+            // hid2[i] = (-hidsum).exp() + 1f32;
+            hid2[i] = (-hidsum).exp();
+        }
+        unsafe {
+            let inp = vld1q_f32_x4(hid2.as_ptr());
+            let wei = vld1q_f32_x4(wh2.as_ptr());
+            // let mul0 = vdivq_f32(wei.0, inp.0);
+            // let mul1 = vdivq_f32(wei.1, inp.1);
+            // let mul2 = vdivq_f32(wei.2, inp.2);
+            // let mul3 = vdivq_f32(wei.3, inp.3);
+        let one = vdupq_n_f32(1f32);
+        let inp0 = vaddq_f32(one, inp.0);
+        let inp1 = vaddq_f32(one, inp.1);
+        let inp2 = vaddq_f32(one, inp.2);
+        let inp3 = vaddq_f32(one, inp.3);
+        let mul0 = vdivq_f32(wei.0, inp0);
+        let mul1 = vdivq_f32(wei.1, inp1);
+        let mul2 = vdivq_f32(wei.2, inp2);
+        let mul3 = vdivq_f32(wei.3, inp3);
+            let mul12 = vaddq_f32(mul0, mul1);
+            let mul34 = vaddq_f32(mul2, mul3);
+            let add4 = vaddq_f32(mul12, mul34);
+            res += vaddvq_f32(add4);
         }
         res
     }
