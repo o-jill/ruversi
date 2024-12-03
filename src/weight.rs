@@ -133,7 +133,7 @@ impl Weight {
         &self.weight[0..]
         // or &self.weight[0..N_WEIGHT_TEBAN]
     }
-    
+
     pub fn wteban(&self) -> &[f32] {
         &self.weight[N_WEIGHT_TEBAN..N_WEIGHT_FIXST_W]
     }
@@ -161,11 +161,11 @@ impl Weight {
     pub fn wl1bias(&self) -> &[f32] {
         &self.weight[N_WEIGHT_LAYER1BIAS..N_WEIGHT_LAYER2]
     }
-    
+
     pub fn wlayer2(&self) -> &[f32] {
         &self.weight[N_WEIGHT_LAYER2..N_WEIGHT_LAYER2BIAS]
     }
-    
+
     pub fn wl2bias(&self) -> f32 {
         *self.weight.last().unwrap()
     }
@@ -242,7 +242,7 @@ impl Weight {
         let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
         let nsz = newtable.len();
         if WSZV6 != nsz {
-            return Err(String::from("size mismatch"));
+            return Err(format!("size mismatch v6:{WSZV6} != {nsz}"));
         }
         self.fromv6tov7(&newtable);
         // println!("v6:{:?}", self.weight);
@@ -254,7 +254,7 @@ impl Weight {
         let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
         let nsz = newtable.len();
         if WSZV7 != nsz {
-            return Err(String::from("size mismatch"));
+            return Err(format!("size mismatch v7:{WSZV7} != {nsz}"));
         }
         self.weight.copy_from_slice(&newtable);
         // println!("v7:{:?}", self.weight);
