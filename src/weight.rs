@@ -1116,7 +1116,6 @@ impl Weight {
 
         let mut hid = [0f32 ; N_HIDDEN];
         const N : usize = 4;
-        let mut sumarr : [f32 ; N] = [0.0f32 ; N];
 
         for i in (0..N_HIDDEN).step_by(N) {
             let hidx = i;
@@ -1245,6 +1244,7 @@ impl Weight {
                 x86_64::_mm_store_ps(hid.as_mut_ptr().add(i), y4);
             }
         }
+
         // 2nd layer to output
         let mut res = self.wl2bias();
         let wh = self.wlayer1();
@@ -1252,15 +1252,16 @@ impl Weight {
         let wh2 = self.wlayer2();
         let mut hid2 = [0f32 ; N_HIDDEN2];
         for i in 0..N_HIDDEN2 {
-            let mut hidsum = wdc1[i];
+            let mut hidsum2 = wdc1[i];
             let mut sum4 = [0f32 ; 4];
+            let mut s4 = unsafe {x86_64::_mm_setzero_ps()};
             for j in (0..N_HIDDEN).step_by(16) {
                 let idx = i * N_HIDDEN + j;
                 unsafe {
-                    let x1 = x86_64::_mm_load_ps(hid.as_ptr());
-                    let x2 = x86_64::_mm_load_ps(hid.as_ptr().add(4));
-                    let x3 = x86_64::_mm_load_ps(hid.as_ptr().add(8));
-                    let x4 = x86_64::_mm_load_ps(hid.as_ptr().add(12));
+                    let x1 = x86_64::_mm_load_ps(hid.as_ptr().add(j));
+                    let x2 = x86_64::_mm_load_ps(hid.as_ptr().add(j + 4));
+                    let x3 = x86_64::_mm_load_ps(hid.as_ptr().add(j + 8));
+                    let x4 = x86_64::_mm_load_ps(hid.as_ptr().add(j + 12));
                     let w1 = x86_64::_mm_load_ps(wh.as_ptr().add(idx));
                     let w2 = x86_64::_mm_load_ps(wh.as_ptr().add(idx + 4));
                     let w3 = x86_64::_mm_load_ps(wh.as_ptr().add(idx + 8));
@@ -1271,15 +1272,18 @@ impl Weight {
                     let mul4 = x86_64::_mm_mul_ps(x4, w4);
                     let s12 = x86_64::_mm_add_ps(mul1, mul2);
                     let s34 = x86_64::_mm_add_ps(mul3, mul4);
-                    let s4 = x86_64::_mm_add_ps(s12, s34);
-                    x86_64::_mm_store_ps(sum4, s4);
+                    // let s12 = x86_64::_mm_fmadd_ps(x3, w3, mul1);
+                    // let s34 = x86_64::_mm_fmadd_ps(x4, w4, mul2);
+                    let s1234 = x86_64::_mm_add_ps(s12, s34);
+                    s4 = x86_64::_mm_add_ps(s1234, s4);
                 }
             }
+            unsafe {x86_64::_mm_store_ps(sum4.as_mut_ptr(), s4);}
             for h in sum4 {
-                hidsum += h;
+                hidsum2 += h;
             }
-            hid2[i] = hidsum;
-            // res += wh2[i] / ((-hidsum).exp() + 1f32);
+            // res += wh2[i] / ((-hidsum2).exp() + 1f32);
+            hid2[i] = hidsum2;
         }
         unsafe {
             let h1 = x86_64::_mm_load_ps(hid2.as_ptr());
@@ -1295,10 +1299,10 @@ impl Weight {
             let hsp142 = x86_64::_mm_add_ps(emx42, one);
             let hsp143 = x86_64::_mm_add_ps(emx43, one);
             let hsp144 = x86_64::_mm_add_ps(emx44, one);
-            let wh21 = x86_64::_mm_load_ps(wh2[i..].as_ptr());
-            let wh22 = x86_64::_mm_load_ps(wh2[i..].as_ptr().add(4));
-            let wh23 = x86_64::_mm_load_ps(wh2[i..].as_ptr().add(8));
-            let wh24 = x86_64::_mm_load_ps(wh2[i..].as_ptr().add(12));
+            let wh21 = x86_64::_mm_load_ps(wh2.as_ptr());
+            let wh22 = x86_64::_mm_load_ps(wh2.as_ptr().add(4));
+            let wh23 = x86_64::_mm_load_ps(wh2.as_ptr().add(8));
+            let wh24 = x86_64::_mm_load_ps(wh2.as_ptr().add(12));
 
             let y1 = x86_64::_mm_div_ps(wh21, hsp141);
             let y2 = x86_64::_mm_div_ps(wh22, hsp142);
@@ -1307,7 +1311,7 @@ impl Weight {
             let y12 = x86_64::_mm_add_ps(y1, y2);
             let y34 = x86_64::_mm_add_ps(y3, y4);
             let y1234 = x86_64::_mm_add_ps(y12, y34);
-            x86_64::_mm_store_ps(hid2.as_mut_ptr, y1234);
+            x86_64::_mm_store_ps(hid2.as_mut_ptr(), y1234);
         }
         for i in 0..4 {
             res += hid2[i];
@@ -1677,9 +1681,6 @@ impl Weight {
         const N : usize = 8;
         let mut hid = [0f32 ; N_HIDDEN];
 
-        const N : usize = 8;
-        let mut sumarr : [f32 ; N] = [0.0 ; N];
-
         for i in (0..N_HIDDEN).step_by(N) {
             let hidx = i;
             let mut sum88 : [f32 ; N * 8] = [0.0 ; N * 8];
@@ -1824,7 +1825,7 @@ impl Weight {
                 let emx4 = Weight::expmx_ps_simd256(h1234);
                 let one = x86_64::_mm256_set1_ps(1.0);
                 let hsp14 = x86_64::_mm256_add_ps(emx4, one);
-                let wh4 = x86_64::_mm256_load_ps(wh.as_ptr().add(hidx));
+                // let wh4 = x86_64::_mm256_load_ps(wh.as_ptr().add(hidx));
 
                 let y4 = x86_64::_mm256_div_ps(one, hsp14);
                 // let rhsp14 = x86_64::_mm_rcp_ps(hsp14);
@@ -1868,7 +1869,7 @@ impl Weight {
                     let s1 = x86_64::_mm256_extractf128_ps(s4, 0);
                     let s2 = x86_64::_mm256_extractf128_ps(s4, 1);
                     let s4 = x86_64::_mm_add_ps(s1, s2);
-                    x86_64::_mm_store_ps(sum4, s4);
+                    x86_64::_mm_store_ps(sum4.as_mut_ptr(), s4);
                 }
             }
             for h in sum4 {
@@ -1894,10 +1895,10 @@ impl Weight {
             let s1 = x86_64::_mm256_extractf128_ps(y3, 0);
             let s2 = x86_64::_mm256_extractf128_ps(y3, 1);
             let s4 = x86_64::_mm_add_ps(s1, s2);
-            x86_64::_mm_store_ps(sum4, s4);
+            x86_64::_mm_store_ps(hid2.as_mut_ptr(), s4);
         }
-        for s in sum4 {
-            res += s;
+        for i in 0..4 {
+            res += hid2[i];
         }
         res
     }
@@ -2069,15 +2070,19 @@ impl Weight {
         sum
     }
 
-    fn learn(&mut self, ban : &board::Board, winner : i8, eta : f32) {
+    #[allow(dead_code)]
+    fn learn(&mut self, _ban : &board::Board, _winner : i8, _eta : f32) {
     }
 
-    fn learnbb(&mut self, ban : &bitboard::BitBoard, winner : i8, eta : f32) {
+    #[allow(dead_code)]
+    fn learnbb(&mut self, _ban : &bitboard::BitBoard, _winner : i8, _eta : f32) {
     }
 
-    fn learnbbdiff(&self, ban : &bitboard::BitBoard, winner : i8, eta : f32, dfw : &mut Weight) {
+    #[allow(dead_code)]
+    fn learnbbdiff(&self, _ban : &bitboard::BitBoard, _winner : i8, _eta : f32, _dfw : &mut Weight) {
     }
 
+    #[allow(dead_code)]
     fn learnbbminib(&self, banscores : &[&(bitboard::BitBoard, i8)], eta : f32, dfw : &mut Weight) {
         for (ban , winner) in banscores.iter() {
             self.learnbbdiff(ban, *winner, eta, dfw);

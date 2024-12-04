@@ -98,11 +98,11 @@ impl ShNode {
         // unsafe{ return WEIGHT.as_ref().unwrap().evaluatev3bb(ban)}
         unsafe {
             if cfg!(feature="nosimd") {
-                WEIGHT.as_ref().unwrap().evaluatev3bb(ban)
+                WEIGHT.as_ref().unwrap().evaluatev7bb(ban)
             } else if cfg!(feature="avx") {
-                WEIGHT.as_ref().unwrap().evaluatev3bb_simdavx(ban)
+                WEIGHT.as_ref().unwrap().evaluatev7bb_simdavx(ban)
             } else {
-                WEIGHT.as_ref().unwrap().evaluatev3bb_simd(ban)
+                WEIGHT.as_ref().unwrap().evaluatev7bb_simd(ban)
             }
         }
     }
