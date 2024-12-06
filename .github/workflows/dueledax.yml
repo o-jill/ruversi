@@ -26,7 +26,8 @@ jobs:
         cd edax-reversi
         mkdir -p bin
         cd src
-        make build COMP=gcc
+        make build ARCH=native OS=linux
+        cp lEdax-native lEdax-x64-modern
         cd ..
         curl -OL https://github.com/abulmo/edax-reversi/releases/download/v4.4/eval.7z
         p7zip -d -k eval.7z
