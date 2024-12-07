@@ -51,6 +51,7 @@ pub struct MyOption {
     pub turn : i8,  // SENTE, GOTE
     pub trmode : TrainingMode,
     pub minibsize : usize,
+    pub verbose : bool,
 }
 
 impl MyOption {
@@ -77,6 +78,7 @@ impl MyOption {
     /// - rfen: ""
     /// - think: ""
     /// - trmode: OneByOne
+    /// - verbose true
     pub fn new(args: Vec<String>) -> Result<MyOption, String> {
         let mut opt = MyOption {
             depth : 7,
@@ -97,6 +99,7 @@ impl MyOption {
             turn : board::NONE,
             trmode : TrainingMode::OneByOne,
             minibsize : 128,
+            verbose : true,
         };
         let mut old = String::new();
         let mut skip = 0;
@@ -179,6 +182,10 @@ impl MyOption {
                     opt.opponent = Opponent::Edax;
                 } else if e == "--Ruversi" {
                     opt.opponent = Opponent::Ruversi;
+                } else if e == "--silent" {
+                    opt.verbose = false;
+                } else if e == "--verbose" {
+                    opt.verbose = true;
                 } else if e == "--gtp" {
                     opt.mode = Mode::Gtp;
                 // } else {

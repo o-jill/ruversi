@@ -259,7 +259,7 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
 /// # Arguments
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
-fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
+fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -282,6 +282,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
@@ -311,6 +312,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             g.start_with_2et(
                 // node::Node::think_ab_extract2,
                 node::Node::think_ab,
@@ -328,6 +330,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
@@ -354,6 +357,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             // g.start_with_2et(node::Node::think_ab_extract2, depth, &w2, &w1).unwrap();
             g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
             let dresult = g.kifu.winner();
@@ -1026,7 +1030,7 @@ fn main() {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         let duellv = MYOPT.get().unwrap().duellv;
-        duel(ev1, ev2, duellv, depth);
+        duel(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose);
     }
     if *mode == myoption::Mode::DuelExt {
         let duellv = MYOPT.get().unwrap().duellv;
