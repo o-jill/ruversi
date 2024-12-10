@@ -6,11 +6,13 @@ use std::sync::{Arc, RwLock};
 pub struct GameBB {
     ban : bitboard::BitBoard,
     pub kifu : kifu::Kifu,
+    verbose : bool
 }
 
 pub struct Game {
     ban : board::Board,
     pub kifu : kifu::Kifu,
+    verbose : bool
 }
 
 impl GameBB {
@@ -18,15 +20,23 @@ impl GameBB {
         GameBB {
             ban : bitboard::BitBoard::new(),
             kifu : kifu::Kifu::new(),
+            verbose : true,
         }
     }
 
     pub fn from(rfen : &str) -> GameBB {
         GameBB {
             ban: bitboard::BitBoard::from(rfen).unwrap(),
-            kifu: kifu::Kifu::new()
+            kifu: kifu::Kifu::new(),
+            verbose : true,
         }
     }
+
+    pub fn set_verbose(&mut self, vb : bool) {
+        self.verbose = vb;
+    }
+
+    pub fn is_verbose(&self) -> bool {self.verbose}
 
     #[allow(dead_code)]
     pub fn start(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>, depth : u8)
@@ -34,14 +44,17 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             // think
             let st = Instant::now();
             let (val, node) = f(&self.ban, depth).unwrap();
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+            if self.is_verbose() {
+                println!("val:{val:+5.1} {} {}msec",
+                    node.dump(), ft.as_millis());
+            }
             let best = node.best.unwrap();
             let x = best.x;
             let y = best.y;
@@ -67,9 +80,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -78,13 +91,16 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             // think
             let st = Instant::now();
             let (val, node) = f(&self.ban, depth).unwrap();
 
             let ft = st.elapsed();
-            println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+            if self.is_verbose() {
+                println!("val:{val:+5.1} {} {}msec",
+                    node.dump(), ft.as_millis());
+            }
             let best = node.best.as_ref().unwrap();
             let x = best.x;
             let y = best.y;
@@ -110,9 +126,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -154,9 +170,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -166,7 +182,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             // think
             let st = Instant::now();
             let (val, node) = f(&self.ban, depth).unwrap();
@@ -201,9 +217,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -216,10 +232,10 @@ impl GameBB {
             let y;
             if self.ban.teban == turnin {
                 // show
-                self.ban.put();
+                if self.is_verbose() {self.ban.put();}
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    println!("auto pass.");
+                    if self.is_verbose() {println!("auto pass.");}
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
@@ -227,7 +243,7 @@ impl GameBB {
                     y = movable[0].1;
                 } else {
                     loop {
-                        print!("your turn[a1 ~ h8]:");
+                        if self.is_verbose() {print!("your turn[a1 ~ h8]:");}
                         io::stdout().flush().unwrap();
                         let mut txt = String::new();
                         io::stdin().read_line(&mut txt).unwrap();
@@ -235,12 +251,16 @@ impl GameBB {
                         let xx = "0abcdefgh".find(txt.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                         let yy = txt.chars().nth(1).unwrap().to_digit(10);
                         if yy.is_none() {
-                            println!("invalid position : {}", txt);
+                            if self.is_verbose() {
+                                println!("invalid position : {}", txt);
+                            }
                             continue;
                         }
                         let yy = yy.unwrap() as u8;
                         if xx > 8 || yy > 8 {
-                            println!("invalid position : {}", txt);
+                            if self.is_verbose() {
+                                println!("invalid position : {}", txt);
+                            }
                             continue;
                         }
                         let pos = (xx, yy);
@@ -249,18 +269,22 @@ impl GameBB {
                             y = yy;
                             break;
                         }
-                        println!("{} is not allowed.", txt);
+                        if self.is_verbose() {
+                            println!("{} is not allowed.", txt);
+                        }
                     }
                 }
-           } else {
-                println!("{}", self.ban.to_str());
+            } else {
+                if self.is_verbose() {println!("{}", self.ban.to_str());}
                 // think
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                if self.is_verbose() {
+                    println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                }
                 let best = node.best.unwrap();
                 x = best.x;
                 y = best.y;
@@ -287,9 +311,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -301,10 +325,10 @@ impl GameBB {
             let y;
             if self.ban.teban == turnin {
                 // show
-                self.ban.put();
+                if self.is_verbose() {self.ban.put();}
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    println!("auto pass.");
+                    if self.is_verbose() {println!("auto pass.");}
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
@@ -312,7 +336,7 @@ impl GameBB {
                     y = movable[0].1;
                 } else {
                     loop {
-                        print!("your turn[a1 ~ h8]:");
+                        if self.is_verbose() {print!("your turn[a1 ~ h8]:");}
                         io::stdout().flush().unwrap();
                         let mut txt = String::new();
                         io::stdin().read_line(&mut txt).unwrap();
@@ -320,12 +344,16 @@ impl GameBB {
                         let xx = "0abcdefgh".find(txt.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                         let yy = txt.chars().nth(1).unwrap().to_digit(10);
                         if yy.is_none() {
-                            println!("invalid position : {}", txt);
+                            if self.is_verbose() {
+                                println!("invalid position : {}", txt);
+                            }
                             continue;
                         }
                         let yy = yy.unwrap() as u8;
                         if xx > 8 || yy > 8 {
-                            println!("invalid position : {}", txt);
+                            if self.is_verbose() {
+                                println!("invalid position : {}", txt);
+                            }
                             continue;
                         }
                         let pos = (xx, yy);
@@ -334,18 +362,21 @@ impl GameBB {
                             y = yy;
                             break;
                         }
-                        println!("{} is not allowed.", txt);
+                        if self.is_verbose() {println!("{} is not allowed.", txt);}
                     }
                 }
-           } else {
-                println!("{}", self.ban.to_str());
+            } else {
+                if self.is_verbose() {println!("{}", self.ban.to_str());}
                 // think
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                if self.is_verbose() {
+                    println!("val:{val:+5.1} {} {}msec",
+                        node.dump(), ft.as_millis());
+                }
                 let best = node.best.as_ref().unwrap();
                 x = best.x;
                 y = best.y;
@@ -372,9 +403,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -388,11 +419,11 @@ impl GameBB {
             let y;
             if self.ban.teban == turnin {
                 // show
-                println!("{}", self.ban.to_str());
+                if self.is_verbose() {println!("{}", self.ban.to_str());}
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    println!("auto pass.");
+                    if self.is_verbose() {println!("auto pass.");}
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
@@ -414,7 +445,10 @@ impl GameBB {
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                if self.is_verbose() {
+                    println!("val:{val:+5.1} {} {}msec",
+                        node.dump(), ft.as_millis());
+                }
                 let best = node.best.unwrap();
                 x = best.x;
                 y = best.y;
@@ -441,9 +475,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -463,14 +497,14 @@ impl GameBB {
         };
         loop {
             // show
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             let x;
             let y;
             if self.ban.teban == turnin {
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    println!("auto pass.");
+                    if self.is_verbose() {println!("auto pass.");}
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
@@ -491,7 +525,10 @@ impl GameBB {
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                if self.is_verbose() {
+                    println!("val:{val:+5.1} {} {}msec",
+                        node.dump(), ft.as_millis());
+                }
                 let best = node.best.as_ref().unwrap();
                 x = best.x;
                 y = best.y;
@@ -518,9 +555,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -540,14 +577,14 @@ impl GameBB {
         };
         loop {
             // show
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             let x;
             let y;
             if self.ban.teban == turnin {
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    println!("auto pass.");
+                    if self.is_verbose() {println!("auto pass.");}
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
@@ -568,7 +605,10 @@ impl GameBB {
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                if self.is_verbose() {
+                    println!("val:{val:+5.1} {} {}msec",
+                        node.dump(), ft.as_millis());
+                }
                 let best = node.best.as_ref().unwrap();
                 x = best.x;
                 y = best.y;
@@ -595,9 +635,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -609,7 +649,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
             if self.ban.teban == bitboard::SENTE {
                 unsafe {
@@ -626,7 +666,10 @@ impl GameBB {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+            if self.is_verbose() {
+                println!("val:{val:+5.1} {} {}msec",
+                    node.dump(), ft.as_millis());
+            }
             let best = node.best.unwrap();
             let x = best.x;
             let y = best.y;
@@ -652,9 +695,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -668,7 +711,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
             if self.ban.teban == bitboard::SENTE {
                 unsafe {
@@ -685,7 +728,7 @@ impl GameBB {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+            if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
             let x = best.x;
             let y = best.y;
@@ -711,9 +754,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -726,7 +769,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
             if self.ban.teban == bitboard::SENTE {
                 unsafe {
@@ -748,7 +791,10 @@ impl GameBB {
             let ban;
             {
                 let nd = node.read().unwrap();
-                println!("val:{val:+5.1} {} {}msec", nd.dump(), ft.as_millis());
+                if self.is_verbose() {
+                    println!("val:{val:+5.1} {} {}msec",
+                        nd.dump(), ft.as_millis());
+                }
                 let best = nd.best.as_ref().unwrap();
                 x = best.x;
                 y = best.y;
@@ -775,9 +821,9 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 }
@@ -787,28 +833,39 @@ impl Game {
         Game {
             ban : board::Board::init(),
             kifu : kifu::Kifu::new(),
+            verbose : true,
         }
     }
 
     pub fn from(rfen : &str) -> Game {
         Game {
             ban: board::Board::from(rfen).unwrap(),
-            kifu: kifu::Kifu::new()
+            kifu: kifu::Kifu::new(),
+            verbose : true,
         }
     }
+
+    pub fn set_verbose(&mut self, vb : bool) {
+        self.verbose = vb;
+    }
+
+    pub fn is_verbose(&self) -> bool {self.verbose}
 
     pub fn start(&mut self, f : fn(&board::Board, u8) -> Option<(f32, node::Node)>, depth : u8) -> Result<(), String> {
         loop {
             // show
             // self.ban.put();
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             // think
             let st = Instant::now();
             let (val, node) = f(&self.ban, depth).unwrap();
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+            if self.is_verbose() {
+                println!("val:{val:+5.1} {} {}msec",
+                    node.dump(), ft.as_millis());
+            }
             let best = node.best.unwrap();
             let x = best.x;
             let y = best.y;
@@ -834,9 +891,9 @@ impl Game {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -851,7 +908,7 @@ impl Game {
                 self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    println!("auto pass.");
+                    if self.is_verbose() {println!("auto pass.");}
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
@@ -859,7 +916,7 @@ impl Game {
                     y = movable[0].1;
                 } else {
                     loop {
-                        print!("your turn[a1 ~ h8]:");
+                        if self.is_verbose() {print!("your turn[a1 ~ h8]:");}
                         io::stdout().flush().unwrap();
                         let mut txt = String::new();
                         io::stdin().read_line(&mut txt).unwrap();
@@ -867,12 +924,12 @@ impl Game {
                         let xx = "0abcdefgh".find(txt.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                         let yy = txt.chars().nth(1).unwrap().to_digit(10);
                         if yy.is_none() {
-                            println!("invalid position : {}", txt);
+                            if self.is_verbose() {println!("invalid position : {}", txt);}
                             continue;
                         }
                         let yy = yy.unwrap();
                         if xx > 8 || yy > 8 {
-                            println!("invalid position : {}", txt);
+                            if self.is_verbose() {println!("invalid position : {}", txt);}
                             continue;
                         }
                         let pos = (xx, yy as u8);
@@ -881,18 +938,21 @@ impl Game {
                             y = yy as u8;
                             break;
                         }
-                        println!("{} is not allowed.", txt);
+                        if self.is_verbose() {println!("{} is not allowed.", txt);}
                     }
                 }
            } else {
-                println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
                 // think
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                if self.is_verbose() {
+                    println!("val:{val:+5.1} {} {}msec",
+                        node.dump(), ft.as_millis());
+                }
                 let best = node.best.unwrap();
                 x = best.x;
                 y = best.y;
@@ -919,9 +979,9 @@ impl Game {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -945,7 +1005,7 @@ impl Game {
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    println!("auto pass.");
+                    if self.is_verbose() {println!("auto pass.");}
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
@@ -962,12 +1022,15 @@ impl Game {
                     }
                 }
            } else {
-                println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
                 // think
                 let st = Instant::now();
                 let (val, node) = f(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                if self.is_verbose() {
+                    println!("val:{val:+5.1} {} {}msec",
+                        node.dump(), ft.as_millis());
+                }
                 let best = node.best.unwrap();
                 x = best.x;
                 y = best.y;
@@ -994,9 +1057,9 @@ impl Game {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 
@@ -1007,7 +1070,7 @@ impl Game {
         loop {
             // show
             // self.ban.put();
-            println!("{}", self.ban.to_str());
+            if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
             if self.ban.teban == board::SENTE {
                 unsafe {
@@ -1024,7 +1087,10 @@ impl Game {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+            if self.is_verbose() {
+                println!("val:{val:+5.1} {} {}msec",
+                    node.dump(), ft.as_millis());
+            }
             let best = node.best.unwrap();
             let x = best.x;
             let y = best.y;
@@ -1050,9 +1116,9 @@ impl Game {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        println!("{}", self.kifu.to_str());
+        if self.is_verbose() {println!("{}", self.kifu.to_str());}
         // show
-        self.ban.put();
+        if self.is_verbose() {self.ban.put();}
         Ok(())
     }
 }
