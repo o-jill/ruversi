@@ -33,16 +33,18 @@ NO Warranty.
   use alpha-beta pruning. default.
 * --thinkall  
   search every node. (no pruning)
+* --rfen \<rfen>  
+  think from rfen for debug. don't forget putting "" to an RFEN not to be recognized as 2 part.  
+* --help  
+  show help.  
+* --silent  
+  reduce console outputs.
 * --learn  
   [deprecated] set lerning mode.
 * --repeat \<number>  
   [deprecated] number of learning. default 10000.
 * --eta \<ratio>  
   [deprecated] learning ratio. default 0.0001.
-* --rfen \<rfen>  
-  think from rfen for debug. don't forget putting "" to an RFEN not to be recognized as 2 part.  
-* --help  
-  show help.  
 
 | command option | generating kifu | learning |
 |:--------------:|:---------------:|:--------:|

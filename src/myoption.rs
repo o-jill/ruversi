@@ -304,6 +304,7 @@ pub fn showhelp(msg : &str) {
     --thinkab   use alpha-beta pruning. default.
     --thinkall  search every node. (no pruning)
     --depth x   searching depth. default 7.
+    --silent    reduce console outputs.
   Duel:
     --ev1 <path>  a file for board evaluation.
     --ev2 <path>  a file for board evaluation.
