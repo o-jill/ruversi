@@ -571,10 +571,11 @@ impl GameBB {
     pub fn starto_against_ruversi(&mut self,
         f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
         depth : u8, turnin : i8, econf : &str) -> Result<(), String> {
-        let rr = match edaxrunner::RuversiRunner::from_config(econf) {
+        let mut rr = match edaxrunner::RuversiRunner::from_config(econf) {
             Ok(e) => e,
             Err(msg) => return Err(msg),
         };
+        rr.set_verbose(self.verbose);
         loop {
             // show
             if self.is_verbose() {println!("{}", self.ban.to_str());}

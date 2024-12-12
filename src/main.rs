@@ -389,7 +389,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_edax(duellv : i8, depth : u8) {
+fn duel_vs_edax(duellv : i8, depth : u8, verbose : bool) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -412,6 +412,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             // g.start_against_edax(
             //     match think {
@@ -440,6 +441,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             // g.start_against_edax(
             //     match think {
             //         "" | "ab" => {
@@ -476,6 +478,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             // g.start_against_edax(
             //     match think {
@@ -504,6 +507,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             // g.start_against_edax(
             //     match think {
             //         "" | "ab" => {
@@ -553,7 +557,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_ruversi(duellv : i8, depth : u8) {
+fn duel_vs_ruversi(duellv : i8, depth : u8, verbose : bool) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -576,6 +580,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             g.starto_against_ruversi(
                 match think {
                     "" | "ab" => {
@@ -590,6 +595,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             g.start_against_edax(
                 match think {
                     "" | "ab" => {
@@ -614,6 +620,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             g.starto_against_ruversi(
                 match think {
@@ -629,6 +636,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             g.start_against_edax(
                 match think {
                     "" | "ab" => {

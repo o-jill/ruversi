@@ -140,7 +140,8 @@ impl EdaxRunner {
 pub struct RuversiRunner {
     curdir : String,
     path : String,
-    evfile : String
+    evfile : String,
+    verbose : bool,
 }
 
 impl RuversiRunner {
@@ -149,7 +150,12 @@ impl RuversiRunner {
             curdir : String::from("../ruversi2"),
             path : String::from("./target/release/ruversi"),
             evfile : String::from("data/evaltable.txt"),
+            verbose : true,
         }
+    }
+
+    pub fn set_verbose(&mut self, verbose : bool) {
+        self.verbose = verbose;
     }
 
     pub fn from_config(path : &str) -> Result<RuversiRunner, String> {
@@ -223,7 +229,7 @@ impl RuversiRunner {
         let txt = String::from_utf8(w.stdout).unwrap();
         // println!("txt:{txt}");
         let lines : Vec<_> = txt.split("\n").collect();
-        println!("{}", lines[12]);
+        if self.verbose {println!("{}", lines[12]);}
         let posptn = regex::Regex::new(" (@@|\\[\\])([a-h][1-8])").unwrap();
         let xtxt = match posptn.captures(lines[12]) {
             Some(cap) => {
