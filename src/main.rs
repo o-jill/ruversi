@@ -801,10 +801,11 @@ fn edax(depth : u8, turnh: i8) {
 /// # Arguments
 /// - depth : depth to think.
 /// - turnh : another ruversi's turn.
-fn vs_ruversi(depth : u8, turnh: i8) {
+fn vs_ruversi(depth : u8, turnh: i8, verbose : bool) {
     if cfg!(feature="bitboard") {
         // prepare game
         let mut g = game::GameBB::new();
+        g.set_verbose(verbose);
         // play
         let econf = MYOPT.get().unwrap().edaxconfig.as_str();
         let think = MYOPT.get().unwrap().think.as_str();
@@ -1046,9 +1047,9 @@ fn main() {
         println!("opponent:{opp:?}");
         match opp {
             myoption::Opponent::Ruversi => {
-                duel_vs_ruversi(duellv, depth);
+                duel_vs_ruversi(duellv, depth, MYOPT.get().unwrap().verbose);
             },
-            _ => {duel_vs_edax(duellv, depth);}
+            _ => {duel_vs_edax(duellv, depth, MYOPT.get().unwrap().verbose);}
         }
     }
     if *mode == myoption::Mode::Play {
@@ -1083,7 +1084,7 @@ fn main() {
                         if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
                     } else {
                         turn
-                    });
+                    }, MYOPT.get().unwrap().verbose);
             },
             _ => {panic!("{:?} is not supported yet.", opp)},
         }
