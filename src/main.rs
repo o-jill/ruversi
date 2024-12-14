@@ -18,7 +18,7 @@ mod node;
 mod nodebb;
 mod shnode;
 mod kifu;
-mod trainer;
+// mod trainer;
 mod transptable;
 mod weight;
 
@@ -29,59 +29,6 @@ static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::O
 #[allow(dead_code)]
 #[cfg(target_arch="x86_64")]
 fn trial() {
-    if false {
-        let rfen = "h/H/h/H/h/H/h/H b";  // same
-        // let rfen = "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b";  // diff
-        // let rfen = "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w";  // diff
-        let bban = bitboard::BitBoard::from(rfen).unwrap();
-        let ban = board::Board::from(rfen).unwrap();
-        ban.put();
-        let mut w = weight::Weight::new();
-        w.init();
-        let mut w2 = weight::Weight::new();
-        w2.copy(&w);
-        let mut w3 = weight::Weight::new();
-        w3.copy(&w);
-        let res_nosimd = w.evaluatev3bb(&bban);
-        let res_simd = w.evaluatev3bb_simd(&bban);
-        let res_simdavx = w.evaluatev3bb_simd(&bban);
-        println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
-        let (bh_ns, ah_ns, res_nosimd, fsns) = w.forwardv3bb(&bban);
-        let (bh_s, ah_s, res_simd, fss) = w.forwardv3bb(&bban);
-        let (bh_sa, ah_sa, res_simdavx, fssa) = w.forwardv3bb(&bban);
-        println!("{bh_ns:?} == \n{bh_s:?} == \n{bh_sa:?} ???");
-        println!("{ah_ns:?} == \n{ah_s:?} == \n{ah_sa:?} ???");
-        println!("{res_nosimd:?} == \n{res_simd:?} == \n{res_simdavx:?} ???");
-        println!("{fsns:?} == {fss:?} == {fssa:?} ???");
-        let res = w.forwardv3bb(&bban);
-        let winner = 1;
-        let eta = 0.001;
-        w.backwardv3bb(&bban, winner, eta, &res);
-        w2.backwardv3bb_simd(&bban, winner, eta, &res);
-        let sv = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        // let s = sv.join(",");
-        let sv2 = w2.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        // let s2 = sv.join(",");
-        // println!("{s}\n{s2}");
-        for ((idx, a), b) in sv.iter().enumerate().zip(sv2.iter()) {
-            if a != b {
-                println!("{a} is not {b} @ {idx}");
-            }
-        }
-        println!("sv and sv2 are {}", if sv == sv2 {"same"} else {"not completely same"});
-        let res = w3.forwardv3(&ban);
-        // let winner = 1;
-        // let eta = 0.001;
-        w3.backwardv3(&ban, winner, eta, &res);
-        let sv3 = w.weight.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-        // let s3 = sv3.join(",");
-        for ((idx, a), b) in sv.iter().enumerate().zip(sv3.iter()) {
-            if a != b {
-                println!("{a} is not {b} @ {idx}");
-            }
-        }
-        panic!("sv and sv3 are {}", if sv == sv3 {"same"} else {"not completely same"});
-    }
     if false {
         let die = Uniform::from(-1..=1);
         let mut rng = rand::thread_rng();
@@ -107,21 +54,6 @@ fn trial() {
                     println!("eval: {} == {}", yres, ires);
                 }
             } else {
-                let yres;
-                let ires;
-                unsafe {
-                    yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3(&byb);
-                    // yres = nodebb::WEIGHT.as_ref().unwrap().forwardv3_simd(&byb);
-                    // ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb(&bib);
-                    // ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb_simd(&bib);
-                    ires = nodebb::WEIGHT.as_ref().unwrap().forwardv3bb_simdavx(&bib);
-                }
-                if yres.2 != ires.2 {
-                    println!("0: {:?} == {:?}", yres.0, ires.0);
-                    println!("1: {:?} == {:?}", yres.1, ires.1);
-                    println!("2: {:?} == {:?}", yres.2, ires.2);
-                    println!("3: {:?} == {:?}", yres.3, ires.3);
-                }
             }
         }
         panic!("stoppppppp!!!!");
@@ -191,12 +123,6 @@ fn trial() {
 
     let mut g = game::Game::new();
     g.start(node::Node::think, 7).unwrap();
-
-    let tr = trainer::Trainer::new(0.01, 100, "./kifu/");
-    unsafe {
-        tr.run4stones(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
-        // tr.run4win(&g.kifu, &mut node::WEIGHT.as_mut().unwrap()).unwrap();
-    }
 }
 
 #[allow(dead_code)]
@@ -329,206 +255,11 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
     // genkifu_single(rfentbl, depth, &format!("{grp:02}"));
 }
 
-/// training a weight.
-/// # Arguments
-/// - repeat : Number of repeat. None as 10000.
-/// - eta : learning ratio. None as 0.0001.
-#[allow(dead_code)]
-fn training(repeat : Option<usize>, eta : Option<f32>, opt : &str) {
-    let repeat = repeat.unwrap_or(10000);
-    let eta = eta.unwrap_or(0.1);
-    let kifupath = "./kifu";
-    println!("eta:{eta}");
-    let st = Instant::now();
-
-    // list up kifu
-    let dir = std::fs::read_dir(kifupath).unwrap();
-    let mut files = dir.filter_map(|entry| {
-        entry.ok().and_then(|e|
-            e.path().file_name().and_then(|n|
-                n.to_str().map(String::from)
-            )
-        )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-            fnm.contains("kifu")
-            // fnm.contains(".txt")
-        }).cloned().collect::<Vec<String>>();
-    // println!("{:?}", files);
-
-    files.sort();
-
-    // train
-    let mut tr = trainer::Trainer::new(eta, repeat, kifupath);
-    tr.read_opt_out(opt);
-    tr.learn_stones_cache(&mut files);
-    // tr.learn_stones(&mut files);
-    // tr.learn_win(&mut files);
-
-    let newevalfile = format!("{kifupath}/newevaltable.txt");
-    // put new eval table
-    if tr.need_save() {
-        println!("save result to {newevalfile}");
-        unsafe {
-            if cfg!(feature="bitboard") {
-                if cfg!(feature="nnv3") {
-                    nodebb::WEIGHT.as_ref().unwrap().writev3(&newevalfile);
-                } else if cfg!(feature="nnv4") {
-                    nodebb::WEIGHT.as_ref().unwrap().writev4(&newevalfile);
-                } else {
-                    nodebb::WEIGHT.as_ref().unwrap().writev5(&newevalfile);
-                }
-            } else {
-                if cfg!(feature="nnv1") {
-                    node::WEIGHT.as_ref().unwrap().writev1asv2(&newevalfile);
-                } else if cfg!(feature="nnv2") {
-                    node::WEIGHT.as_ref().unwrap().writev2asv3(&newevalfile);
-                } else if cfg!(feature="nnv3") {
-                    node::WEIGHT.as_ref().unwrap().writev3(&newevalfile);
-                } else {
-                    node::WEIGHT.as_ref().unwrap().writev4(&newevalfile);
-                }
-            }
-        }
-    }
-
-    // put new eval table
-    let ft = st.elapsed();
-    if tr.need_time() {
-        let min = ft.as_secs() / 60;
-        let sec = ft.as_secs_f64() % 60.0;
-        let spdbatch = ft.as_secs_f64() * 1000.0 / repeat as f64;
-        let spdkifu = spdbatch / files.len() as f64;
-        println!(
-            "processing time: {}min {:.1}sec ({:.1}msec/batch, {:.3}msec/file)",
-            min, sec, spdbatch, spdkifu);
-    }
-    if tr.need_summay() {
-        let mut win = 0;
-        let mut draw = 0;
-        let mut lose = 0;
-        let mut total = 0;
-        for fname in files.iter() {
-            let path = format!("kifu/{}", fname);
-            let content = std::fs::read_to_string(&path).unwrap();
-            let lines:Vec<&str> = content.split("\n").collect();
-            let kifu = kifu::Kifu::from(&lines);
-            let result = kifu.winner();
-            total += 1;
-            let result = result.unwrap();
-            match result {
-                kifu::SENTEWIN => {win += 1;},
-                kifu::DRAW => {draw += 1;},
-                kifu::GOTEWIN => {lose += 1;},
-                _ => {}
-            }
-        }
-        println!("total,{},win,{},draw,{},lose,{}", total, win, draw, lose);
-        println!("{}", tr.fmt_result());
-    }
-    if tr.need_exrfens() {
-        // list up kifu
-        let files = std::fs::read_dir("./kifu/").unwrap();
-        let files = files.filter_map(|entry| {
-            entry.ok().and_then(|e|
-                e.path().file_name().and_then(|n|
-                    n.to_str().map(String::from)
-                )
-            )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-            fnm.contains("kifu")
-        }).cloned().collect::<Vec<String>>();
-        for path in files.iter() {
-            extractrfen::extract(&format!("kifu/{}", path));
-        }
-    }
-}
-
-/// training a weight.
-/// # Arguments
-/// - repeat : Number of repeat. None as 10000.
-/// - eta : learning ratio. None as 0.0001.
-fn training_para(repeat : Option<usize>, eta : Option<f32>, opt : &str,
-        prgs : &[u32], trmd : &myoption::TrainingMode, mbsize : usize) {
-    let repeat = repeat.unwrap_or(10000);
-    let eta = eta.unwrap_or(0.1);
-    println!("eta:{eta}");
-    let st = Instant::now();
-
-    // train
-    let mut tr = trainer::Trainer::new(eta, repeat, "./kifu/");
-    tr.read_opt_out(opt);
-    tr.set_progress(prgs);
-    println!("training mode: {:?}", *trmd);
-    if *trmd == myoption::TrainingMode::OneByOne {
-        tr.learn_stones_para_boardgrp();
-        // tr.learn_stones_para_rfengrp();
-        // tr.learn_stones_para();
-    } else {
-        tr.learn_stones_para_boardgrp_minibatch(mbsize);
-        // tr.learn_stones_para_boardgrp_minibatch2(mbsize);
-    }
-
-    // put new eval table
-    if tr.need_save() {
-        let fname = "./kifu/newevaltable.txt";
-        println!("save result to {fname}");
-        unsafe {
-            if cfg!(feature="bitboard") {
-                if cfg!(feature="nnv3") {
-                    nodebb::WEIGHT.as_ref().unwrap().writev3(fname);
-                } else if cfg!(feature="nnv4") {
-                    nodebb::WEIGHT.as_ref().unwrap().writev4(fname);
-                } else {
-                    nodebb::WEIGHT.as_ref().unwrap().writev5(fname);
-                }
-            } else {
-                if cfg!(feature="nnv1") {
-                    node::WEIGHT.as_ref().unwrap().writev1asv2(fname);
-                } else if cfg!(feature="nnv2") {
-                    node::WEIGHT.as_ref().unwrap().writev2asv3(fname);
-                } else if cfg!(feature="nnv3") {
-                    node::WEIGHT.as_ref().unwrap().writev3(fname);
-                } else {
-                    node::WEIGHT.as_ref().unwrap().writev4(fname);
-                }
-            }
-        }
-    }
-
-    let ft = st.elapsed();
-    if tr.need_time() {
-        let min = ft.as_secs() / 60;
-        let sec = ft.as_secs_f64() % 60.0;
-        let spdbatch = ft.as_secs_f64() * 1000.0 / repeat as f64;
-        let spdkifu = spdbatch / tr.nfiles as f64;
-        println!(
-            "processing time: {}min {:.1}sec ({:.1}msec/batch, {:.3}msec/file)",
-            min, sec, spdbatch, spdkifu);
-    }
-    if tr.need_summay() {
-        println!("{}", tr.fmt_result());
-    }
-    if tr.need_exrfens() {
-        // list up kifu
-        let files = std::fs::read_dir("./kifu/").unwrap();
-        let files = files.filter_map(|entry| {
-            entry.ok().and_then(|e|
-                e.path().file_name().and_then(|n|
-                    n.to_str().map(String::from)
-                )
-            )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-            fnm.contains("kifu")
-        }).cloned().collect::<Vec<String>>();
-        for path in files.iter() {
-            extractrfen::extract(&format!("kifu/{}", path));
-        }
-    }
-}
-
-
 /// duel between 2 eval tables.
 /// # Arguments
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
-fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
+fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -551,6 +282,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
@@ -580,6 +312,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             g.start_with_2et(
                 // node::Node::think_ab_extract2,
                 node::Node::think_ab,
@@ -597,6 +330,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
@@ -623,6 +357,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             // g.start_with_2et(node::Node::think_ab_extract2, depth, &w2, &w1).unwrap();
             g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
             let dresult = g.kifu.winner();
@@ -654,7 +389,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_edax(duellv : i8, depth : u8) {
+fn duel_vs_edax(duellv : i8, depth : u8, verbose : bool) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -677,6 +412,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             // g.start_against_edax(
             //     match think {
@@ -705,6 +441,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             // g.start_against_edax(
             //     match think {
             //         "" | "ab" => {
@@ -741,6 +478,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             // g.start_against_edax(
             //     match think {
@@ -769,6 +507,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             // g.start_against_edax(
             //     match think {
             //         "" | "ab" => {
@@ -818,7 +557,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_ruversi(duellv : i8, depth : u8) {
+fn duel_vs_ruversi(duellv : i8, depth : u8, verbose : bool) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -841,6 +580,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             g.starto_against_ruversi(
                 match think {
                     "" | "ab" => {
@@ -855,6 +595,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             g.start_against_edax(
                 match think {
                     "" | "ab" => {
@@ -879,6 +620,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         if cfg!(feature="bitboard") {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
             // play
             g.starto_against_ruversi(
                 match think {
@@ -894,6 +636,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         } else {
             // prepare game
             let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
             g.start_against_edax(
                 match think {
                     "" | "ab" => {
@@ -1058,10 +801,11 @@ fn edax(depth : u8, turnh: i8) {
 /// # Arguments
 /// - depth : depth to think.
 /// - turnh : another ruversi's turn.
-fn vs_ruversi(depth : u8, turnh: i8) {
+fn vs_ruversi(depth : u8, turnh: i8, verbose : bool) {
     if cfg!(feature="bitboard") {
         // prepare game
         let mut g = game::GameBB::new();
+        g.set_verbose(verbose);
         // play
         let econf = MYOPT.get().unwrap().edaxconfig.as_str();
         let think = MYOPT.get().unwrap().think.as_str();
@@ -1295,7 +1039,7 @@ fn main() {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         let duellv = MYOPT.get().unwrap().duellv;
-        duel(ev1, ev2, duellv, depth);
+        duel(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose);
     }
     if *mode == myoption::Mode::DuelExt {
         let duellv = MYOPT.get().unwrap().duellv;
@@ -1303,9 +1047,9 @@ fn main() {
         println!("opponent:{opp:?}");
         match opp {
             myoption::Opponent::Ruversi => {
-                duel_vs_ruversi(duellv, depth);
+                duel_vs_ruversi(duellv, depth, MYOPT.get().unwrap().verbose);
             },
-            _ => {duel_vs_edax(duellv, depth);}
+            _ => {duel_vs_edax(duellv, depth, MYOPT.get().unwrap().verbose);}
         }
     }
     if *mode == myoption::Mode::Play {
@@ -1340,7 +1084,7 @@ fn main() {
                         if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
                     } else {
                         turn
-                    });
+                    }, MYOPT.get().unwrap().verbose);
             },
             _ => {panic!("{:?} is not supported yet.", opp)},
         }
