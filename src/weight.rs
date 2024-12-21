@@ -1331,7 +1331,7 @@ impl Weight {
         let wtbn = self.wteban();
         let wfs = self.wfixedstones();
         let wdc = self.wibias();
-        const N : usize = 8;
+        const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
         for i in (0..N_HIDDEN).step_by(N) {
             let mut sumn = [0.0f32 ; N];
@@ -1392,28 +1392,38 @@ impl Weight {
                 }
             }
             unsafe {
-                let sum4 = vld1q_f32_x2(sumn.as_ptr());
+                let sum4 = vld1q_f32_x4(sumn.as_ptr());
 
                 let tbn = vmovq_n_f32(teban);
-                let wtb = vld1q_f32_x2(wtbn.as_ptr().add(i));
+                let wtb = vld1q_f32_x4(wtbn.as_ptr().add(i));
                 let sum41 = vmlaq_f32(sum4.0, tbn, wtb.0);
                 let sum42 = vmlaq_f32(sum4.1, tbn, wtb.1);
+                let sum43 = vmlaq_f32(sum4.2, tbn, wtb.2);
+                let sum44 = vmlaq_f32(sum4.3, tbn, wtb.3);
 
                 let fsb4 = vmovq_n_f32(fsb as f32);
-                let wfsb = vld1q_f32_x2(wfs.as_ptr().add(i));
-                let sum4 = vmlaq_f32(sum41, fsb4, wfsb.0);
+                let wfsb = vld1q_f32_x4(wfs.as_ptr().add(i));
+                let sum41 = vmlaq_f32(sum41, fsb4, wfsb.0);
                 let sum42 = vmlaq_f32(sum42, fsb4, wfsb.1);
+                let sum43 = vmlaq_f32(sum43, fsb4, wfsb.2);
+                let sum44 = vmlaq_f32(sum44, fsb4, wfsb.3);
 
                 let fsw4 = vmovq_n_f32(fsw as f32);
-                let wfsw = vld1q_f32_x2(wfs.as_ptr().add(i + N_HIDDEN));
-                let sum4 = vmlaq_f32(sum4, fsw4, wfsw.0);
+                let wfsw = vld1q_f32_x4(wfs.as_ptr().add(i + N_HIDDEN));
+                let sum41 = vmlaq_f32(sum41, fsw4, wfsw.0);
                 let sum42 = vmlaq_f32(sum42, fsw4, wfsw.1);
+                let sum43 = vmlaq_f32(sum43, fsw4, wfsw.2);
+                let sum44 = vmlaq_f32(sum44, fsw4, wfsw.3);
 
-                let wdc4 = vld1q_f32_x2(wdc.as_ptr().add(i));
-                let sum4 = vaddq_f32(sum4, wdc4.0);
+                let wdc4 = vld1q_f32_x4(wdc.as_ptr().add(i));
+                let sum41 = vaddq_f32(sum41, wdc4.0);
                 let sum42 = vaddq_f32(sum42, wdc4.1);
-                vst1q_f32(sumn.as_mut_ptr(), sum4);
+                let sum43 = vaddq_f32(sum43, wdc4.2);
+                let sum44 = vaddq_f32(sum44, wdc4.3);
+                vst1q_f32(sumn.as_mut_ptr(), sum41);
                 vst1q_f32(sumn.as_mut_ptr().add(4), sum42);
+                vst1q_f32(sumn.as_mut_ptr().add(8), sum43);
+                vst1q_f32(sumn.as_mut_ptr().add(12), sum44);
 
                 // let expmx = Self::expmx_ps_simd(sum4);
                 // let expmx1 = vaddq_f32(expmx, vmovq_n_f32(1.0));
