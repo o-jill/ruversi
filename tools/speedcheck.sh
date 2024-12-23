@@ -57,7 +57,6 @@ cat ${RESULT} | ruby ./tools/speedcheck.rb learn
 }
 
 game() {
-# SDEPTH="--depth 5"
 SDEPTH="--depth 7"
 # FEATURES=""  # sse
 FEATURES="--features=avx"
@@ -65,18 +64,20 @@ FEATURES="--features=avx"
 DUELLV=2
 # DUELLV=3
 
-RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES}
+RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES} 2>/dev/null
 
-STARTDT=`date +%s.%3N`
+for ((j=0;j<${REPEAT};j++)) do
+  STARTDT=`date +%s.%3N`
 
-# for ((j=0;j<${REPEAT};j++)) do
-RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --duel "${DUELLV}" ${SDEPTH}  --ev1 ${EVFILE} --ev2 ${EVFILE} >> ${RESULT} 2>/dev/null
-# done
+  RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --duel "${DUELLV}" ${SDEPTH}  --ev1 ${EVFILE} --ev2 ${EVFILE} --silent >> ${RESULT} 2>/dev/null
 
-FINISHDT=`date +%s.%3N`
-DURATION=`echo "scale=3; ${FINISHDT} - ${STARTDT}" | bc`  # $((FINISHDT - STARTDT))
-echo "duration: ${DURATION} sec." >> ${RESULT}
-tail -n 6 ${RESULT} | ruby ./tools/speedcheck.rb game
+  FINISHDT=`date +%s.%3N`
+  DURATION=`echo "scale=3; ${FINISHDT} - ${STARTDT}" | bc`  # $((FINISHDT - STARTDT))
+  echo "duration: ${DURATION} sec." >> ${RESULT}
+  tail -n 1 ${RESULT}
+done
+tail -n 6 ${RESULT}
+ruby ./tools/speedcheck.rb game < ${RESULT}
 }
 
 help() {
