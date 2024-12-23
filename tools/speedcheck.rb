@@ -65,14 +65,16 @@ end
 # duration: 14 sec.
 def game(lines)
     value = 0;
+    values = [];
     games = 1;
     lines.each {|line|
-        puts line
+        # puts line
 
         if line.start_with?("duration:")
             # duration: 14 sec.
             m = / (\d+\.?\d*) sec/.match(line)
             value = m[1].to_f
+            values.push(value)
             next
         elsif line.start_with?("total,")
             # total,8687,win,1630,draw,56,lose,7001
@@ -82,6 +84,11 @@ def game(lines)
         end
     }
     puts "#{'%.2f' % (value / games)} sec/game = #{value} / #{games}"
+    avg = values.sum.fdiv(values.length)
+    vari = values.map {|elem| elem * elem}.sum.fdiv(values.length) - avg * avg
+    sd = Math.sqrt(vari)
+    min, max = values.minmax
+    puts "#{'%.3f' % avg } ± #{'%.3f' % sd} sec (#{min} -- #{max}) for #{games} games"
 end
 
 def help()
