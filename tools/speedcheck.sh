@@ -2,9 +2,9 @@
 #!/bin/bash -x
 
 # REPEAT=5
-# REPEAT=20
+REPEAT=20
 # REPEAT=30
-REPEAT=40
+# REPEAT=40
 
 DATESTR=$(date +%Y%m%d%H%M%S)
 RESULT=speedcheck${DATESTR}.txt
