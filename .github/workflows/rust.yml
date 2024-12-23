@@ -38,11 +38,11 @@ jobs:
       id: releaserun
       run: |
         echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release -- --genkifu ${{ matrix.kifu }} --depth 8
+        cargo run --release --features=avx -- --genkifu ${{ matrix.kifu }} --depth 8
     - name: Learn
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaselearn
-      run: cargo run --release -- --learn --repeat 10
+      run: cargo run --release --features=avx -- --learn --repeat 10
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定

@@ -1,7 +1,12 @@
 # edax configuration example
 
+# -- mac
+# curdir: ../../edax-reversi/
+# edax: ./bin/mEdax-aarch64
+# -- linux
 curdir: ../edax-reversi/
 edax: ./bin/lEdax-x64-modern
+
 evfile: data/eval.dat
 obf: /tmp/test.obf
 

@@ -22,7 +22,7 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       id: utest
-      run: cargo test --verbose --release  # test w/ simd will get error w/o --release.
+      run: cargo test --verbose --release --features=avx  # test w/ simd will get error w/o --release.
 
   build_mac:
     runs-on: macos-latest
