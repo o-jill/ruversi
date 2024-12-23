@@ -147,7 +147,7 @@ pub struct RuversiRunner {
 impl RuversiRunner {
     pub fn new() -> RuversiRunner {
         RuversiRunner {
-            curdir : String::from("../ruversi2"),
+            curdir : String::from("../ruversi3"),
             path : String::from("./target/release/ruversi"),
             evfile : String::from("data/evaltable.txt"),
             verbose : true,

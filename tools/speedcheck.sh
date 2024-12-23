@@ -2,9 +2,11 @@
 #!/bin/bash -x
 
 # REPEAT=5
-REPEAT=20
+# REPEAT=20
+# REPEAT=30
+REPEAT=40
 
-DATESTR=`date +%Y%m%d%H%M%S`
+DATESTR=$(date +%Y%m%d%H%M%S)
 RESULT=speedcheck${DATESTR}.txt
 
 EVFILE=data/evaltable.txt
@@ -12,8 +14,8 @@ EVFILE=data/evaltable.txt
 search() {
 # SDEPTH="--depth 9"
 SDEPTH="--depth 11"
-# FEATURES=""  # sse
-FEATURES="--features=avx"
+FEATURES=""  # sse
+# FEATURES="--features=avx"
 
 RFENS=("8/8/8/3Aa3/3aA3/8/8/8 b" "8/8/8/3aA3/3Aa3/8/8/8 b" "A1A1A3/1c4/Aa1dA/1c4/A1a1a3/2a2a2/2a3a1/2A4A b")
 LENRFENS=${#RFENS[@]}

@@ -1,7 +1,9 @@
 # edax configuration example
 
-curdir: ../edax-reversi/
-edax: ./bin/lEdax-x64-modern
+curdir: ../../edax-reversi/
+# curdir: ../edax-reversi/
+edax: ./bin/mEdax-aarch64
+# edax: ./bin/lEdax-x64-modern
 evfile: data/eval.dat
 obf: /tmp/test.obf
 
