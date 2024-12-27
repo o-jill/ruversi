@@ -27,18 +27,12 @@ jobs:
     - uses: actions/checkout@v4
     - name: cpu
       run: cat /proc/cpuinfo
-    - name: Run
-      continue-on-error: true # とにかくログを保存するとこまで行きたい
-      id: releaserun
-      run: |
-        echo "RUSTFLAGS=-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release --features=avx -- --genkifu ${{ matrix.kifu }} --depth 8
     - name: Run avx
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaseruna
       run: |
         echo "RUSTFLAGS=-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release --feature=avx -- --genkifu ${{ matrix.kifu }} --depth 7
+        cargo run --release --features=avx -- --genkifu ${{ matrix.kifu }} --depth 8
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定
