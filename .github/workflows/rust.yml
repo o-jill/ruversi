@@ -18,9 +18,9 @@ jobs:
       fail-fast: false
       matrix:
         kifu: [
-          '-N0'  # '-N0', '-N1', '-N2', '-N3', '-N4', '-N5', '-N6', '-N7', '-N8', '-N9',
-          # '-N10', '-N11', '-N12', '-N13', '-N14',
-          # '-N15', '-N16', '-N17', '-N18', '-N19'
+          '-N0', '-N1', '-N2', '-N3', '-N4', '-N5', '-N6', '-N7', '-N8', '-N9',
+          '-N10', '-N11', '-N12', '-N13', '-N14',
+          '-N15', '-N16', '-N17', '-N18', '-N19'
         ]
 
     steps:
@@ -32,7 +32,7 @@ jobs:
       id: releaserun
       run: |
         echo "RUSTFLAGS=-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release -- --genkifu ${{ matrix.kifu }} --depth 7
+        cargo run --release --features=avx -- --genkifu ${{ matrix.kifu }} --depth 8
     - name: Run avx
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaseruna

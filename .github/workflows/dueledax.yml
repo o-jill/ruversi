@@ -43,7 +43,7 @@ jobs:
       id: dueledax
       run: |
         echo "RUSTFLAGS=-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release -- --duelext 1 --depth 5 --Edconf tools/edaxconfig.txt | tee > kifu/log.txt
+        cargo run --release --features=avx -- --duelext 5 --depth 9 --Edconf tools/edaxconfig.txt | tee > kifu/log.txt
     - name: duel result
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel-result

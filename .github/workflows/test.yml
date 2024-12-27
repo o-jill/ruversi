@@ -29,10 +29,10 @@ jobs:
         cargo build --verbose
     - name: Run tests
       id: utest
-      run: cargo test --verbose --release  # test w/ simd will get error w/o --release.
-    - name: Speed check
+      run: cargo test --features=avx --verbose --release  # test w/ simd will get error w/o --release.
+    - name: Speed check search
       run: ./tools/speedcheck.sh search
-    - name: Speed check
+    - name: Speed check game
       run: ./tools/speedcheck.sh game
 
   build_mac:
