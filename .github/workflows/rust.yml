@@ -18,31 +18,27 @@ jobs:
       fail-fast: false
       matrix:
         kifu: [
-          '-N0', '-N1', '-N2', '-N3', '-N4', '-N5', '-N6', '-N7', '-N8', '-N9',
-          '-N10', '-N11', '-N12', '-N13', '-N14',
-          '-N15', '-N16', '-N17', '-N18', '-N19'
+          '-N0'  # '-N0', '-N1', '-N2', '-N3', '-N4', '-N5', '-N6', '-N7', '-N8', '-N9',
+          # '-N10', '-N11', '-N12', '-N13', '-N14',
+          # '-N15', '-N16', '-N17', '-N18', '-N19'
         ]
 
     steps:
     - uses: actions/checkout@v4
     - name: cpu
       run: cat /proc/cpuinfo
-    # - name: Build
-    #   run: cargo build --verbose
-    # - name: Run tests
-    #   continue-on-error: true # とにかくログを保存するとこまで行きたい
-    #   id: utest
-    #   run: cargo test --verbose
     - name: Run
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaserun
       run: |
-        echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release -- --genkifu ${{ matrix.kifu }} --depth 8
-    - name: Learn
+        echo "RUSTFLAGS=-Ctarget-cpu=native" >> $GITHUB_ENV
+        cargo run --release -- --genkifu ${{ matrix.kifu }} --depth 7
+    - name: Run avx
       continue-on-error: true # とにかくログを保存するとこまで行きたい
-      id: releaselearn
-      run: cargo run --release -- --learn --repeat 10
+      id: releaseruna
+      run: |
+        echo "RUSTFLAGS=-Ctarget-cpu=native" >> $GITHUB_ENV
+        cargo run --release --feature=avx -- --genkifu ${{ matrix.kifu }} --depth 7
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定
@@ -53,18 +49,8 @@ jobs:
         name: kifu${{ matrix.kifu }}_${{ env.CURRENT_DATETIME }}
         path: |
           kifu
-    # - name: check error test
-    #   if: ${{ steps.utest.outcome == 'failure' }}
-    #   run: |
-    #     echo ${{ steps.utest.outcome }} == 'failure'
-    #     exit 1
     - name: check error run
       if: ${{ steps.releaserun.outcome == 'failure' }}
       run: |
         echo ${{ steps.releaserun.outcome }} == 'failure'
-        exit 1
-    - name: check error run learn
-      if: ${{ steps.releaselearn.outcome == 'failure' }}
-      run: |
-        echo ${{ steps.releaselearn.outcome }} == 'failure'
         exit 1
