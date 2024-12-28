@@ -1,0 +1,5 @@
+[alias]     # command aliases
+b = "build"
+
+[build]
+rustflags = ["-Ctarget-cpu=native"]
