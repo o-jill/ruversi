@@ -26,9 +26,7 @@ jobs:
     - name: Run duel
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel
-      run: |
-        echo RUSTFLAGS="-Ctarget-cpu=native" >> $GITHUB_ENV
-        cargo run --release -- --duel 7 --ev1 data/evaltable.txt --ev2 data/evaltable.txt.old --depth 7 | tee > kifu/log.txt
+      run: cargo run --release --features=avx -- --duel 7 --ev1 data/evaltable.txt --ev2 data/evaltable.txt.old --depth 7 | tee > kifu/log.txt
     - name: duel result
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel-result

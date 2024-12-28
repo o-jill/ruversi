@@ -12,9 +12,11 @@ EVFILE=data/evaltable.txt
 search() {
 # SDEPTH="--depth 9"
 SDEPTH="--depth 11"
-# FEATURES=""  # sse
-FEATURES="--features=avx"
-
+# if [$FEATURES -eq ""]; then
+#   # FEATURES=""  # sse
+#   FEATURES="--features=avx"
+# fi
+echo $FEATURES
 RFENS=("8/8/8/3Aa3/3aA3/8/8/8 b" "8/8/8/3aA3/3Aa3/8/8/8 b" "A1A1A3/1c4/Aa1dA/1c4/A1a1a3/2a2a2/2a3a1/2A4A b")
 LENRFENS=${#RFENS[@]}
 
@@ -22,7 +24,8 @@ for ((i=0;i<${LENRFENS};i++)) do
   echo -n "Begin RFEN:${RFENS[$i]}"
   echo "Begin RFEN:${RFENS[$i]}" >> ${RESULT}
   for ((j=0;j<${REPEAT};j++)) do
-    RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --rfen "${RFENS[$i]}" ${SDEPTH} --ev1 ${EVFILE} >> ${RESULT} 2>/dev/null
+    cargo run --release ${FEATURES} -- --rfen "${RFENS[$i]}" ${SDEPTH} --ev1 ${EVFILE} >> ${RESULT} 2>/dev/null
+    # RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --rfen "${RFENS[$i]}" ${SDEPTH} --ev1 ${EVFILE} >> ${RESULT} 2>/dev/null
     echo -n " ${j}"
   done
   echo "End RFEN:${RFENS[$i]}" >> ${RESULT}
@@ -37,7 +40,7 @@ LREPEAT="--repeat 1000"
 # LREPEAT="--repeat 1000 --minibatch"
 KIFUFILE="kifu/kifu00000000.txt"
 # FEATURES=""  # sse
-FEATURES="--features=avx"
+# FEATURES="--features=avx"
 
 RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES}
 
@@ -49,7 +52,7 @@ RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES}
 #  echo "a kifu file was found."
   for ((j=0;j<${REPEAT};j++)) do
     echo -n " ${j}"
-    RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --learn ${LREPEAT} >> ${RESULT} 2>/dev/null
+    cargo run --release ${FEATURES} -- --learn ${LREPEAT} >> ${RESULT} 2>/dev/null
   done
   echo " ${REPEAT}"
 
@@ -60,17 +63,17 @@ game() {
 # SDEPTH="--depth 5"
 SDEPTH="--depth 7"
 # FEATURES=""  # sse
-FEATURES="--features=avx"
+# FEATURES="--features=avx"
 # DUELLV=1
 DUELLV=2
 # DUELLV=3
 
-RUSTFLAGS="-Ctarget-cpu=native" cargo build --release ${FEATURES}
+cargo build --release ${FEATURES}
 
 STARTDT=`date +%s.%3N`
 
 # for ((j=0;j<${REPEAT};j++)) do
-RUSTFLAGS="-Ctarget-cpu=native" cargo run --release ${FEATURES} -- --duel "${DUELLV}" ${SDEPTH}  --ev1 ${EVFILE} --ev2 ${EVFILE} >> ${RESULT} 2>/dev/null
+cargo run --release ${FEATURES} -- --duel "${DUELLV}" ${SDEPTH}  --ev1 ${EVFILE} --ev2 ${EVFILE} >> ${RESULT} 2>/dev/null
 # done
 
 FINISHDT=`date +%s.%3N`
