@@ -524,6 +524,88 @@ impl Weight {
         vmulq_f32(y4, pow2n)
     }
 
+    #[inline]
+    #[cfg(target_arch="aarch64")]
+    unsafe fn expmx_ps_simdx2(x41 : float32x4_t, x42 : float32x4_t)
+            -> (float32x4_t, float32x4_t) {
+        // clip x
+        let max4 = vmovq_n_f32(EXP_HI as f32);
+        let x41 = vminq_f32(x41, max4);
+        let x42 = vminq_f32(x42, max4);
+        let min4 = vmovq_n_f32(EXP_LO as f32);
+        let x41 = vmaxq_f32(x41, min4);
+        let x42 = vmaxq_f32(x42, min4);
+        let m1 = vmovq_n_f32(-1.0);
+        let x41 = vmulq_f32(x41, m1);
+        let x42 = vmulq_f32(x42, m1);
+
+        /* express exp(x) as exp(g + n*log(2)) */
+        let log2ef = vmovq_n_f32(CEPHES_LOG2EF as f32);
+        let zp5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
+        let fx1 = vmlaq_f32(zp5, x41, log2ef);
+        let fx2 = vmlaq_f32(zp5, x42, log2ef);
+        let emm01 = vcvtq_s32_f32(fx1);
+        let emm02 = vcvtq_s32_f32(fx2);
+        let tmp1 = vcvtq_f32_s32(emm01);
+        let tmp2 = vcvtq_f32_s32(emm02);
+
+        let mask1 = vcgtq_f32(tmp1, fx2);
+        let mask2 = vcgtq_f32(tmp2, fx2);
+        let one = vmovq_n_f32(1.0);
+        let mask1 = vreinterpretq_f32_u32(vandq_u32(
+                mask1, vreinterpretq_u32_f32(one)));
+        let mask2 = vreinterpretq_f32_u32(vandq_u32(
+                mask2, vreinterpretq_u32_f32(one)));
+        let fx1 = vsubq_f32(tmp1, mask1);
+        let fx2 = vsubq_f32(tmp2, mask2);
+
+        let c1 = vmovq_n_f32(CEPHES_EXP_C1 as f32);
+        let tmp1 = vmulq_f32(fx1, c1);
+        let tmp2 = vmulq_f32(fx2, c1);
+        let c2 = vmovq_n_f32(CEPHES_EXP_C2 as f32);
+        let z41 = vmulq_f32(fx1, c2);
+        let z42 = vmulq_f32(fx2, c2);
+        let x41 = vsubq_f32(x41, tmp1);
+        let x42 = vsubq_f32(x42, tmp2);
+        let x41 = vsubq_f32(x41, z41);
+        let x42 = vsubq_f32(x42, z42);
+
+        let z41 = vmulq_f32(x41, x41);
+        let z42 = vmulq_f32(x42, x42);
+
+        let y4 = vmovq_n_f32(CEPHES_EXP_P0 as f32);
+        let exp_p1 = vmovq_n_f32(CEPHES_EXP_P1 as f32);
+        let y41 = vmlaq_f32(exp_p1, y4, x41);
+        let y42 = vmlaq_f32(exp_p1, y4, x42);
+        let exp_p2 = vmovq_n_f32(CEPHES_EXP_P2 as f32);
+        let y41 = vmlaq_f32(exp_p2, y41, x41);
+        let y42 = vmlaq_f32(exp_p2, y42, x42);
+        let exp_p3 = vmovq_n_f32(CEPHES_EXP_P3 as f32);
+        let y41 = vmlaq_f32(exp_p3, y41, x41);
+        let y42 = vmlaq_f32(exp_p3, y42, x42);
+        let exp_p4 = vmovq_n_f32(CEPHES_EXP_P4 as f32);
+        let y41 = vmlaq_f32(exp_p4, y41, x41);
+        let y42 = vmlaq_f32(exp_p4, y42, x42);
+        let exp_p5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
+        let y41 = vmlaq_f32(exp_p5, y41, x41);
+        let y42 = vmlaq_f32(exp_p5, y42, x42);
+        let y41 = vmlaq_f32(x41, y41, z41);
+        let y42 = vmlaq_f32(x42, y42, z42);
+        let y41 = vaddq_f32(y41, one);
+        let y42 = vaddq_f32(y42, one);
+
+        let emm01 = vcvtq_s32_f32(fx1);
+        let emm02 = vcvtq_s32_f32(fx2);
+        let _pi32_0x7f = vmovq_n_s32(0x7f);
+        let emm01 = vaddq_s32(emm01, _pi32_0x7f);
+        let emm02 = vaddq_s32(emm02, _pi32_0x7f);
+        let emm01 = vshlq_n_s32(emm01, 23);
+        let emm02 = vshlq_n_s32(emm02, 23);
+        let pow2n1 = vreinterpretq_f32_s32(emm01);
+        let pow2n2 = vreinterpretq_f32_s32(emm02);
+        (vmulq_f32(y41, pow2n1), vmulq_f32(y42, pow2n2))
+    }
+
     /**
      * exp(-x)
      * 
@@ -1063,14 +1145,18 @@ impl Weight {
                 let wdc4 = vld1q_f32_x2(wdc.as_ptr().add(i));
                 let sum4 = vaddq_f32(sum4, wdc4.0);
                 let sum42 = vaddq_f32(sum42, wdc4.1);
-                vst1q_f32(sumn.as_mut_ptr(), sum4);
-                vst1q_f32(sumn.as_mut_ptr().add(4), sum42);
+                // vst1q_f32(sumn.as_mut_ptr(), sum4);
+                // vst1q_f32(sumn.as_mut_ptr().add(4), sum42);
 
-                // let expmx = Self::expmx_ps_simd(sum4);
-                // let expmx1 = vaddq_f32(expmx, vmovq_n_f32(1.0));
-                // let wh4 = vld1q_f32(wh.as_ptr().add(i));
-                // res += vaddvq_f32(vdivq_f32(wh4, expmx1));
-                // 1950nps
+                let (expmx1, expmx2) = Self::expmx_ps_simdx2(sum4, sum42);
+                let one = vmovq_n_f32(1.0);
+                let expmx1 = vaddq_f32(expmx1, one);
+                let expmx2 = vaddq_f32(expmx2, one);
+                let wh8 = vld1q_f32_x2(wh.as_ptr().add(i));
+                let h1 = vdivq_f32(wh8.0, expmx1);
+                let h2 = vdivq_f32(wh8.1, expmx2);
+                res += vaddvq_f32(vaddq_f32(h1, h2));
+                // 1860nps
 
                 // let expmx = Self::expmx_ps_simd(sum4);
                 // let expmx1 = vaddq_f32(expmx, vmovq_n_f32(1.0));
@@ -1080,10 +1166,10 @@ impl Weight {
                 // expmx_ps_simd is slower than exp()x4 on M2 ...
                 // 1950nps
             }
-            for n in 0 .. N {
-                // sumn[n] = (-sumn[n]).exp();
-                res += wh[i + n] / ((-sumn[n]).exp() + 1.0);
-            }  // 2050nps
+            // for n in 0 .. N {
+            //     // sumn[n] = (-sumn[n]).exp();
+            //     res += wh[i + n] / ((-sumn[n]).exp() + 1.0);
+            // }  // 1820nps
             // unsafe {
             //     let expmx4 = vld1q_f32_x2(sumn.as_ptr());
             //     // let expmx = vld1q_f32(sumn.as_ptr());
