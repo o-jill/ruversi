@@ -3,6 +3,7 @@ use std::collections::HashSet;
 // use regex::Regex;
 
 pub const INITIALPOSFILE : &str = "data/initialpos.txt";
+pub const INITIALPOSFILE7 : &str = "data/initialpos.seven.txt";
 
 pub fn equalfile(lv : i8) -> String {
     format!("data/initialpos.eq{lv}.txt")
@@ -43,37 +44,46 @@ pub struct InitialPos {
 }
 
 impl InitialPos {
-  pub fn new() -> InitialPos {
-      InitialPos { list: Vec::new() }
-  }
+    pub fn new() -> InitialPos {
+        InitialPos { list: Vec::new() }
+    }
 
-  pub fn read(path : &str) -> Result<InitialPos, String> {
-      let mut tag = String::new();
-      let mut ret = InitialPos::new();
+    pub fn read(path : &str) -> Result<InitialPos, String> {
+        let mut ret = InitialPos::new();
+        ret.append(path)?;
+        Ok(ret)
+    }
 
-      let file = File::open(path);
-      if file.is_err() {return Err(file.err().unwrap().to_string());}
+    pub fn append(&mut self, path : &str) -> Result<(), String> {
+        let mut tag = String::new();
 
-      let file = file.unwrap();
-      let lines = BufReader::new(file);
-      for line in lines.lines() {
+        let file = File::open(path);
+        if file.is_err() {return Err(file.err().unwrap().to_string());}
+
+        let file = file.unwrap();
+        let lines = BufReader::new(file);
+        for line in lines.lines() {
             match line {
                 Ok(line) => {
                     // println!("line:{}", line);
                     let tagptn = regex::Regex::new("#\\s+(\\S+) *").unwrap();
                     if let Some(cap) = tagptn.captures(&line) {
-                            tag = String::from(&cap[1]);
-                            // println!("tag:{}", tag);
+                        tag = String::from(&cap[1]);
+                        // println!("tag:{}", tag);
+                        continue;
                     }
+
                     let rfenptn =
                         regex::Regex::new("^([1-8A-Ha-h/]+ [bw])").unwrap();
                     match rfenptn.captures(&line) {
                         Some(cap) => {
                             let rfen = &cap[1];
-                            ret.add(&tag, rfen);
+                            self.add(&tag, rfen);
                             // println!("rfen:{}({})", rfen, tag);
                         },
-                        _ => {continue;}
+                        _ => {
+                            // println!("line:{}", line);
+                        }
                     }
                 },
                 Err(e) => {
@@ -81,7 +91,7 @@ impl InitialPos {
                 },
             }
         }
-        Ok(ret)
+        Ok(())
     }
 
     fn add(&mut self, tag : &str, rfen : &str) {

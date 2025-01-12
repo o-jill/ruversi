@@ -234,16 +234,17 @@ fn genkifu_para(rfentbl : &[String], depth : u8, grp : &str) {
 /// # Arguments
 /// - n : None or Some(0 - 19). index in 20 group.
 fn gen_kifu(n : Option<usize>, depth : u8) {
-    let ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
+    let mut ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
+    ip.append(initialpos::INITIALPOSFILE7).unwrap();
     let rfentbl =
-            ip.rfens_uniq(&["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"]);
+            ip.rfens_uniq(&["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN"]);
 
     let grp;
     let rfentbl = if n.is_none() {
         grp = 0;
         &rfentbl
     } else {
-        let group = 20;
+        let group = 100;
         grp = n.unwrap();
         let sz = rfentbl.len();
         let b = sz * grp / group;

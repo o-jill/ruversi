@@ -312,7 +312,7 @@ pub fn showhelp(msg : &str) {
     --Edconf <path>  a file for edax(or ruversi) path configuration.
     --Ruversi  play against another Ruversi, not against Edax.
   GenKifu:
-    -Nx  initial board group x for generating kifu. 0~9.
+    -Nx  initial board group x for generating kifu. 0~99.
         all of the initial board positions will be used when this option is not specified.
   Play:
     --Edax     play against Edax instead of you. please use with --play(bw).
