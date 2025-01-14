@@ -120,14 +120,17 @@ impl NodeBB {
     }
 
     #[cfg(target_arch="x86_64")]
-    fn evaluate(ban : &bitboard::BitBoard) -> f32 {
+    fn evaluate(&self, ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
         unsafe {
             if cfg!(feature="nosimd") {
-                WEIGHT.as_ref().unwrap().evaluatev7bb(ban)
+                wei.evaluatev7bb(ban)
+                // WEIGHT.as_ref().unwrap().evaluatev7bb(ban)
             } else if cfg!(feature="avx") {
-                WEIGHT.as_ref().unwrap().evaluatev7bb_simdavx(ban)
+                wei.evaluatev7bb_simdavx(ban)
+                // WEIGHT.as_ref().unwrap().evaluatev7bb_simdavx(ban)
             } else {
-                WEIGHT.as_ref().unwrap().evaluatev7bb_simd(ban)
+                wei.evaluatev7bb_simd(ban)
+                // WEIGHT.as_ref().unwrap().evaluatev7bb_simd(ban)
             }
         }
     }
@@ -136,16 +139,18 @@ impl NodeBB {
     fn evaluate(ban : &bitboard::BitBoard) -> f32 {
         unsafe {
             if cfg!(feature="nosimd") {
-                WEIGHT.as_ref().unwrap().evaluatev7bb(ban)
+                (*self.wei).evaluatev7bb(ban)
+                // WEIGHT.as_ref().unwrap().evaluatev7bb(ban)
             } else {
-                WEIGHT.as_ref().unwrap().evaluatev7bb_simd(ban)
+                (*self.wei).evaluatev7bb_simd(ban)
+                // WEIGHT.as_ref().unwrap().evaluatev7bb_simd(ban)
             }
         }
     }
 
-    fn evalwtt(ban : &bitboard::BitBoard, tt : &mut transptable::TranspositionTable) -> f32 {
+    fn evalwtt(&self, ban : &bitboard::BitBoard, wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
         let id = if cfg!(feature="nosimd") {ban.to_id()} else {ban.to_id_simd()};
-        tt.check_or_append(&id, || NodeBB::evaluate(ban))
+        tt.check_or_append(&id, || self.evaluate(ban, wei))
     }
 
     pub fn thinko(ban : &bitboard::BitBoard, mut depth : u8)
@@ -161,6 +166,7 @@ impl NodeBB {
         // no more empty cells
         let mut moves = ban.genmove()?;
 
+        let wei = unsafe{WEIGHT.as_ref().unwrap()};
         let node;
         let teban = ban.teban;
         unsafe {
@@ -195,7 +201,7 @@ impl NodeBB {
                 }
                 let nd = nd.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
-                let val = NodeBB::think_internal(nd, &newban);
+                let val = NodeBB::think_internal(nd, &newban, wei);
                 nd.hyoka = val;
             }
             });
@@ -205,7 +211,7 @@ impl NodeBB {
                     a.x == mvx && a.y == mvy
                 ).unwrap();
             let newban = ban.r#move(mvx, mvy).unwrap();
-            let val = NodeBB::think_internal(nd, &newban);
+            let val = NodeBB::think_internal(nd, &newban, wei);
 
             nd.hyoka = val;
         }
@@ -260,6 +266,7 @@ impl NodeBB {
 
         let sub =
                 thread::spawn(move || {
+            let wei2 = unsafe{WEIGHT.as_ref().unwrap()};
             let mut node2 = NodeBB::new(0, 0, depth, bitboard::NONE);
             let teban = ban2.teban;
             let mut tt = transptable::TranspositionTable::new();
@@ -269,10 +276,10 @@ impl NodeBB {
                 node2.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
                 let val = if cfg!(feature="withtt") {
                         NodeBB::think_internal_tt(
-                            &mut node2.child[idx], &newban, &mut tt)
+                            &mut node2.child[idx], &newban, wei2, &mut tt)
                     } else {
                         NodeBB::think_internal(
-                            &mut node2.child[idx], &newban)
+                            &mut node2.child[idx], &newban, wei2)
                     };
                 let ch = &mut node2.child[idx];
                 ch.hyoka = val;
@@ -294,16 +301,17 @@ impl NodeBB {
 
         let mut tt = transptable::TranspositionTable::new();
         let teban = ban.teban;
+        let wei = unsafe{WEIGHT.as_ref().unwrap()};
         for (mvx, mvy) in moves2 {
             let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let val = if cfg!(feature="withtt") {
                     NodeBB::think_internal_tt(
-                        &mut node.child[idx], &newban, &mut tt)
+                        &mut node.child[idx], &newban, wei, &mut tt)
                 } else {
                     NodeBB::think_internal(
-                        &mut node.child[idx], &newban)
+                        &mut node.child[idx], &newban, wei)
                 };
 
             let ch = &mut node.child[idx];
@@ -333,7 +341,7 @@ impl NodeBB {
         Some((subresult.best.as_ref().unwrap().hyoka, subresult))
     }
 
-    pub fn think_internal(node:&mut NodeBB, ban : &bitboard::BitBoard)
+    pub fn think_internal(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight)
             -> Option<f32> {
         let mut depth = node.depth;
         if ban.nblank() == 0 || ban.is_passpass() {
@@ -342,7 +350,7 @@ impl NodeBB {
         }
         if depth == 0 {
             node.kyokumen = 1;
-            return Some(NodeBB::evaluate(ban));
+            return Some(node.evaluate(ban, wei));
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -364,7 +372,7 @@ impl NodeBB {
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let val = NodeBB::think_internal(
-                &mut node.child[idx], &newban);
+                &mut node.child[idx], &newban, wei);
 
             let ch = &mut node.child[idx];
             ch.hyoka = val;
@@ -384,12 +392,12 @@ impl NodeBB {
     }
 
     #[allow(dead_code)]
-    pub fn think_internal_tt(node:&mut NodeBB, ban : &bitboard::BitBoard,
+    pub fn think_internal_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight,
         tt : &mut transptable::TranspositionTable) -> Option<f32> {
         let mut depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
-            return Some(NodeBB::evalwtt(ban, tt));
+            return Some(node.evalwtt(ban, wei, tt));
         }
         if ban.is_passpass() {
             node.kyokumen = 1;
@@ -415,7 +423,7 @@ impl NodeBB {
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let val = NodeBB::think_internal_tt(
-                &mut node.child[idx], &newban, tt);
+                &mut node.child[idx], &newban, wei, tt);
 
             let ch = &mut node.child[idx];
             ch.hyoka = val;
@@ -477,6 +485,7 @@ impl NodeBB {
             });
             let mut tt = transptable::TranspositionTable::new();
             let teban = ban2.teban;
+            let wei2 = unsafe{WEIGHT.as_ref().unwrap()};
             let mut node2 = NodeBB::new(0, 0, depth, bitboard::NONE);
             let mut alpha : f32 = -100000.0;
             let mut beta : f32 = 100000.0;
@@ -486,10 +495,10 @@ impl NodeBB {
                 node2.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
                 let val = if cfg!(feature="withtt") {
                         NodeBB::think_internal_ab_tt(
-                            &mut node2.child[idx], &newban, alpha, beta, &mut tt)
+                            &mut node2.child[idx], &newban, alpha, beta, wei2, &mut tt)
                     } else {
                         NodeBB::think_internal_ab(
-                            &mut node2.child[idx], &newban, alpha, beta)
+                            &mut node2.child[idx], &newban, alpha, beta, wei2)
                     };
 
                 let ch = &mut node2.child[idx];
@@ -524,16 +533,17 @@ impl NodeBB {
         let mut alpha : f32 = -100000.0;
         let mut beta : f32 = 100000.0;
         let teban = ban.teban;
+        let wei = unsafe{WEIGHT.as_ref().unwrap()};
         for (mvx, mvy) in moves2 {
             let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let val = if cfg!(feature="withtt") {
                     NodeBB::think_internal_ab_tt(
-                        &mut node.child[idx], &newban, alpha, beta, &mut tt)
+                        &mut node.child[idx], &newban, alpha, beta, wei, &mut tt)
                 } else {
                     NodeBB::think_internal_ab(
-                        &mut node.child[idx], &newban, alpha, beta)
+                        &mut node.child[idx], &newban, alpha, beta, wei)
                 };
 
             let ch = &mut node.child[idx];
@@ -592,6 +602,7 @@ impl NodeBB {
                 depth
             };
 
+        let wei = unsafe{WEIGHT.as_ref().unwrap()};
         let node;
         unsafe {
             ND_ROOT = Some(NodeBB::new(0, 0, depth, bitboard::NONE));
@@ -600,14 +611,14 @@ impl NodeBB {
 
         let alpha : f32 = -123456.7;
         let beta : f32 = 123456.7;
-        let val = NodeBB::think_internal_ab(node, ban, alpha, beta);
+        let val = NodeBB::think_internal_ab(node, ban, alpha, beta, wei);
         let val = val * ban.teban as f32;
 
         Some((val, node))
     }
 
     #[allow(dead_code)]
-    pub fn thinko_ab_simple_gk(ban : &bitboard::BitBoard, depth : u8, nd : &mut NodeBB)
+    pub fn thinko_ab_simple_gk(ban : &bitboard::BitBoard, depth : u8, nd : &mut NodeBB, wei : &weight::Weight)
             -> Option<f32> {
         if depth == 0 {
             return None;
@@ -634,7 +645,7 @@ impl NodeBB {
 
         let alpha : f32 = -123456.7;
         let beta : f32 = 123456.7;
-        let val = NodeBB::think_internal_ab(node, ban, alpha, beta);
+        let val = NodeBB::think_internal_ab(node, ban, alpha, beta, wei);
         let val = val * ban.teban as f32;
 
         Some(val)
@@ -689,6 +700,7 @@ impl NodeBB {
 
         let sub =
                 thread::spawn(move || {
+            let wei2 = unsafe{WEIGHT.as_ref().unwrap()};
             moves1.sort_by(|a, b| {
                 let pa = move_priority(a);
                 let pb = move_priority(b);
@@ -712,7 +724,7 @@ impl NodeBB {
                 // }
                 let nd = nd.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
-                let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
+                let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta, wei2);
                 let val = val * teban as f32;
                 nd.hyoka = Some(val);
                 if teban == bitboard::SENTE {
@@ -751,6 +763,7 @@ impl NodeBB {
         // let mut alpha : f32 = *salpha.lock().unwrap();
         // let mut beta : f32 = *sbeta.lock().unwrap();
         let teban = ban.teban;
+        let wei = unsafe{WEIGHT.as_ref().unwrap()};
         for (mvx, mvy) in moves2 {
             let nd = node.child.iter_mut().find(|a| {
                     a.x == mvx && a.y == mvy
@@ -760,7 +773,7 @@ impl NodeBB {
             // }
             let nd = nd.unwrap();
             let newban = ban.r#move(mvx, mvy).unwrap();
-            let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
+            let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta, wei);
             let val = if teban == bitboard::SENTE {val} else {-val};
             nd.hyoka = Some(val);
             if teban == bitboard::SENTE {
@@ -893,6 +906,7 @@ impl NodeBB {
 
         let sub =
                 thread::spawn(move || {
+            let wei2 = unsafe{WEIGHT.as_ref().unwrap()};
             moves1.sort_by(|a, b| {
                 let pa = move_priority2(a);
                 let pb = move_priority2(b);
@@ -920,7 +934,7 @@ impl NodeBB {
                 let nd = nd2.unwrap();
                 let newban = ban2.r#move(mvx, mvy).unwrap();
                 let newban = newban.r#move(mvx2, mvy2).unwrap();
-                let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
+                let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta, wei2);
                 let val = if teban == bitboard::SENTE {val} else {-val};
                 nd.hyoka = Some(val);
                 if teban == bitboard::SENTE {
@@ -959,6 +973,7 @@ impl NodeBB {
         // let mut alpha : f32 = *salpha.lock().unwrap();
         // let mut beta : f32 = *sbeta.lock().unwrap();
         let teban = -ban.teban;
+        let wei = unsafe{WEIGHT.as_ref().unwrap()};
         for (mvx, mvy, mvx2, mvy2) in moves2 {
             let nd = node.child.iter_mut().find(|a| {
                     a.x == mvx && a.y == mvy
@@ -972,7 +987,7 @@ impl NodeBB {
             let nd = nd2.unwrap();
             let newban = ban.r#move(mvx, mvy).unwrap();
             let newban = newban.r#move(mvx2, mvy2).unwrap();
-            let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta);
+            let val = NodeBB::think_internal_ab(nd, &newban, alpha, beta, wei);
             let val = if teban == bitboard::SENTE {val} else {-val};
             nd.hyoka = Some(val);
             if teban == bitboard::SENTE {
@@ -1109,6 +1124,7 @@ impl NodeBB {
 
         let sub =
                 thread::spawn(move || {
+            let wei2 = unsafe{WEIGHT.as_ref().unwrap()};
             moves1.sort_by(|a, b| {
                 let pa = move_priority2(a);
                 let pb = move_priority2(b);
@@ -1116,6 +1132,7 @@ impl NodeBB {
             });
             let mut tt = transptable::TranspositionTable::new();
             let teban = ban2.teban;
+            let wei2 = unsafe{WEIGHT.as_ref().unwrap()};
             let mut node2 = NodeBB::new(0, 0, depth, bitboard::NONE);
             let mut alpha = -100000.0f32;
             let mut beta  = 100000.0f32;
@@ -1139,10 +1156,10 @@ impl NodeBB {
 
                 let val = if cfg!(feature="withtt") {
                         NodeBB::think_internal_ab_tt(
-                            nd2, &newban2, alpha, beta, &mut tt)
+                            nd2, &newban2, alpha, beta, wei2, &mut tt)
                     } else {
                         NodeBB::think_internal_ab(
-                            nd2, &newban2, -beta, -alpha)
+                            nd2, &newban2, -beta, -alpha, wei2)
                             // &mut nd2, &newban2, alpha, beta)
                     };
 
@@ -1198,6 +1215,7 @@ impl NodeBB {
         let mut alpha = -100000.0f32;
         let mut beta = 100000.0f32;
         let teban = ban.teban;
+        let wei = unsafe{WEIGHT.as_ref().unwrap()};
         for mv in moves2 {
             // println!("{:?}", mv);
             let (x1, y1, x2, y2) = mv;
@@ -1221,11 +1239,11 @@ impl NodeBB {
             // println!("lets think! {}{} {}{}", nd1.x, nd1.y, nd2.x, nd2.y);
             let val = if cfg!(feature="withtt") {
                     NodeBB::think_internal_ab_tt(
-                        nd2, &newban2, alpha, beta, &mut tt)
+                        nd2, &newban2, alpha, beta, wei, &mut tt)
                 } else {
                     NodeBB::think_internal_ab(
                         // &mut node.child[idx], &newban2, alpha, beta)
-                        nd2, &newban2, -beta, -alpha)
+                        nd2, &newban2, -beta, -alpha, wei)
                         // &mut nd2, &newban2, alpha, beta)
                 };
             let val = if teban == bitboard::GOTE {val} else {-val};
@@ -1372,6 +1390,7 @@ impl NodeBB {
             });
             let mut tt = transptable::TranspositionTable::new();
             let teban = ban2.teban;
+            let wei2 = unsafe{WEIGHT.as_ref().unwrap()};
             let mut node2 = NodeBB::new(0, 0, depth, bitboard::NONE);
             let mut alpha = -100000.0f32;
             let mut beta = 100000.0f32;
@@ -1404,10 +1423,10 @@ impl NodeBB {
 
                 let val = if cfg!(feature="withtt") {
                         NodeBB::think_internal_ab_tt(
-                            nd3, &newban3, alpha, beta, &mut tt)
+                            nd3, &newban3, alpha, beta, wei2, &mut tt)
                     } else {
                         NodeBB::think_internal_ab(
-                            nd3, &newban3, alpha, beta)
+                            nd3, &newban3, alpha, beta, wei2)
                     };
                 let val = if teban == bitboard::SENTE {val} else {-val};
 
@@ -1445,6 +1464,7 @@ impl NodeBB {
         let mut alpha = -100000.0f32;
         let mut beta = 100000.0f32;
         let teban = ban.teban;
+        let wei = unsafe{WEIGHT.as_ref().unwrap()};
 
         for mv in moves2 {
             let (x1, y1, x2, y2, x3, y3) = mv;
@@ -1477,11 +1497,11 @@ impl NodeBB {
             // println!("lets think! {}{} {}{}", nd1.x, nd1.y, nd2.x, nd2.y);
             let val = if cfg!(feature="withtt") {
                     NodeBB::think_internal_ab_tt(
-                        nd3, &newban3, alpha, beta, &mut tt)
+                        nd3, &newban3, alpha, beta, wei, &mut tt)
                 } else {
                     NodeBB::think_internal_ab(
                         // &mut node.child[idx], &newban2, alpha, beta)
-                        nd3, &newban3, alpha, beta)
+                        nd3, &newban3, alpha, beta, wei)
                 };
             let val = if teban == bitboard::SENTE {val} else {-val};
 
@@ -1525,7 +1545,7 @@ impl NodeBB {
 
     #[allow(dead_code)]
     pub fn think_internal_ab_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
-            tt : &mut transptable::TranspositionTable) -> f32 {
+            wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
         let mut newalpha = alpha;
         let mut depth = node.depth;
         if ban.nblank() == 0 {
@@ -1538,7 +1558,7 @@ impl NodeBB {
         }
         if depth == 0 {
             node.kyokumen = 1;
-            return -NodeBB::evalwtt(ban, tt);
+            return -node.evalwtt(ban, wei, tt);
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -1568,7 +1588,7 @@ impl NodeBB {
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let ch = &mut node.child[idx];
             let val = -NodeBB::think_internal_ab_tt(
-                ch, &newban, -beta, -newalpha, tt);
+                ch, &newban, -beta, -newalpha, wei, tt);
             ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -1590,7 +1610,7 @@ impl NodeBB {
     }
 
     pub fn think_internal_ab(node : &mut NodeBB, ban : &bitboard::BitBoard,
-            alpha : f32, beta : f32) -> f32 {
+            alpha : f32, beta : f32, wei : &weight::Weight) -> f32 {
         let mut newalpha = alpha;
         let mut depth = node.depth;
         // println!("d:{}",depth);
@@ -1628,9 +1648,9 @@ impl NodeBB {
                     newban.countf32() * -fteban
                 } else if depth <= 1 {
                     ch.kyokumen = 1;
-                    NodeBB::evaluate(&newban) * -fteban
+                    ch.evaluate(&newban, wei) * -fteban
                 } else {
-                    -NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha)
+                    -NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha, wei)
                 };
             ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
@@ -1653,6 +1673,7 @@ impl NodeBB {
     #[allow(dead_code)]
     pub fn vb_think_ab(ban : &bitboard::BitBoard, mut depth : u8)
             -> Option<(f32, NodeBB)> {
+        let wei = unsafe{WEIGHT.as_ref().unwrap()};
         let mut node = NodeBB::new(0, 0, depth, bitboard::NONE);
         if depth == 0 {
             return None;
@@ -1684,7 +1705,7 @@ impl NodeBB {
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let val = NodeBB::vb_think_internal_ab(
-                &mut node.child[idx], &newban, alpha, beta);
+                &mut node.child[idx], &newban, alpha, beta, wei);
     println!("({mvx},{mvy})@{} {:?}", depth - 1, val);
             let ch = &mut node.child[idx];
             ch.hyoka = val;
@@ -1708,13 +1729,14 @@ impl NodeBB {
     }
 
     #[allow(dead_code)]
-    pub fn vb_think_internal_ab(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32) -> Option<f32> {
+    pub fn vb_think_internal_ab(node:&mut NodeBB, ban : &bitboard::BitBoard,
+            alpha : f32, beta : f32, wei : &weight::Weight) -> Option<f32> {
         let mut newalpha = alpha;
         let mut depth = node.depth;
         if depth == 0 {
             println!("depth zero");
             node.kyokumen = 1;
-            return Some(NodeBB::evaluate(ban));
+            return Some(node.evaluate(ban, wei));
             // return Some(NodeBB::evalwtt(&ban));
         }
         if ban.is_passpass() {
@@ -1748,7 +1770,7 @@ impl NodeBB {
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let val = NodeBB::vb_think_internal_ab(
-                &mut node.child[idx], &newban, -beta, -alpha);
+                &mut node.child[idx], &newban, -beta, -alpha, wei);
     println!("({mvx},{mvy})@{} {:?} {}", depth-1, val, ban.to_str());
             let ch = &mut node.child[idx];
             ch.hyoka = val;

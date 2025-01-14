@@ -5,6 +5,7 @@ use std::thread;
 use std::sync::mpsc;
 use rand::Rng;
 use rand::distributions::{Distribution, Uniform};
+use std::sync::{Arc, Mutex};
 
 mod board;
 mod bitboard;
@@ -254,6 +255,227 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
 
     genkifu_para(rfentbl, depth, &format!("{grp:02}"));
     // genkifu_single(rfentbl, depth, &format!("{grp:02}"));
+}
+
+struct DuelResult {
+    pub win : [u32 ; 2],
+    pub draw : [u32 ; 2],
+    pub lose : [u32 ; 2],
+    pub total : u32,
+}
+
+impl DuelResult {
+    pub fn new() -> DuelResult {
+        DuelResult {
+            win : [0 ; 2],
+            draw : [0 ; 2],
+            lose : [0 ; 2],
+            total : 0,
+        }
+    }
+
+    pub fn sresult(&mut self, winner : i8) {
+        self.total += 1;
+        match winner {
+            kifu::SENTEWIN => {self.win[0] += 1;},
+            kifu::DRAW => {self.draw[0] += 1;},
+            kifu::GOTEWIN => {self.lose[0] += 1;},
+            _ => {}
+        }
+    }
+    pub fn gresult(&mut self, winner : i8) {
+        self.total += 1;
+        match winner {
+            kifu::SENTEWIN => {self.lose[1] += 1;},
+            kifu::DRAW => {self.draw[1] += 1;},
+            kifu::GOTEWIN => {self.win[1] += 1;},
+            _ => {}
+        }
+    }
+
+    pub fn dump(&self) {
+        let twin = self.win[0] + self.win[1];
+        let tdraw = self.draw[0] + self.draw[1];
+        let tlose = self.lose[0] + self.lose[1];
+        let tsen = self.win[0] + self.lose[1] + tdraw;
+        let tgo = self.win[1] + self.lose[0] + tdraw;
+        let winrate = 100.0 * twin as f64 / (self.total - tdraw) as f64;
+        let r = 400.0 * (twin as f64 / tlose as f64).log10();
+        println!("total,{},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate:.2}%,R,{r:+.1}", self.total);
+        println!("ev1 @@,win,{},draw,{},lose,{}", self.win[0], self.draw[0], self.lose[0]);
+        println!("ev1 [],win,{},draw,{},lose,{}", self.win[1], self.draw[1], self.lose[1]);
+    }
+}
+
+/// duel between 2 eval tables.
+/// # Arguments
+/// - ev1 : eval table 1.
+/// - ev2 : eval table 2.
+fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
+    if !(1..=14).contains(&duellv) {
+        panic!("duel level:{duellv} is not supported...");
+    }
+
+    let mut w1 = weight::Weight::new();
+    w1.read(ev1).unwrap();
+    let mut w2 = weight::Weight::new();
+    w2.read(ev2).unwrap();
+    let mut w3 = weight::Weight::new();
+    w3.copy(&w1);
+    let mut w4 = weight::Weight::new();
+    w4.copy(&w2);
+    let dresult = Arc::new(Mutex::new(DuelResult::new()));
+    let dresult2 = dresult.clone();
+
+    let eqfile = initialpos::equalfile(duellv);
+    println!("equal file: {eqfile}");
+    let ip = initialpos::InitialPos::read(&eqfile).unwrap();
+    let rfentbl = &mut ip.rfens_all();
+    let n = rfentbl.len() / 2;
+    let rfen1 = rfentbl.drain(n..).collect::<Vec<String>>();
+    let think = MYOPT.get().unwrap().think.as_str();
+
+    let thrd = thread::spawn(move || {
+        let mut result;
+        for rfen in rfen1.iter() {
+            if cfg!(feature="bitboard") {
+                // prepare game
+                let mut g = game::GameBB::from(rfen);
+                g.set_verbose(false);
+                // play
+                match think {
+                    "" | "ab" => {
+                        // g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w3, &w4).unwrap()
+                        g.starto_with_2et_mt(nodebb::NodeBB::thinko_ab_simple_gk, depth, &w3, &w4).unwrap()
+                    },
+                    "all" => {
+                        g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w3, &w4).unwrap()
+                    },
+                    _ => { panic!("unknown thinking method.") }
+                }
+                let dresult = g.kifu.winner();
+                result = dresult.unwrap();
+            } else {
+                // prepare game
+                let mut g = game::Game::from(rfen);
+                g.set_verbose(verbose);
+                g.start_with_2et(
+                    node::Node::think_ab,
+                    depth, &w3, &w4).unwrap();
+                let dresult = g.kifu.winner();
+                result = dresult.unwrap();
+            }
+            {
+                let mut dr = dresult2.lock().unwrap();
+                dr.sresult(result);
+            }
+            if cfg!(feature="bitboard") {
+                // prepare game
+                let mut g = game::GameBB::from(rfen);
+                g.set_verbose(verbose);
+                // play
+                let think = MYOPT.get().unwrap().think.as_str();
+                match think {
+                    "" | "ab" => {
+                        g.starto_with_2et_mt(nodebb::NodeBB::thinko_ab_simple_gk, depth, &w4, &w3).unwrap()
+                    },
+                    "all" => {
+                        g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w4, &w3).unwrap()
+                    },
+                    _ => { panic!("unknown thinking method.") }
+                }
+                let dresult = g.kifu.winner();
+                result = dresult.unwrap();
+            } else {
+                // prepare game
+                let mut g = game::Game::from(rfen);
+                g.set_verbose(verbose);
+                g.start_with_2et(node::Node::think_ab, depth, &w4, &w3).unwrap();
+                let dresult = g.kifu.winner();
+                result = dresult.unwrap();
+            }
+            {
+                let mut dr = dresult2.lock().unwrap();
+                dr.gresult(result);
+                dr.dump();
+            }
+        }});
+
+    let mut result;
+    for rfen in rfentbl.iter() {
+        if cfg!(feature="bitboard") {
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
+            // play
+            let think = MYOPT.get().unwrap().think.as_str();
+            match think {
+                "" | "ab" => {
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w1, &w2).unwrap()
+                },
+                "all" => {
+                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
+                },
+                _ => { panic!("unknown thinking method.") }
+            }
+            let dresult = g.kifu.winner();
+            result = dresult.unwrap();
+        } else {
+            // prepare game
+            let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
+            g.start_with_2et(
+                // node::Node::think_ab_extract2,
+                node::Node::think_ab,
+                depth, &w1, &w2).unwrap();
+            let dresult = g.kifu.winner();
+            result = dresult.unwrap();
+        }
+        {
+            let mut dr = dresult.lock().unwrap();
+            dr.sresult(result);
+        }
+        if cfg!(feature="bitboard") {
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
+            // play
+            let think = MYOPT.get().unwrap().think.as_str();
+            match think {
+                "" | "ab" => {
+                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w2, &w1).unwrap()
+                },
+                "all" => {
+                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
+                },
+                _ => { panic!("unknown thinking method.") }
+            }
+            let dresult = g.kifu.winner();
+            result = dresult.unwrap();
+        } else {
+            // prepare game
+            let mut g = game::Game::from(rfen);
+            g.set_verbose(verbose);
+            // g.start_with_2et(node::Node::think_ab_extract2, depth, &w2, &w1).unwrap();
+            g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
+            let dresult = g.kifu.winner();
+            result = dresult.unwrap();
+        }
+        {
+            let mut dr = dresult.lock().unwrap();
+            dr.gresult(result);
+            dr.dump();
+        }
+    }
+
+    thrd.join().unwrap();
+
+    {
+        let dr = dresult.lock().unwrap();
+        dr.dump();
+    }
+    println!("ev1:{}", MYOPT.get().unwrap().evaltable1);
+    println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
 }
 
 /// duel between 2 eval tables.
@@ -1040,7 +1262,8 @@ fn main() {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         let duellv = MYOPT.get().unwrap().duellv;
-        duel(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose);
+        duel_para(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose);
+        // duel(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose);
     }
     if *mode == myoption::Mode::DuelExt {
         let duellv = MYOPT.get().unwrap().duellv;
