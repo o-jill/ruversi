@@ -121,36 +121,27 @@ impl NodeBB {
 
     #[cfg(target_arch="x86_64")]
     fn evaluate(&self, ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
-        unsafe {
-            if cfg!(feature="nosimd") {
-                wei.evaluatev7bb(ban)
-                // WEIGHT.as_ref().unwrap().evaluatev7bb(ban)
-            } else if cfg!(feature="avx") {
-                wei.evaluatev7bb_simdavx(ban)
-                // WEIGHT.as_ref().unwrap().evaluatev7bb_simdavx(ban)
-            } else {
-                wei.evaluatev7bb_simd(ban)
-                // WEIGHT.as_ref().unwrap().evaluatev7bb_simd(ban)
-            }
+        if cfg!(feature="nosimd") {
+            wei.evaluatev7bb(ban)
+        } else if cfg!(feature="avx") {
+            wei.evaluatev7bb_simdavx(ban)
+        } else {
+            wei.evaluatev7bb_simd(ban)
         }
     }
 
     #[cfg(target_arch="aarch64")]
-    fn evaluate(ban : &bitboard::BitBoard) -> f32 {
-        unsafe {
-            if cfg!(feature="nosimd") {
-                (*self.wei).evaluatev7bb(ban)
-                // WEIGHT.as_ref().unwrap().evaluatev7bb(ban)
-            } else {
-                (*self.wei).evaluatev7bb_simd(ban)
-                // WEIGHT.as_ref().unwrap().evaluatev7bb_simd(ban)
-            }
+    fn evaluate(ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
+        if cfg!(feature="nosimd") {
+            wei.evaluatev7bb(ban)
+        } else {
+            wei.evaluatev7bb_simd(ban)
         }
     }
 
-    fn evalwtt(&self, ban : &bitboard::BitBoard, wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
+    fn evalwtt(ban : &bitboard::BitBoard, wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
         let id = if cfg!(feature="nosimd") {ban.to_id()} else {ban.to_id_simd()};
-        tt.check_or_append(&id, || self.evaluate(ban, wei))
+        tt.check_or_append(&id, || NodeBB::evaluate(ban, wei))
     }
 
     pub fn thinko(ban : &bitboard::BitBoard, mut depth : u8)
@@ -350,7 +341,7 @@ impl NodeBB {
         }
         if depth == 0 {
             node.kyokumen = 1;
-            return Some(node.evaluate(ban, wei));
+            return Some(NodeBB::evaluate(ban, wei));
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -397,7 +388,7 @@ impl NodeBB {
         let mut depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
-            return Some(node.evalwtt(ban, wei, tt));
+            return Some(NodeBB::evalwtt(ban, wei, tt));
         }
         if ban.is_passpass() {
             node.kyokumen = 1;
@@ -1558,7 +1549,7 @@ impl NodeBB {
         }
         if depth == 0 {
             node.kyokumen = 1;
-            return -node.evalwtt(ban, wei, tt);
+            return -NodeBB::evalwtt(ban, wei, tt);
         }
         let teban = ban.teban;
         // let sum = 0;
@@ -1648,7 +1639,7 @@ impl NodeBB {
                     newban.countf32() * -fteban
                 } else if depth <= 1 {
                     ch.kyokumen = 1;
-                    ch.evaluate(&newban, wei) * -fteban
+                    NodeBB::evaluate(&newban, wei) * -fteban
                 } else {
                     -NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha, wei)
                 };
@@ -1736,7 +1727,7 @@ impl NodeBB {
         if depth == 0 {
             println!("depth zero");
             node.kyokumen = 1;
-            return Some(node.evaluate(ban, wei));
+            return Some(NodeBB::evaluate(ban, wei));
             // return Some(NodeBB::evalwtt(&ban));
         }
         if ban.is_passpass() {
