@@ -120,7 +120,7 @@ impl NodeBB {
     }
 
     #[cfg(target_arch="x86_64")]
-    fn evaluate(&self, ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
+    fn evaluate(ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
         if cfg!(feature="nosimd") {
             wei.evaluatev7bb(ban)
         } else if cfg!(feature="avx") {
