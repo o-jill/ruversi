@@ -22,3 +22,14 @@ withtt = []  # use transposition table
 bitboard = []
 byteboard = []
 avx = ["bitboard"] ## including AVX and BMI2
+
+[lib]
+name="mylib"
+path="src/lib.rs"
+
+[dev-dependencies]
+criterion = {version = "0.4", features = ["html_reports"]}
+
+[[bench]]
+name = "my_benchmark"
+harness = false
