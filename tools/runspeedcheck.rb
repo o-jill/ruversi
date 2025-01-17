@@ -104,7 +104,7 @@ def search()
 
   rfens.each_with_index do |rfen, i|
     echo("Begin RFEN:#{rfen}", RESULT)
-    for j in 0..REPEAT do
+    for j in 1..REPEAT do
       # runcmd = "cargo run --release #{features} -- --rfen \"#{rfen}\" #{sdepth} --ev1 #{EVFILE} >> #{RESULT} 2>/dev/null"
       runcmd = "cargo run --release #{features} -- --rfen \"#{rfen}\" #{sdepth} --ev1 #{EVFILE} 2>/dev/null"
       res = exec_command(runcmd)
@@ -113,7 +113,7 @@ def search()
       result_elapsed[i] << elapsed
       print(" #{j}")
     end
-    echo("End RFEN:#{rfen}", RESULT)
+    echo("End RFEN:#{rfen}\n", RESULT)
   end
 
   result_nodes.each_with_index do |nd, i|
@@ -159,14 +159,15 @@ def game()
   puts "features: #{features}"
 
   # duellv=1
-  duellv=2
-  # duellv=3
+  # duellv=2
+  duellv=3
 
   buildcmd = "cargo build --release #{features}"
   exec_command(buildcmd)
 
+  listelapsed = []
   txtout = nil
-  for j in 0..REPEAT do
+  for j in 1..REPEAT do
     print("#{j} ")
     elapsed, _res = elapsed_time_of() do
       # runcmd = "cargo run --release --silent #{features} -- --duel #{duellv} #{sdepth}  --ev1 #{evfile} --ev2 #{evfile} >> #{RESULT} 2>/dev/null"
@@ -177,7 +178,10 @@ def game()
  
     # gameresult(tail(RESULT, 5), elapsed)
     gameresult(txtout.split("\n").reverse, elapsed)
+    listelapsed << elapsed
   end
+
+  gamestatistics(listelapsed)
 end
 
 def help()
