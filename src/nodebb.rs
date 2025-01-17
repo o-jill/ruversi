@@ -135,7 +135,8 @@ impl NodeBB {
         if cfg!(feature="nosimd") {
             wei.evaluatev7bb(ban)
         } else {
-            wei.evaluatev7bb_simd(ban)
+            wei.evaluatev7bb_simd_mul(ban)
+            // wei.evaluatev7bb_simd_xor(ban)
         }
     }
 
