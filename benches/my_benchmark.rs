@@ -8,17 +8,26 @@ use mylib::bitboard::BitBoard;
 fn criterion_benchmark_weight(c : &mut Criterion) {
     let w = Weight::new();
     let ban = BitBoard::new();
-    c.bench_function("weight_nosimd", |b| b.iter(|| w.evaluatev7bb(&ban)));
-    c.bench_function("weight_simd_sse", |b| b.iter(|| w.evaluatev7bb_simd(&ban)));
-    c.bench_function("weight_simd_avx", |b| b.iter(|| w.evaluatev7bb_simdavx(&ban)));
+    c.bench_function("weight_nosimd", |b| b.iter(|| w.evaluatev7bb(black_box(&ban))));
+    c.bench_function("weight_simd_sse", |b| b.iter(|| w.evaluatev7bb_simd(black_box(&ban))));
+    c.bench_function("weight_simd_avx", |b| b.iter(|| w.evaluatev7bb_simdavx(black_box(&ban))));
 }
 
 #[cfg(target_arch="aarch64")]
 fn criterion_benchmark_weight(c : &mut Criterion) {
+    use criterion::black_box;
+
     let w = Weight::new();
     let ban = BitBoard::new();
-    c.bench_function("weight_nosimd", |b| b.iter(|| w.evaluatev7bb(&ban)));
-    c.bench_function("weight_simd_neon", |b| b.iter(|| w.evaluatev7bb_simd(&ban)));
+    c.bench_function(
+        "weight_nosimd",
+        |b| b.iter(|| w.evaluatev7bb(black_box(&ban))));
+    c.bench_function(
+        "weight_simd_neon",
+        |b| b.iter(|| w.evaluatev7bb_simd_xor(black_box(&ban))));
+    c.bench_function(
+        "weight_simd_neon_mul",
+        |b| b.iter(|| w.evaluatev7bb_simd_mul(black_box(&ban))));
 }
 
 criterion_group!(benches, criterion_benchmark_weight);
