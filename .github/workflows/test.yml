@@ -30,15 +30,15 @@ jobs:
       id: utest
       run: cargo test --features=avx --verbose --release  # test w/ simd will get error w/o --release.
     - name: Speed check search
-      run: ./tools/speedcheck.sh search
+      run: ruby ./tools/runspeedcheck.rb search
     - name: Speed check game
-      run: ./tools/speedcheck.sh game
+      run: ruby ./tools/runspeedcheck.rb game
     - name: Speed check search
-      run: ./tools/speedcheck.sh search
+      run: ruby ./tools/runspeedcheck.rb search
       env:
         FEATURES: '--features=avx'
     - name: Speed check game
-      run: ./tools/speedcheck.sh game
+      run: ruby ./tools/runspeedcheck.rb game
       env:
         FEATURES: '--features=avx'
 
@@ -50,11 +50,11 @@ jobs:
     - uses: actions/checkout@v4
     - name: cpu
       run: cat /proc/cpuinfo
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.2'
-        bundler-cache: false
+    # - name: Set up Ruby
+    #   uses: ruby/setup-ruby@v1
+    #   with:
+    #     ruby-version: '3.2'
+    #     bundler-cache: false
     - name: Build
       run: |
         cargo build --verbose
@@ -98,6 +98,6 @@ jobs:
         echo ${{ steps.rutest.outcome }} == 'failure'
         exit 1
     - name: Speed check search
-      run: ./tools/runspeedcheck.sh search
+      run: ruby ./tools/runspeedcheck.rb search
     - name: Speed check game
-      run: ./tools/runspeedcheck.sh game
+      run: ruby ./tools/runspeedcheck.rb game
