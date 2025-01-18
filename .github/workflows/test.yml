@@ -42,6 +42,30 @@ jobs:
       env:
         FEATURES: '--features=avx'
 
+  build_linux_arm:
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v4
+    - name: cpu
+      run: cat /proc/cpuinfo
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: false
+    - name: Build
+      run: |
+        cargo build --verbose
+    - name: Run tests
+      id: utest
+      run: cargo test --verbose --release
+    - name: Speed check search
+      run: ./tools/runspeedcheck.sh search
+    - name: Speed check game
+      run: ./tools/runspeedcheck.sh game
+
   build_mac:
     runs-on: macos-latest
     steps:
@@ -73,3 +97,7 @@ jobs:
       run: |
         echo ${{ steps.rutest.outcome }} == 'failure'
         exit 1
+    - name: Speed check search
+      run: ./tools/runspeedcheck.sh search
+    - name: Speed check game
+      run: ./tools/runspeedcheck.sh game
