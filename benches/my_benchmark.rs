@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use mylib::weight::Weight;
 use mylib::bitboard::BitBoard;
@@ -15,8 +15,6 @@ fn criterion_benchmark_weight(c : &mut Criterion) {
 
 #[cfg(target_arch="aarch64")]
 fn criterion_benchmark_weight(c : &mut Criterion) {
-    use criterion::black_box;
-
     let w = Weight::new();
     let ban = BitBoard::new();
     c.bench_function(
