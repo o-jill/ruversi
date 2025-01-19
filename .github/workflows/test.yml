@@ -40,11 +40,6 @@ jobs:
       run: |
         echo ${{ steps.rubuild.outcome }} == 'failure'
         exit 1
-    - name: check error run clippy
-      if: ${{ steps.ruclippy.outcome == 'failure' }}
-      run: |
-        echo ${{ steps.ruclippy.outcome }} == 'failure'
-        exit 1
     - name: check error run test
       if: ${{ steps.rutest.outcome == 'failure' }}
       run: |
@@ -64,6 +59,11 @@ jobs:
       run: ruby ./tools/runspeedcheck.rb game
       env:
         FEATURES: '--features=avx'
+    - name: check error run clippy
+      if: ${{ steps.ruclippy.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.ruclippy.outcome }} == 'failure'
+        exit 1
 
   build_linux_arm:
     runs-on: ubuntu-24.04-arm
@@ -99,10 +99,6 @@ jobs:
         exit 1
     - name: Run bench
       run: cargo bench
-    - name: Speed check search
-      run: ./tools/speedcheck.sh search
-    - name: Speed check game
-      run: ./tools/speedcheck.sh game
     - name: Speed check search
       run: ruby ./tools/runspeedcheck.rb search
     - name: Speed check game
