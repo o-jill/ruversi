@@ -24,23 +24,85 @@ jobs:
         ruby-version: '3.2'
         bundler-cache: false
     - name: Build
+      continue-on-error: true # とにかく最後まで行きたい
+      run: |
+        cargo build --verbose
+    - name: Run clippy
+      continue-on-error: true # とにかく最後まで行きたい
+      id: ruclippy
+      run: cargo clippy --all-targets
+    - name: Run tests
+      continue-on-error: true # とにかく最後まで行きたい
+      id: utest
+      run: cargo test --features=avx --verbose --release  # test w/ simd will get error w/o --release.
+    - name: check error run build
+      if: ${{ steps.rubuild.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.rubuild.outcome }} == 'failure'
+        exit 1
+    - name: check error run test
+      if: ${{ steps.rutest.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.rutest.outcome }} == 'failure'
+        exit 1
+    - name: Run bench
+      run: cargo bench
+    - name: Speed check search
+      run: ruby ./tools/runspeedcheck.rb search
+    - name: Speed check game
+      run: ruby ./tools/runspeedcheck.rb game
+    - name: Speed check search
+      run: ruby ./tools/runspeedcheck.rb search
+      env:
+        FEATURES: '--features=avx'
+    - name: Speed check game
+      run: ruby ./tools/runspeedcheck.rb game
+      env:
+        FEATURES: '--features=avx'
+    - name: check error run clippy
+      if: ${{ steps.ruclippy.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.ruclippy.outcome }} == 'failure'
+        exit 1
+
+  build_linux_arm:
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v4
+    - name: cpu
+      run: cat /proc/cpuinfo
+    - name: Set up Ruby
+      continue-on-error: true # とにかく最後まで行きたい
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: false
+    - name: Build
+      continue-on-error: true # とにかく最後まで行きたい
       run: |
         cargo build --verbose
     - name: Run tests
+      continue-on-error: true # とにかく最後まで行きたい
       id: utest
-      run: cargo test --features=avx --verbose --release  # test w/ simd will get error w/o --release.
+      run: cargo test --verbose --release
+    - name: check error run build
+      if: ${{ steps.rubuild.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.rubuild.outcome }} == 'failure'
+        exit 1
+    - name: check error run test
+      if: ${{ steps.rutest.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.rutest.outcome }} == 'failure'
+        exit 1
+    - name: Run bench
+      run: cargo bench
     - name: Speed check search
-      run: ./tools/speedcheck.sh search
+      run: ruby ./tools/runspeedcheck.rb search
     - name: Speed check game
-      run: ./tools/speedcheck.sh game
-    - name: Speed check search
-      run: ./tools/speedcheck.sh search
-      env:
-        FEATURES: '--features=avx'
-    - name: Speed check game
-      run: ./tools/speedcheck.sh game
-      env:
-        FEATURES: '--features=avx'
+      run: ruby ./tools/runspeedcheck.rb game
 
   build_mac:
     runs-on: macos-latest
@@ -73,3 +135,9 @@ jobs:
       run: |
         echo ${{ steps.rutest.outcome }} == 'failure'
         exit 1
+    - name: Run bench
+      run: cargo bench
+    - name: Speed check search
+      run: ruby ./tools/runspeedcheck.rb search
+    - name: Speed check game
+      run: ruby ./tools/runspeedcheck.rb game

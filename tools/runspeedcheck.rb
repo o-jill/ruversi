@@ -3,8 +3,8 @@
 # example:
 #  $ ruby runspeedcheck.rb <option>
 
-REPEAT=5
-# REPEAT=20
+# REPEAT=5
+REPEAT=20
 
 EVFILE='data/evaltable.txt'
 
@@ -147,6 +147,19 @@ def gameresult(lines, elapsed)
   }
   msec = ((elapsed * 10000) + 0.5).floor() * 0.1
   puts("#{'%.2f' % (msec / games)} msec/game = #{msec} / #{games}")
+end
+
+def gamestatistics(elapsed)
+  return if elapsed.length() <= 1
+
+  n = elapsed.length()
+  avg = elapsed.sum().fdiv(n)
+  sqsum = elapsed.sum() {|a| a * a}
+  vari = sqsum.fdiv(n) - avg * avg
+  sd = Math.sqrt(vari)
+  min, max = elapsed.minmax
+
+  puts "#{'%.2f' % avg} ± #{'%.2f' % sd} sec (#{'%.2f' % min} -- #{'%.2f' % max}) N:#{n}"
 end
 
 def game()
