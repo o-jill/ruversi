@@ -682,7 +682,8 @@ impl BitBoard {
             if rev && (mine & bit) != 0 {return true;}
         }
 
-        if false && cfg!(feature="avx") {
+        let checkbyshift = false;
+        if checkbyshift && cfg!(feature="avx") {
             let gather = 0x0101010101010101 << y;
             let oppon = unsafe {x86_64::_pext_u64(oppo, gather)};
             let minee = unsafe {x86_64::_pext_u64(mine, gather)};
