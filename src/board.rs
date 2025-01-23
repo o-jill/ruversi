@@ -10,10 +10,23 @@ const STR_NUM : &str = "012345678";
 pub const STONE_SENTE : &str = "@@";
 pub const STONE_GOTE : &str = "[]";
 
+#[derive(Clone)]
 pub struct Board {
     pub cells: [i8 ; CELL_2D],
     pub teban: i8,
     pub pass: i8,
+}
+
+impl Default for Board {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl std::fmt::Display for Board {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_str())
+    }
 }
 
 impl Board {
@@ -221,11 +234,6 @@ impl Board {
 
     pub fn is_passpass(&self) -> bool {
         self.pass >= 2
-    }
-    pub fn clone(&self) -> Board {
-        Board {
-            cells: self.cells, teban: self.teban , pass: self.pass
-        }
     }
 
     pub fn nblank(&self) -> u32 {

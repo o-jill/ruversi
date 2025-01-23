@@ -107,6 +107,12 @@ pub struct Weight {
     pub weight : [f32 ; N_WEIGHT]
 }
 
+impl Default for Weight {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Weight {
     pub fn new() -> Weight {
         Weight {
@@ -887,8 +893,8 @@ impl Weight {
 
                 x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
             }
-            // for n in 0..N {
-            //     sum += sumarr[n];
+            // for s in sumarr {
+            //     sum += s;
             // }
             sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
         }
@@ -1040,8 +1046,8 @@ impl Weight {
 
                 x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
             }
-            // for n in 0..N {
-            //     sum += sumarr[n];
+            // for s in sumarr {
+            //     sum += s;
             // }
             sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
         }
@@ -1419,8 +1425,8 @@ impl Weight {
             let y1234 = x86_64::_mm_add_ps(y12, y34);
             x86_64::_mm_store_ps(hid2.as_mut_ptr(), y1234);
         }
-        for i in 0..4 {
-            res += hid2[i];
+        for h in hid2.iter().take(4) {
+            res += h;
         }
         res
     }
@@ -1941,8 +1947,8 @@ impl Weight {
 
                 x86_64::_mm256_store_ps(sumarr.as_mut_ptr(), y4);
             }
-            for n in 0..N {
-                sum += sumarr[n];
+            for s in sumarr {
+                sum += s;
             }
             // sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
         }
@@ -1963,7 +1969,7 @@ impl Weight {
         let wdc = self.wibias();
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
-        let mut sumN = [0f32 ; N];
+        let mut sumn = [0f32 ; N];
 
         for i in (0..N_HIDDEN).step_by(N) {
             let hidx = i;
@@ -2048,7 +2054,7 @@ impl Weight {
                         x86_64::_mm256_store_ps(res8, sum8);
                     }
                 }
-                // sum88->sumN
+                // sum88->sumn
                 // transpose
                 unsafe {
                     let x1 = x86_64::_mm256_load_ps(sum88.as_ptr());
@@ -2087,13 +2093,13 @@ impl Weight {
     
                     let h18 = x86_64::_mm256_add_ps(x1234, x5678);
                     // sum
-                    x86_64::_mm256_storeu_ps(sumN.as_mut_ptr().add(m), h18);
+                    x86_64::_mm256_storeu_ps(sumn.as_mut_ptr().add(m), h18);
                 }
             }
 
             unsafe {
-                let x1 = x86_64::_mm256_load_ps(sumN.as_ptr());
-                let x2 = x86_64::_mm256_load_ps(sumN.as_ptr().add(8));
+                let x1 = x86_64::_mm256_load_ps(sumn.as_ptr());
+                let x2 = x86_64::_mm256_load_ps(sumn.as_ptr().add(8));
                 // teban
                 let wtbn1 = x86_64::_mm256_load_ps(wtbn.as_ptr().add(hidx));
                 let wtbn2 = x86_64::_mm256_load_ps(wtbn.as_ptr().add(hidx + 8));
@@ -2196,8 +2202,8 @@ impl Weight {
             let s4 = x86_64::_mm_add_ps(s1, s2);
             x86_64::_mm_store_ps(hid2.as_mut_ptr(), s4);
         }
-        for i in 0..4 {
-            res += hid2[i];
+        for h in hid2.iter().take(4) {
+            res += h;
         }
         res
     }
@@ -2361,8 +2367,8 @@ impl Weight {
 
                 x86_64::_mm_store_ps(sumarr.as_mut_ptr(), y4);
             }
-            // for n in 0..N {
-            //     sum += sumarr[n];
+            // for s in sumarr {
+            //     sum += s;
             // }
             sum += sumarr[0] + sumarr[1] + sumarr[2] + sumarr[3];
         }
