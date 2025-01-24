@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 mod board;
 mod bitboard;
 mod edaxrunner;
-mod extractrfen;
+// mod extractrfen;
 mod game;
 mod gtprotocol;
 mod initialpos;

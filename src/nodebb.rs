@@ -1116,7 +1116,6 @@ impl NodeBB {
 
         let sub =
                 thread::spawn(move || {
-            let wei2 = unsafe{WEIGHT.as_ref().unwrap()};
             moves1.sort_by(|a, b| {
                 let pa = move_priority2(a);
                 let pb = move_priority2(b);

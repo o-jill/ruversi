@@ -103,11 +103,24 @@ const TBLCHKREV : [i8 ; 16130] = [
 0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 ];
 
+#[derive(Clone)]
 pub struct BitBoard {
     pub black: u64,
     pub white: u64,
     pub teban: i8,
     pub pass: i8,
+}
+
+impl Default for BitBoard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl std::fmt::Display for BitBoard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_str())
+    }
 }
 
 impl BitBoard {
@@ -386,12 +399,6 @@ impl BitBoard {
 
     pub fn is_passpass(&self) -> bool {
         self.pass >= 2
-    }
-    pub fn clone(&self) -> BitBoard {
-        BitBoard {
-            black : self.black, white : self.white,
-            teban: self.teban , pass: self.pass
-        }
     }
 
     pub fn nblank(&self) -> u32 {
