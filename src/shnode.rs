@@ -66,6 +66,8 @@ impl Best {
     }
 }
 
+pub type ShNodeResult = (f32, Arc<RwLock<ShNode>>);
+
 pub struct ShNode {
     child : Vec<Arc<RwLock<ShNode>>>,
     hyoka : Option<f32>,
@@ -120,7 +122,7 @@ impl ShNode {
 
     #[allow(dead_code)]
     pub fn think(ban : &bitboard::BitBoard, mut depth : u8)
-            -> Option<(f32, Arc<RwLock<ShNode>>)> {
+            -> Option<ShNodeResult> {
 // println!("shnode::think(ban, d:{depth})");
         if depth == 0 {
             return None;

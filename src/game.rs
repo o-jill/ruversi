@@ -178,7 +178,7 @@ impl GameBB {
     }
 
     #[allow(dead_code)]
-    pub fn startsh(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<RwLock<shnode::ShNode>>)>, depth : u8)
+    pub fn startsh(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<shnode::ShNodeResult>, depth : u8)
             -> Result<(), String> {
         loop {
             // show
@@ -821,7 +821,7 @@ impl GameBB {
 
     #[allow(dead_code)]
     pub fn startsh_with_2et(&mut self,
-            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<RwLock<shnode::ShNode>>)>,
+            f : fn(&bitboard::BitBoard, u8) -> Option<shnode::ShNodeResult>,
             // f : fn(&bitboard::BitBoard, u8) -> Option<(f32, Arc<Mutex<shnode::ShNode>>)>,
             depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
                 -> Result<(), String> {
