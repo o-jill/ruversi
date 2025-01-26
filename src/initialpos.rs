@@ -61,20 +61,19 @@ impl InitialPos {
         if file.is_err() {return Err(file.err().unwrap().to_string());}
 
         let file = file.unwrap();
+        let tagptn = regex::Regex::new("#\\s+(\\S+) *").unwrap();
+        let rfenptn = regex::Regex::new("^([1-8A-Ha-h/]+ [bw])").unwrap();
         let lines = BufReader::new(file);
         for line in lines.lines() {
             match line {
                 Ok(line) => {
                     // println!("line:{}", line);
-                    let tagptn = regex::Regex::new("#\\s+(\\S+) *").unwrap();
                     if let Some(cap) = tagptn.captures(&line) {
                         tag = String::from(&cap[1]);
                         // println!("tag:{}", tag);
                         continue;
                     }
 
-                    let rfenptn =
-                        regex::Regex::new("^([1-8A-Ha-h/]+ [bw])").unwrap();
                     match rfenptn.captures(&line) {
                         Some(cap) => {
                             let rfen = &cap[1];
