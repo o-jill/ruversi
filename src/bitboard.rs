@@ -11,13 +11,12 @@ pub const STONE_SENTE : &str = "@@";
 pub const STONE_GOTE : &str = "[]";
 pub const LSB_CELL : u64 = 0x0000000000000001;
 const LT_CELL : u64 = LSB_CELL;
-const RT_CELL : u64 = 0x0100000000000000;
-const LB_CELL : u64 = 0x0000000000000080;
+const RT_CELL : u64 = 0x0000000000000080;
+const LB_CELL : u64 = 0x0100000000000000;
 const RB_CELL : u64 = 0x8000000000000000;
 const CORNER_CELL : u64 = 0x8100000000000081;
 const BITPTN : [u64 ; 9] = [
-    0, 0x1, 0x101, 0x10101, 0x1010101, 0x101010101, 0x10101010101,
-    0x1010101010101, 0x101010101010101,
+    0, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff,
 ];
 const TBLCHKREV : [i8 ; 16130] = [
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -163,12 +162,12 @@ impl BitBoard {
             match ch {
                 'A'..='H' => {
                     let n = ch as i32 + 1 - 'A' as i32;
-                    ret.black |= BITPTN[n as usize] << (x * NUMCELL + y);
+                    ret.black |= BITPTN[n as usize] << Self::index(x, y);
                     x += n as usize;
                 },
                 'a'..='h' => {
                     let n = ch as i32 + 1 - 'a' as i32;
-                    ret.white |= BITPTN[n as usize] << (x * NUMCELL + y);
+                    ret.white |= BITPTN[n as usize] << Self::index(x, y);
                     x += n as usize;
                 },
                 '1'..='8' => {
@@ -200,7 +199,7 @@ impl BitBoard {
         let mut x = 0;
         let mut y = 0;
         for ch  in elem[0].chars() {
-            let bit = LSB_CELL << BitBoard::index(x, y);
+            let bit = LSB_CELL << Self::index(x, y);
             match ch {
             'X' => {ret.black |= bit;},
             'O' => {ret.white |= bit;},
@@ -225,16 +224,16 @@ impl BitBoard {
         let mut ban = Vec::<String>::new();
         let black = self.black;
         let white = self.white;
+        let mut bit : u64 = LSB_CELL;
         for y in 0..NUMCELL {
             let mut old = NONE;
             let mut count = 0;
             let mut line = String::new();
-            let mut bit : u64 = LSB_CELL << y;
             for _x in 0..NUMCELL {
                 let cb = (bit & black) != 0;
                 let cw = (bit & white) != 0;
                 // println!("bit:0x{:016x}, cb:{}, cw:{}", bit, cb, cw);
-                bit <<= NUMCELL;
+                bit <<= 1;
                 let c = if cb {SENTE} else if cw {GOTE} else {BLANK};
                 if c == old {
                     count += 1;
@@ -276,12 +275,12 @@ impl BitBoard {
         let mut ban = String::new();
         let black = self.black;
         let white = self.white;
+        let mut bit : u64 = LSB_CELL;
         for y in 0..NUMCELL {
-            let mut bit : u64 = LSB_CELL << y;
             for _x in 0..NUMCELL {
                 let cb = (bit & black) != 0;
                 let cw = (bit & white) != 0;
-                bit <<= NUMCELL;
+                bit <<= 1;
                 ban += if cb {"X"} else if cw {"O"} else {"-"};
             }
         }
@@ -355,13 +354,13 @@ impl BitBoard {
     pub fn put(&self) {
         let black = self.black;
         let white = self.white;
+        let mut bit : u64 = LSB_CELL;
         for y in 0..NUMCELL {
             let mut line = String::new();
-            let mut bit : u64 = LSB_CELL << y;
             for _x in 0..NUMCELL {
                 let cb = (bit & black) != 0;
                 let cw = (bit & white) != 0;
-                bit <<= NUMCELL;
+                bit <<= 1;
 
                 line += "|";
                 line +=
@@ -406,7 +405,7 @@ impl BitBoard {
     }
 
     fn index(x: usize, y: usize) -> usize {
-        x * NUMCELL + y
+        x + NUMCELL * y
     }
 
     #[allow(dead_code)]
@@ -477,7 +476,7 @@ impl BitBoard {
             let mut bit : u64 = pos;
             let mut rev : u64 = 0;
             for _i in y..(NUMCELL - 1) {
-                bit <<= 1;
+                bit <<= NUMCELL;
                 if (oppo & bit) == 0 {break;}
 
                 rev |= bit;
@@ -510,7 +509,7 @@ impl BitBoard {
             let mut bit : u64 = pos;
             let mut rev : u64 = 0;
             for _i in 0..y {
-                bit >>= 1;
+                bit >>= NUMCELL;
                 if (oppo & bit) == 0 {break;}
 
                 rev |= bit;
@@ -524,7 +523,7 @@ impl BitBoard {
         let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         for _i in x..(NUMCELL - 1) {
-            bit <<= NUMCELL;
+            bit <<= 1;
             if (oppo & bit) == 0 {break;}
 
             rev |= bit;
@@ -537,7 +536,7 @@ impl BitBoard {
         let mut bit : u64 = pos;
         let mut rev : u64 = 0;
         for _i in 0..x {
-            bit >>= NUMCELL;
+            bit >>= 1;
             if (oppo & bit) == 0 {break;}
 
             rev |= bit;
@@ -567,7 +566,7 @@ impl BitBoard {
         let yy = y;
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
-            bit <<= NUMCELL - 1;
+            bit >>= NUMCELL - 1;
             if (oppo & bit) == 0 {break;}
 
             rev |= bit;
@@ -597,7 +596,7 @@ impl BitBoard {
         let yy = NUMCELL - 1 - y;
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
-            bit >>= NUMCELL - 1;
+            bit <<= NUMCELL - 1;
             if (oppo & bit) == 0 {break;}
 
             rev |= bit;
@@ -626,8 +625,8 @@ impl BitBoard {
         // 下
         let usetzcnt = false;
         // let usetzcnt = true;
-        // let usetableud = false;
-        let usetableud = true;
+        let usetableud = false;
+        // let usetableud = true;
         if usetzcnt {
             let shift = BitBoard::index(x, y) + 1;
             let mask = (1u64 << (NUMCELL - 1 - y)) - 1;
@@ -648,7 +647,7 @@ impl BitBoard {
             let mut bit = pos;
             let mut rev = false;
             for _i in y..(NUMCELL - 1) {
-                bit <<= 1;
+                bit <<= NUMCELL;
                 if (oppo & bit) == 0 {break;}
 
                 rev = true;
@@ -681,7 +680,7 @@ impl BitBoard {
             let mut bit = pos;
             let mut rev = false;
             for _i in 0..y {
-                bit >>= 1;
+                bit >>= NUMCELL;
                 if (oppo & bit) == 0 {break;}
 
                 rev = true;
@@ -723,7 +722,7 @@ impl BitBoard {
             let mut bit = pos;
             let mut rev = false;
             for _i in x..(NUMCELL - 1) {
-                bit <<= NUMCELL;
+                bit <<= 1;
                 if (oppo & bit) == 0 {break;}
 
                 rev = true;
@@ -734,7 +733,7 @@ impl BitBoard {
             let mut bit = pos;
             let mut rev = false;
             for _i in 0..x {
-                bit >>= NUMCELL;
+                bit >>= 1;
                 if (oppo & bit) == 0 {break;}
 
                 rev = true;
@@ -761,7 +760,7 @@ impl BitBoard {
         let yy = y;
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
-            bit <<= NUMCELL - 1;
+            bit >>= NUMCELL - 1;
             if (oppo & bit) == 0 {break;}
 
             rev = true;
@@ -787,7 +786,7 @@ impl BitBoard {
         let yy = NUMCELL - 1 - y;
         let sz = if xx < yy {xx} else {yy};
         for _i in 0..sz {
-            bit >>= NUMCELL - 1;
+            bit <<= NUMCELL - 1;
             if (oppo & bit) == 0 {break;}
 
             rev = true;
@@ -979,8 +978,8 @@ impl BitBoard {
         let mut ret = Vec::<(u8, u8)>::new();
         let stones = self.black | self.white;
         let mut bit = LSB_CELL;
-        for x in 0..NUMCELL {
-            for y in 0..NUMCELL {
+        for y in 0..NUMCELL {
+            for x in 0..NUMCELL {
                 let exist = bit & stones;
                 bit <<= 1;
                 if exist != 0 {
@@ -1056,7 +1055,7 @@ impl BitBoard {
         let mut fcells = 0u64;
         let mut bit = startbit;
         for _i in 1..7 {  // →
-            bit <<= NUMCELL;
+            bit <<= 1;
             if (tgt & bit) == 0 {return fcells;}
 
             fcells |= bit;
@@ -1069,7 +1068,7 @@ impl BitBoard {
         let mut fcells = 0u64;
         let mut bit = startbit;
         for _i in 1..7 {  // →
-            bit >>= NUMCELL;
+            bit >>= 1;
             if (tgt & bit) == 0 {return fcells;}
 
             fcells |= bit;
@@ -1082,7 +1081,7 @@ impl BitBoard {
         let mut fcells = 0u64;
         let mut bit = startbit;
         for _i in 1..7 {  // ↓
-            bit >>= 1;
+            bit >>= NUMCELL;
             if (tgt & bit) == 0 {return fcells;}
 
             fcells |= bit;
@@ -1095,7 +1094,7 @@ impl BitBoard {
         let mut fcells = 0u64;
         let mut bit = startbit;
         for _i in 1..7 {  // ↓
-            bit <<= 1;
+            bit <<= NUMCELL;
             if (tgt & bit) == 0 {return fcells;}
 
             fcells |= bit;
@@ -1160,14 +1159,15 @@ impl BitBoard {
             // 左3つ fcells[] == @
             // 上 fcells[] == @
             let mut bit = LSB_CELL << BitBoard::index(x, 1);
-            let mut wbit = 0x0000000000000107 << BitBoard::index(x - 1, 0);
+            let mut wbit = 0x0000000000010103 << BitBoard::index(x - 1, 0);
+            // let mut wbit = 0x0000000000000107 << BitBoard::index(x - 1, 0);
             for _y in 0..6 {
                 // println!("bit:{:b}, wbit:{:b}", bit, wbit);
 
                 if (bit & (fcellsb | fcellsw)) != 0 {
                    // println!("if fcb | fcw");
-                    bit <<= 1;
-                    wbit <<= 1;
+                    bit <<= NUMCELL;
+                    wbit <<= NUMCELL;
                     continue;
                 }
 
@@ -1192,17 +1192,18 @@ impl BitBoard {
                     break;
                 }
 
-                bit <<= 1;
-                wbit <<= 1;
+                bit <<= NUMCELL;
+                wbit <<= NUMCELL;
             }
             // 左3つ fcells[] == @
             // 下 fcells[] == @
             let mut bit = LSB_CELL << BitBoard::index(x, NUMCELL - 2);
-            let mut wbit = 0x0000000000000407 << BitBoard::index(x - 1, NUMCELL - 3);
+            let mut wbit = 0x0000000000030101 << BitBoard::index(x - 1, NUMCELL - 3);
+            // let mut wbit = 0x0000000000000407 << BitBoard::index(x - 1, NUMCELL - 3);
             for _y in (0..6).rev() {
                 if (bit & (fcellsb | fcellsw)) != 0 {
-                    bit >>= 1;
-                    wbit >>= 1;
+                    bit >>= NUMCELL;
+                    wbit >>= NUMCELL;
                     continue;
                 }
 
@@ -1223,8 +1224,8 @@ impl BitBoard {
                     break;
                 }
 
-                bit >>= 1;
-                wbit >>= 1;
+                bit >>= NUMCELL;
+                wbit >>= NUMCELL;
             }
             if cnt == 0 {break;}
         }
@@ -1236,72 +1237,9 @@ impl BitBoard {
             // 上3つ fcells[] == @
             // 左 fcells[] == @
             let mut bit : u64 = LSB_CELL << BitBoard::index(1, y);
-            let mut wbit = 0x0000000000010103 << BitBoard::index(0, y - 1);
+            let mut wbit = 0x0000000000000107 << BitBoard::index(0, y - 1);
+            // let mut wbit = 0x0000000000010103 << BitBoard::index(0, y - 1);
             for _x in 1..7 {
-                if (bit & (fcellsb | fcellsw)) != 0 {
-                    bit <<= NUMCELL;
-                    wbit <<= NUMCELL;
-                    continue;
-                }
-
-                if (bit & black) != 0 {
-                    if (fcellsb & wbit) != wbit {break;}
-
-                    fcellsb |= bit;
-                    cnt += 1;
-                } else if (bit & white) != 0 {
-                    if (fcellsw & wbit) != wbit {break;}
-
-                    fcellsw |= bit;
-                    cnt += 1;
-                } else {
-                    break;
-                }
-
-                bit <<= NUMCELL;
-                wbit <<= NUMCELL;
-            }
-            // 上3つ fcells[] == @
-            // 右 fcells[] == @
-            let mut bit : u64 = LSB_CELL << BitBoard::index(NUMCELL - 2, y);
-            let mut wbit = 0x0000000000030101 << BitBoard::index(NUMCELL - 3, y - 1);
-            for _x in (1..7).rev() {
-                if (bit & (fcellsb | fcellsw)) != 0 {
-                    bit >>= NUMCELL;
-                    wbit >>= NUMCELL;
-                    continue;
-                }
-
-                if (bit & black) != 0 {
-                    if (fcellsb & wbit) != wbit {break;}
-
-                    fcellsb |= bit;
-                    cnt += 1;
-                } else if (bit & white) != 0 {
-                    if (fcellsw & wbit) != wbit {break;}
-
-                    fcellsw |= bit;
-                    cnt += 1;
-                } else {
-                    break;
-                }
-
-                bit >>= NUMCELL;
-                wbit >>= NUMCELL;
-            }
-            if cnt == 0 {break;}
-        }
-        //
-        // ?xx  ??x
-        // ?@x  ?@x
-        // ??x  ?xx
-        for x in (1..7).rev() {
-            let mut cnt = 0;
-            // 右3つ fcells[] == @
-            // 上 fcells[] == @
-            let mut bit : u64 = LSB_CELL << BitBoard::index(x, 1);
-            let mut wbit = 0x0000000000070100 << BitBoard::index(x - 1, 0);
-            for _y in 1..7 {
                 if (bit & (fcellsb | fcellsw)) != 0 {
                     bit <<= 1;
                     wbit <<= 1;
@@ -1325,11 +1263,11 @@ impl BitBoard {
                 bit <<= 1;
                 wbit <<= 1;
             }
-            // 右3つ fcells[] == @
-            // 下 fcells[] == @
-            let mut bit : u64 = LSB_CELL << BitBoard::index(x, NUMCELL - 2);
-            let mut wbit = 0x0000000000070400 << BitBoard::index(x - 1, NUMCELL - 3);
-            for _y in (1..7).rev() {
+            // 上3つ fcells[] == @
+            // 右 fcells[] == @
+            let mut bit : u64 = LSB_CELL << BitBoard::index(NUMCELL - 2, y);
+            let mut wbit = 0x0000000000000407 << BitBoard::index(NUMCELL - 3, y - 1);
+            for _x in (1..7).rev() {
                 if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= 1;
                     wbit >>= 1;
@@ -1355,19 +1293,18 @@ impl BitBoard {
             }
             if cnt == 0 {break;}
         }
-
-        // ???  ???
-        // ?@x  x@?
-        // xxx  xxx
-        for y in (1..7).rev() {
+        //
+        // ?xx  ??x
+        // ?@x  ?@x
+        // ??x  ?xx
+        for x in (1..7).rev() {
             let mut cnt = 0;
-            // 下3つ fcells[] == @
-            // 左 fcells[] == @
-            let mut bit : u64 = LSB_CELL << BitBoard::index(1, y);
-            let mut wbit = 0x0000000000040406 << BitBoard::index(0, y - 1);
-            for _x in 1..7 {
-                // println!("bit:{:08x}, wbit:{:08x}", bit, wbit);
-
+            // 右3つ fcells[] == @
+            // 上 fcells[] == @
+            let mut bit : u64 = LSB_CELL << BitBoard::index(x, 1);
+            let mut wbit = 0x0000000000040406 << BitBoard::index(x - 1, 0);
+            // let mut wbit = 0x0000000000070100 << BitBoard::index(x - 1, 0);
+            for _y in 1..7 {
                 if (bit & (fcellsb | fcellsw)) != 0 {
                     bit <<= NUMCELL;
                     wbit <<= NUMCELL;
@@ -1384,7 +1321,6 @@ impl BitBoard {
 
                     fcellsw |= bit;
                     cnt += 1;
-                    // println!("fcellsw : {:08x}, {}", fcellsw, cnt);
                 } else {
                     break;
                 }
@@ -1392,15 +1328,11 @@ impl BitBoard {
                 bit <<= NUMCELL;
                 wbit <<= NUMCELL;
             }
-            // 下3つ fcells[] == @
-            // 右 fcells[] == @
-            let mut bit : u64 = LSB_CELL << BitBoard::index(NUMCELL - 2, y);
-            let mut wbit = 0x0000000000060404 << BitBoard::index(NUMCELL - 3, y - 1);
-            for _x in (1..7).rev() {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                if !(cb | cw) {break;}
-
+            // 右3つ fcells[] == @
+            // 下 fcells[] == @
+            let mut bit : u64 = LSB_CELL << BitBoard::index(x, NUMCELL - 2);
+            let mut wbit = 0x0000000000060404 << BitBoard::index(x - 1, NUMCELL - 3);
+            for _y in (1..7).rev() {
                 if (bit & (fcellsb | fcellsw)) != 0 {
                     bit >>= NUMCELL;
                     wbit >>= NUMCELL;
@@ -1423,6 +1355,77 @@ impl BitBoard {
 
                 bit >>= NUMCELL;
                 wbit >>= NUMCELL;
+            }
+            if cnt == 0 {break;}
+        }
+
+        // ???  ???
+        // ?@x  x@?
+        // xxx  xxx
+        for y in (1..7).rev() {
+            let mut cnt = 0;
+            // 下3つ fcells[] == @
+            // 左 fcells[] == @
+            let mut bit : u64 = LSB_CELL << BitBoard::index(1, y);
+            let mut wbit = 0x0000000000070100 << BitBoard::index(0, y - 1);
+            for _x in 1..7 {
+                // println!("bit:{:08x}, wbit:{:08x}", bit, wbit);
+
+                if (bit & (fcellsb | fcellsw)) != 0 {
+                    bit <<= 1;
+                    wbit <<= 1;
+                    continue;
+                }
+
+                if (bit & black) != 0 {
+                    if (fcellsb & wbit) != wbit {break;}
+
+                    fcellsb |= bit;
+                    cnt += 1;
+                } else if (bit & white) != 0 {
+                    if (fcellsw & wbit) != wbit {break;}
+
+                    fcellsw |= bit;
+                    cnt += 1;
+                    // println!("fcellsw : {:08x}, {}", fcellsw, cnt);
+                } else {
+                    break;
+                }
+
+                bit <<= 1;
+                wbit <<= 1;
+            }
+            // 下3つ fcells[] == @
+            // 右 fcells[] == @
+            let mut bit : u64 = LSB_CELL << BitBoard::index(NUMCELL - 2, y);
+            let mut wbit = 0x0000000000070400 << BitBoard::index(NUMCELL - 3, y - 1);
+            for _x in (1..7).rev() {
+                let cb = (bit & black) != 0;
+                let cw = (bit & white) != 0;
+                if !(cb | cw) {break;}
+
+                if (bit & (fcellsb | fcellsw)) != 0 {
+                    bit >>= 1;
+                    wbit >>= 1;
+                    continue;
+                }
+
+                if (bit & black) != 0 {
+                    if (fcellsb & wbit) != wbit {break;}
+
+                    fcellsb |= bit;
+                    cnt += 1;
+                } else if (bit & white) != 0 {
+                    if (fcellsw & wbit) != wbit {break;}
+
+                    fcellsw |= bit;
+                    cnt += 1;
+                } else {
+                    break;
+                }
+
+                bit >>= 1;
+                wbit >>= 1;
             }
             if cnt == 0 {break;}
         }
@@ -1509,7 +1512,7 @@ fn testbitbrd() {
     assert_eq!(b.to_obf(),
         "---------------------------XO------OX--------------------------- X");
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(3, 5), (4, 6), (5, 3), (6, 4)]));
+    assert_eq!(mv, Some(vec![(5, 3), (6, 4), (3, 5), (4, 6)]));
     let b = BitBoard::from("H/H/H/H/H/H/H/H b").unwrap();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);
@@ -1567,8 +1570,8 @@ fn testbitbrd() {
     let b90 = b.rotate90();
     // b90.put();
     assert_eq!(b90.to_str(), "h/AeAa/AdAb/AcAc/AbAd/AaAe/Bf/1Fa w");
-    assert_eq!(b90.black, 0x0082848890A0C07E);
-    assert_eq!(b90.white, 0xFF7D7B776F5F3F01);
+    assert_eq!(b90.black, 0x7e03050911214100);
+    assert_eq!(b90.white, 0x80FCFAF6EEDEBEFF);
     assert_eq!(b90.fixedstones(), (0, 15));
     let br = b90.r#move(1, 8);
     assert!(br.is_ok());
@@ -1577,8 +1580,8 @@ fn testbitbrd() {
     assert_eq!(br.fixedstones(), (0, 64));
     assert_eq!(br.count(), -64);
     let b180 = b.rotate180();
-    assert_eq!(b180.black, (0x004121110905037Eu64).reverse_bits());
-    assert_eq!(b180.white, (0xffbedeeef6fafc80u64).reverse_bits());
+    assert_eq!(b180.black, 0x7EC0A09088848200);
+    assert_eq!(b180.white, 0x013f5f6f777b7dff);
     // b180.put();
     assert_eq!(b180.fixedstones(), (0, 15));
     let b = b180.r#move(8, 8);
@@ -1591,8 +1594,8 @@ fn testbitbrd() {
     b.put();
     println!("b.black:0x{:016X}", b.black);
     println!("b.white:0x{:016X}", b.white);
-    assert_eq!(b.black, 0x80FCFAF6EEDEBEFF);
-    assert_eq!(b.white, 0x7E03050911214100);
+    assert_eq!(b.black, 0xFF7D7B776F5F3F01);
+    assert_eq!(b.white, 0x0082848890A0C07E);
     assert!(b.checkreverse(7, 0));
     assert_eq!(b.fixedstones(), (15, 0));
     assert_eq!(b.count(),
@@ -1622,8 +1625,10 @@ fn testbitbrd() {
     assert_eq!(br.count(), 64);
     let b180 = b.rotate180();
     // b.put();
-    assert_eq!(b180.black, (0x80FCFAF6EEDEBEFFu64).reverse_bits());
-    assert_eq!(b180.white, (0x7E03050911214100u64).reverse_bits());
+    println!("b180.black:0x{:x}", b180.black);
+    println!("b180.white:0x{:x}", b180.white);
+    assert_eq!(b180.black, 0x80FCFAF6EEDEBEFF);
+    assert_eq!(b180.white, 0x7E03050911214100);
     assert!(b180.checkreverse(0, 7));
     assert_eq!(b180.fixedstones(), (15, 0));
     assert_eq!(b180.count(),
@@ -1643,7 +1648,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (36, 0));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "A7/B6/C5/D4/E3/F2/G1/H w");
-    assert_eq!(b90.black, 0x80C0E0F0F8FCFEFF);
+    assert_eq!(b90.black, 0xFF7F3F1F0F070301);
     assert_eq!(b90.white, 0x0);
     assert_eq!(b90.fixedstones(), (36, 0));
     let b180 = b.rotate180();
@@ -1665,7 +1670,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (8, 0));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "A7/A7/A7/A7/A7/A7/A7/A7 b");
-    assert_eq!(b90.black, 0xFF);
+    assert_eq!(b90.black, 0x0101010101010101);
     assert_eq!(b90.white, 0x0);
     assert_eq!(b90.fixedstones(), (8, 0));
     let b180 = b.rotate180();
@@ -1679,7 +1684,7 @@ fn testbitbrd() {
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "8/8/8/8/8/8/8/h b");
     assert_eq!(b90.black, 0x0);
-    assert_eq!(b90.white, 0x8080808080808080);
+    assert_eq!(b90.white, 0xFF00000000000000);
     assert_eq!(b90.fixedstones(), (0, 8));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1691,8 +1696,8 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (32, 32));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "H/H/H/H/h/h/h/h b");
-    assert_eq!(b90.black, 0x0F0F0F0F0F0F0F0F);
-    assert_eq!(b90.white, 0xF0F0F0F0F0F0F0F0);
+    assert_eq!(b90.black, 0x00000000FFFFFFFF);
+    assert_eq!(b90.white, 0xFFFFFFFF00000000);
     assert_eq!(b90.fixedstones(), (32, 32));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1704,8 +1709,8 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (32, 32));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "dD/dD/dD/dD/dD/dD/dD/dD b");
-    assert_eq!(b90.black, 0xFFFFFFFF00000000);
-    assert_eq!(b90.white, 0xFFFFFFFF);
+    assert_eq!(b90.black, 0xF0F0F0F0F0F0F0F0);
+    assert_eq!(b90.white, 0x0F0F0F0F0F0F0F0F);
     assert_eq!(b90.fixedstones(), (32, 32));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1717,8 +1722,10 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (16, 16));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "b4B/b4B/b4B/b4B/b4B/b4B/b4B/b4B b");
-    assert_eq!(b90.black, 0xFFFF000000000000);
-    assert_eq!(b90.white, 0xFFFF);
+    println!("b90.black:0x{:X}", b90.black);
+    println!("b90.white:0x{:X}", b90.white);
+    assert_eq!(b90.black, 0xC0C0C0C0C0C0C0C0);
+    assert_eq!(b90.white, 0x0303030303030303);
     assert_eq!(b90.fixedstones(), (16, 16));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1730,8 +1737,8 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (16, 16));
     let b90 = b.rotate90();
     assert_eq!(b90.to_str(), "H/H/8/8/8/8/h/h w");
-    assert_eq!(b90.black, 0x0303030303030303);
-    assert_eq!(b90.white, 0xC0C0C0C0C0C0C0C0);
+    assert_eq!(b90.black, 0x000000000000FFFF);
+    assert_eq!(b90.white, 0xFFFF000000000000);
     assert_eq!(b90.fixedstones(), (16, 16));
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1744,7 +1751,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 4 - 10);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(2, 2), (3, 4), (4, 3)]));
+    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
     let b = b.r#move(2, 2);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1757,13 +1764,15 @@ fn testbitbrd() {
     let b = BitBoard::from("1A6/A1eA/1a6/1a6/1a6/1a6/1a6/1A6 b").unwrap();
     let b90 = b.rotate90();
     b90.put();
+    println!("b90.black:0x{:X}", b90.black);
+    println!("b90.white:0x{:X}", b90.white);
     assert_eq!(b90.to_str(), "1A6/1a6/1a6/1a6/1a6/1a6/A1eA/1A6 b");
-    assert_eq!(b90.black, 0x4000000000008140);
-    assert_eq!(b90.white, 0x0040404040403E00);
+    assert_eq!(b90.black, 0x0281000000000002);
+    assert_eq!(b90.white, 0x007C020202020200);
     assert_eq!(b90.fixedstones(), (0, 0));
     assert!(b90.checkreverse(1, 6));
     let mv = b90.genmove();
-    assert_eq!(mv, Some(vec![(2, 7), (3, 5), (4, 6)]));
+    assert_eq!(mv, Some(vec![(3, 5), (4, 6), (2, 7)]));
     let br = b90.r#move(2, 7);
     assert!(br.is_ok());
     let br = br.unwrap();
@@ -1777,7 +1786,7 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (0, 0));
     assert_eq!(b180.count(), 4 - 10);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![(5, 6), (6, 5), (7, 7)]));
+    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
     let b = b180.r#move(7, 7);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1830,7 +1839,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 6 - 15);
     b.put();
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![(2, 2), (3, 4), (4, 3)]));
+    assert_eq!(mv, Some(vec![(2, 2), (4, 3), (3, 4)]));
     let b = b.r#move(2, 2);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1848,7 +1857,7 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (4, 0));
     assert_eq!(b180.count(), 6 - 15);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![(5, 6), (6, 5), (7, 7)]));
+    assert_eq!(mv, Some(vec![(6, 5), (5, 6), (7, 7)]));
     let b = b180.r#move(7, 7);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1866,7 +1875,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 8 - 17);
     let mv = b.genmove();
     // b.put();
-    assert_eq!(mv, Some(vec![(3, 3), (4, 6), (6, 4)]));
+    assert_eq!(mv, Some(vec![(3, 3), (6, 4), (4, 6)]));
     let b = b.r#move(3, 3);
     assert!(b.is_ok());
     let b = b.unwrap();
@@ -1884,7 +1893,7 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (2, 0));
     assert_eq!(b180.count(), 8 - 17);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![(3, 5), (5, 3), (6, 6)]));
+    assert_eq!(mv, Some(vec![(5, 3), (3, 5), (6, 6)]));
     let b = b180.r#move(6, 6);
     assert!(b.is_ok());
     let b = b.unwrap();
