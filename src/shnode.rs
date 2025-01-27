@@ -279,7 +279,7 @@ impl ShNode {
 
     #[allow(dead_code)]
     pub fn think_ab(ban : &bitboard::BitBoard, mut depth : u8)
-            -> Option<(f32, Arc<RwLock<ShNode>>)> {
+            -> Option<ShNodeResult> {
         let node = Arc::new(RwLock::new(ShNode::new(0, 0, depth, bitboard::NONE)));
         if depth == 0 {
             return None;
@@ -447,7 +447,7 @@ impl ShNode {
 
     #[allow(dead_code)]
     pub fn think_ab_extract2(ban : &bitboard::BitBoard, mut depth : u8)
-            -> Option<(f32, Arc<RwLock<ShNode>>)> {
+            -> Option<ShNodeResult> {
         let node = Arc::new(RwLock::new(
                 ShNode::new(0, 0, depth, bitboard::NONE)));
         if depth == 0 {

@@ -492,10 +492,8 @@ impl GameBB {
     pub fn starto_against_edax(&mut self,
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
             depth : u8, turnin : i8, econf : &str) -> Result<(), String> {
-        let er = match edaxrunner::EdaxRunner::from_config(econf) {
-            Ok(e) => e,
-            Err(msg) => return Err(msg),
-        };
+        let er = edaxrunner::EdaxRunner::from_config(econf)?;
+
         loop {
             // show
             if self.is_verbose() {println!("{}", self.ban.to_str());}
@@ -572,10 +570,7 @@ impl GameBB {
     pub fn starto_against_ruversi(&mut self,
         f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
         depth : u8, turnin : i8, econf : &str) -> Result<(), String> {
-        let mut rr = match edaxrunner::RuversiRunner::from_config(econf) {
-            Ok(e) => e,
-            Err(msg) => return Err(msg),
-        };
+        let mut rr = edaxrunner::RuversiRunner::from_config(econf)?;
         rr.set_verbose(self.verbose);
         loop {
             // show

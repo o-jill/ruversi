@@ -6093,7 +6093,7 @@ fn testbitbrd() {
     assert_eq!(ban.black.count_ones(), 2);
     assert_eq!(ban.white.count_ones(), 5);
 
-    const TBLCHKREV_TEST : [(&str, bool);2187] = [
+    static TBLCHKREV_TEST : [(&str, bool);2187] = [
         ("-------", false), ("------X", false), ("------O", false), ("-----X-", false), ("-----XX", false), ("-----XO", true), ("-----O-", false), ("-----OX", false),
         ("-----OO", false), ("----X--", false), ("----X-X", false), ("----X-O", false), ("----XX-", false), ("----XXX", false), ("----XXO", true), ("----XO-", false),
         ("----XOX", false), ("----XOO", true), ("----O--", false), ("----O-X", false), ("----O-O", false), ("----OX-", false), ("----OXX", false), ("----OXO", true),
