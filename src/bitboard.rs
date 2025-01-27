@@ -225,7 +225,7 @@ impl BitBoard {
         let black = self.black;
         let white = self.white;
         let mut bit : u64 = LSB_CELL;
-        for y in 0..NUMCELL {
+        for _y in 0..NUMCELL {
             let mut old = NONE;
             let mut count = 0;
             let mut line = String::new();
@@ -276,7 +276,7 @@ impl BitBoard {
         let black = self.black;
         let white = self.white;
         let mut bit : u64 = LSB_CELL;
-        for y in 0..NUMCELL {
+        for _y in 0..NUMCELL {
             for _x in 0..NUMCELL {
                 let cb = (bit & black) != 0;
                 let cw = (bit & white) != 0;
@@ -355,7 +355,7 @@ impl BitBoard {
         let black = self.black;
         let white = self.white;
         let mut bit : u64 = LSB_CELL;
-        for y in 0..NUMCELL {
+        for _y in 0..NUMCELL {
             let mut line = String::new();
             for _x in 0..NUMCELL {
                 let cb = (bit & black) != 0;
