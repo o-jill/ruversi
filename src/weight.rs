@@ -1886,32 +1886,26 @@ impl Weight {
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
         let mut stone = [0f32 ; board::CELL_2D];
-        let bit8 = 0x0101010101010101u64;
         for y in (0..board::NUMCELL).step_by(2) {
-            let b81 = bit8 & (black >> y);
-            let w81 = bit8 & (white >> y);
-            let b82 = bit8 & (black >> (y + 1));
-            let w82 = bit8 & (white >> (y + 1));
+            let bit8 = 0xff;
+            let idx = y * bitboard::NUMCELL * 2;
+            let bi1 = bit4 & (black >> (idx + 0)) as usize;
+            let wi1 = bit4 & (white >> (idx + 0)) as usize;
+            let bi3 = bit4 & (black >> (idx + bitboard::NUMCELL)) as usize;
+            let wi3 = bit4 & (white >> (idx + bitboard::NUMCELL)) as usize;
 
             unsafe {
-                let b81 = vreinterpret_s8_u64(vmov_n_u64(b81));
-                let b82 = vreinterpret_s8_u64(vmov_n_u64(b82));
-                let w81 = vreinterpret_s8_u64(vmov_n_u64(w81));
-                let w82 = vreinterpret_s8_u64(vmov_n_u64(w82));
-                let c81 = vsub_s8(b81, w81);
-                let c82 = vsub_s8(b82, w82);
-                let c81 = vmovl_s8(c81);
-                let c82 = vmovl_s8(c82);
-                let c41 = vmovl_s16(vget_low_s16(c81));
-                let c43 = vmovl_s16(vget_low_s16(c82));
-                let c42 = vmovl_high_s16(c81);
-                let c44 = vmovl_high_s16(c82);
-                let f41 = vcvtq_f32_s32(c41);
-                let f42 = vcvtq_f32_s32(c42);
-                let f43 = vcvtq_f32_s32(c43);
-                let f44 = vcvtq_f32_s32(c44);
-                vst1q_f32_x4(stone.as_mut_ptr().add(y * 8),
-                    float32x4x4_t(f41, f42, f43, f44));
+                let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
+                let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
+                let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
+                let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi4));
+
+                let c1 = vsubq_f32(b12.0, w12.0);
+                let c2 = vsubq_f32(b12.1, w12.1);
+                let c3 = vsubq_f32(b34.0, w34.0);
+                let c4 = vsubq_f32(b34.1, w34.1);
+                vst1q_f32_x4(stone.as_mut_ptr().add(y * bitboard::NUMCELL),
+                    float32x4x4_t(c1, c2, c3, c4));
             }
         }
         for i in (0..N_HIDDEN).step_by(N) {
