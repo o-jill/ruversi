@@ -2239,27 +2239,35 @@ impl Weight {
                     // let mut hidsum : f32 = dc[i];
                     let mut sum8 = unsafe {x86_64::_mm256_setzero_ps()};
                     const M : usize = 32;
-                    let mut bit8 = 0xff;
+                    let bit8 = 0xff;
                     for j in 0..board::CELL_2D / M {
                         let idx = j * M;
                         let bi1 = bit8 & (black >> idx) as usize;
-                        let bi2 = bit8 & (black >> (idx + 8)) as usize;
-                        let bi3 = bit8 & (black >> (idx + 16)) as usize;
-                        let bi4 = bit8 & (black >> (idx + 24)) as usize;
                         let wi1 = bit8 & (white >> idx) as usize;
+                        let bi2 = bit8 & (black >> (idx + 8)) as usize;
                         let wi2 = bit8 & (white >> (idx + 8)) as usize;
+                        let bi3 = bit8 & (black >> (idx + 16)) as usize;
                         let wi3 = bit8 & (white >> (idx + 16)) as usize;
+                        let bi4 = bit8 & (black >> (idx + 24)) as usize;
                         let wi4 = bit8 & (white >> (idx + 24)) as usize;
 
                         unsafe {
-                            let b81 = x86_64::_mm256_loadu_ps(TBL_BIT2F32[bi1 * 8..].as_ptr());
-                            let b82 = x86_64::_mm256_loadu_ps(TBL_BIT2F32[bi2 * 8..].as_ptr());
-                            let b83 = x86_64::_mm256_loadu_ps(TBL_BIT2F32[bi3 * 8..].as_ptr());
-                            let b84 = x86_64::_mm256_loadu_ps(TBL_BIT2F32[bi4 * 8..].as_ptr());
-                            let w81 = x86_64::_mm256_loadu_ps(TBL_BIT2F32[wi1 * 8..].as_ptr());
-                            let w82 = x86_64::_mm256_loadu_ps(TBL_BIT2F32[wi2 * 8..].as_ptr());
-                            let w83 = x86_64::_mm256_loadu_ps(TBL_BIT2F32[wi3 * 8..].as_ptr());
-                            let w84 = x86_64::_mm256_loadu_ps(TBL_BIT2F32[wi4 * 8..].as_ptr());
+                            let b81 = x86_64::_mm256_loadu_ps(
+                                TBL_BIT2F32[bi1 * 8..].as_ptr());
+                            let b82 = x86_64::_mm256_loadu_ps(
+                                TBL_BIT2F32[bi2 * 8..].as_ptr());
+                            let b83 = x86_64::_mm256_loadu_ps(
+                                TBL_BIT2F32[bi3 * 8..].as_ptr());
+                            let b84 = x86_64::_mm256_loadu_ps(
+                                TBL_BIT2F32[bi4 * 8..].as_ptr());
+                            let w81 = x86_64::_mm256_loadu_ps(
+                                TBL_BIT2F32[wi1 * 8..].as_ptr());
+                            let w82 = x86_64::_mm256_loadu_ps(
+                                TBL_BIT2F32[wi2 * 8..].as_ptr());
+                            let w83 = x86_64::_mm256_loadu_ps(
+                                TBL_BIT2F32[wi3 * 8..].as_ptr());
+                            let w84 = x86_64::_mm256_loadu_ps(
+                                TBL_BIT2F32[wi4 * 8..].as_ptr());
                             let f81 = x86_64::_mm256_sub_ps(b81, w81);
                             let f82 = x86_64::_mm256_sub_ps(b82, w82);
                             let f83 = x86_64::_mm256_sub_ps(b83, w83);
