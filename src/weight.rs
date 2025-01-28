@@ -746,7 +746,7 @@ impl Weight {
                     if (bit & black) != 0 {w}
                     else if (bit & white) != 0 {-w}
                     else {0.0};
-                    bit <<= 1;
+                    bit_right!(bit);
                 }
             }
             hidsum = teban.mul_add(wtbn[i], hidsum);
