@@ -1620,11 +1620,13 @@ impl NodeBB {
             moves.push((0, 0));
             depth += 1;
         } else {
-            moves.sort_by(|a, b| {
-                let pa = move_priority(a);
-                let pb = move_priority(b);
-                pa.partial_cmp(&pb).unwrap()
-            });
+            let fteban = -teban as f32;
+            let mut aval = moves.iter().enumerate().map(|(i, &(x, y))| {
+                let newban = ban.r#move(x, y).unwrap();
+                (i, NodeBB::evaluate(&newban, wei) * fteban)
+            }).collect::<Vec<_>>();
+            aval.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+            moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
         }
 
         let fteban = -teban as f32;
