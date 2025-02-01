@@ -1620,12 +1620,12 @@ impl NodeBB {
             moves.push((0, 0));
             depth += 1;
         } else {
-            let fteban = -teban as f32;
+            let fteban = teban as f32;
             let mut aval = moves.iter().enumerate().map(|(i, &(x, y))| {
                 let newban = ban.r#move(x, y).unwrap();
                 (i, NodeBB::evaluate(&newban, wei) * fteban)
             }).collect::<Vec<_>>();
-            aval.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+            aval.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
             moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
         }
 
