@@ -997,8 +997,8 @@ impl BitBoard {
             return if self.is_full() {
                 None
             } else {
-                Some(vec![])
-                // Some(vec![(0, 0)])
+                // Some(vec![])
+                Some(vec![(0, 0)])
             }
         }
         Some(ret)
