@@ -1604,9 +1604,7 @@ impl NodeBB {
             alpha : f32, beta : f32, wei : &weight::Weight) -> f32 {
         let mut newalpha = alpha;
         let mut depth = node.depth;
-        // println!("d:{}",depth);
         let teban = ban.teban;
-        // let sum = 0;
         let moves = ban.genmove();
 
         // no more empty cells
@@ -1649,7 +1647,7 @@ impl NodeBB {
             moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
         }
 
-        let fteban = -teban as f32;
+        let fteban = teban as f32;
         node.child.reserve(moves.len());
         for (mvx, mvy) in moves {
             let newban = ban.r#move(mvx, mvy).unwrap();
@@ -1658,10 +1656,10 @@ impl NodeBB {
             let val =
                 if newban.nblank() == 0 || newban.is_passpass() {
                     ch.kyokumen = 1;
-                    newban.countf32() * -fteban
+                    newban.countf32() * fteban
                 } else if depth <= 1 {
                     ch.kyokumen = 1;
-                    NodeBB::evaluate(&newban, wei) * -fteban
+                    NodeBB::evaluate(&newban, wei) * fteban
                 } else {
                     -NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha, wei)
                 };
