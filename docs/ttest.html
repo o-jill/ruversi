@@ -6,6 +6,21 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
 <script type="text/javascript">
+function ttest(av1, sd1, N1, av2, sd2, N2) {
+    let v1 = sd1 * sd1 * N1 / (N1 -1);  // unbiased estimate of variance
+    let v2 = sd2 * sd2 * N2 / (N2 -1);  // unbiased estimate of variance
+    let s2 = (v1 * N1 + v2 * N2) / (N1 + N2 - 2);
+    let t = (av1 - av2) / (Math.sqrt(s2 * (1.0 / N1 + 1.0 / N2)));
+    let sn1 = sd1 * sd1 / N1;
+    let sn2 = sd2 * sd2 / N2;
+    let dof_welch = (sn1 + sn2) * (sn1 + sn2)
+            / (sn1 * sn1 / (N1 - 1) + sn2 * sn2 / (N2 - 1));
+    let dof_studentt = N1 + N2 - 2;
+    let p = jStat.studentt.pdf(t, dof_welch);
+    /* let p = jStat.studentt.pdf(t, dof_studentt); */
+    return [t, p];
+}
+
 function calc1() {
     let res1 = document.getElementById("res1").value.split('±');
     let a1 = res1[0].trim() - 0;
@@ -17,9 +32,7 @@ function calc1() {
     let sd2 = res2[1].trim() - 0;
     let N2 = document.getElementById("N2").value - 0;
 
-    let s2 = (sd1 * sd1 * N1 + sd2 * sd2 * N2) / (N1 + N2 - 2);
-    let t = (a1 - a2) / (Math.sqrt(s2 * (1.0 / N1 + 1.0 / N2)));
-    let p = jStat.studentt.pdf(t, N1 + N2 - 2);
+    let [t, p] = ttest(a1, sd1, N1, a2, sd2, N2);
 
     let thr = document.getElementById("thr").value - 0;
     document.getElementById("result").innerHTML =
@@ -37,9 +50,7 @@ function calc2() {
     let sd2 = document.getElementById("sd2").value - 0;
     let N2 = document.getElementById("N2").value - 0;
 
-    let s2 = (sd1 * sd1 * N1 + sd2 * sd2 * N2) / (N1 + N2 - 2);
-    let t = (a1 - a2) / (Math.sqrt(s2 * (1.0 / N1 + 1.0 / N2)));
-    let p = jStat.studentt.pdf(t, N1 + N2 - 2);
+    let [t, p] = ttest(a1, sd1, N1, a2, sd2, N2);
 
     let thr = document.getElementById("thr").value - 0;
     document.getElementById("result").innerHTML =
@@ -62,7 +73,7 @@ function readdataarray(txt) {
     return elements.map((e) => e.trim() - 0);
 }
 
-function calcavgvar(arr) {
+function calcavgsd(arr) {
     let sum = 0;
     let sqsum = 0;
     let n = arr.length;
@@ -72,7 +83,7 @@ function calcavgvar(arr) {
         sqsum += e * e;
     }
     let avg = sum / n;
-    return [avg, sqsum / n - avg * avg];
+    return [avg, Math.sqrt(sqsum / n - avg * avg)];
 }
 
 function calc3() {
@@ -87,12 +98,11 @@ function calc3() {
         return;
     }
 
-    let avgvar1 = calcavgvar(d1);
-    let avgvar2 = calcavgvar(d2);
-    // console.log(avgvar1); console.log(avgvar2);
-    let s2 = (avgvar1[1] * N1 + avgvar2[1] * N2) / (N1 + N2 - 2);
-    let t = (avgvar1[0] - avgvar2[0]) / (Math.sqrt(s2 * (1.0 / N1 + 1.0 / N2)));
-    let p = jStat.studentt.pdf(t, N1 + N2 - 2);
+    let [a1, sd1] = calcavgvar(d1);
+    let [a2, sd2] = calcavgvar(d2);
+
+    let [t, p] = ttest(a1, sd1, N1, a2, sd2, N2);
+
     let thr = document.getElementById("thr3").value - 0;
     document.getElementById("result3").innerHTML =
         (p < thr) ? "<span style='color:red;font-size:3em;'>different</span>"
