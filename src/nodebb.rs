@@ -156,7 +156,8 @@ impl NodeBB {
 
         // let sum = 0;
         // no more empty cells
-        let mut moves = ban.genmove()?;
+        let moves = ban.genmove()?;
+        // let mut moves = ban.genmove()?;
 
         let wei = unsafe{WEIGHT.as_ref().unwrap()};
         let node;
@@ -164,11 +165,6 @@ impl NodeBB {
         unsafe {
             ND_ROOT = Some(NodeBB::new(0, 0, depth, 0));
             node = ND_ROOT.as_mut().unwrap();
-        }
-        if moves.is_empty() {  // pass
-            moves.push((0, 0));
-            node.depth += 1;
-            depth += 1;
         }
         let n = moves.len();
         for (mvx, mvy) in moves.iter() {
@@ -242,13 +238,9 @@ impl NodeBB {
         }
         // let sum = 0;
         // no more empty cells
-        let mut moves = ban.genmove()?;
+        let moves = ban.genmove()?;
+        // let mut moves = ban.genmove()?;
 
-        if moves.is_empty() {  // pass
-            moves.push((0, 0));
-            node.depth += 1;
-            depth += 1;
-        }
         let n = moves.len();
         // let moves1 = &moves[0..n/2];
         let moves1 = Vec::from_iter(moves[0..n/2].iter().cloned());
@@ -335,7 +327,7 @@ impl NodeBB {
 
     pub fn think_internal(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight)
             -> Option<f32> {
-        let mut depth = node.depth;
+        let depth = node.depth;
         if ban.nblank() == 0 || ban.is_passpass() {
             node.kyokumen = 1;
             return Some(ban.countf32());
@@ -353,11 +345,7 @@ impl NodeBB {
             node.kyokumen = 1;
             return Some(ban.countf32());
         }
-        let mut moves = moves.unwrap();
-        if moves.is_empty() {  // pass
-            moves.push((0, 0));
-            depth += 1;
-        }
+        let moves = moves.unwrap();
 
         for (mvx, mvy) in moves {
             let newban = ban.r#move(mvx, mvy).unwrap();
@@ -386,7 +374,7 @@ impl NodeBB {
     #[allow(dead_code)]
     pub fn think_internal_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight,
         tt : &mut transptable::TranspositionTable) -> Option<f32> {
-        let mut depth = node.depth;
+        let depth = node.depth;
         if depth == 0 {
             node.kyokumen = 1;
             return Some(NodeBB::evalwtt(ban, wei, tt));
@@ -404,11 +392,7 @@ impl NodeBB {
             node.kyokumen = 1;
             return Some(ban.countf32());
         }
-        let mut moves = moves.unwrap();
-        if moves.is_empty() {  // pass
-            moves.push((0, 0));
-            depth += 1;
-        }
+        let moves = moves.unwrap();
 
         for (mvx, mvy) in moves {
             let newban = ban.r#move(mvx, mvy).unwrap();
@@ -445,14 +429,9 @@ impl NodeBB {
         }
         // let sum = 0;
         // no more empty cells
-        let mut moves = ban.genmove()?;
+        let moves = ban.genmove()?;
 
         let mut tt = transptable::TranspositionTable::new();
-        if moves.is_empty() {  // pass
-            moves.push((0, 0));
-            depth += 1;
-            node.depth += 1;
-        }
         let yomikiri = 12;
         let yose = 18;
         let nblank = ban.nblank();
@@ -654,17 +633,12 @@ impl NodeBB {
         }
         // let sum = 0;
         // no more empty cells
-        let mut moves = ban.genmove()?;
+        let moves = ban.genmove()?;
 
         let node;
         unsafe {
             ND_ROOT = Some(NodeBB::new(0, 0, depth, bitboard::NONE));
             node = ND_ROOT.as_mut().unwrap();
-        }
-        if moves.is_empty() {  // pass
-            moves.push((0, 0));
-            node.depth += 1;
-            depth += 1;
         }
         let yomikiri = 12;
         let yose = 18;
@@ -829,18 +803,12 @@ impl NodeBB {
         }
         // let sum = 0;
         // no more empty cells
-        let mut moves = ban.genmove()?;
+        let moves = ban.genmove()?;
 
         let node;
         unsafe {
             ND_ROOT = Some(NodeBB::new(0, 0, depth, bitboard::NONE));
             node = ND_ROOT.as_mut().unwrap();
-        }
-        if moves.is_empty() {  // pass
-            // println!("moves.is_empty()");
-            moves.push((0, 0));
-            node.depth += 1;
-            depth += 1;
         }
         let yomikiri = 12;
         let yose = 18;
@@ -866,12 +834,6 @@ impl NodeBB {
             }
 
             let moves = moves.unwrap();
-            if moves.is_empty() {
-                // println!("moves.len() == 0");
-                nd.child.push(NodeBB::new(0, 0, depth - 1, teban2));
-                moves4.push((*mvx, *mvy, 0, 0));
-                continue;
-            }
 
             for (mvx2, mvy2) in moves {
                 nd.child.push(NodeBB::new(mvx2, mvy2, depth - 2, teban2));
@@ -1070,14 +1032,9 @@ impl NodeBB {
         }
         // let sum = 0;
         // no more empty cells
-        let mut moves1 = ban.genmove()?;
+        let moves1 = ban.genmove()?;
 
         let mut tt = transptable::TranspositionTable::new();
-        if moves1.is_empty() {  // pass
-            moves1.push((0, 0));
-            depth += 1;
-            node.depth += 1;
-        }
         let yomikiri = 12;
         let yose = 18;
         let nblank = ban.nblank();
@@ -1095,12 +1052,8 @@ impl NodeBB {
                     moves.push((a, b, 0, 0));
                 },
                 Some(mvs) => {
-                    if mvs.is_empty() {
-                        moves.push((a, b, 0, 0));
-                    } else {
-                        for &(c, d) in mvs.iter() {
-                            moves.push((a, b, c, d));
-                        }
+                    for &(c, d) in mvs.iter() {
+                        moves.push((a, b, c, d));
                     }
                 },
             }
@@ -1313,14 +1266,9 @@ impl NodeBB {
         }
         // let sum = 0;
         // no more empty cells
-        let mut moves1 = ban.genmove()?;
+        let moves1 = ban.genmove()?;
 
         let mut tt = transptable::TranspositionTable::new();
-        if moves1.is_empty() {  // pass
-            moves1.push((0, 0));
-            depth += 1;
-            node.depth += 1;
-        }
         let yomikiri = 12;
         let yose = 18;
         let nblank = ban.nblank();
@@ -1334,16 +1282,8 @@ impl NodeBB {
         for &(a, b) in moves1.iter() {
             let ban2 = ban.r#move(a, b).unwrap();
             let m = match ban2.genmove() {
-                None => {
-                    vec![(0, 0)]
-                },
-                Some(mvs) => {
-                    if mvs.is_empty() {
-                        vec![(0, 0)]
-                    } else {
-                        mvs
-                    }
-                }
+                None => {vec![(0, 0)]},
+                Some(mvs) => {mvs}
             };
             for &(c, d) in m.iter() {
                 let ban3 = ban2.r#move(c, d).unwrap();
@@ -1352,12 +1292,8 @@ impl NodeBB {
                         moves.push((a, b, c, d, 0, 0));
                     },
                     Some(mvs) => {
-                        if mvs.is_empty() {
-                            moves.push((a, b, c, d, 0, 0));
-                        } else {
-                            for &(e, f) in mvs.iter() {
-                                moves.push((a, b, c, d, e, f));
-                            }
+                        for &(e, f) in mvs.iter() {
+                            moves.push((a, b, c, d, e, f));
                         }
                     },
                 }
@@ -1538,7 +1474,7 @@ impl NodeBB {
     pub fn think_internal_ab_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
             wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
         let mut newalpha = alpha;
-        let mut depth = node.depth;
+        let depth = node.depth;
         if ban.nblank() == 0 {
             node.kyokumen = 1;
             return ban.countf32();
@@ -1562,16 +1498,11 @@ impl NodeBB {
             // return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
-        if moves.is_empty() {  // pass
-            moves.push((0, 0));
-            depth += 1;
-        } else {
-            moves.sort_by(|a, b| {
-                let pa = move_priority(a);
-                let pb = move_priority(b);
-                pa.partial_cmp(&pb).unwrap()
-            });
-        }
+        moves.sort_by(|a, b| {
+            let pa = move_priority(a);
+            let pb = move_priority(b);
+            pa.partial_cmp(&pb).unwrap()
+        });
 
         for (mvx, mvy) in moves {
             let newban = ban.r#move(mvx, mvy).unwrap();
@@ -1603,7 +1534,7 @@ impl NodeBB {
     pub fn think_internal_ab(node : &mut NodeBB, ban : &bitboard::BitBoard,
             alpha : f32, beta : f32, wei : &weight::Weight) -> f32 {
         let mut newalpha = alpha;
-        let mut depth = node.depth;
+        let depth = node.depth;
         let teban = ban.teban;
         let moves = ban.genmove();
 
@@ -1614,38 +1545,32 @@ impl NodeBB {
             // return -ban.countf32();
         }
         let mut moves = moves.unwrap();
-        if moves.is_empty() {  // pass
-            moves.push((0, 0));
-            depth += 1;
-        } else {
-            // shallow search for move ordering.
-            let fteban = teban as f32;
-            let mut aval = moves.iter().enumerate().map(|(i, &(x, y))| {
-                const D : u8 = 6;
-                if depth < D {  // depth:1
-                    let newban = ban.r#move(x, y).unwrap();
-                    (i, NodeBB::evaluate(&newban, wei) * fteban)
-                } else {  // depth:2
-                    let mut newban = ban.r#move(x, y).unwrap();
-                    (i,
-                    match newban.genmove() {
-                        None => {
-                            newban.pass();
-                            NodeBB::evaluate(&newban, wei) * fteban
-                        },
-                        Some(mvs) => {
-                            mvs.iter().map(|&(x, y)| {
-                                    let newban = newban.r#move(x, y).unwrap();
-                                    NodeBB::evaluate(&newban, wei) * fteban
-                                }
-                            ).collect::<Vec<_>>().into_iter().reduce(f32::min).unwrap()
-                        },
-                    })
-                }
-            }).collect::<Vec<_>>();
-            aval.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-            moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
-        }
+        // shallow search for move ordering.
+        let fteban = teban as f32;
+        let mut aval = moves.iter().enumerate().map(|(i, &(x, y))| {
+            const D : u8 = 6;
+            if depth < D {  // depth:1
+                let newban = ban.r#move(x, y).unwrap();
+                (i, NodeBB::evaluate(&newban, wei) * fteban)
+            } else {  // depth:2
+                let newban = ban.r#move(x, y).unwrap();
+                (i,
+                match newban.genmove() {
+                    None => {
+                        newban.countf32() * fteban
+                    },
+                    Some(mvs) => {
+                        mvs.iter().map(|&(x, y)| {
+                                let newban = newban.r#move(x, y).unwrap();
+                                NodeBB::evaluate(&newban, wei) * fteban
+                            }
+                        ).collect::<Vec<_>>().into_iter().reduce(f32::min).unwrap()
+                    },
+                })
+            }
+        }).collect::<Vec<_>>();
+        aval.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+        moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
 
         let fteban = teban as f32;
         node.child.reserve(moves.len());
@@ -1696,18 +1621,12 @@ impl NodeBB {
         // no more empty cells
         let mut moves = ban.genmove()?;
 
-        // let n = moves.len();
-        if moves.is_empty() {  // pass
-            depth += 1;
-            moves.push((0, 0));
-            println!("pass");
-        } else {
-            moves.sort_by(|a, b| {
-                let pa = move_priority(a);
-                let pb = move_priority(b);
-                pa.partial_cmp(&pb).unwrap()
-            });
-        }
+        moves.sort_by(|a, b| {
+            let pa = move_priority(a);
+            let pb = move_priority(b);
+            pa.partial_cmp(&pb).unwrap()
+        });
+
         let mut alpha = -100000.0f32;
         let mut beta = 100000.0f32;
         let teban = ban.teban;
@@ -1743,7 +1662,7 @@ impl NodeBB {
     pub fn vb_think_internal_ab(node:&mut NodeBB, ban : &bitboard::BitBoard,
             alpha : f32, beta : f32, wei : &weight::Weight) -> Option<f32> {
         let mut newalpha = alpha;
-        let mut depth = node.depth;
+        let depth = node.depth;
         if depth == 0 {
             println!("depth zero");
             node.kyokumen = 1;
@@ -1766,16 +1685,12 @@ impl NodeBB {
             return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
-        if moves.is_empty() {  // pass
-            depth += 1;
-            moves.push((0, 0));
-        } else {
-            moves.sort_by(|a, b| {
-                let pa = move_priority(a);
-                let pb = move_priority(b);
-                pa.partial_cmp(&pb).unwrap()
-            });
-        }
+        moves.sort_by(|a, b| {
+            let pa = move_priority(a);
+            let pb = move_priority(b);
+            pa.partial_cmp(&pb).unwrap()
+        });
+
         for (mvx, mvy) in moves {
             let newban = ban.r#move(mvx, mvy).unwrap();
             let idx = node.child.len();
