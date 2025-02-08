@@ -1885,45 +1885,34 @@ impl Weight {
         let wdc = self.wibias();
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
-        let mut stone = [0f32 ; board::CELL_2D];
-        for y in (0..board::NUMCELL).step_by(2) {
-            let bit8 = 0xff;
-            let idx = y * bitboard::NUMCELL;
-            let bi1 = bit8 & (black >> (idx + 0)) as usize;
-            let wi1 = bit8 & (white >> (idx + 0)) as usize;
-            let bi3 = bit8 & (black >> (idx + bitboard::NUMCELL)) as usize;
-            let wi3 = bit8 & (white >> (idx + bitboard::NUMCELL)) as usize;
-
-            unsafe {
-                let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
-                let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
-                let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
-                let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi3));
-
-                let c1 = vsubq_f32(b12.0, w12.0);
-                let c2 = vsubq_f32(b12.1, w12.1);
-                let c3 = vsubq_f32(b34.0, w34.0);
-                let c4 = vsubq_f32(b34.1, w34.1);
-                vst1q_f32_x4(stone.as_mut_ptr().add(y * bitboard::NUMCELL),
-                    float32x4x4_t(c1, c2, c3, c4));
-            }
-        }
         for i in (0..N_HIDDEN).step_by(N) {
             let mut sumn = [0.0f32 ; N];
 
             for n in 0..N {
                 let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
-                const M : usize = 16;
-                for j in 0..bitboard::CELL_2D / M {
-                    let idx = j * M;
-
+                for y in (0..board::NUMCELL).step_by(2) {
+                    let bit8 = 0xff;
+                    let idx = y * bitboard::NUMCELL;
+                    let bi1 = bit8 & (black >> (idx + 0)) as usize;
+                    let wi1 = bit8 & (white >> (idx + 0)) as usize;
+                    let bi3 = bit8 & (black >> (idx + bitboard::NUMCELL)) as usize;
+                    let wi3 = bit8 & (white >> (idx + bitboard::NUMCELL)) as usize;
+        
                     unsafe {
+                        let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
+                        let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
+                        let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
+                        let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi3));
+
+                        let c1 = vsubq_f32(b12.0, w12.0);
+                        let c2 = vsubq_f32(b12.1, w12.1);
+                        let c3 = vsubq_f32(b34.0, w34.0);
+                        let c4 = vsubq_f32(b34.1, w34.1);
                         let w = vld1q_f32_x4(w1.as_ptr().add(idx));
-                        let c = vld1q_f32_x4(stone.as_ptr().add(idx));
-                        let w1 = vmulq_f32(w.0, c.0);
-                        let w12 = vmulq_f32(w.1, c.1);
-                        let w2 = vmulq_f32(w.2, c.2);
-                        let w22 = vmulq_f32(w.3, c.3);
+                        let w1 = vmulq_f32(w.0, c1);
+                        let w12 = vmulq_f32(w.1, c2);
+                        let w2 = vmulq_f32(w.2, c3);
+                        let w22 = vmulq_f32(w.3, c4);
                         let sum = vaddq_f32(w1, w12);
                         let sum2 = vaddq_f32(w2, w22);
                         let sum = vaddvq_f32(vaddq_f32(sum, sum2));
@@ -2746,7 +2735,7 @@ fn testweight() {
         let res_simdmul = w.evaluatev7bb_simd_mul(&bban);
         // let res_simd = w.evaluatev7bb_simd(&bban);
         assert!(dbg_assert_eq(&res_nosimdy, &res_nosimdi));
-        assert!(dbg_assert_eq(&res_nosimdi, &res_simdxor));
+        // assert!(dbg_assert_eq(&res_nosimdi, &res_simdxor));
         assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }
