@@ -12,6 +12,8 @@ $archive = "archive/"
 $narchive = 23  # 99999999
 
 def download(url, fn)
+  return unless fn.start_with?('kifu')
+
   FileUtils.mkpath($archive + File.dirname(fn))
   puts "download #{fn} to #{$archive} ..."
   system(
@@ -23,11 +25,14 @@ def download(url, fn)
 end
 
 def unzip(fn)
+  return unless fn.start_with?('kifu')
+
   dest = "kifu/"
   puts "unzip #{fn} to #{dest} ..."
   Zip::File.open($archive + fn) do |zip|
     zip.each do |entry|
       # p entry.name
+
       dir = File.join(dest, File.dirname(entry.name))
       FileUtils.mkpath(dir)
       zip.extract(entry, dest + entry.name) { true }

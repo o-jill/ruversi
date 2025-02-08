@@ -41,7 +41,7 @@ jobs:
     - name: Run duel edax
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: dueledax
-      run: cargo run --release --features=avx -- --duelext 5 --depth 9 --Edconf tools/edaxconfig.txt | tee > kifu/log.txt
+      run: cargo run --release --features=avx -- --duelext 5 --depth 10 --Edconf tools/edaxconfig.txt | tee > kifu/log.txt
     - name: duel result
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel-result
