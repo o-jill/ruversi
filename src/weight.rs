@@ -1888,17 +1888,17 @@ impl Weight {
         let mut stone = [0f32 ; board::CELL_2D];
         for y in (0..board::NUMCELL).step_by(2) {
             let bit8 = 0xff;
-            let idx = y * bitboard::NUMCELL * 2;
-            let bi1 = bit4 & (black >> (idx + 0)) as usize;
-            let wi1 = bit4 & (white >> (idx + 0)) as usize;
-            let bi3 = bit4 & (black >> (idx + bitboard::NUMCELL)) as usize;
-            let wi3 = bit4 & (white >> (idx + bitboard::NUMCELL)) as usize;
+            let idx = y * bitboard::NUMCELL;
+            let bi1 = bit8 & (black >> (idx + 0)) as usize;
+            let wi1 = bit8 & (white >> (idx + 0)) as usize;
+            let bi3 = bit8 & (black >> (idx + bitboard::NUMCELL)) as usize;
+            let wi3 = bit8 & (white >> (idx + bitboard::NUMCELL)) as usize;
 
             unsafe {
                 let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
                 let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
                 let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
-                let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi4));
+                let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi3));
 
                 let c1 = vsubq_f32(b12.0, w12.0);
                 let c2 = vsubq_f32(b12.1, w12.1);
