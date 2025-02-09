@@ -9,7 +9,7 @@ $owner = "o-jill"
 $repo = "ruversi"
 $logfile = "ikkatsu.log"
 $archive = "archive/"
-$narchive = 23  # 99999999
+$narchive = 105  # 99999999
 
 def download(url, fn)
   return unless fn.start_with?('kifu')
@@ -50,7 +50,7 @@ def dl_list
     [
       "curl", "-H", "\"Accept: application/vnd.github+json\"",
       # "-H", "\"Authorization: token #{$token}\"",
-      "https://api.github.com/repos/#{$owner}/#{$repo}/actions/artifacts"
+      "https://api.github.com/repos/#{$owner}/#{$repo}/actions/artifacts?per_page=200"
     ].join(' '), [:out, :err]=>[$logfile, "w"])
 end
 

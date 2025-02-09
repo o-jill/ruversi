@@ -21,9 +21,6 @@ fn criterion_benchmark_weight(c : &mut Criterion) {
         "weight_nosimd",
         |b| b.iter(|| w.evaluatev7bb(black_box(&ban))));
     c.bench_function(
-        "weight_simd_neon",
-        |b| b.iter(|| w.evaluatev7bb_simd_xor(black_box(&ban))));
-    c.bench_function(
         "weight_simd_neon_mul",
         |b| b.iter(|| w.evaluatev7bb_simd_mul(black_box(&ban))));
 }

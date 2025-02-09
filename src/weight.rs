@@ -102,6 +102,281 @@ impl EvalFile {
     }
 }
 
+/**
+ * conversion table from bits to f32.
+ */
+#[repr(align(32))]
+pub struct Bit2F32 {
+    table : [f32 ; 256 * 8]
+}
+
+impl Bit2F32 {
+    pub unsafe fn addr(&self, idx : usize) -> *const f32 {
+        self.table.as_ptr().add(idx * 8)
+    }
+}
+
+const TBL8_BIT2F32 : Bit2F32 = Bit2F32 {
+    table : [
+        0f32, 0f32, 0f32, 0f32, 0f32, 0f32, 0f32, 0f32,
+        1f32, 0f32, 0f32, 0f32, 0f32, 0f32, 0f32, 0f32,
+        0f32, 1f32, 0f32, 0f32, 0f32, 0f32, 0f32, 0f32,
+        1f32, 1f32, 0f32, 0f32, 0f32, 0f32, 0f32, 0f32,
+        0f32, 0f32, 1f32, 0f32, 0f32, 0f32, 0f32, 0f32,
+        1f32, 0f32, 1f32, 0f32, 0f32, 0f32, 0f32, 0f32,
+        0f32, 1f32, 1f32, 0f32, 0f32, 0f32, 0f32, 0f32,
+        1f32, 1f32, 1f32, 0f32, 0f32, 0f32, 0f32, 0f32,
+        0f32, 0f32, 0f32, 1f32, 0f32, 0f32, 0f32, 0f32,
+        1f32, 0f32, 0f32, 1f32, 0f32, 0f32, 0f32, 0f32,
+        0f32, 1f32, 0f32, 1f32, 0f32, 0f32, 0f32, 0f32,
+        1f32, 1f32, 0f32, 1f32, 0f32, 0f32, 0f32, 0f32,
+        0f32, 0f32, 1f32, 1f32, 0f32, 0f32, 0f32, 0f32,
+        1f32, 0f32, 1f32, 1f32, 0f32, 0f32, 0f32, 0f32,
+        0f32, 1f32, 1f32, 1f32, 0f32, 0f32, 0f32, 0f32,
+        1f32, 1f32, 1f32, 1f32, 0f32, 0f32, 0f32, 0f32,
+        0f32, 0f32, 0f32, 0f32, 1f32, 0f32, 0f32, 0f32,
+        1f32, 0f32, 0f32, 0f32, 1f32, 0f32, 0f32, 0f32,
+        0f32, 1f32, 0f32, 0f32, 1f32, 0f32, 0f32, 0f32,
+        1f32, 1f32, 0f32, 0f32, 1f32, 0f32, 0f32, 0f32,
+        0f32, 0f32, 1f32, 0f32, 1f32, 0f32, 0f32, 0f32,
+        1f32, 0f32, 1f32, 0f32, 1f32, 0f32, 0f32, 0f32,
+        0f32, 1f32, 1f32, 0f32, 1f32, 0f32, 0f32, 0f32,
+        1f32, 1f32, 1f32, 0f32, 1f32, 0f32, 0f32, 0f32,
+        0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 0f32, 0f32,
+        1f32, 0f32, 0f32, 1f32, 1f32, 0f32, 0f32, 0f32,
+        0f32, 1f32, 0f32, 1f32, 1f32, 0f32, 0f32, 0f32,
+        1f32, 1f32, 0f32, 1f32, 1f32, 0f32, 0f32, 0f32,
+        0f32, 0f32, 1f32, 1f32, 1f32, 0f32, 0f32, 0f32,
+        1f32, 0f32, 1f32, 1f32, 1f32, 0f32, 0f32, 0f32,
+        0f32, 1f32, 1f32, 1f32, 1f32, 0f32, 0f32, 0f32,
+        1f32, 1f32, 1f32, 1f32, 1f32, 0f32, 0f32, 0f32,
+        0f32, 0f32, 0f32, 0f32, 0f32, 1f32, 0f32, 0f32,
+        1f32, 0f32, 0f32, 0f32, 0f32, 1f32, 0f32, 0f32,
+        0f32, 1f32, 0f32, 0f32, 0f32, 1f32, 0f32, 0f32,
+        1f32, 1f32, 0f32, 0f32, 0f32, 1f32, 0f32, 0f32,
+        0f32, 0f32, 1f32, 0f32, 0f32, 1f32, 0f32, 0f32,
+        1f32, 0f32, 1f32, 0f32, 0f32, 1f32, 0f32, 0f32,
+        0f32, 1f32, 1f32, 0f32, 0f32, 1f32, 0f32, 0f32,
+        1f32, 1f32, 1f32, 0f32, 0f32, 1f32, 0f32, 0f32,
+        0f32, 0f32, 0f32, 1f32, 0f32, 1f32, 0f32, 0f32,
+        1f32, 0f32, 0f32, 1f32, 0f32, 1f32, 0f32, 0f32,
+        0f32, 1f32, 0f32, 1f32, 0f32, 1f32, 0f32, 0f32,
+        1f32, 1f32, 0f32, 1f32, 0f32, 1f32, 0f32, 0f32,
+        0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 0f32, 0f32,
+        1f32, 0f32, 1f32, 1f32, 0f32, 1f32, 0f32, 0f32,
+        0f32, 1f32, 1f32, 1f32, 0f32, 1f32, 0f32, 0f32,
+        1f32, 1f32, 1f32, 1f32, 0f32, 1f32, 0f32, 0f32,
+        0f32, 0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 0f32,
+        1f32, 0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 0f32,
+        0f32, 1f32, 0f32, 0f32, 1f32, 1f32, 0f32, 0f32,
+        1f32, 1f32, 0f32, 0f32, 1f32, 1f32, 0f32, 0f32,
+        0f32, 0f32, 1f32, 0f32, 1f32, 1f32, 0f32, 0f32,
+        1f32, 0f32, 1f32, 0f32, 1f32, 1f32, 0f32, 0f32,
+        0f32, 1f32, 1f32, 0f32, 1f32, 1f32, 0f32, 0f32,
+        1f32, 1f32, 1f32, 0f32, 1f32, 1f32, 0f32, 0f32,
+        0f32, 0f32, 0f32, 1f32, 1f32, 1f32, 0f32, 0f32,
+        1f32, 0f32, 0f32, 1f32, 1f32, 1f32, 0f32, 0f32,
+        0f32, 1f32, 0f32, 1f32, 1f32, 1f32, 0f32, 0f32,
+        1f32, 1f32, 0f32, 1f32, 1f32, 1f32, 0f32, 0f32,
+        0f32, 0f32, 1f32, 1f32, 1f32, 1f32, 0f32, 0f32,
+        1f32, 0f32, 1f32, 1f32, 1f32, 1f32, 0f32, 0f32,
+        0f32, 1f32, 1f32, 1f32, 1f32, 1f32, 0f32, 0f32,
+        1f32, 1f32, 1f32, 1f32, 1f32, 1f32, 0f32, 0f32,
+        0f32, 0f32, 0f32, 0f32, 0f32, 0f32, 1f32, 0f32,
+        1f32, 0f32, 0f32, 0f32, 0f32, 0f32, 1f32, 0f32,
+        0f32, 1f32, 0f32, 0f32, 0f32, 0f32, 1f32, 0f32,
+        1f32, 1f32, 0f32, 0f32, 0f32, 0f32, 1f32, 0f32,
+        0f32, 0f32, 1f32, 0f32, 0f32, 0f32, 1f32, 0f32,
+        1f32, 0f32, 1f32, 0f32, 0f32, 0f32, 1f32, 0f32,
+        0f32, 1f32, 1f32, 0f32, 0f32, 0f32, 1f32, 0f32,
+        1f32, 1f32, 1f32, 0f32, 0f32, 0f32, 1f32, 0f32,
+        0f32, 0f32, 0f32, 1f32, 0f32, 0f32, 1f32, 0f32,
+        1f32, 0f32, 0f32, 1f32, 0f32, 0f32, 1f32, 0f32,
+        0f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32, 0f32,
+        1f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32, 0f32,
+        0f32, 0f32, 1f32, 1f32, 0f32, 0f32, 1f32, 0f32,
+        1f32, 0f32, 1f32, 1f32, 0f32, 0f32, 1f32, 0f32,
+        0f32, 1f32, 1f32, 1f32, 0f32, 0f32, 1f32, 0f32,
+        1f32, 1f32, 1f32, 1f32, 0f32, 0f32, 1f32, 0f32,
+        0f32, 0f32, 0f32, 0f32, 1f32, 0f32, 1f32, 0f32,
+        1f32, 0f32, 0f32, 0f32, 1f32, 0f32, 1f32, 0f32,
+        0f32, 1f32, 0f32, 0f32, 1f32, 0f32, 1f32, 0f32,
+        1f32, 1f32, 0f32, 0f32, 1f32, 0f32, 1f32, 0f32,
+        0f32, 0f32, 1f32, 0f32, 1f32, 0f32, 1f32, 0f32,
+        1f32, 0f32, 1f32, 0f32, 1f32, 0f32, 1f32, 0f32,
+        0f32, 1f32, 1f32, 0f32, 1f32, 0f32, 1f32, 0f32,
+        1f32, 1f32, 1f32, 0f32, 1f32, 0f32, 1f32, 0f32,
+        0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 0f32,
+        1f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 0f32,
+        0f32, 1f32, 0f32, 1f32, 1f32, 0f32, 1f32, 0f32,
+        1f32, 1f32, 0f32, 1f32, 1f32, 0f32, 1f32, 0f32,
+        0f32, 0f32, 1f32, 1f32, 1f32, 0f32, 1f32, 0f32,
+        1f32, 0f32, 1f32, 1f32, 1f32, 0f32, 1f32, 0f32,
+        0f32, 1f32, 1f32, 1f32, 1f32, 0f32, 1f32, 0f32,
+        1f32, 1f32, 1f32, 1f32, 1f32, 0f32, 1f32, 0f32,
+        0f32, 0f32, 0f32, 0f32, 0f32, 1f32, 1f32, 0f32,
+        1f32, 0f32, 0f32, 0f32, 0f32, 1f32, 1f32, 0f32,
+        0f32, 1f32, 0f32, 0f32, 0f32, 1f32, 1f32, 0f32,
+        1f32, 1f32, 0f32, 0f32, 0f32, 1f32, 1f32, 0f32,
+        0f32, 0f32, 1f32, 0f32, 0f32, 1f32, 1f32, 0f32,
+        1f32, 0f32, 1f32, 0f32, 0f32, 1f32, 1f32, 0f32,
+        0f32, 1f32, 1f32, 0f32, 0f32, 1f32, 1f32, 0f32,
+        1f32, 1f32, 1f32, 0f32, 0f32, 1f32, 1f32, 0f32,
+        0f32, 0f32, 0f32, 1f32, 0f32, 1f32, 1f32, 0f32,
+        1f32, 0f32, 0f32, 1f32, 0f32, 1f32, 1f32, 0f32,
+        0f32, 1f32, 0f32, 1f32, 0f32, 1f32, 1f32, 0f32,
+        1f32, 1f32, 0f32, 1f32, 0f32, 1f32, 1f32, 0f32,
+        0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32, 0f32,
+        1f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32, 0f32,
+        0f32, 1f32, 1f32, 1f32, 0f32, 1f32, 1f32, 0f32,
+        1f32, 1f32, 1f32, 1f32, 0f32, 1f32, 1f32, 0f32,
+        0f32, 0f32, 0f32, 0f32, 1f32, 1f32, 1f32, 0f32,
+        1f32, 0f32, 0f32, 0f32, 1f32, 1f32, 1f32, 0f32,
+        0f32, 1f32, 0f32, 0f32, 1f32, 1f32, 1f32, 0f32,
+        1f32, 1f32, 0f32, 0f32, 1f32, 1f32, 1f32, 0f32,
+        0f32, 0f32, 1f32, 0f32, 1f32, 1f32, 1f32, 0f32,
+        1f32, 0f32, 1f32, 0f32, 1f32, 1f32, 1f32, 0f32,
+        0f32, 1f32, 1f32, 0f32, 1f32, 1f32, 1f32, 0f32,
+        1f32, 1f32, 1f32, 0f32, 1f32, 1f32, 1f32, 0f32,
+        0f32, 0f32, 0f32, 1f32, 1f32, 1f32, 1f32, 0f32,
+        1f32, 0f32, 0f32, 1f32, 1f32, 1f32, 1f32, 0f32,
+        0f32, 1f32, 0f32, 1f32, 1f32, 1f32, 1f32, 0f32,
+        1f32, 1f32, 0f32, 1f32, 1f32, 1f32, 1f32, 0f32,
+        0f32, 0f32, 1f32, 1f32, 1f32, 1f32, 1f32, 0f32,
+        1f32, 0f32, 1f32, 1f32, 1f32, 1f32, 1f32, 0f32,
+        0f32, 1f32, 1f32, 1f32, 1f32, 1f32, 1f32, 0f32,
+        1f32, 1f32, 1f32, 1f32, 1f32, 1f32, 1f32, 0f32,
+        0f32, 0f32, 0f32, 0f32, 0f32, 0f32, 0f32, 1f32,
+        1f32, 0f32, 0f32, 0f32, 0f32, 0f32, 0f32, 1f32,
+        0f32, 1f32, 0f32, 0f32, 0f32, 0f32, 0f32, 1f32,
+        1f32, 1f32, 0f32, 0f32, 0f32, 0f32, 0f32, 1f32,
+        0f32, 0f32, 1f32, 0f32, 0f32, 0f32, 0f32, 1f32,
+        1f32, 0f32, 1f32, 0f32, 0f32, 0f32, 0f32, 1f32,
+        0f32, 1f32, 1f32, 0f32, 0f32, 0f32, 0f32, 1f32,
+        1f32, 1f32, 1f32, 0f32, 0f32, 0f32, 0f32, 1f32,
+        0f32, 0f32, 0f32, 1f32, 0f32, 0f32, 0f32, 1f32,
+        1f32, 0f32, 0f32, 1f32, 0f32, 0f32, 0f32, 1f32,
+        0f32, 1f32, 0f32, 1f32, 0f32, 0f32, 0f32, 1f32,
+        1f32, 1f32, 0f32, 1f32, 0f32, 0f32, 0f32, 1f32,
+        0f32, 0f32, 1f32, 1f32, 0f32, 0f32, 0f32, 1f32,
+        1f32, 0f32, 1f32, 1f32, 0f32, 0f32, 0f32, 1f32,
+        0f32, 1f32, 1f32, 1f32, 0f32, 0f32, 0f32, 1f32,
+        1f32, 1f32, 1f32, 1f32, 0f32, 0f32, 0f32, 1f32,
+        0f32, 0f32, 0f32, 0f32, 1f32, 0f32, 0f32, 1f32,
+        1f32, 0f32, 0f32, 0f32, 1f32, 0f32, 0f32, 1f32,
+        0f32, 1f32, 0f32, 0f32, 1f32, 0f32, 0f32, 1f32,
+        1f32, 1f32, 0f32, 0f32, 1f32, 0f32, 0f32, 1f32,
+        0f32, 0f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32,
+        1f32, 0f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32,
+        0f32, 1f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32,
+        1f32, 1f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32,
+        0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 0f32, 1f32,
+        1f32, 0f32, 0f32, 1f32, 1f32, 0f32, 0f32, 1f32,
+        0f32, 1f32, 0f32, 1f32, 1f32, 0f32, 0f32, 1f32,
+        1f32, 1f32, 0f32, 1f32, 1f32, 0f32, 0f32, 1f32,
+        0f32, 0f32, 1f32, 1f32, 1f32, 0f32, 0f32, 1f32,
+        1f32, 0f32, 1f32, 1f32, 1f32, 0f32, 0f32, 1f32,
+        0f32, 1f32, 1f32, 1f32, 1f32, 0f32, 0f32, 1f32,
+        1f32, 1f32, 1f32, 1f32, 1f32, 0f32, 0f32, 1f32,
+        0f32, 0f32, 0f32, 0f32, 0f32, 1f32, 0f32, 1f32,
+        1f32, 0f32, 0f32, 0f32, 0f32, 1f32, 0f32, 1f32,
+        0f32, 1f32, 0f32, 0f32, 0f32, 1f32, 0f32, 1f32,
+        1f32, 1f32, 0f32, 0f32, 0f32, 1f32, 0f32, 1f32,
+        0f32, 0f32, 1f32, 0f32, 0f32, 1f32, 0f32, 1f32,
+        1f32, 0f32, 1f32, 0f32, 0f32, 1f32, 0f32, 1f32,
+        0f32, 1f32, 1f32, 0f32, 0f32, 1f32, 0f32, 1f32,
+        1f32, 1f32, 1f32, 0f32, 0f32, 1f32, 0f32, 1f32,
+        0f32, 0f32, 0f32, 1f32, 0f32, 1f32, 0f32, 1f32,
+        1f32, 0f32, 0f32, 1f32, 0f32, 1f32, 0f32, 1f32,
+        0f32, 1f32, 0f32, 1f32, 0f32, 1f32, 0f32, 1f32,
+        1f32, 1f32, 0f32, 1f32, 0f32, 1f32, 0f32, 1f32,
+        0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 0f32, 1f32,
+        1f32, 0f32, 1f32, 1f32, 0f32, 1f32, 0f32, 1f32,
+        0f32, 1f32, 1f32, 1f32, 0f32, 1f32, 0f32, 1f32,
+        1f32, 1f32, 1f32, 1f32, 0f32, 1f32, 0f32, 1f32,
+        0f32, 0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32,
+        1f32, 0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32,
+        0f32, 1f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32,
+        1f32, 1f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32,
+        0f32, 0f32, 1f32, 0f32, 1f32, 1f32, 0f32, 1f32,
+        1f32, 0f32, 1f32, 0f32, 1f32, 1f32, 0f32, 1f32,
+        0f32, 1f32, 1f32, 0f32, 1f32, 1f32, 0f32, 1f32,
+        1f32, 1f32, 1f32, 0f32, 1f32, 1f32, 0f32, 1f32,
+        0f32, 0f32, 0f32, 1f32, 1f32, 1f32, 0f32, 1f32,
+        1f32, 0f32, 0f32, 1f32, 1f32, 1f32, 0f32, 1f32,
+        0f32, 1f32, 0f32, 1f32, 1f32, 1f32, 0f32, 1f32,
+        1f32, 1f32, 0f32, 1f32, 1f32, 1f32, 0f32, 1f32,
+        0f32, 0f32, 1f32, 1f32, 1f32, 1f32, 0f32, 1f32,
+        1f32, 0f32, 1f32, 1f32, 1f32, 1f32, 0f32, 1f32,
+        0f32, 1f32, 1f32, 1f32, 1f32, 1f32, 0f32, 1f32,
+        1f32, 1f32, 1f32, 1f32, 1f32, 1f32, 0f32, 1f32,
+        0f32, 0f32, 0f32, 0f32, 0f32, 0f32, 1f32, 1f32,
+        1f32, 0f32, 0f32, 0f32, 0f32, 0f32, 1f32, 1f32,
+        0f32, 1f32, 0f32, 0f32, 0f32, 0f32, 1f32, 1f32,
+        1f32, 1f32, 0f32, 0f32, 0f32, 0f32, 1f32, 1f32,
+        0f32, 0f32, 1f32, 0f32, 0f32, 0f32, 1f32, 1f32,
+        1f32, 0f32, 1f32, 0f32, 0f32, 0f32, 1f32, 1f32,
+        0f32, 1f32, 1f32, 0f32, 0f32, 0f32, 1f32, 1f32,
+        1f32, 1f32, 1f32, 0f32, 0f32, 0f32, 1f32, 1f32,
+        0f32, 0f32, 0f32, 1f32, 0f32, 0f32, 1f32, 1f32,
+        1f32, 0f32, 0f32, 1f32, 0f32, 0f32, 1f32, 1f32,
+        0f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32, 1f32,
+        1f32, 1f32, 0f32, 1f32, 0f32, 0f32, 1f32, 1f32,
+        0f32, 0f32, 1f32, 1f32, 0f32, 0f32, 1f32, 1f32,
+        1f32, 0f32, 1f32, 1f32, 0f32, 0f32, 1f32, 1f32,
+        0f32, 1f32, 1f32, 1f32, 0f32, 0f32, 1f32, 1f32,
+        1f32, 1f32, 1f32, 1f32, 0f32, 0f32, 1f32, 1f32,
+        0f32, 0f32, 0f32, 0f32, 1f32, 0f32, 1f32, 1f32,
+        1f32, 0f32, 0f32, 0f32, 1f32, 0f32, 1f32, 1f32,
+        0f32, 1f32, 0f32, 0f32, 1f32, 0f32, 1f32, 1f32,
+        1f32, 1f32, 0f32, 0f32, 1f32, 0f32, 1f32, 1f32,
+        0f32, 0f32, 1f32, 0f32, 1f32, 0f32, 1f32, 1f32,
+        1f32, 0f32, 1f32, 0f32, 1f32, 0f32, 1f32, 1f32,
+        0f32, 1f32, 1f32, 0f32, 1f32, 0f32, 1f32, 1f32,
+        1f32, 1f32, 1f32, 0f32, 1f32, 0f32, 1f32, 1f32,
+        0f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32,
+        1f32, 0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32,
+        0f32, 1f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32,
+        1f32, 1f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32,
+        0f32, 0f32, 1f32, 1f32, 1f32, 0f32, 1f32, 1f32,
+        1f32, 0f32, 1f32, 1f32, 1f32, 0f32, 1f32, 1f32,
+        0f32, 1f32, 1f32, 1f32, 1f32, 0f32, 1f32, 1f32,
+        1f32, 1f32, 1f32, 1f32, 1f32, 0f32, 1f32, 1f32,
+        0f32, 0f32, 0f32, 0f32, 0f32, 1f32, 1f32, 1f32,
+        1f32, 0f32, 0f32, 0f32, 0f32, 1f32, 1f32, 1f32,
+        0f32, 1f32, 0f32, 0f32, 0f32, 1f32, 1f32, 1f32,
+        1f32, 1f32, 0f32, 0f32, 0f32, 1f32, 1f32, 1f32,
+        0f32, 0f32, 1f32, 0f32, 0f32, 1f32, 1f32, 1f32,
+        1f32, 0f32, 1f32, 0f32, 0f32, 1f32, 1f32, 1f32,
+        0f32, 1f32, 1f32, 0f32, 0f32, 1f32, 1f32, 1f32,
+        1f32, 1f32, 1f32, 0f32, 0f32, 1f32, 1f32, 1f32,
+        0f32, 0f32, 0f32, 1f32, 0f32, 1f32, 1f32, 1f32,
+        1f32, 0f32, 0f32, 1f32, 0f32, 1f32, 1f32, 1f32,
+        0f32, 1f32, 0f32, 1f32, 0f32, 1f32, 1f32, 1f32,
+        1f32, 1f32, 0f32, 1f32, 0f32, 1f32, 1f32, 1f32,
+        0f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32, 1f32,
+        1f32, 0f32, 1f32, 1f32, 0f32, 1f32, 1f32, 1f32,
+        0f32, 1f32, 1f32, 1f32, 0f32, 1f32, 1f32, 1f32,
+        1f32, 1f32, 1f32, 1f32, 0f32, 1f32, 1f32, 1f32,
+        0f32, 0f32, 0f32, 0f32, 1f32, 1f32, 1f32, 1f32,
+        1f32, 0f32, 0f32, 0f32, 1f32, 1f32, 1f32, 1f32,
+        0f32, 1f32, 0f32, 0f32, 1f32, 1f32, 1f32, 1f32,
+        1f32, 1f32, 0f32, 0f32, 1f32, 1f32, 1f32, 1f32,
+        0f32, 0f32, 1f32, 0f32, 1f32, 1f32, 1f32, 1f32,
+        1f32, 0f32, 1f32, 0f32, 1f32, 1f32, 1f32, 1f32,
+        0f32, 1f32, 1f32, 0f32, 1f32, 1f32, 1f32, 1f32,
+        1f32, 1f32, 1f32, 0f32, 1f32, 1f32, 1f32, 1f32,
+        0f32, 0f32, 0f32, 1f32, 1f32, 1f32, 1f32, 1f32,
+        1f32, 0f32, 0f32, 1f32, 1f32, 1f32, 1f32, 1f32,
+        0f32, 1f32, 0f32, 1f32, 1f32, 1f32, 1f32, 1f32,
+        1f32, 1f32, 0f32, 1f32, 1f32, 1f32, 1f32, 1f32,
+        0f32, 0f32, 1f32, 1f32, 1f32, 1f32, 1f32, 1f32,
+        1f32, 0f32, 1f32, 1f32, 1f32, 1f32, 1f32, 1f32,
+        0f32, 1f32, 1f32, 1f32, 1f32, 1f32, 1f32, 1f32,
+        1f32, 1f32, 1f32, 1f32, 1f32, 1f32, 1f32, 1f32,
+    ],
+};
+
 #[repr(align(32))]
 pub struct Weight {
     pub weight : [f32 ; N_WEIGHT]
@@ -738,15 +1013,15 @@ impl Weight {
         for (i, h) in hid.iter_mut().enumerate() {
             let w1 = &ow[i * bitboard::CELL_2D .. (i + 1) * bitboard::CELL_2D];
             let mut hidsum : f32 = 0.0;  // wdc[i];
+            let mut bit = bitboard::LSB_CELL;
             for y in 0..bitboard::NUMCELL {
-                let mut bit = bitboard::LSB_CELL << y;
                 for x in 0..bitboard::NUMCELL {
                     let w = w1[x + y * bitboard::NUMCELL];
                     hidsum +=
                     if (bit & black) != 0 {w}
                     else if (bit & white) != 0 {-w}
                     else {0.0};
-                    bit <<= bitboard::NUMCELL;
+                    bit_right!(bit);
                 }
             }
             hidsum = teban.mul_add(wtbn[i], hidsum);
@@ -1221,64 +1496,43 @@ impl Weight {
                     sum4 = x86_64::_mm_setzero_ps();
                 }
                 const M : usize = 16;
-                let bit8 : u64 = 0x0101010101010101;
+                let bit4 = 0x0f;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let b81 = bit8 & (black >> (2 * j));
-                    let w81 = bit8 & (white >> (2 * j));
-                    let b82 = bit8 & (black >> (2 * j + 1));
-                    let w82 = bit8 & (white >> (2 * j + 1));
+                    let bi1 = bit4 & (black >> idx) as usize;
+                    let wi1 = bit4 & (white >> idx) as usize;
+                    let bi2 = bit4 & (black >> (idx + 4)) as usize;
+                    let wi2 = bit4 & (white >> (idx + 4)) as usize;
+                    let bi3 = bit4 & (black >> (idx + 8)) as usize;
+                    let wi3 = bit4 & (white >> (idx + 8)) as usize;
+                    let bi4 = bit4 & (black >> (idx + 12)) as usize;
+                    let wi4 = bit4 & (white >> (idx + 12)) as usize;
 
                     unsafe {
-                        let b08 = x86_64::_mm_set_epi64x(b82 as i64, b81 as i64);
-                        let w08 = x86_64::_mm_set_epi64x(w82 as i64, w81 as i64);
-                        let one = x86_64::_mm_set1_epi8(1);
-                        let bm08 = x86_64::_mm_cmpeq_epi8(b08, one);
-                        let wm08 = x86_64::_mm_cmpeq_epi8(w08, one);
-                        let b16l = x86_64::_mm_unpacklo_epi8(bm08, bm08);
-                        let b16h = x86_64::_mm_unpackhi_epi8(bm08, bm08);
-                        let w16l = x86_64::_mm_unpacklo_epi8(wm08, wm08);
-                        let w16h = x86_64::_mm_unpackhi_epi8(wm08, wm08);
-                        let bm1 = x86_64::_mm_unpacklo_epi16(b16l, b16l);
-                        let bm2 = x86_64::_mm_unpackhi_epi16(b16l, b16l);
-                        let bm3 = x86_64::_mm_unpacklo_epi16(b16h, b16h);
-                        let bm4 = x86_64::_mm_unpackhi_epi16(b16h, b16h);
-                        let wm1 = x86_64::_mm_unpacklo_epi16(w16l, w16l);
-                        let wm2 = x86_64::_mm_unpackhi_epi16(w16l, w16l);
-                        let wm3 = x86_64::_mm_unpacklo_epi16(w16h, w16h);
-                        let wm4 = x86_64::_mm_unpackhi_epi16(w16h, w16h);
-                        let ex1 = x86_64::_mm_or_si128(bm1, wm1);
-                        let ex2 = x86_64::_mm_or_si128(bm2, wm2);
-                        let ex3 = x86_64::_mm_or_si128(bm3, wm3);
-                        let ex4 = x86_64::_mm_or_si128(bm4, wm4);
+                        let b41 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi1));
+                        let b42 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi2));
+                        let b43 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi3));
+                        let b44 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi4));
+                        let w41 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi1));
+                        let w42 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi2));
+                        let w43 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi3));
+                        let w44 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi4));
+                        let c1 = x86_64::_mm_sub_ps(b41, w41);
+                        let c2 = x86_64::_mm_sub_ps(b42, w42);
+                        let c3 = x86_64::_mm_sub_ps(b43, w43);
+                        let c4 = x86_64::_mm_sub_ps(b44, w44);
+
                         let x41 = x86_64::_mm_load_ps(w1.as_ptr().add(idx));
                         let x42 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 4));
                         let x43 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 8));
                         let x44 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 12));
-                        let minus = x86_64::_mm_set1_ps(-0.0);
-                        let mn1 = x86_64::_mm_and_ps(
-                                x86_64::_mm_castsi128_ps(wm1), minus);
-                        let mn2 = x86_64::_mm_and_ps(
-                                x86_64::_mm_castsi128_ps(wm2), minus);
-                        let mn3 = x86_64::_mm_and_ps(
-                                x86_64::_mm_castsi128_ps(wm3), minus);
-                        let mn4 = x86_64::_mm_and_ps(
-                                x86_64::_mm_castsi128_ps(wm4), minus);
-                        let m41 = x86_64::_mm_xor_ps(x41, mn1);
-                        let m42 = x86_64::_mm_xor_ps(x42, mn2);
-                        let m43 = x86_64::_mm_xor_ps(x43, mn3);
-                        let m44 = x86_64::_mm_xor_ps(x44, mn4);
-                        let w1 = x86_64::_mm_and_ps(
-                                m41, x86_64::_mm_castsi128_ps(ex1));
-                        let w2 = x86_64::_mm_and_ps(
-                                m42, x86_64::_mm_castsi128_ps(ex2));
-                        let w3 = x86_64::_mm_and_ps(
-                                m43, x86_64::_mm_castsi128_ps(ex3));
-                        let w4 = x86_64::_mm_and_ps(
-                                m44, x86_64::_mm_castsi128_ps(ex4));
 
-                        let sum12 = x86_64::_mm_add_ps(w1, w2);
-                        let sum34 = x86_64::_mm_add_ps(w3, w4);
+                        let m1 = x86_64::_mm_mul_ps(c1, x41);
+                        let m2 = x86_64::_mm_mul_ps(c2, x42);
+                        let m3 = x86_64::_mm_mul_ps(c3, x43);
+                        let m4 = x86_64::_mm_mul_ps(c4, x44);
+                        let sum12 = x86_64::_mm_add_ps(m1, m2);
+                        let sum34 = x86_64::_mm_add_ps(m3, m4);
                         let sum1234 = x86_64::_mm_add_ps(sum12, sum34);
                         sum4 = x86_64::_mm_add_ps(sum4, sum1234);
                     }
@@ -1432,192 +1686,6 @@ impl Weight {
     }
 
     #[cfg(target_arch="aarch64")]
-    pub fn evaluatev7bb_simd_xor(&self, ban : &bitboard::BitBoard) -> f32 {
-        let black = ban.black;
-        let white = ban.white;
-        let teban = ban.teban as f32;
-        
-        let (fsb, fsw) = ban.fixedstones();
-        
-        let ow = self.wban();
-        let wtbn = self.wteban();
-        let wfs = self.wfixedstones();
-        let wdc = self.wibias();
-        const N : usize = 16;
-        let mut hid = [0f32 ; N_HIDDEN];
-        let mut mnstone = [0i32 ; board::CELL_2D];
-        let mut stone = [0i32 ; board::CELL_2D];
-        let bit8 = 0x0101010101010101u64;
-        for y in (0..board::NUMCELL).step_by(2) {
-            let b81 = bit8 & (black >> y);
-            let w81 = bit8 & (white >> y);
-            let e81 = b81 | w81;
-            let b82 = bit8 & (black >> (y + 1));
-            let w82 = bit8 & (white >> (y + 1));
-            let e82 = b82 | w82;
-
-            unsafe {
-                let e08 = vmov_n_u64(e81 * 0xffu64);
-                let e082 = vmov_n_u64(e82 * 0xffu64);
-                let e04 = vmovl_s8(vreinterpret_s8_u64(e08));
-                let e042 = vmovl_s8(vreinterpret_s8_u64(e082));
-                let ex1 = vmovl_s16(vget_low_s16(e04));
-                let ex12 = vmovl_s16(vget_low_s16(e042));
-                let ex2 = vmovl_high_s16(e04);
-                let ex22 = vmovl_high_s16(e042);
-                vst1q_s32_x4(stone.as_mut_ptr().add(y * 8),
-                             int32x4x4_t(ex1, ex12, ex2, ex22));
-                let w08 = vmov_n_u64(w81 * 0xffu64);
-                let w082 = vmov_n_u64(w82 * 0xffu64);
-                let w04 = vmovl_s8(vreinterpret_s8_u64(w08));
-                let w042 = vmovl_s8(vreinterpret_s8_u64(w082));
-                let w02 = vmovl_s16(vget_low_s16(w04));
-                let w022 = vmovl_s16(vget_low_s16(w042));
-                let w12 = vmovl_high_s16(w04);
-                let w122 = vmovl_high_s16(w042);
-                let minus = vreinterpretq_s32_f32(vmovq_n_f32(-0.0));
-                let mn1 = vandq_s32(minus, w02);
-                let mn2 = vandq_s32(minus, w022);
-                let mn3 = vandq_s32(minus, w12);
-                let mn4 = vandq_s32(minus, w122);
-                vst1q_s32_x4(mnstone.as_mut_ptr().add(y * 8),
-                             int32x4x4_t(mn1, mn2, mn3, mn4));
-            }
-        }
-        for i in (0..N_HIDDEN).step_by(N) {
-            let mut sumn = [0.0f32 ; N];
-
-            for n in 0..N {
-                let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
-                const M : usize = 16;
-                for j in 0..bitboard::CELL_2D / M {
-                    let idx = j * M;
-
-                    unsafe {
-                        let w41 = vld1q_f32_x4(w1.as_ptr().add(idx));
-                        let mn = vld1q_s32_x4(mnstone.as_ptr().add(idx));
-                        let w1 = veorq_s32(mn.0, vreinterpretq_s32_f32(w41.0));
-                        let w12 = veorq_s32(mn.1, vreinterpretq_s32_f32(w41.2));
-                        let w2 = veorq_s32(mn.2, vreinterpretq_s32_f32(w41.1));
-                        let w22 = veorq_s32(mn.3, vreinterpretq_s32_f32(w41.3));
-                        let ex = vld1q_s32_x4(stone.as_ptr().add(idx));
-                        let w1 = vandq_s32(ex.0, w1);
-                        let w12 = vandq_s32(ex.1, w12);
-                        let w2 = vandq_s32(ex.2, w2);
-                        let w22 = vandq_s32(ex.3, w22);
-                        let sum = vaddq_f32(vreinterpretq_f32_s32(w1),
-                                                        vreinterpretq_f32_s32(w2));
-                        let sum2 = vaddq_f32(vreinterpretq_f32_s32(w12),
-                                                        vreinterpretq_f32_s32(w22));
-                        let sum = vaddvq_f32(vaddq_f32(sum, sum2));
-                        sumn[n] += sum;
-                    }
-                }
-            }
-            unsafe {
-                let sum4 = vld1q_f32_x4(sumn.as_ptr());
-
-                let tbn = vmovq_n_f32(teban);
-                let wtb = vld1q_f32_x4(wtbn.as_ptr().add(i));
-                let sum41 = vmlaq_f32(sum4.0, tbn, wtb.0);
-                let sum42 = vmlaq_f32(sum4.1, tbn, wtb.1);
-                let sum43 = vmlaq_f32(sum4.2, tbn, wtb.2);
-                let sum44 = vmlaq_f32(sum4.3, tbn, wtb.3);
-
-                let fsb4 = vmovq_n_f32(fsb as f32);
-                let wfsb = vld1q_f32_x4(wfs.as_ptr().add(i));
-                let sum41 = vmlaq_f32(sum41, fsb4, wfsb.0);
-                let sum42 = vmlaq_f32(sum42, fsb4, wfsb.1);
-                let sum43 = vmlaq_f32(sum43, fsb4, wfsb.2);
-                let sum44 = vmlaq_f32(sum44, fsb4, wfsb.3);
-
-                let fsw4 = vmovq_n_f32(fsw as f32);
-                let wfsw = vld1q_f32_x4(wfs.as_ptr().add(i + N_HIDDEN));
-                let sum41 = vmlaq_f32(sum41, fsw4, wfsw.0);
-                let sum42 = vmlaq_f32(sum42, fsw4, wfsw.1);
-                let sum43 = vmlaq_f32(sum43, fsw4, wfsw.2);
-                let sum44 = vmlaq_f32(sum44, fsw4, wfsw.3);
-
-                let wdc4 = vld1q_f32_x4(wdc.as_ptr().add(i));
-                let sum41 = vaddq_f32(sum41, wdc4.0);
-                let sum42 = vaddq_f32(sum42, wdc4.1);
-                let sum43 = vaddq_f32(sum43, wdc4.2);
-                let sum44 = vaddq_f32(sum44, wdc4.3);
-                // vst1q_f32_x4(sumn.as_mut_ptr(), float32x4x4_t(sum41, sum42, sum43, sum44));
-                vst1q_f32(sumn.as_mut_ptr(), sum41);
-                vst1q_f32(sumn.as_mut_ptr().add(4), sum42);
-                vst1q_f32(sumn.as_mut_ptr().add(8), sum43);
-                vst1q_f32(sumn.as_mut_ptr().add(12), sum44);
-
-                // let expmx = Self::expmx_ps_simd(sum4);
-                // let expmx1 = vaddq_f32(expmx, vmovq_n_f32(1.0));
-                // let wh4 = vld1q_f32(wh.as_ptr().add(i));
-                // res += vaddvq_f32(vdivq_f32(wh4, expmx1));
-                // 1950nps
-
-                // let expmx = Self::expmx_ps_simd(sum4);
-                // let expmx1 = vaddq_f32(expmx, vmovq_n_f32(1.0));
-                // let remx = vrecpeq_f32(expmx1);
-                // let wh4 = vld1q_f32(wh.as_ptr().add(i));
-                // res += vaddvq_f32(vmulq_f32(remx, wh4));
-                // expmx_ps_simd is slower than exp()x4 on M2 ...
-                // 1950nps
-            }
-            for n in 0 .. N {
-                // sumn[n] = (-sumn[n]).exp();
-                hid[i + n] = 1f32 / ((-sumn[n]).exp() + 1.0);
-                // res += wh[i + n] / ((-sumn[n]).exp() + 1.0);
-            }  // 2050nps
-        }
-        // 2nd layer to output
-        let mut res = self.wl2bias();
-        let wh = self.wlayer1();
-        let wdc1 = self.wl1bias();
-        let wh2 = self.wlayer2();
-        let mut hid2 = [0f32 ; N_HIDDEN2];
-        for i in 0..N_HIDDEN2 {
-            let mut hidsum = wdc1[i];
-            for j in (0..N_HIDDEN).step_by(16) {
-               unsafe {
-                    let inp = vld1q_f32_x4(hid.as_ptr().add(j));
-                    let wei = vld1q_f32_x4(wh.as_ptr().add(i * N_HIDDEN + j));
-                    let mul0 = vmulq_f32(inp.0, wei.0);
-                    let mul1 = vmulq_f32(inp.1, wei.1);
-                    let mul2 = vmlaq_f32(mul0, inp.2, wei.2);
-                    let mul3 = vmlaq_f32(mul1, inp.3, wei.3);
-                    let add4 = vaddq_f32(mul2, mul3);
-                    hidsum += vaddvq_f32(add4);
-                }
-            }
-            // res += wh2[i] / ((-hidsum).exp() + 1f32);
-            // hid2[i] = (-hidsum).exp() + 1f32;
-            hid2[i] = (-hidsum).exp();
-        }
-        unsafe {
-            let inp = vld1q_f32_x4(hid2.as_ptr());
-            let wei = vld1q_f32_x4(wh2.as_ptr());
-            // let mul0 = vdivq_f32(wei.0, inp.0);
-            // let mul1 = vdivq_f32(wei.1, inp.1);
-            // let mul2 = vdivq_f32(wei.2, inp.2);
-            // let mul3 = vdivq_f32(wei.3, inp.3);
-            let one = vdupq_n_f32(1f32);
-            let inp0 = vaddq_f32(one, inp.0);
-            let inp1 = vaddq_f32(one, inp.1);
-            let inp2 = vaddq_f32(one, inp.2);
-            let inp3 = vaddq_f32(one, inp.3);
-            let mul0 = vdivq_f32(wei.0, inp0);
-            let mul1 = vdivq_f32(wei.1, inp1);
-            let mul2 = vdivq_f32(wei.2, inp2);
-            let mul3 = vdivq_f32(wei.3, inp3);
-            let mul12 = vaddq_f32(mul0, mul1);
-            let mul34 = vaddq_f32(mul2, mul3);
-            let add4 = vaddq_f32(mul12, mul34);
-            res += vaddvq_f32(add4);
-        }
-        res
-    }
-
-    #[cfg(target_arch="aarch64")]
     pub fn evaluatev7bb_simd_mul(&self, ban : &bitboard::BitBoard) -> f32 {
         let black = ban.black;
         let white = ban.white;
@@ -1631,51 +1699,34 @@ impl Weight {
         let wdc = self.wibias();
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
-        let mut stone = [0f32 ; board::CELL_2D];
-        let bit8 = 0x0101010101010101u64;
-        for y in (0..board::NUMCELL).step_by(2) {
-            let b81 = bit8 & (black >> y);
-            let w81 = bit8 & (white >> y);
-            let b82 = bit8 & (black >> (y + 1));
-            let w82 = bit8 & (white >> (y + 1));
-
-            unsafe {
-                let b81 = vreinterpret_s8_u64(vmov_n_u64(b81));
-                let b82 = vreinterpret_s8_u64(vmov_n_u64(b82));
-                let w81 = vreinterpret_s8_u64(vmov_n_u64(w81));
-                let w82 = vreinterpret_s8_u64(vmov_n_u64(w82));
-                let c81 = vsub_s8(b81, w81);
-                let c82 = vsub_s8(b82, w82);
-                let c81 = vmovl_s8(c81);
-                let c82 = vmovl_s8(c82);
-                let c41 = vmovl_s16(vget_low_s16(c81));
-                let c43 = vmovl_s16(vget_low_s16(c82));
-                let c42 = vmovl_high_s16(c81);
-                let c44 = vmovl_high_s16(c82);
-                let f41 = vcvtq_f32_s32(c41);
-                let f42 = vcvtq_f32_s32(c42);
-                let f43 = vcvtq_f32_s32(c43);
-                let f44 = vcvtq_f32_s32(c44);
-                vst1q_f32_x4(stone.as_mut_ptr().add(y * 8),
-                    float32x4x4_t(f41, f42, f43, f44));
-            }
-        }
         for i in (0..N_HIDDEN).step_by(N) {
             let mut sumn = [0.0f32 ; N];
 
             for n in 0..N {
                 let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
-                const M : usize = 16;
-                for j in 0..bitboard::CELL_2D / M {
-                    let idx = j * M;
-
+                for y in (0..board::NUMCELL).step_by(2) {
+                    let bit8 = 0xff;
+                    let idx = y * bitboard::NUMCELL;
+                    let bi1 = bit8 & (black >> idx) as usize;
+                    let wi1 = bit8 & (white >> idx) as usize;
+                    let bi3 = bit8 & (black >> (idx + bitboard::NUMCELL)) as usize;
+                    let wi3 = bit8 & (white >> (idx + bitboard::NUMCELL)) as usize;
+        
                     unsafe {
+                        let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
+                        let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
+                        let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
+                        let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi3));
+
+                        let c1 = vsubq_f32(b12.0, w12.0);
+                        let c2 = vsubq_f32(b12.1, w12.1);
+                        let c3 = vsubq_f32(b34.0, w34.0);
+                        let c4 = vsubq_f32(b34.1, w34.1);
                         let w = vld1q_f32_x4(w1.as_ptr().add(idx));
-                        let c = vld1q_f32_x4(stone.as_ptr().add(idx));
-                        let w1 = vmulq_f32(w.0, c.0);
-                        let w12 = vmulq_f32(w.1, c.1);
-                        let w2 = vmulq_f32(w.2, c.2);
-                        let w22 = vmulq_f32(w.3, c.3);
+                        let w1 = vmulq_f32(w.0, c1);
+                        let w12 = vmulq_f32(w.1, c2);
+                        let w2 = vmulq_f32(w.2, c3);
+                        let w22 = vmulq_f32(w.3, c4);
                         let sum = vaddq_f32(w1, w12);
                         let sum2 = vaddq_f32(w2, w22);
                         let sum = vaddvq_f32(vaddq_f32(sum, sum2));
@@ -1983,45 +2034,39 @@ impl Weight {
                     // let mut hidsum : f32 = dc[i];
                     let mut sum8 = unsafe {x86_64::_mm256_setzero_ps()};
                     const M : usize = 32;
-                    let mut bit8 : u64 = 0x0101010101010101;
+                    let bit8 = 0xff;
                     for j in 0..board::CELL_2D / M {
                         let idx = j * M;
-                        let b81 = (bit8 & black) >> (4 * j);
-                        let w81 = (bit8 & white) >> (4 * j);
-                        bit8 <<= 1;
-                        let b82 = (bit8 & black) >> (4 * j + 1);
-                        let w82 = (bit8 & white) >> (4 * j + 1);
-                        bit8 <<= 1;
-                        let b83 = (bit8 & black) >> (4 * j + 2);
-                        let w83 = (bit8 & white) >> (4 * j + 2);
-                        bit8 <<= 1;
-                        let b84 = (bit8 & black) >> (4 * j + 3);
-                        let w84 = (bit8 & white) >> (4 * j + 3);
-                        bit8 <<= 1;
+                        let bi1 = bit8 & (black >> idx) as usize;
+                        let wi1 = bit8 & (white >> idx) as usize;
+                        let bi2 = bit8 & (black >> (idx + 8)) as usize;
+                        let wi2 = bit8 & (white >> (idx + 8)) as usize;
+                        let bi3 = bit8 & (black >> (idx + 16)) as usize;
+                        let wi3 = bit8 & (white >> (idx + 16)) as usize;
+                        let bi4 = bit8 & (black >> (idx + 24)) as usize;
+                        let wi4 = bit8 & (white >> (idx + 24)) as usize;
 
                         unsafe {
-                            let c1 = x86_64::_mm_sub_epi8(
-                                    x86_64::_mm_set1_epi64x(b81 as i64),
-                                    x86_64::_mm_set1_epi64x(w81 as i64));
-                            let c2 = x86_64::_mm_sub_epi8(
-                                    x86_64::_mm_set1_epi64x(b82 as i64),
-                                    x86_64::_mm_set1_epi64x(w82 as i64));
-                            let c3 = x86_64::_mm_sub_epi8(
-                                    x86_64::_mm_set1_epi64x(b83 as i64),
-                                    x86_64::_mm_set1_epi64x(w83 as i64));
-                            let c4 = x86_64::_mm_sub_epi8(
-                                    x86_64::_mm_set1_epi64x(b84 as i64),
-                                    x86_64::_mm_set1_epi64x(w84 as i64));
-
-                            let c81 = x86_64::_mm256_cvtepi8_epi32(c1);
-                            let c82 = x86_64::_mm256_cvtepi8_epi32(c2);
-                            let c83 = x86_64::_mm256_cvtepi8_epi32(c3);
-                            let c84 = x86_64::_mm256_cvtepi8_epi32(c4);
-
-                            let f81 = x86_64::_mm256_cvtepi32_ps(c81);
-                            let f82 = x86_64::_mm256_cvtepi32_ps(c82);
-                            let f83 = x86_64::_mm256_cvtepi32_ps(c83);
-                            let f84 = x86_64::_mm256_cvtepi32_ps(c84);
+                            let b81 = x86_64::_mm256_load_ps(
+                                TBL8_BIT2F32.addr(bi1));
+                            let b82 = x86_64::_mm256_load_ps(
+                                TBL8_BIT2F32.addr(bi2));
+                            let b83 = x86_64::_mm256_load_ps(
+                                TBL8_BIT2F32.addr(bi3));
+                            let b84 = x86_64::_mm256_load_ps(
+                                TBL8_BIT2F32.addr(bi4));
+                            let w81 = x86_64::_mm256_load_ps(
+                                TBL8_BIT2F32.addr(wi1));
+                            let w82 = x86_64::_mm256_load_ps(
+                                TBL8_BIT2F32.addr(wi2));
+                            let w83 = x86_64::_mm256_load_ps(
+                                TBL8_BIT2F32.addr(wi3));
+                            let w84 = x86_64::_mm256_load_ps(
+                                TBL8_BIT2F32.addr(wi4));
+                            let f81 = x86_64::_mm256_sub_ps(b81, w81);
+                            let f82 = x86_64::_mm256_sub_ps(b82, w82);
+                            let f83 = x86_64::_mm256_sub_ps(b83, w83);
+                            let f84 = x86_64::_mm256_sub_ps(b84, w84);
 
                             let x81 = x86_64::_mm256_load_ps(
                                 w1.as_ptr().add(idx));
@@ -2500,11 +2545,9 @@ fn testweight() {
         w.init();
         let res_nosimdy = w.evaluatev7(&ban);
         let res_nosimdi = w.evaluatev7bb(&bban);
-        let res_simdxor = w.evaluatev7bb_simd_xor(&bban);
         let res_simdmul = w.evaluatev7bb_simd_mul(&bban);
         // let res_simd = w.evaluatev7bb_simd(&bban);
         assert!(dbg_assert_eq(&res_nosimdy, &res_nosimdi));
-        assert!(dbg_assert_eq(&res_nosimdi, &res_simdxor));
         assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }

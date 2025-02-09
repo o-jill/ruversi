@@ -136,7 +136,6 @@ impl NodeBB {
             wei.evaluatev7bb(ban)
         } else {
             wei.evaluatev7bb_simd_mul(ban)
-            // wei.evaluatev7bb_simd_xor(ban)
         }
     }
 
@@ -145,7 +144,7 @@ impl NodeBB {
         tt.check_or_append(&id, || NodeBB::evaluate(ban, wei))
     }
 
-    pub fn thinko(ban : &bitboard::BitBoard, mut depth : u8)
+    pub fn thinko(ban : &bitboard::BitBoard, depth : u8)
             -> Option<(f32, &NodeBB)> {
         if depth == 0 {
             return None;
@@ -227,7 +226,7 @@ impl NodeBB {
     }
 
     #[allow(dead_code)]
-    pub fn think(ban : &bitboard::BitBoard, mut depth : u8)
+    pub fn think(ban : &bitboard::BitBoard, depth : u8)
             -> Option<(f32, NodeBB)> {
         let mut node = NodeBB::new(0, 0, depth, bitboard::NONE);
         if depth == 0 {
@@ -1607,7 +1606,7 @@ impl NodeBB {
     }
 
     #[allow(dead_code)]
-    pub fn vb_think_ab(ban : &bitboard::BitBoard, mut depth : u8)
+    pub fn vb_think_ab(ban : &bitboard::BitBoard, depth : u8)
             -> Option<(f32, NodeBB)> {
         let wei = unsafe{WEIGHT.as_ref().unwrap()};
         let mut node = NodeBB::new(0, 0, depth, bitboard::NONE);
