@@ -1499,8 +1499,8 @@ impl Weight {
                 let bit4 = 0x0f;
                 for j in 0..board::CELL_2D / M {
                     let idx = j * M;
-                    let bi1 = bit4 & (black >> (idx + 0)) as usize;
-                    let wi1 = bit4 & (white >> (idx + 0)) as usize;
+                    let bi1 = bit4 & (black >> idx) as usize;
+                    let wi1 = bit4 & (white >> idx) as usize;
                     let bi2 = bit4 & (black >> (idx + 4)) as usize;
                     let wi2 = bit4 & (white >> (idx + 4)) as usize;
                     let bi3 = bit4 & (black >> (idx + 8)) as usize;
@@ -1707,8 +1707,8 @@ impl Weight {
                 for y in (0..board::NUMCELL).step_by(2) {
                     let bit8 = 0xff;
                     let idx = y * bitboard::NUMCELL;
-                    let bi1 = bit8 & (black >> (idx + 0)) as usize;
-                    let wi1 = bit8 & (white >> (idx + 0)) as usize;
+                    let bi1 = bit8 & (black >> idx) as usize;
+                    let wi1 = bit8 & (white >> idx) as usize;
                     let bi3 = bit8 & (black >> (idx + bitboard::NUMCELL)) as usize;
                     let wi3 = bit8 & (white >> (idx + bitboard::NUMCELL)) as usize;
         
