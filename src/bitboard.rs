@@ -664,109 +664,48 @@ impl BitBoard {
         }
     }
 
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     pub fn checkreverse(&self, x : usize, y : usize) -> bool {
-        use std::arch::x86_64;
         let color = self.teban;
         let mine = if color == SENTE {self.black} else {self.white};
         let oppo = if color == SENTE {self.white} else {self.black};
         let pos = LSB_CELL << BitBoard::index(x, y);
 
-        // 下
         let usetzcnt = false;
         // let usetzcnt = true;
-        let usetableud = false;
-        // let usetableud = true;
+        let usetablelr = false;
+        // let usetablelr = true;
         if usetzcnt {
             let shift = BitBoard::index(x, y) + 1;
-            let mask = (1u64 << (NUMCELL - 1 - y)) - 1;
+            let mask = (1u64 << (NUMCELL - 1 - x)) - 1;
             let obits = (oppo >> shift) ^ mask;
             let o = obits.trailing_zeros();
             let mbits = (mine >> shift) & mask;
             let m = mbits >> o;  // その先の自分の石
-            // let obito = (oppo >> shift) & mask;
-            // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
             // 相手の石が並んでいて、そのすぐ先に自分の石がある
             if o > 0 && (m & 0x1) != 0 {return true;}
-        } else if usetableud {
-            let p = ((mine >> x * 8) & 0xff) >> (y + 1);
-            let o = ((oppo >> x * 8) & 0xff) >> (y + 1);
-            let idx = p * 127 + o;
-            if TBLCHKREV[idx as usize] != 0 {return true;}
-        } else {
-            let mut bit = pos;
-            let mut rev = false;
-            for _i in y..(NUMCELL - 1) {
-                bit_down!(bit);
-                if (oppo & bit) == 0 {break;}
 
-                rev = true;
-            }
-            if rev && (mine & bit) != 0 {return true;}
-        }
-
-        // 上
-        let uselzcnt = false;
-        // let uselzcnt = true;
-        if uselzcnt {
             let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
-            let mask = 0xff00000000000000u64 << (NUMCELL - y);
+            let mask = 0xff00000000000000u64 << (NUMCELL - x);
             let obits = (oppo << shift) ^ mask;  // 石のあるところがゼロになる
             let o = obits.leading_zeros();  // 相手の石が並んでいる数
             let mbits = (mine << shift) & mask;
             let m = mbits << o;  // その先の自分の石
-            // let obito = (oppo << shift) & mask;
-            // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & MSB) != 0");
             // 相手の石が並んでいて、そのすぐ先に自分の石がある
             if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
-        } else if usetableud {
-            let p = ((mine >> x * 8) & 0xff) as u8;
-            let o = ((oppo >> x * 8) & 0xff) as u8;
-            let p = p.reverse_bits() as usize >> (7 - y + 1);
-            let o = o.reverse_bits() as usize >> (7 - y + 1);
+        } else if usetablelr {
+            // 右
+            let y8 = y * NUMCELL;
+            let mn = ((mine >> y8) & 0xff) as u8;
+            let op = ((oppo >> y8) & 0xff) as u8;
+            let p = mn as usize >> (x + 1);
+            let o = op as usize >> (x + 1);
+            let idx = p * 127 + o;
+            if TBLCHKREV[idx as usize] != 0 {return true;}
+            // 左
+            let p = mn.reverse_bits() as usize >> (NUMCELL - x);
+            let o = op.reverse_bits() as usize >> (NUMCELL - x);
             let idx = p * 127 + o;
             if TBLCHKREV[idx] != 0 {return true;}
-        } else {
-            let mut bit = pos;
-            let mut rev = false;
-            for _i in 0..y {
-                bit_up!(bit);
-                if (oppo & bit) == 0 {break;}
-
-                rev = true;
-            }
-            if rev && (mine & bit) != 0 {return true;}
-        }
-
-        let checkbyshift = false;
-        if checkbyshift && cfg!(feature="avx") {
-            let gather = 0x0101010101010101 << y;
-            let oppon = unsafe {x86_64::_pext_u64(oppo, gather)};
-            let minee = unsafe {x86_64::_pext_u64(mine, gather)};
-            // 右
-            let shift = x + 1;
-            let mask = (1u64 << (NUMCELL - 1 - x)) - 1;
-            let obits = (oppon >> shift) ^ mask;
-            let o = obits.trailing_zeros();
-            let mbits = (minee >> shift) & mask;
-            let m = mbits >> o;  // その先の自分の石
-            // let obito = (oppo >> shift) & mask;
-            // println!("(x{x},y{y}), {shift} {mask:x} {oppon:x} {minee:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
-            // 相手の石が並んでいて、そのすぐ先に自分の石がある
-            if o > 0 && (m & 0x1) != 0 {return true;}
-
-            // 左
-            // x = 0のときに64シフトになってシフトできないので63+1に分割
-            let shift = 63 - x;
-            let mask = 0xffu64;
-            let obits = (oppon ^ mask) << shift;  // 石のあるところがゼロになる
-            let o = (obits << 1).leading_zeros();  // 相手の石が並んでいる数
-            let mbits = (minee & mask) << shift;
-            let m = (mbits << 1) << o;  // その先の自分の石
-            // let obito = (oppo & mask) << shift;
-            // println!("(x{x},y{y}), {shift} {mask:x} {oppon:x} {minee:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m:x} & MSB) != 0");
-            // 相手の石が並んでいて、そのすぐ先に自分の石がある
-            if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
         } else {
             // 右
             let mut bit = pos;
@@ -791,150 +730,22 @@ impl BitBoard {
             if rev && (mine & bit) != 0 {return true;}
         }
 
-        // 右下
-        let mut bit = pos;
-        let mut rev = false;
-        let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
-        for _i in 0..sz {
-            bit_rightdown!(bit);
-            if (oppo & bit) == 0 {break;}
-
-            rev = true;
-        }
-        if rev && (mine & bit) != 0 {return true;}
-
-        // 右上
-        let mut bit = pos;
-        let mut rev = false;
-        let xx = NUMCELL - 1 - x;
-        let yy = y;
-        let sz = if xx < yy {xx} else {yy};
-        for _i in 0..sz {
-            bit_rightup!(bit);
-            if (oppo & bit) == 0 {break;}
-
-            rev = true;
-        }
-        if rev && (mine & bit) != 0 {return true;}
-
-        // 左上
-        let mut bit = pos;
-        let mut rev = false;
-        let sz = if x < y {x} else {y};
-        for _i in 0..sz {
-            bit_leftup!(bit);
-            if (oppo & bit) == 0 {break;}
-
-            rev = true;
-        }
-        if rev && (mine & bit) != 0 {return true;}
-
-        // 左下
-        let mut bit = pos;
-        let mut rev = false;
-        let xx = x;
-        let yy = NUMCELL - 1 - y;
-        let sz = if xx < yy {xx} else {yy};
-        for _i in 0..sz {
-            bit_leftdown!(bit);
-            if (oppo & bit) == 0 {break;}
-
-            rev = true;
-        }
-        if rev && (mine & bit) != 0 {return true;}
-
-        false
-    }
-
-    #[cfg(target_arch = "aarch64")]
-    pub fn checkreverse(&self, x : usize, y : usize) -> bool {
-        let color = self.teban;
-        let mine = if color == SENTE {self.black} else {self.white};
-        let oppo = if color == SENTE {self.white} else {self.black};
-        let pos = LSB_CELL << BitBoard::index(x, y);
-
         // 下
-        let usetzcnt = false;
-        // let usetzcnt = true;
-        let usetableud = false;
-        // let usetableud = true;
-        if usetzcnt {
-            let shift = BitBoard::index(x, y) + 1;
-            let mask = (1u64 << (NUMCELL - 1 - y)) - 1;
-            let obits = (oppo >> shift) ^ mask;
-            let o = obits.trailing_zeros();
-            let mbits = (mine >> shift) & mask;
-            let m = mbits >> o;  // その先の自分の石
-            // let obito = (oppo >> shift) & mask;
-            // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & 0x1) != 0");
-            // 相手の石が並んでいて、そのすぐ先に自分の石がある
-            if o > 0 && (m & 0x1) != 0 {return true;}
-        } else if usetableud {
-            let p = ((mine >> (x * 8)) & 0xff) >> (y + 1);
-            let o = ((oppo >> (x * 8)) & 0xff) >> (y + 1);
-            let idx = p * 127 + o;
-            if TBLCHKREV[idx as usize] != 0 {return true;}
-        } else {
-            let mut bit = pos;
-            let mut rev = false;
-            for _i in y..(NUMCELL - 1) {
-                bit_down!(bit);
-                if (oppo & bit) == 0 {break;}
+        let mut bit = pos;
+        let mut rev = false;
+        for _i in y..(NUMCELL - 1) {
+            bit_down!(bit);
+            if (oppo & bit) == 0 {break;}
 
-                rev = true;
-            }
-            if rev && (mine & bit) != 0 {return true;}
+            rev = true;
         }
+        if rev && (mine & bit) != 0 {return true;}
 
         // 上
-        let uselzcnt = false;
-        // let uselzcnt = true;
-        if uselzcnt {
-            let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
-            let mask = 0xff00000000000000u64 << (NUMCELL - y);
-            let obits = (oppo << shift) ^ mask;  // 石のあるところがゼロになる
-            let o = obits.leading_zeros();  // 相手の石が並んでいる数
-            let mbits = (mine << shift) & mask;
-            let m = mbits << o;  // その先の自分の石
-            // let obito = (oppo << shift) & mask;
-            // println!("(x{x},y{y}), {shift} {mask:x} {oppo:x} {mine:x} {obito:x} {obits:x} {o}>0 {mbits:x} ({m} & MSB) != 0");
-            // 相手の石が並んでいて、そのすぐ先に自分の石がある
-            if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
-        } else if usetableud {
-            let p = ((mine >> (x * 8)) & 0xff) as u8;
-            let o = ((oppo >> (x * 8)) & 0xff) as u8;
-            let p = p.reverse_bits() as usize >> (7 - y + 1);
-            let o = o.reverse_bits() as usize >> (7 - y + 1);
-            let idx = p * 127 + o;
-            if TBLCHKREV[idx] != 0 {return true;}
-        } else {
-            let mut bit = pos;
-            let mut rev = false;
-            for _i in 0..y {
-                bit_up!(bit);
-                if (oppo & bit) == 0 {break;}
-
-                rev = true;
-            }
-            if rev && (mine & bit) != 0 {return true;}
-        }
-
-        // 右
         let mut bit = pos;
         let mut rev = false;
-        for _i in x..(NUMCELL - 1) {
-            bit_right!(bit);
-            if (oppo & bit) == 0 {break;}
-            
-            rev = true;
-        }
-        if rev && (mine & bit) != 0 {return true;}
-
-        // 左
-        let mut bit = pos;
-        let mut rev = false;
-        for _i in 0..x {
-            bit_left!(bit);
+        for _i in 0..y {
+            bit_up!(bit);
             if (oppo & bit) == 0 {break;}
 
             rev = true;
