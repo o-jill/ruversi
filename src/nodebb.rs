@@ -105,7 +105,7 @@ impl NodeBB {
         NodeBB {
             child : Vec::<NodeBB>::new(),
             hyoka : None,
-            kyokumen : 0,
+            kyokumen : 1,
             best : None,
             x,
             y,
@@ -328,11 +328,9 @@ impl NodeBB {
             -> Option<f32> {
         let depth = node.depth;
         if ban.nblank() == 0 || ban.is_passpass() {
-            node.kyokumen = 1;
             return Some(ban.countf32());
         }
         if depth == 0 {
-            node.kyokumen = 1;
             return Some(NodeBB::evaluate(ban, wei));
         }
         let teban = ban.teban;
@@ -341,7 +339,6 @@ impl NodeBB {
 
         // no more empty cells
         if moves.is_none() {
-            node.kyokumen = 1;
             return Some(ban.countf32());
         }
         let moves = moves.unwrap();
@@ -375,11 +372,9 @@ impl NodeBB {
         tt : &mut transptable::TranspositionTable) -> Option<f32> {
         let depth = node.depth;
         if depth == 0 {
-            node.kyokumen = 1;
             return Some(NodeBB::evalwtt(ban, wei, tt));
         }
         if ban.is_passpass() {
-            node.kyokumen = 1;
             return Some(ban.countf32());
         }
         let teban = ban.teban;
@@ -388,7 +383,6 @@ impl NodeBB {
 
         // no more empty cells
         if moves.is_none() {
-            node.kyokumen = 1;
             return Some(ban.countf32());
         }
         let moves = moves.unwrap();
@@ -1475,15 +1469,12 @@ impl NodeBB {
         let mut newalpha = alpha;
         let depth = node.depth;
         if ban.nblank() == 0 {
-            node.kyokumen = 1;
             return ban.countf32();
         }
         if ban.is_passpass() {
-            node.kyokumen = 1;
             return -ban.countf32();
         }
         if depth == 0 {
-            node.kyokumen = 1;
             return -NodeBB::evalwtt(ban, wei, tt);
         }
         let teban = ban.teban;
@@ -1540,7 +1531,6 @@ impl NodeBB {
         // no more empty cells
         if moves.is_none() {
             panic!("moves.is_none() nblank == 0 should work!");
-            // node.kyokumen = 1;
             // return -ban.countf32();
         }
         let mut moves = moves.unwrap();
@@ -1579,10 +1569,8 @@ impl NodeBB {
             let ch = node.child.last_mut().unwrap();
             let val =
                 if newban.nblank() == 0 || newban.is_passpass() {
-                    ch.kyokumen = 1;
                     newban.countf32() * fteban
                 } else if depth <= 1 {
-                    ch.kyokumen = 1;
                     NodeBB::evaluate(&newban, wei) * fteban
                 } else {
                     -NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha, wei)
@@ -1664,13 +1652,11 @@ impl NodeBB {
         let depth = node.depth;
         if depth == 0 {
             println!("depth zero");
-            node.kyokumen = 1;
             return Some(NodeBB::evaluate(ban, wei));
             // return Some(NodeBB::evalwtt(&ban));
         }
         if ban.is_passpass() {
             println!("pass pass");
-            node.kyokumen = 1;
             return Some(ban.countf32());
         }
         let teban = ban.teban;
@@ -1680,7 +1666,6 @@ impl NodeBB {
         // no more empty cells
         if moves.is_none() {
             println!("no more empty cells");
-            node.kyokumen = 1;
             return Some(ban.countf32());
         }
         let mut moves = moves.unwrap();
