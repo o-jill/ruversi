@@ -159,7 +159,7 @@ def gamestatistics(elapsed)
   sd = Math.sqrt(vari)
   min, max = elapsed.minmax
 
-  puts "#{'%.2f' % avg} ± #{'%.2f' % sd} sec (#{'%.2f' % min} -- #{'%.2f' % max}) N:#{n}"
+  puts "#{'%.3f' % avg} ± #{'%.3f' % sd} sec (#{'%.3f' % min} -- #{'%.3f' % max}) N:#{n}"
 end
 
 def game()
