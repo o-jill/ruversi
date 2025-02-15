@@ -248,7 +248,7 @@ impl BitBoard {
         };
         let mut x = 0;
         let mut y = 0;
-        for ch  in elem[0].chars() {
+        for ch  in elem[0].chars().take(64) {
             let bit = LSB_CELL << Self::index(x, y);
             match ch {
             'X' => {ret.black |= bit;},
@@ -262,11 +262,17 @@ impl BitBoard {
                 x = 0;
             }
         }
-        match elem[1] {
+        let turn = if elem[0].len() == 65 {
+            &elem[0][64..]
+        } else {
+            elem[1]
+        };
+        match turn {
         "X" => {ret.teban = SENTE;},
         "O" => {ret.teban = GOTE;},
         _ => {},
         }
+
         ret
     }
 
