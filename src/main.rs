@@ -7,6 +7,7 @@ use rand::Rng;
 use rand::distributions::{Distribution, Uniform};
 use std::sync::{Arc, Mutex};
 
+mod cassio;
 mod board;
 mod bitboard;
 mod edaxrunner;
@@ -1207,6 +1208,32 @@ fn gtp() {
     std::process::exit(0);
 }
 
+fn oep() {
+    let mut patha;
+    let mut path : &str = &MYOPT.get().unwrap().evaltable1;
+    if path.is_empty() {
+        patha = std::env::current_exe().unwrap().to_str().unwrap().to_string();
+        // println!("patha:{patha}");
+        match patha.rfind("/") {
+            Some(idx) => {
+                patha = patha[0..=idx].to_string();
+            },
+            None => {
+                patha = String::new();
+            }
+        }
+        patha += "data/evaltable.txt";
+        path = &patha;
+    }
+
+    let mut oep = cassio::OthelloEngineProtocol::new();
+    match oep.start(path) {
+        Err(msg) => panic!("{msg:?}"),
+        Ok(msg) => println!("{msg}"),
+    }
+    std::process::exit(0);
+}
+
 fn main() {
     // read command options
     MYOPT.set(
@@ -1221,6 +1248,9 @@ fn main() {
     }
     if *mode == myoption::Mode::Gtp {
         gtp();
+    }
+    if *mode == myoption::Mode::Oep {
+        oep();
     }
 
     println!("Hello, reversi world!");

@@ -8,6 +8,7 @@ pub enum Mode {
   Duel,
   DuelExt,
   Gtp,
+  Oep,
   Rfen,
   Play,
   Help,
@@ -188,6 +189,8 @@ impl MyOption {
                     opt.verbose = true;
                 } else if e == "--gtp" {
                     opt.mode = Mode::Gtp;
+                } else if e == "--oep" {
+                    opt.mode = Mode::Oep;
                 // } else {
                 }
             } else if old.is_empty() && e.starts_with("-") {
@@ -298,6 +301,7 @@ pub fn showhelp(msg : &str) {
   you can use w/ --Edax to make ruversi white.
   --rfen <rfen>  think from rfen for debug. don't forget \"\" not to be recognized as 2 part.
   --gtp      go text protocol mode.
+  --oep      othello engine protocol mode.
   --learn    [deprecated]set lerning mode. default.
 
   Common:
