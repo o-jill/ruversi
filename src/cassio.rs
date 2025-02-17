@@ -66,12 +66,12 @@ impl OthelloEngineProtocol {
                 let _beta = elem[3].parse::<f32>().unwrap();
                 let depth = elem[4].parse::<u8>().unwrap();
                 let _precision = elem[5].parse::<f32>().unwrap();
-eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
+                // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let (val, node) =
                     nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
                 let ft = st.elapsed();
-eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+                // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let mvstr;
                 if let Some(best) = node.best.as_ref() {
                     let xy = best.pos();
@@ -94,7 +94,7 @@ eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let nodes = node.kyokumen;
                 let sec = ft.as_secs_f32();
 
-                println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {hash}, node {nodes}, time {sec:3}");                    
+                println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {hash}, node {nodes}, time {sec:3}");
                 running.store(false, Ordering::Relaxed);
                 println!("ready.");
             })).unwrap();
@@ -103,9 +103,58 @@ eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
         }
 
         if body.starts_with("endgame-search") {
-            // start thinking.
-            // println!("ready.");
+            let running = self.running.load(Ordering::Relaxed);
+            if running {
+                self.log("Error: already thinking... {cmd}").unwrap();
+                return Ok(false);
+            }
+            self.running.store(true, Ordering::Relaxed);
+
             self.log(body).unwrap();
+
+            let running = self.running.clone();
+            let cmd = body.to_string();
+            let _thread = Some(spawn(move || {
+                let elem = cmd.split(" ").collect::<Vec<_>>();
+                let obf = elem[1];
+                let ban = bitboard::BitBoard::from_obf(obf);
+                let _alpha = elem[2].parse::<f32>().unwrap();
+                let _beta = elem[3].parse::<f32>().unwrap();
+                let depth = ban.nblank() as u8;
+                let _precision = elem[4].parse::<f32>().unwrap();
+                // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
+                let st = Instant::now();
+                let (val, node) =
+                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                let ft = st.elapsed();
+                // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+                let mvstr;
+                if let Some(best) = node.best.as_ref() {
+                    let xy = best.pos();
+                    if xy == "00" {
+                        mvstr = "Pa".to_string();
+                    } else {
+                        mvstr = xy.to_uppercase();
+                    }
+                } else {
+                    mvstr = "--".to_string();
+                }
+
+                let range =
+                    if val.is_sign_negative() {
+                        format!("W:{val:.1} <= v <= W:{val:.1}")
+                    } else {
+                        format!("B:{val:.1} <= v <= B:{val:.1}")
+                    };
+                let hash = "0123456789ABCDEF";
+                let nodes = node.kyokumen;
+                let sec = ft.as_secs_f32();
+
+                println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {hash}, node {nodes}, time {sec:3}");
+                running.store(false, Ordering::Relaxed);
+                println!("ready.");
+            })).unwrap();
+
             return Ok(false);
         }
 
