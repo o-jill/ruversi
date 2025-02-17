@@ -166,7 +166,12 @@ impl OthelloEngineProtocol {
         }
 
         if body.starts_with("get-search-infos") {
-            println!("ready.");
+            let running = self.running.load(Ordering::Relaxed);
+            if running {
+                println!("ok.");
+            } else {
+                println!("ready.");
+            }
             self.log(body).unwrap();
             return Ok(false);
         }
