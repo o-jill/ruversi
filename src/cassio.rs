@@ -59,7 +59,7 @@ impl OthelloEngineProtocol {
             let _thread = Some(spawn(move || {
                 let elem = cmd.split(" ").collect::<Vec<_>>();
                 let obf = elem[1];
-                let ban = bitboard::BitBoard::from_obf(obf);
+                let ban = bitboard::BitBoard::from_obf(obf).unwrap();
                 let _alpha = elem[2].parse::<f32>().unwrap();
                 let _beta = elem[3].parse::<f32>().unwrap();
                 let depth = elem[4].parse::<u8>().unwrap();
