@@ -22,6 +22,7 @@ pub enum Opponent {
     Cui,
     Edax,
     Ruversi,
+    Cassio,
 }
 
 #[derive(Debug, PartialEq)]
@@ -183,6 +184,8 @@ impl MyOption {
                     opt.opponent = Opponent::Edax;
                 } else if e == "--Ruversi" {
                     opt.opponent = Opponent::Ruversi;
+                } else if e == "--Cassio" {
+                    opt.opponent = Opponent::Cassio;
                 } else if e == "--silent" {
                     opt.verbose = false;
                 } else if e == "--verbose" {
@@ -230,6 +233,7 @@ impl MyOption {
                 } else {
                     return Err(format!("failed find \"{e}\"."));
                 }
+                old.clear();
             } else if old == "--eta" {
                 let eta = e.parse::<f32>();
                 if eta.is_err() {
@@ -315,6 +319,7 @@ pub fn showhelp(msg : &str) {
   DuelExt:
     --Edconf <path>  a file for edax(or ruversi) path configuration.
     --Ruversi  play against another Ruversi, not against Edax.
+    --Cassio   play against edax via othello engine protocol.
   GenKifu:
     -Nx  initial board group x for generating kifu. 0~99.
         all of the initial board positions will be used when this option is not specified.
