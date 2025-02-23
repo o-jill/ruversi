@@ -92,11 +92,11 @@ impl OthelloEngineProtocol {
                     } else {
                         format!("B:{val:.1} <= v <= B:{val:.1}")
                     };
-                let hash = "0123456789ABCDEF";
+                let moves = node.bestorder();
                 let nodes = node.kyokumen;
                 let sec = ft.as_secs_f32();
 
-                println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {hash}, node {nodes}, time {sec:3}");
+                println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {moves}, node {nodes}, time {sec:3}");
                 running.store(false, Ordering::Relaxed);
                 println!("ready.");
             });
