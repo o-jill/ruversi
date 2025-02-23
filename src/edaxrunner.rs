@@ -356,8 +356,7 @@ impl CassioRunner {
         // launch edax
         match self.spawn() {
             Err(msg) => {
-                return Err(format!("error running cassio... [{}], config:[{}]",
-                            msg, self.to_str()))
+                Err(format!("error running cassio... [{msg}], {self}"))
             },
             Ok(prcs) => Ok(prcs),
         }

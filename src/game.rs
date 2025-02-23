@@ -696,12 +696,15 @@ impl GameBB {
                                 y = 255;
                             },
                             _ => {
-                                x = mv[1].chars().nth(0).unwrap().to_ascii_uppercase() as u8 - 'A' as u8 + 1;
-                                y = mv[1].chars().nth(1).unwrap() as u8 - '0' as u8;
+                                x = mv[1].chars().nth(0).unwrap()
+                                    .to_ascii_uppercase() as u8 - b'A' + 1;
+                                y = mv[1].chars().nth(1).unwrap() as u8 - b'0';
                             },
                             }
                         },
-                        Err(ermsg) => {panic!("error occured: {ermsg}!!");}, 
+                        Err(ermsg) => {
+                            panic!("error occured: {ermsg}!!");
+                        },
                     }
                 }
             } else {

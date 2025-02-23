@@ -247,8 +247,6 @@ impl BitBoard {
             teban : SENTE,
             pass : 0,
         };
-        let mut x = 0;
-        let mut y = 0;
         for (i, ch)  in obf.chars().enumerate() {
             if i < 64 {
                 let bit = LSB_CELL << i;
@@ -273,7 +271,7 @@ impl BitBoard {
                 }
             }
         }
-        Err(format!("unknown format."))
+        Err("unknown obf format.".to_string())
     }
 
     pub fn to_str(&self) -> String {
@@ -702,7 +700,7 @@ impl BitBoard {
             let p = mn as usize >> (x + 1);
             let o = op as usize >> (x + 1);
             let idx = p * 127 + o;
-            if TBLCHKREV[idx as usize] != 0 {return true;}
+            if TBLCHKREV[idx] != 0 {return true;}
             // 左
             let p = mn.reverse_bits() as usize >> (NUMCELL - x);
             let o = op.reverse_bits() as usize >> (NUMCELL - x);

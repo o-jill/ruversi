@@ -1,9 +1,9 @@
 use super::*;
 use std::fs::OpenOptions;
 use std::io::{BufRead, BufReader};
-use std::os::fd::{AsRawFd, FromRawFd};
+// use std::os::fd::{AsRawFd, FromRawFd};
 use std::process::{Child, ChildStdin, ChildStdout};
-use std::thread::{sleep, spawn, JoinHandle};
+use std::thread::{sleep, spawn};
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use std::time::Duration;
 
@@ -60,7 +60,7 @@ impl OthelloEngineProtocol {
 
             let running = self.running.clone();
             let cmd = body.to_string();
-            let _thread = Some(spawn(move || {
+            let _thread = spawn(move || {
                 let elem = cmd.split(" ").collect::<Vec<_>>();
                 let obf = elem[1];
                 let ban = bitboard::BitBoard::from_obf(obf).unwrap();
@@ -99,7 +99,7 @@ impl OthelloEngineProtocol {
                 println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {hash}, node {nodes}, time {sec:3}");
                 running.store(false, Ordering::Relaxed);
                 println!("ready.");
-            })).unwrap();
+            });
 
             return Ok(false);
         }
@@ -116,7 +116,7 @@ impl OthelloEngineProtocol {
 
             let running = self.running.clone();
             let cmd = body.to_string();
-            let _thread = Some(spawn(move || {
+            let _thread = spawn(move || {
                 let elem = cmd.split(" ").collect::<Vec<_>>();
                 let obf = elem[1];
                 let ban = bitboard::BitBoard::from_obf(obf).unwrap();
@@ -155,7 +155,7 @@ impl OthelloEngineProtocol {
                 println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {hash}, node {nodes}, time {sec:3}");
                 running.store(false, Ordering::Relaxed);
                 println!("ready.");
-            })).unwrap();
+            });
 
             return Ok(false);
         }
@@ -221,7 +221,7 @@ impl OthelloEngineProtocol {
     pub fn start(&mut self, path : &str) -> Result<String, String> {
 
         self.log("started!!!").unwrap();
-        self.log(&format!("{path}")).unwrap();
+        self.log(path).unwrap();
 
         if cfg!(feature="bitboard") {
             nodebb::init_weight();
