@@ -1719,25 +1719,13 @@ impl NodeBB {
             self.y)
     }
 
-    pub fn dump(&self) -> String {
-        let mut ret = String::new();
-        ret += &format!("{} nodes. ", self.kyokumen);
-        // ret += &format!("{:?}", self.best);
-        // let x = self.best.unwrap().1;
-        // let y = self.best.unwrap().2;
-        // let n = self.child.iter().find(|&a| a.x == x && a.y == y);
-        // ret += &format!("{:?}", n.unwrap().best);
+    pub fn bestorder(&self) -> String {
+        let mut ret = String::default();
         let mut n = self;
         loop {
-            if n.best.is_none() {
-                // ret += &format!("best:none {:?}", n.hyoka);
-                // if n.child.is_empty() {break;}
-                // panic!("n.child is not empty... {} ret:{}", n.child.len(), ret);
-                break;
-            }
+            if n.best.is_none() {break;}
 
             let best = n.best.as_ref().unwrap();
-            // ret += &format!("{}", best.to_str());
             let x = best.x;
             let y = best.y;
             if n.child.len() == 1 {
@@ -1749,47 +1737,19 @@ impl NodeBB {
                 }
                 n = m.unwrap();
             }
-            // ret += &format!("{}", best.pos());
             ret += &n.to_xy();
         }
         ret
     }
 
+    pub fn dump(&self) -> String {
+        format!("{} nodes. ", self.kyokumen) + &self.bestorder()
+    }
+
     #[allow(dead_code)]
     pub fn dumpv(&self) -> String {
-        let mut ret = String::new();
-        ret += &format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen);
-        // ret += &format!("{:?}", self.best);
-        // let x = self.best.unwrap().1;
-        // let y = self.best.unwrap().2;
-        // let n = self.child.iter().find(|&a| a.x == x && a.y == y);
-        // ret += &format!("{:?}", n.unwrap().best);
-        let mut n = self;
-        loop {
-            if n.best.is_none() {
-                // ret += &format!("best:none {:?}", n.hyoka);
-                // if n.child.is_empty() {break;}
-                // panic!("n.child is not empty... {} ret:{}", n.child.len(), ret);
-                break;
-            }
-
-            let best = n.best.as_ref().unwrap();
-            // ret += &format!("{}", best.to_str());
-            let x = best.x;
-            let y = best.y;
-            if n.child.len() == 1 {
-                n = &n.child[0];
-            } else {
-                let m = n.child.iter().find(|&a| a.x == x && a.y == y);
-                if m.is_none() {
-                    return ret;
-                }
-                n = m.unwrap();
-            }
-            // ret += &format!("{}", best.pos());
-            ret += &n.to_xy();
-        }
-        ret
+        format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen)
+            + &self.bestorder()
     }
 }
 
