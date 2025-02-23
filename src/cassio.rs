@@ -1,9 +1,11 @@
 use super::*;
 use std::fs::OpenOptions;
-use std::io::{BufRead, Read};
-use std::process::{ChildStdin, ChildStdout};
-use std::thread::spawn;
+use std::io::{BufRead, BufReader};
+use std::os::fd::{AsRawFd, FromRawFd};
+use std::process::{Child, ChildStdin, ChildStdout};
+use std::thread::{sleep, spawn, JoinHandle};
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::time::Duration;
 
 const HEADER : &str = "ENGINE-PROTOCOL ";
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -242,13 +244,13 @@ impl OthelloEngineProtocol {
 }
 
 pub struct OthelloEngineProtocolServer {
-    ply1 : Option<std::process::Child>,
-    ply2 : Option<std::process::Child>,
+    ply1 : Option<Child>,
+    ply2 : Option<Child>,
     turn : i8,
 }
 
 impl OthelloEngineProtocolServer {
-    pub fn new1(ch : std::process::Child) -> Self {
+    pub fn new1(ch : Child) -> Self {
         OthelloEngineProtocolServer {
             ply1 : Some(ch),
             ply2 : None,
@@ -256,7 +258,7 @@ impl OthelloEngineProtocolServer {
         }
     }
 
-    pub fn new2(ch1 : std::process::Child, ch2 : std::process::Child) -> Self {
+    pub fn new2(ch1 : Child, ch2 : Child) -> Self {
         OthelloEngineProtocolServer {
             ply1 : Some(ch1),
             ply2 : Some(ch2),
@@ -264,9 +266,9 @@ impl OthelloEngineProtocolServer {
         }
     }
 
-    fn setturn(&mut self, trn : i8) {self.turn = trn;}
+    pub fn setturn(&mut self, trn : i8) {self.turn = trn;}
 
-    fn selectplayer(&mut self) -> Result<&mut std::process::Child, String> {
+    fn selectplayer(&mut self) -> Result<&mut Child, String> {
         if self.turn == board::NONE {
             return Err("turn is NONE!".to_string());
         }
@@ -293,83 +295,200 @@ impl OthelloEngineProtocolServer {
         Ok((toeng, fromeng))
     }
 
-    fn init(&mut self) -> Result<(), String> {
+    pub fn init(&mut self) -> Result<(), String> {
         let (toeng, fromeng) = self.getio()?;
 
-        toeng.write("ENGINE-PROTOCOL init\n".as_bytes());
+        if let Err(e) = toeng.write("ENGINE-PROTOCOL init\n".as_bytes()) {
+            return Err(e.to_string());
+        }
 
-        std::thread::sleep(std::time::Duration::from_millis(1));
+        sleep(Duration::from_millis(1));
 
-        let mut bufreader = std::io::BufReader::new(fromeng);
+        let mut bufreader = BufReader::new(fromeng);
         let mut buf = String::default();
-        bufreader.read_line(&mut buf);
+        bufreader.read_line(&mut buf).unwrap();
         if buf == "ready.\n" {
             return Ok(())
         }
-        Err(format!("unknown response : \"{buf}\""))
+        Err(format!("unknown response ii: \"{buf}\""))
     }
 
-    fn get_version(&mut self) -> Result<String, String> {
+    pub fn get_version(&mut self) -> Result<String, String> {
         let (toeng, fromeng) = self.getio()?;
 
-        toeng.write("ENGINE-PROTOCOL get-version\n".as_bytes());
+        if let Err(e) =
+                toeng.write("ENGINE-PROTOCOL get-version\n".as_bytes()) {
+            return Err(e.to_string());
+        }
 
-        std::thread::sleep(std::time::Duration::from_millis(1));
+        sleep(Duration::from_millis(1));
 
-        let mut bufreader = std::io::BufReader::new(fromeng);
+        let mut bufreader = BufReader::new(fromeng);
         let mut buf = String::default();
-        bufreader.read_line(&mut buf);
+        bufreader.read_line(&mut buf).unwrap();
         let ret = buf.trim().to_string();
-        bufreader.read_line(&mut buf);
+        buf.clear();
+        bufreader.read_line(&mut buf).unwrap();
         if buf == "ready.\n" {
             return Ok(ret)
         }
-        Err(format!("unknown response : \"{buf}\""))
+        Err(format!("unknown response gv: \"{buf}\" \"{ret}\""))
     }
 
-    // new-position
-    // midgame-search
-    // endgame-search
-    // get-serach-infos
-
-    fn stop(&mut self) -> Result<(), String> {
+    pub fn new_position(&mut self) -> Result<(), String> {
         let (toeng, fromeng) = self.getio()?;
 
-        toeng.write("ENGINE-PROTOCOL stop\n".as_bytes());
+        if let Err(e) =
+                toeng.write("ENGINE-PROTOCOL new-position\n".as_bytes()) {
+            return Err(e.to_string());
+        }
 
-        std::thread::sleep(std::time::Duration::from_millis(1));
+        sleep(Duration::from_millis(1));
 
-        let mut bufreader = std::io::BufReader::new(fromeng);
+        let mut bufreader = BufReader::new(fromeng);
         let mut buf = String::default();
-        bufreader.read_line(&mut buf);
+        bufreader.read_line(&mut buf).unwrap();
         if buf == "ready.\n" {
             return Ok(())
         }
-        Err(format!("unknown response : \"{buf}\""))
+        Err(format!("unknown response np: \"{buf}\""))
     }
 
-    fn empty_hash(&mut self) -> Result<(), String> {
+    pub fn midgame_search(&mut self,
+            obf : &str, alpha : f32, beta : f32, depth : u8, precision : i8)
+            -> Result<String, String> {
         let (toeng, fromeng) = self.getio()?;
 
-        toeng.write("ENGINE-PROTOCOL empty-hash\n".as_bytes());
+        if let Err(e) = toeng.write(
+            format!(
+                "ENGINE-PROTOCOL midgame-search {obf} {alpha} {beta} {depth} {precision}\n"
+            ).as_bytes()) {
+            return Err(e.to_string());
+        }
 
-        std::thread::sleep(std::time::Duration::from_millis(1));
+        sleep(Duration::from_millis(1));
 
-        let mut bufreader = std::io::BufReader::new(fromeng);
+        let mut bufreader = BufReader::new(fromeng);
         let mut buf = String::default();
-        bufreader.read_line(&mut buf);
+        bufreader.read_line(&mut buf).unwrap();
+        let ret = buf.trim().to_string();
+        buf.clear();
+        bufreader.read_line(&mut buf).unwrap();
+        if buf == "ready.\n" {
+            return Ok(ret)
+        }
+        Err(format!("unknown response ms: \"{buf}\" \"{ret}\""))
+    }
+
+    // pub fn midgame_search_thr(&mut self,
+    //         obf : &str, alpha : f32, beta : f32, depth : u8, precision : i8)
+    //          -> Result<String, String> {
+    //     let (toeng, fromeng) = self.getio()?;
+
+    //     if let Err(e) = toeng.write(
+    //         format!(
+    //             "ENGINE-PROTOCOL midgame-search {obf} {alpha} {beta} {depth} {precision}\n"
+    //         ).as_bytes()) {
+    //         return Err(e.to_string());
+    //     }
+
+    //     sleep(Duration::from_millis(1));
+
+    //     let finished = Arc::new(AtomicBool::new(false));
+    //     let finishthread = finished.clone();
+    //     // let outfd = toeng.as_raw_fd();
+    //     let thread = spawn(move || {
+    //         // let mut toeng = unsafe {std::fs::File::from_raw_fd(outfd)};
+    //         loop {
+    //             for _i in 0..100 {
+    //                 let fin = finishthread.load(Ordering::Relaxed);
+    //                 if fin {return;}
+
+    //                 std::thread::sleep(Duration::from_millis(10));
+    //             }
+    //             toeng.write("\n".as_bytes()).unwrap();
+    //         }
+    //     });
+    //     let mut bufreader = BufReader::new(fromeng);
+    //     let mut buf = String::default();
+    //     let mut ret = String::default();
+    //     loop {
+    //         buf.clear();
+    //         bufreader.read_line(&mut buf).unwrap();
+    //         eprint!("recv:{buf}");
+    //         let resp = buf.trim();
+    //         if resp == "ok." {
+    //             continue;
+    //         } else if resp == "ready." {
+    //             if ret.is_empty() {continue;}
+
+    //             finished.store(true, Ordering::Relaxed);
+    //             // drop(bufreader);
+    //             thread.join().unwrap();
+    //             let _ = toeng;
+    //             return Ok(ret);
+    //         } else if resp.is_empty() {
+    //             // error
+    //             finished.store(true, Ordering::Relaxed);
+    //             // drop(bufreader);
+    //             thread.join().unwrap();
+    //             let _ = toeng;
+    //             return Err(format!("unknown response mgs: \"{resp}\""));
+    //         }
+    //         ret = resp.to_string();
+    //     }
+
+    // }
+
+    pub fn endgame_search(&mut self) {unimplemented!()}
+
+    pub fn get_serach_infos(&mut self) {unimplemented!()}
+
+    pub fn stop(&mut self) -> Result<(), String> {
+        let (toeng, fromeng) = self.getio()?;
+
+        if let Err(e) = toeng.write("ENGINE-PROTOCOL stop\n".as_bytes()) {
+            return Err(e.to_string());
+        }
+
+        sleep(Duration::from_millis(1));
+
+        let mut bufreader = BufReader::new(fromeng);
+        let mut buf = String::default();
+        bufreader.read_line(&mut buf).unwrap();
         if buf == "ready.\n" {
             return Ok(())
         }
-        Err(format!("unknown response : \"{buf}\""))
+        Err(format!("unknown response sp: \"{buf}\""))
     }
 
-    fn quit(&mut self) -> Result<(), String> {
+    pub fn empty_hash(&mut self) -> Result<(), String> {
+        let (toeng, fromeng) = self.getio()?;
+
+        if let Err(e) =
+                toeng.write("ENGINE-PROTOCOL empty-hash\n".as_bytes()) {
+            return Err(e.to_string());
+        }
+
+        sleep(Duration::from_millis(1));
+
+        let mut bufreader = BufReader::new(fromeng);
+        let mut buf = String::default();
+        bufreader.read_line(&mut buf).unwrap();
+        if buf == "ready.\n" {
+            return Ok(())
+        }
+        Err(format!("unknown response eh: \"{buf}\""))
+    }
+
+    pub fn quit(&mut self) -> Result<(), String> {
         let (toeng, _fromeng) = self.getio()?;
 
-        toeng.write("ENGINE-PROTOCOL quit\n".as_bytes());
+        if let Err(e) = toeng.write("ENGINE-PROTOCOL quit\n".as_bytes()) {
+            return Err(e.to_string());
+        }
 
-        std::thread::sleep(std::time::Duration::from_millis(1));
+        sleep(Duration::from_millis(1));
 
         Ok(())
     }
