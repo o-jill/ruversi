@@ -1710,13 +1710,13 @@ impl NodeBB {
     }
 
     pub fn to_xy(&self) -> String {
-        format!("{}{}{}",
+        format!("{}{}",
             if self.teban == board::SENTE {
-                board::STONE_SENTE
+                board::STR_SENTE
             } else {
-                board::STONE_GOTE
-            },
-            board::STR_GOTE.chars().nth(self.x as usize).unwrap(), self.y)
+                board::STR_GOTE
+            }.chars().nth(self.x as usize).unwrap(),
+            self.y)
     }
 
     pub fn dump(&self) -> String {
