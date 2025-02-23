@@ -649,7 +649,12 @@ impl GameBB {
             f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
             depth : u8, turnin : i8, cconf : &str) -> Result<(), String> {
         let er = edaxrunner::CassioRunner::from_config(cconf)?;
-        let cassio =cassio::OthelloEngineProtocol::new();
+        let mut cassio =
+            cassio::OthelloEngineProtocolServer::new1(er.run().unwrap());
+        cassio.setturn(board::SENTE);
+        cassio.init().unwrap();
+        println!("opponent:{}", cassio.get_version()?);
+        cassio.new_position()?;
 
         loop {
             // show
@@ -668,12 +673,35 @@ impl GameBB {
                     y = movable[0].1;
                 } else {
                     // launch edax
-                    match er.run(&self.ban.to_obf()) {
-                        Ok((pos, _)) => {
-                            x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
-                            y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                    let alpha = -64f32;
+                    let beta = 64f32;
+                    // let depth = depth;
+                    let precision = 50;
+                    match cassio.midgame_search(&self.ban.to_obf(), alpha, beta, depth, precision) {
+                        Ok(res) => {
+                            println!("{res}");
+                            let elem = res.split(',').collect::<Vec<_>>();
+                            if elem.len() < 2 {panic!("lack of response.. {res}");}
+
+                            let mv = elem[1].split_whitespace().collect::<Vec<_>>();
+                            if mv.len() < 2 {panic!("lack of response.. {res}");}
+
+                            match mv[1] {
+                            "Pa" => {
+                                x = 0;
+                                y = 0;
+                            },
+                            "--" => {
+                                x = 255;
+                                y = 255;
+                            },
+                            _ => {
+                                x = mv[1].chars().nth(0).unwrap().to_ascii_uppercase() as u8 - 'A' as u8 + 1;
+                                y = mv[1].chars().nth(1).unwrap() as u8 - '0' as u8;
+                            },
+                            }
                         },
-                        Err(msg) => panic!("error running edax... [{msg}]"),
+                        Err(ermsg) => {panic!("error occured: {ermsg}!!");}, 
                     }
                 }
             } else {
@@ -689,14 +717,17 @@ impl GameBB {
                 x = best.x;
                 y = best.y;
             }
-            // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
-            let rfen = self.ban.to_str();
-            let teban = self.ban.teban;
-            self.ban = ban;
 
-            // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            if x <= 8 {
+                // apply move
+                let ban = self.ban.r#move(x, y).unwrap();
+                let rfen = self.ban.to_str();
+                let teban = self.ban.teban;
+                self.ban = ban;
+
+                // save to kifu
+                self.kifu.append(x as usize, y as usize, teban, rfen);
+            }
 
             // check finished
             if self.ban.is_passpass() {
@@ -709,6 +740,8 @@ impl GameBB {
                 break;
             }
         }
+        cassio.quit().unwrap();
+
         // check who won
         self.kifu.winneris(self.ban.count());
         if self.is_verbose() {println!("{}", self.kifu.to_str());}
