@@ -1808,7 +1808,7 @@ fn test_nodebb() {
     node9a.best = Some(Best::new(99.9, 8, 7));
     node9a.child.push(nodede);
     node9a.child.push(nodefg);
-    assert_eq!(node9a.dumpv(), "val:Some(99.9), 4321 nodes. []h7");
+    assert_eq!(node9a.dumpv(), "val:Some(99.9), 4321 nodes. h7");
 
     let mut node56 = NodeBB::new(5, 6, 6, bitboard::NONE);
     node56.kyokumen = 6543;
@@ -1820,7 +1820,7 @@ fn test_nodebb() {
     node78.best = Some(Best::new(99.9, 2, 1));
     node78.child.push(nodebc);
     node78.child.push(node9a);
-    assert_eq!(node78.dumpv(), "val:Some(99.9), 5432 nodes. @@b1[]h7");
+    assert_eq!(node78.dumpv(), "val:Some(99.9), 5432 nodes. B1h7");
 
     let mut node12 = NodeBB::new(1, 2, 7, bitboard::SENTE);
     node12.kyokumen = 8765;
@@ -1828,7 +1828,7 @@ fn test_nodebb() {
     node12.hyoka = Some(99.9);
     node12.best = Some(Best::new(99.9, 7, 8));
     node12.child.push(node78);
-    assert_eq!(node12.dumpv(), "val:Some(99.9), 8765 nodes. []g8@@b1[]h7");
+    assert_eq!(node12.dumpv(), "val:Some(99.9), 8765 nodes. g8B1h7");
 
     let mut node34 = NodeBB::new(3, 4, 7, bitboard::GOTE);
     node34.kyokumen = 7654;
@@ -1840,5 +1840,5 @@ fn test_nodebb() {
     node.best = Some(Best::new(99.9, 1, 2));
     node.child.push(node12);
     node.child.push(node34);
-    assert_eq!(node.dumpv(), "val:Some(99.9), 9876 nodes. @@a2[]g8@@b1[]h7");
+    assert_eq!(node.dumpv(), "val:Some(99.9), 9876 nodes. A2g8B1h7");
 }
