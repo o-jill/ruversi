@@ -653,7 +653,9 @@ impl GameBB {
             cassio::OthelloEngineProtocolServer::new1(er.run().unwrap());
         cassio.setturn(board::SENTE);
         cassio.init().unwrap();
-        println!("opponent:{}", cassio.get_version()?);
+        if self.is_verbose() {
+            println!("opponent:{}", cassio.get_version()?);
+        }
         cassio.new_position()?;
 
         loop {
@@ -679,7 +681,7 @@ impl GameBB {
                     let precision = 50;
                     match cassio.midgame_search(&self.ban.to_obf(), alpha, beta, depth, precision) {
                         Ok(res) => {
-                            println!("{res}");
+                            if self.is_verbose() {println!("{res}");}
                             let elem = res.split(',').collect::<Vec<_>>();
                             if elem.len() < 2 {panic!("lack of response.. {res}");}
 
