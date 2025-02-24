@@ -238,36 +238,40 @@ impl BitBoard {
     }
 
     #[allow(dead_code)]
-    pub fn from_obf(obf : &str) -> BitBoard {
-        let elem = obf.split(" ").collect::<Vec<_>>();
+    pub fn from_obf(obf : &str) -> Result<BitBoard, String> {
+        if obf.len() < 65 {return Err("less letters.".to_string());}
+
         let mut ret = BitBoard {
             black : 0,
             white : 0,
             teban : SENTE,
             pass : 0,
         };
-        let mut x = 0;
-        let mut y = 0;
-        for ch  in elem[0].chars() {
-            let bit = LSB_CELL << Self::index(x, y);
-            match ch {
-            'X' => {ret.black |= bit;},
-            'O' => {ret.white |= bit;},
-            // '-' => {},
-            _ => {},
-            }
-            x += 1;
-            if x >= NUMCELL {
-                y += 1;
-                x = 0;
+        for (i, ch)  in obf.chars().enumerate() {
+            if i < 64 {
+                let bit = LSB_CELL << i;
+                match ch {
+                'X' => {ret.black |= bit;},
+                'O' => {ret.white |= bit;},
+                '-' => {},
+                _ => {return Err(format!("unknown letter:{ch}."))},
+                }
+            } else {
+                match ch {
+                'X' => {
+                    ret.teban = SENTE;
+                    return Ok(ret);
+                },
+                'O' => {
+                    ret.teban = GOTE;
+                    return Ok(ret);
+                },
+                ' ' => {},
+                _ => {return Err(format!("unknown letter:{ch}."))},
+                }
             }
         }
-        match elem[1] {
-        "X" => {ret.teban = SENTE;},
-        "O" => {ret.teban = GOTE;},
-        _ => {},
-        }
-        ret
+        Err("unknown obf format.".to_string())
     }
 
     pub fn to_str(&self) -> String {
@@ -696,7 +700,7 @@ impl BitBoard {
             let p = mn as usize >> (x + 1);
             let o = op as usize >> (x + 1);
             let idx = p * 127 + o;
-            if TBLCHKREV[idx as usize] != 0 {return true;}
+            if TBLCHKREV[idx] != 0 {return true;}
             // 左
             let p = mn.reverse_bits() as usize >> (NUMCELL - x);
             let o = op.reverse_bits() as usize >> (NUMCELL - x);
@@ -1878,7 +1882,7 @@ fn testbitbrd() {
     ];
     for (obf, x, y) in revchktbl {
         println!("obf:{obf}");
-        let b = BitBoard::from_obf(obf);
+        let b = BitBoard::from_obf(obf).unwrap();
         // assert!(b.checkreverse1(x, y));
         // assert!(b.checkreverse2(x, y));
         assert!(b.checkreverse(x, y));
@@ -1892,7 +1896,7 @@ fn testbitbrd() {
     for y in 1..NUMCELL - 1 {
         for x in 1..NUMCELL - 1 {
             let mut b = BitBoard::from_obf(
-                "XXXXXXXXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXXXXXXXX X");
+                "XXXXXXXXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXOOOOOOXXXXXXXXX X").unwrap();
             let bit = LSB_CELL << BitBoard::index(x, y);
             let mask = !bit;
             b.white &= mask;
@@ -1923,7 +1927,7 @@ fn testbitbrd() {
         ("--------------X------O------O------O------O------O------X------- X", 7, 0),
     ];
     for (obf, x, y) in revchktbl {
-        let b = BitBoard::from_obf(obf);
+        let b = BitBoard::from_obf(obf).unwrap();
         // assert!(!b.checkreverse1(x, y));
         // assert!(!b.checkreverse2(x, y));
         assert!(!b.checkreverse(x, y));
@@ -1937,13 +1941,13 @@ fn testbitbrd() {
     for y in 0..NUMCELL {
         for x in 0..NUMCELL {
             let b = BitBoard::from_obf(
-                "---------------------------------------------------------------- X");
+                "---------------------------------------------------------------- X").unwrap();
             // assert!(!b.checkreverse1(x, y));
             // assert!(!b.checkreverse2(x, y));
             assert!(!b.checkreverse(x, y));
             // assert!(!b.checkreverse4(x, y));
             let mut b = BitBoard::from_obf(
-                "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X");
+                "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X").unwrap();
             let bit = LSB_CELL << BitBoard::index(x, y);
             let mask = !bit;
             b.black &= mask;
@@ -1953,7 +1957,7 @@ fn testbitbrd() {
             // assert!(!b.checkreverse4(x, y));
 
             let mut b = BitBoard::from_obf(
-                "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO X");
+                "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO X").unwrap();
             b.white &= mask;
             // assert!(!b.checkreverse1(x, y));
             // assert!(!b.checkreverse2(x, y));
@@ -6250,7 +6254,7 @@ fn testbitbrd() {
                 String::from("--") + &ch.to_string() + "-----"
             }).collect::<Vec<String>>().join("") + "-------- X";
 
-        let ban = BitBoard::from_obf(&obf);
+        let ban = BitBoard::from_obf(&obf).unwrap();
         let result = ban.checkreverse(2, 7);
         if result != res {ban.put();}
         assert_eq!(result, res);

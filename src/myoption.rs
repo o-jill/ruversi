@@ -8,6 +8,7 @@ pub enum Mode {
   Duel,
   DuelExt,
   Gtp,
+  Oep,
   Rfen,
   Play,
   Help,
@@ -21,6 +22,7 @@ pub enum Opponent {
     Cui,
     Edax,
     Ruversi,
+    Cassio,
 }
 
 #[derive(Debug, PartialEq)]
@@ -182,12 +184,16 @@ impl MyOption {
                     opt.opponent = Opponent::Edax;
                 } else if e == "--Ruversi" {
                     opt.opponent = Opponent::Ruversi;
+                } else if e == "--Cassio" {
+                    opt.opponent = Opponent::Cassio;
                 } else if e == "--silent" {
                     opt.verbose = false;
                 } else if e == "--verbose" {
                     opt.verbose = true;
                 } else if e == "--gtp" {
                     opt.mode = Mode::Gtp;
+                } else if e == "--oep" {
+                    opt.mode = Mode::Oep;
                 // } else {
                 }
             } else if old.is_empty() && e.starts_with("-") {
@@ -227,6 +233,7 @@ impl MyOption {
                 } else {
                     return Err(format!("failed find \"{e}\"."));
                 }
+                old.clear();
             } else if old == "--eta" {
                 let eta = e.parse::<f32>();
                 if eta.is_err() {
@@ -298,6 +305,7 @@ pub fn showhelp(msg : &str) {
   you can use w/ --Edax to make ruversi white.
   --rfen <rfen>  think from rfen for debug. don't forget \"\" not to be recognized as 2 part.
   --gtp      go text protocol mode.
+  --oep      othello engine protocol mode.
   --learn    [deprecated]set lerning mode. default.
 
   Common:
@@ -311,6 +319,7 @@ pub fn showhelp(msg : &str) {
   DuelExt:
     --Edconf <path>  a file for edax(or ruversi) path configuration.
     --Ruversi  play against another Ruversi, not against Edax.
+    --Cassio   play against edax via othello engine protocol.
   GenKifu:
     -Nx  initial board group x for generating kifu. 0~99.
         all of the initial board positions will be used when this option is not specified.

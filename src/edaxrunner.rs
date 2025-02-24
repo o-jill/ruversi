@@ -1,5 +1,8 @@
+use core::fmt;
 use std::fs::File;
 use std::io::{BufReader, BufRead, Write};
+use std::fmt::{Display, Formatter};
+use std::process::{Child, Command, Stdio};
 
 const OBF : &str = "/tmp/test.obf";
 const CD : &str = "../../edax-reversi/";
@@ -250,6 +253,112 @@ impl RuversiRunner {
                 Err(format!("invalid input from edax. \"{}\" pos{xtxt}",
                     lines[2]))
             }
+        }
+    }
+}
+
+pub struct CassioRunner {
+    curdir : String,
+    path : String,
+    evfile : String,
+    cas : String,
+    // verbose : bool,
+}
+
+impl Display for CassioRunner {
+    fn fmt(&self, f : &mut Formatter) -> fmt::Result {
+        write!(f, "curdir:{}, path:{}, evfile:{}, cassio:{}",
+                self.curdir, self.path, self.evfile, self.cas)
+    }
+}
+    
+impl CassioRunner {
+    pub fn new() -> Self {
+        Self {
+            curdir: String::from(CD),
+            path: String::from(EDAXPATH),
+            evfile: String::from(EVFILE),
+            cas: String::from("-cassio"),
+        }
+    }
+
+    // pub fn set_verbose(&mut self, verbose : bool) {
+    //     self.verbose = verbose;
+    // }
+
+    pub fn from_config(path : &str) -> Result<CassioRunner, String> {
+        let mut rr = CassioRunner::new();
+        if path.is_empty() {
+            return Ok(rr);
+        }
+
+        match rr.read(path) {
+            Ok(_) => Ok(rr),
+            Err(msg) => Err(msg),
+        }
+    }
+
+    pub fn to_str(&self) -> String {
+        format!("{self}")
+    }
+
+    /// read config from a file.
+    /// 
+    /// ex.
+    /// curdir: ~/ruversi/
+    /// path: ./bin/ruversi
+    /// evfile: ./data/eval.dat
+    pub fn read(&mut self, path : &str) -> Result<(), String> {
+        let file = File::open(path);
+        if file.is_err() {return Err(file.err().unwrap().to_string());}
+
+        let file = file.unwrap();
+        let lines = BufReader::new(file);
+        for line in lines.lines() {
+            match line {
+                Ok(l) =>{
+                    if let Some(cd) = l.strip_prefix("curdir:") {
+                        // println!("{l}");
+                        self.curdir = String::from(cd.trim());
+                    } else if let Some(ed) = l.strip_prefix("path:") {
+                        // println!("{l}");
+                        self.path = String::from(ed.trim());
+                    } else if let Some(ed) = l.strip_prefix("edax:") {
+                        // println!("{l}");
+                        self.path = String::from(ed.trim());
+                    } else if let Some(evf) = l.strip_prefix("evfile:") {
+                        // println!("{l}");
+                        self.evfile = String::from(evf.trim());
+                    } else if let Some(cas) = l.strip_prefix("cas:") {
+                        // println!("{l}");
+                        self.cas = String::from(cas.trim());
+                    }
+                },
+                Err(err) => {return Err(err.to_string())}
+            }
+        }
+        Ok(())
+    }
+
+    fn spawn(&self) -> std::io::Result<Child> {
+        let mut cmd = Command::new(&self.path);
+            cmd.current_dir(&self.curdir)
+            .arg(&self.cas)
+            .arg("-eval-file").arg(&self.evfile)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null());
+        // println!("cmd:{cmd:?}");
+        cmd.spawn()
+    }
+
+    pub fn run(&self) -> Result<Child, String> {
+        // launch edax
+        match self.spawn() {
+            Err(msg) => {
+                Err(format!("error running cassio... [{msg}], {self}"))
+            },
+            Ok(prcs) => Ok(prcs),
         }
     }
 }

@@ -4,6 +4,7 @@ curdir: ../edax-reversi/
 edax: ./bin/lEdax-x64-modern
 evfile: data/eval.dat
 obf: /tmp/test.obf
+cassio: -cassio
 
 # obf: /tmp/testooooooo.obf
 # curdir: ~/edax/
@@ -14,3 +15,9 @@ obf: /tmp/test.obf
 # curdir: ../../edax-reversi/
 # edax: ./bin/lEdax-x64-modern
 # evfile: data/eval.dat
+
+# curdir: ../../edax-reversi/
+# edax: ./bin/mEdax-aarch64
+# path: ./bin/mEdax-aarch64
+# evfile: data/eval.dat
+# cassio: -cassio

@@ -7,6 +7,7 @@ use rand::Rng;
 use rand::distributions::{Distribution, Uniform};
 use std::sync::{Arc, Mutex};
 
+mod cassio;
 mod board;
 mod bitboard;
 mod edaxrunner;
@@ -780,6 +781,103 @@ fn duel_vs_edax(duellv : i8, depth : u8, verbose : bool) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
+fn duel_vs_cassio(duellv : i8, depth : u8, verbose : bool) {
+    if !(1..=14).contains(&duellv) {
+        panic!("duel level:{duellv} is not supported...");
+    }
+
+    let mut win = [0, 0];
+    let mut draw = [0, 0];
+    let mut lose = [0, 0];
+    let mut total = 0;
+    let mut dresult;
+    let mut result;
+
+    let econf = MYOPT.get().unwrap().edaxconfig.as_str();
+    // println!("econf:{econf}");
+    let think = MYOPT.get().unwrap().think.as_str();
+    let eqfile = initialpos::equalfile(duellv);
+    println!("equal file: {eqfile}");
+    let ip = initialpos::InitialPos::read(&eqfile).unwrap();
+    let rfentbl = &ip.rfens_all();
+    for rfen in rfentbl.iter() {
+        let turn = board::SENTE;
+        if cfg!(feature="bitboard") {
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
+            // play
+            g.start_against_via_cassio(
+                match think {
+                    "" | "ab" => {
+                        // nodebb::NodeBB::think_ab_extract2
+                        nodebb::NodeBB::thinko_ab_simple
+                        // nodebb::NodeBB::thinko_ab_extract2
+                    },
+                    "all" => {
+                        nodebb::NodeBB::thinko
+                    },
+                    _ => { panic!("unknown thinking method.") }
+                }, depth, turn, econf).unwrap();
+            dresult = g.kifu.winner();
+        } else {
+            unimplemented!()
+        }
+        result = dresult.unwrap();
+        total += 1;
+        match result {
+            kifu::SENTEWIN => {win[0] += 1;},
+            kifu::DRAW => {draw[0] += 1;},
+            kifu::GOTEWIN => {lose[0] += 1;},
+            _ => {}
+        }
+        let turn = board::GOTE;
+        if cfg!(feature="bitboard") {
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
+            // play
+            g.start_against_via_cassio(
+                match think {
+                    "" | "ab" => {
+                        // nodebb::NodeBB::think_ab_extract2
+                        nodebb::NodeBB::thinko_ab_simple
+                        // nodebb::NodeBB::thinko_ab_extract2
+                    },
+                    "all" => {
+                        nodebb::NodeBB::thinko
+                    },
+                    _ => { panic!("unknown thinking method.") }
+                }, depth, turn, econf).unwrap();
+            dresult = g.kifu.winner();
+        } else {
+            unimplemented!()
+        }
+        result = dresult.unwrap();
+        total += 1;
+        match result {
+            kifu::SENTEWIN => {lose[1] += 1;},
+            kifu::DRAW => {draw[1] += 1;},
+            kifu::GOTEWIN => {win[1] += 1;},
+            _ => {}
+        }
+        let twin = win[0] + win[1];
+        let tdraw = draw[0] + draw[1];
+        let tlose = lose[0] + lose[1];
+        let tsen = win[0] + lose[1] + tdraw;
+        let tgo = win[1] + lose[0] + tdraw;
+        let winrate = 100.0 * twin as f64 / (total - tdraw) as f64;
+        let r = 400.0 * (twin as f64 / tlose as f64).log10();
+        println!("total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate:.2}%,R,{r:+.1}");
+        println!("ext @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
+        println!("ext [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
+    }
+}
+
+/// duel between 2 eval tables.
+/// # Arguments
+/// - duellv : duel level.
+/// - depth : searching depth.
 fn duel_vs_ruversi(duellv : i8, depth : u8, verbose : bool) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
@@ -1207,6 +1305,32 @@ fn gtp() {
     std::process::exit(0);
 }
 
+fn oep() {
+    let mut patha;
+    let mut path : &str = &MYOPT.get().unwrap().evaltable1;
+    if path.is_empty() {
+        patha = std::env::current_exe().unwrap().to_str().unwrap().to_string();
+        // println!("patha:{patha}");
+        match patha.rfind("/") {
+            Some(idx) => {
+                patha = patha[0..=idx].to_string();
+            },
+            None => {
+                patha = String::new();
+            }
+        }
+        patha += "data/evaltable.txt";
+        path = &patha;
+    }
+
+    let mut oep = cassio::OthelloEngineProtocol::new();
+    match oep.start(path) {
+        Err(msg) => panic!("{msg:?}"),
+        Ok(msg) => println!("{msg}"),
+    }
+    std::process::exit(0);
+}
+
 fn main() {
     // read command options
     MYOPT.set(
@@ -1221,6 +1345,9 @@ fn main() {
     }
     if *mode == myoption::Mode::Gtp {
         gtp();
+    }
+    if *mode == myoption::Mode::Oep {
+        oep();
     }
 
     println!("Hello, reversi world!");
@@ -1272,6 +1399,9 @@ fn main() {
         match opp {
             myoption::Opponent::Ruversi => {
                 duel_vs_ruversi(duellv, depth, MYOPT.get().unwrap().verbose);
+            },
+            myoption::Opponent::Cassio => {
+                duel_vs_cassio(duellv, depth, MYOPT.get().unwrap().verbose);
             },
             _ => {duel_vs_edax(duellv, depth, MYOPT.get().unwrap().verbose);}
         }
