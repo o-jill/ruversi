@@ -342,7 +342,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
             if cfg!(feature="bitboard") {
                 // prepare game
                 let mut g = game::GameBB::from(rfen);
-                g.set_verbose(false);
+                g.set_verbose(verbose);
                 // play
                 match think {
                     "" | "ab" => {
