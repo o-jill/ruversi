@@ -1751,6 +1751,42 @@ impl NodeBB {
         format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen)
             + &self.bestorder()
     }
+
+    pub fn dumptree(&self, offset : usize, path : &str) -> Result<(), std::io::Error>{
+        // let mut file = std::fs::File::open(path)?;
+        let mut file = std::fs::File::create(path)?;
+        file.write_all(
+        format!("@startmindmap\n*{} root\n{}\n@endmindmap\n",
+            "*".repeat(offset),
+            &self.dumptree_sub(offset + 2)).as_bytes())?;
+
+        Ok(())
+    }
+
+    pub fn dumptree_sub(&self, offset : usize) -> String {
+        let mut ret = String::default();
+
+        let x;let y;
+        if let Some(best) = self.best.as_ref() {
+            x = best.x;
+            y = best.y;
+        } else {
+            x = 99;
+            y = 99;
+        }
+        for ch in self.child.iter() {
+            let best = if ch.x == x && ch.y == y {
+                "!"
+            } else { "" };
+            ret += &format!("{} {}{} {:.1}\n",
+                "*".repeat(offset), best, &ch.to_xy(), ch.hyoka.unwrap_or(-99f32));
+
+            if !ch.child.is_empty() {
+                ret += &ch.dumptree_sub(offset + 1);
+            }
+        }
+        ret
+    }
 }
 
 #[test]
