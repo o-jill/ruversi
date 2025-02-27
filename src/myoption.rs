@@ -54,6 +54,7 @@ pub struct MyOption {
     pub trmode : TrainingMode,
     pub minibsize : usize,
     pub verbose : bool,
+    pub treedump : Option<String>,
 }
 
 impl MyOption {
@@ -102,6 +103,7 @@ impl MyOption {
             trmode : TrainingMode::OneByOne,
             minibsize : 128,
             verbose : true,
+            treedump : None,
         };
         let mut old = String::new();
         let mut skip = 0;
@@ -161,7 +163,7 @@ impl MyOption {
                     old = e;
                 } else if [
                         "--depth", "--Edconf", "--eta", "--ev1", "--ev2",
-                         "--progress", "--Ruconf", "--repeat", "--trainout"
+                         "--progress", "--Ruconf", "--repeat", "--trainout",
                     ].contains(&e.as_str()) {
                     old = e;
                 } else if e == "--help" || e == "-h" {
@@ -194,6 +196,9 @@ impl MyOption {
                     opt.mode = Mode::Gtp;
                 } else if e == "--oep" {
                     opt.mode = Mode::Oep;
+                } else if e == "--treedump" {
+                    old = e;
+                    opt.treedump = Some("treeinfo.puml".to_string());
                 // } else {
                 }
             } else if old.is_empty() && e.starts_with("-") {
@@ -279,6 +284,9 @@ impl MyOption {
             } else if old == "--trainout" {
                 opt.outtrain = e;
                 old.clear();
+            } else if old == "--treedump" {
+                opt.treedump = Some(e.to_string());
+                old.clear();
             } else {
                 println!("unknown option: {}", e);
             }
@@ -326,6 +334,8 @@ pub fn showhelp(msg : &str) {
   Play:
     --Edax     play against Edax instead of you. please use with --play(bw).
     --Edconf <path>  a file for edax path configuration.
+  Rfen:
+    --treedump <path>  put search tree into a file w/ PlantUML format.
   [deprecated]Learn:
     --repeat <number>  [deprecated]number of learning. default 10000.
     --eta <ratio>      [deprecated]learning ratio. default 0.1.
