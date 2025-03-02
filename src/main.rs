@@ -502,7 +502,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
     let mut total = 0;
     let mut result;
 
-    let verbose = MYOPT.get().unwrap().verbose.is_verbose();
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -632,7 +632,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
 
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();
-    let verbose = MYOPT.get().unwrap().verbose.is_verbose();
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -802,7 +802,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     // println!("econf:{econf}");
     let think = MYOPT.get().unwrap().think.as_str();
-    let verbose = MYOPT.get().unwrap().verbose.is_verbose();
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -899,7 +899,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
 
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();
-    let verbose = MYOPT.get().unwrap().verbose.is_verbose();
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -1131,7 +1131,7 @@ fn edax(depth : u8, turnh: i8) {
 /// - depth : depth to think.
 /// - turnh : another ruversi's turn.
 fn vs_ruversi(depth : u8, turnh: i8) {
-    let verbose = MYOPT.get().unwrap().verbose.is_silent();
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     if cfg!(feature="bitboard") {
         // prepare game
         let mut g = game::GameBB::new();
