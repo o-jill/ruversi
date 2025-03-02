@@ -46,7 +46,7 @@ jobs:
     - name: Run avx
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: releaseruna
-      run: cargo run --release --features=avx -- --genkifu ${{ matrix.kifu }} --depth 8
+      run: cargo run --release --features=avx -- --genkifu ${{ matrix.kifu }} --depth 9
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定

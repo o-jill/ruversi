@@ -31,6 +31,20 @@ pub enum TrainingMode {
     MiniBatch,
 }
 
+
+#[derive(Debug, PartialEq)]
+pub enum Verbose {
+    Silent,
+    Normal,
+    Verbose,
+}
+
+impl Verbose {
+    pub fn is_silent(&self) -> bool {self.eq(&Verbose::Silent)}
+    pub fn is_normal(&self) -> bool {self.eq(&Verbose::Normal)}
+    pub fn is_verbose(&self) -> bool {self.eq(&Verbose::Verbose)}
+}
+
 /// Options specified in command line args.
 /// See 'options:' section in Readme.md.
 #[derive(Debug)]
@@ -53,7 +67,7 @@ pub struct MyOption {
     pub turn : i8,  // SENTE, GOTE
     pub trmode : TrainingMode,
     pub minibsize : usize,
-    pub verbose : bool,
+    pub verbose : Verbose,
 }
 
 impl MyOption {
@@ -80,7 +94,7 @@ impl MyOption {
     /// - rfen: ""
     /// - think: ""
     /// - trmode: OneByOne
-    /// - verbose true
+    /// - verbose: Normal
     pub fn new(args: Vec<String>) -> Result<MyOption, String> {
         let mut opt = MyOption {
             depth : 7,
@@ -101,7 +115,7 @@ impl MyOption {
             turn : board::NONE,
             trmode : TrainingMode::OneByOne,
             minibsize : 128,
-            verbose : true,
+            verbose : Verbose::Normal,
         };
         let mut old = String::new();
         let mut skip = 0;
@@ -187,9 +201,9 @@ impl MyOption {
                 } else if e == "--Cassio" {
                     opt.opponent = Opponent::Cassio;
                 } else if e == "--silent" {
-                    opt.verbose = false;
+                    opt.verbose = Verbose::Silent;
                 } else if e == "--verbose" {
-                    opt.verbose = true;
+                    opt.verbose = Verbose::Verbose;
                 } else if e == "--gtp" {
                     opt.mode = Mode::Gtp;
                 } else if e == "--oep" {
