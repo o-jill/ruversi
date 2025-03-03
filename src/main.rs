@@ -319,7 +319,7 @@ impl DuelResult {
 /// # Arguments
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
-fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
+fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -335,6 +335,9 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
     let dresult = Arc::new(Mutex::new(DuelResult::new()));
     let dresult2 = dresult.clone();
 
+    let verbose = &MYOPT.get().unwrap().verbose;
+    let silent = verbose.is_silent();
+    let verbose = verbose.is_verbose();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -344,12 +347,13 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
     let think = MYOPT.get().unwrap().think.as_str();
 
     let thrd = thread::spawn(move || {
+        let verbose = !silent;
         let mut result;
         for rfen in rfen1.iter() {
             if cfg!(feature="bitboard") {
                 // prepare game
                 let mut g = game::GameBB::from(rfen);
-                g.set_verbose(false);
+                g.set_verbose(verbose);
                 // play
                 match think {
                     "" | "ab" => {
@@ -490,7 +494,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
 /// # Arguments
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
-fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
+fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -505,6 +509,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
     let mut total = 0;
     let mut result;
 
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -620,7 +625,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, verbose : bool) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_edax(duellv : i8, depth : u8, verbose : bool) {
+fn duel_vs_edax(duellv : i8, depth : u8) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -634,6 +639,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, verbose : bool) {
 
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -788,7 +794,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, verbose : bool) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_cassio(duellv : i8, depth : u8, verbose : bool) {
+fn duel_vs_cassio(duellv : i8, depth : u8) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -803,6 +809,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, verbose : bool) {
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     // println!("econf:{econf}");
     let think = MYOPT.get().unwrap().think.as_str();
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -885,7 +892,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, verbose : bool) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_ruversi(duellv : i8, depth : u8, verbose : bool) {
+fn duel_vs_ruversi(duellv : i8, depth : u8) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -899,6 +906,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, verbose : bool) {
 
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -1129,7 +1137,8 @@ fn edax(depth : u8, turnh: i8) {
 /// # Arguments
 /// - depth : depth to think.
 /// - turnh : another ruversi's turn.
-fn vs_ruversi(depth : u8, turnh: i8, verbose : bool) {
+fn vs_ruversi(depth : u8, turnh: i8) {
+    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     if cfg!(feature="bitboard") {
         // prepare game
         let mut g = game::GameBB::new();
@@ -1396,7 +1405,7 @@ fn main() {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         let duellv = MYOPT.get().unwrap().duellv;
-        duel_para(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose);
+        duel_para(ev1, ev2, duellv, depth);
         // duel(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose);
     }
     if *mode == myoption::Mode::DuelExt {
@@ -1405,12 +1414,12 @@ fn main() {
         println!("opponent:{opp:?}");
         match opp {
             myoption::Opponent::Ruversi => {
-                duel_vs_ruversi(duellv, depth, MYOPT.get().unwrap().verbose);
+                duel_vs_ruversi(duellv, depth);
             },
             myoption::Opponent::Cassio => {
-                duel_vs_cassio(duellv, depth, MYOPT.get().unwrap().verbose);
+                duel_vs_cassio(duellv, depth);
             },
-            _ => {duel_vs_edax(duellv, depth, MYOPT.get().unwrap().verbose);}
+            _ => {duel_vs_edax(duellv, depth);}
         }
     }
     if *mode == myoption::Mode::Play {
@@ -1445,7 +1454,7 @@ fn main() {
                         if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
                     } else {
                         turn
-                    }, MYOPT.get().unwrap().verbose);
+                    });
             },
             _ => {panic!("{:?} is not supported yet.", opp)},
         }
