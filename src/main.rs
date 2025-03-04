@@ -136,7 +136,7 @@ fn trial() {
 /// # Arguments
 /// - rfen : RFEN text to be thought.
 /// - depth : depth to think.
-fn verbose(rfen : &str, depth : u8) {
+fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
     if cfg!(feature="bitboard") {
             match bitboard::BitBoard::from(rfen) {
             Err(msg) => {println!("{}", msg)},
@@ -150,6 +150,13 @@ fn verbose(rfen : &str, depth : u8) {
                     // nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
                 let ft = st.elapsed();
                 println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+                if let Some(path) = treepath {
+                    if let Err(e) = node.dumptree(0, path) {
+                        eprintln!("{}@{} {}", e.to_string(),file!(), line!());
+                    } else {
+                        println!("put tree into {path}.")
+                    }
+                }
             }
         }
     } else {
@@ -1454,7 +1461,8 @@ fn main() {
     }
     if *mode == myoption::Mode::Rfen {
         let rfen = &MYOPT.get().unwrap().rfen;
-        verbose(rfen, depth);
+        let treepath = &MYOPT.get().unwrap().treedump;
+        verbose(rfen, depth, treepath);
     }
     if *mode == myoption::Mode::InitPos {
         let tag = &MYOPT.get().unwrap().initpos;
