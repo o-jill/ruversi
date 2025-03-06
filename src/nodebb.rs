@@ -1534,32 +1534,34 @@ impl NodeBB {
             // return -ban.countf32();
         }
         let mut moves = moves.unwrap();
-        // shallow search for move ordering.
-        let fteban = teban as f32;
-        let mut aval = moves.iter().enumerate().map(|(i, &(x, y))| {
-            const D : u8 = 6;
-            if depth < D {  // depth:1
-                let newban = ban.r#move(x, y).unwrap();
-                (i, NodeBB::evaluate(&newban, wei) * fteban)
-            } else {  // depth:2
-                let newban = ban.r#move(x, y).unwrap();
-                (i,
-                match newban.genmove() {
-                    None => {
-                        newban.countf32() * fteban
-                    },
-                    Some(mvs) => {
-                        mvs.iter().map(|&(x, y)| {
-                                let newban = newban.r#move(x, y).unwrap();
-                                NodeBB::evaluate(&newban, wei) * fteban
-                            }
-                        ).collect::<Vec<_>>().into_iter().reduce(f32::min).unwrap()
-                    },
-                })
-            }
-        }).collect::<Vec<_>>();
-        aval.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
+        if moves.len() > 1 {
+            // shallow search for move ordering.
+            let fteban = teban as f32;
+            let mut aval = moves.iter().enumerate().map(|(i, &(x, y))| {
+                const D : u8 = 6;
+                if depth < D {  // depth:1
+                    let newban = ban.r#move(x, y).unwrap();
+                    (i, NodeBB::evaluate(&newban, wei) * fteban)
+                } else {  // depth:2
+                    let newban = ban.r#move(x, y).unwrap();
+                    (i,
+                    match newban.genmove() {
+                        None => {
+                            newban.countf32() * fteban
+                        },
+                        Some(mvs) => {
+                            mvs.iter().map(|&(x, y)| {
+                                    let newban = newban.r#move(x, y).unwrap();
+                                    NodeBB::evaluate(&newban, wei) * fteban
+                                }
+                            ).collect::<Vec<_>>().into_iter().reduce(f32::min).unwrap()
+                        },
+                    })
+                }
+            }).collect::<Vec<_>>();
+            aval.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+            moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
+        }
 
         let fteban = teban as f32;
         node.child.reserve(moves.len());
