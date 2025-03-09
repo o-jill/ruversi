@@ -232,11 +232,11 @@ impl RuversiRunner {
         let txt = String::from_utf8(w.stdout).unwrap();
         // println!("txt:{txt}");
         let lines : Vec<_> = txt.split("\n").collect();
-        if self.verbose {println!("{}", lines[12]);}
-        let posptn = regex::Regex::new(" (@@|\\[\\])([a-h][1-8])").unwrap();
-        let xtxt = match posptn.captures(lines[12]) {
+        if self.verbose {println!("{}", lines[10]);}
+        let posptn = regex::Regex::new("nodes\\. ([a-h][1-8])").unwrap();
+        let xtxt = match posptn.captures(lines[10]) {
             Some(cap) => {
-                String::from(&cap[2])
+                String::from(&cap[1])
             },
             _ => {
                 return Err(
@@ -245,12 +245,12 @@ impl RuversiRunner {
         };
 
         let scoreptn = regex::Regex::new("val:(-?\\d+\\.\\d+) ").unwrap();
-        match scoreptn.captures(lines[12]) {
+        match scoreptn.captures(lines[10]) {
             Some(cap) => {
                 Ok((xtxt, String::from(&cap[1])))
             },
             _ => {
-                Err(format!("invalid input from edax. \"{}\" pos{xtxt}",
+                Err(format!("invalid input from ruversi. \"{}\" pos{xtxt}",
                     lines[2]))
             }
         }
