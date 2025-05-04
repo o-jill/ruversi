@@ -232,20 +232,21 @@ impl RuversiRunner {
         let txt = String::from_utf8(w.stdout).unwrap();
         // println!("txt:{txt}");
         let lines : Vec<_> = txt.split("\n").collect();
-        if self.verbose {println!("{}", lines[10]);}
+        let res = lines[12].to_ascii_lowercase();
+        if self.verbose {println!("opp:{}", &res);}
         let posptn = regex::Regex::new("nodes\\. ([a-h][1-8])").unwrap();
-        let xtxt = match posptn.captures(lines[10]) {
+        let xtxt = match posptn.captures(&res) {
             Some(cap) => {
                 String::from(&cap[1])
             },
             _ => {
                 return Err(
-                    format!("invalid input from ruversi. \"{}\"", lines[12]));
+                    format!("invalid input from ruversi. \"{}\"", &res));
             }
         };
 
         let scoreptn = regex::Regex::new("val:(-?\\d+\\.\\d+) ").unwrap();
-        match scoreptn.captures(lines[10]) {
+        match scoreptn.captures(&res) {
             Some(cap) => {
                 Ok((xtxt, String::from(&cap[1])))
             },
