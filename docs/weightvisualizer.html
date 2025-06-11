@@ -194,7 +194,8 @@ function viridis(i) {
 }
 
 function num2markLn(n) {
-  let nn = Math.abs(n)
+  let nn = Math.abs(n * 2.71828182846);
+  if (nn < 1) return "<font color='white'>■</font>";
   /* blue - white - red *
   let i = Math.round(Math.log(nn) * 64);
   if (i > 255) {i = 255;}
