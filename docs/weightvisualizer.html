@@ -296,12 +296,20 @@ function parseasciitbl(txt, layers, converter) {
     i += layers[0][0];
   }
   result += '</div>';
-  result += '<table border=1 cellspacing=0><caption>turn</caption><tr>';
-  for (let l = 0 ; l < layers[1] ; ++l) {
-    result += '<td>' + converter(weights[l + i]) + '</td>';
-    i += layers[0][1];
+  result += '<table border=1 cellspacing=0><caption>turn</caption>';
+  let sz = layers[1]
+  for (let l = sz ; l > 0 ; ) {
+    const COLUMNS = 256;
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[l + i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
   }
-  result += '</tr></table>\n';
+  result += '</table>\n';
   result += '<table border=1 cellspacing=0><caption>fixed stones</caption><tr>';
   let tmp = '</tr><tr>'
   for (let l = 0 ; l < layers[1] ; ++l) {
@@ -310,12 +318,19 @@ function parseasciitbl(txt, layers, converter) {
     i += layers[0][2];
   }
   result += tmp + '</tr></table>\n';
-  result += '<table border=1 cellspacing=0><caption>bias</caption><tr>';
-  for (let l = 0 ; l < layers[1] ; ++l) {
-    result += '<td>' + converter(weights[i]) + '</td>';
-    i += 1;
+  result += '<table border=1 cellspacing=0><caption>bias</caption>';
+  for (let l = sz ; l > 0 ; ) {
+    const COLUMNS = 256;
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[l + i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
   }
-  result += '</tr></table>\n';
+  result += '</table>\n';
   result += '<table border=1 cellspacing=0><caption>hidden</caption><tr>';
   for (let l = 0 ; l < layers[1] ; ++l) {
     result += '<td>' + converter(weights[i]) + '</td>';
@@ -382,7 +397,7 @@ function parse2(txt, layers) {
     for (let y = 0; y < 8; ++y) {
       let line = '|';
       for (let x = 0; x < 8; ++x) {
-        line += weights[x * 8 + y + i].toFixed(1) + '|';
+        line += weights[x * 8 + y + i].toFixed(2) + '|';
       }
       result += line + '<br>';
     }
@@ -392,20 +407,24 @@ function parse2(txt, layers) {
   result += '|';
   // turn
   for (let l = 0; l < layers[1]; ++l) {
-    result += weights[l + i].toFixed(1) + '|';
+    result += weights[l + i].toFixed(2) + '|';
     i += layers[0][1];
   }
-  result += '<br><br>';
+  result += '<br><br>|';
   // fixed stone
   for (let l = 0; l < layers[1]; ++l) {
-    result += '|' + weights[i].toFixed(1) + '|';
-    result += weights[i + 1].toFixed(1) + '|<br>';
-    i += layers[0][2];
+    result += weights[i].toFixed(2) + '|';
+    ++i;
   }
-  result += '<br>';
+  result += '<br>|';
+  for (let l = 0; l < layers[1]; ++l) {
+    result += weights[i].toFixed(2) + '|';
+    ++i;
+  }
+  result += '<br><br>';
   // bias
   for (let l = 0; l < layers[1]; ++l) {
-    result += '|' + weights[i].toFixed(1);
+    result += '|' + weights[i].toFixed(2);
     ++i;
   }
   result += '|<br><br>';
@@ -413,24 +432,24 @@ function parse2(txt, layers) {
   for (let k = 0; k < layers[2]; ++k) {
     let line = '|';
     for (let l = 0; l < layers[1]; ++l) {
-      line += weights[i].toFixed(1) + '|';
+      line += weights[i].toFixed(2) + '|';
       ++i;
     }
     result += line + '<br><br>';
   }
   // bias1
   for (let k = 0; k < layers[2]; ++k) {
-    result += '|' + weights[i].toFixed(1);
+    result += '|' + weights[i].toFixed(2);
     ++i;
   }
   result += '|<br><br>';
   // hidden2
   for (let l = 0; l < layers[2]; ++l) {
-    result += '|' + weights[i].toFixed(1);
+    result += '|' + weights[i].toFixed(2);
     ++i;
   }
   // bias2
-  result += '|<br><br>|' + weights[i].toFixed(1) + '|<br>';
+  result += '|<br><br>|' + weights[i].toFixed(2) + '|<br>';
   return result;
 }
 
@@ -469,13 +488,26 @@ function parseascii2(txt, layers, converter) {
     i += layers[0][1];
   }
   result += ali + tmp + '|\n\n\n';
-  result += 'fixed stones  \n\n|   |   |\n|---|---|\n';
+  result += 'fixed stones black  \n\n|';
+  let header = '';
+  let row = '\n|';
   for (let l = 0; l < layers[1]; ++l) {
-    result += '|' + converter(weights[i]) + '|'
-        + converter(weights[i + 1]) + '|\n';
-    i += layers[0][2];
+    header += '   |';
+    row += '---|';
   }
-  result += '\n\nbias  \n\n';
+  result += header + row + '\n';
+  for (let l = 0; l < layers[1]; ++l) {
+    result += converter(weights[i]) + '|';
+    ++i;
+  }
+  i += layers[0][2];
+  result += '|\n\nfixed stones white  \n\n|';
+  result += header + row + '\n';
+  for (let l = 0; l < layers[1]; ++l) {
+    result += converter(weights[i + 1]) + '|';
+    ++i;
+  }
+  result += '|\n\nbias  \n\n';
   tmp = '|\n';
   ali = '|\n';
   for (let l = 0; l < layers[1]; ++l) {
@@ -543,25 +575,55 @@ function parseasciitbl2(txt, layers, converter) {
   }
   result += '</div>';
   result += '<table border=1 cellspacing=0><caption>turn</caption><tr>';
-  for (let l = 0; l < layers[1]; ++l) {
-    result += '<td>' + converter(weights[l + i]) + '</td>';
-    i += layers[0][1];
+  let sz = layers[1]
+  const COLUMNS = 128;
+  for (let l = sz ; l > 0 ; ) {
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
   }
-  result += '</tr></table>\n';
-  result += '<table border=1 cellspacing=0><caption>fixed stones</caption><tr>';
-  let tmp = '</tr><tr>'
-  for (let l = 0; l < layers[1]; ++l) {
-    result += '<td>' + converter(weights[i]) + '</td>';
-    tmp += '<td>' + converter(weights[i + 1]) + '</td>';
-    i += layers[0][2];
+  result += '</table>\n';
+  result += '<table border=1 cellspacing=0><caption>fixed stones black</caption>';
+  for (let l = sz ; l > 0 ; ) {
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
   }
-  result += tmp + '</tr></table>\n';
-  result += '<table border=1 cellspacing=0><caption>bias</caption><tr>';
-  for (let l = 0; l < layers[1]; ++l) {
-    result += '<td>' + converter(weights[i]) + '</td>';
-    ++i;
+  result += '</table>\n';
+  result += '<table border=1 cellspacing=0><caption>fixed stones white</caption>';
+  for (let l = sz ; l > 0 ; ) {
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
   }
-  result += '</tr></table>\n';
+  result += '</table>\n';
+  result += '<table border=1 cellspacing=0><caption>bias</caption>';
+  for (let l = sz ; l > 0 ; ) {
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
+  }
+  result += '</table>\n';
   result += '<div class="grp">';
   for (let k = 0; k < layers[2]; ++k) {
     result += "<table border=1 cellspacing=0><caption>hidden1-" + k + "</caption>";
