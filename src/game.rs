@@ -603,7 +603,7 @@ impl GameBB {
                 let (val, node) = f(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
                 if self.is_verbose() {
-                    println!("val:{val:+5.1} {} {}msec",
+                    println!("  val:{val:+5.1} {} {}msec",
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();

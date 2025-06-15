@@ -234,10 +234,10 @@ impl RuversiRunner {
         let lines : Vec<_> = txt.split("\n").collect();
         let res = lines[12].to_ascii_lowercase();
         if self.verbose {println!("opp:{}", &res);}
-        let posptn = regex::Regex::new("nodes\\. ([a-h][1-8])").unwrap();
+        let posptn = regex::Regex::new("nodes\\. ([A-Ha-h][1-8])").unwrap();
         let xtxt = match posptn.captures(&res) {
             Some(cap) => {
-                String::from(&cap[1])
+                String::from(&cap[1].to_lowercase())
             },
             _ => {
                 return Err(
