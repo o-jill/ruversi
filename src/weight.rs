@@ -951,7 +951,9 @@ impl Weight {
             hidsum = wfs[i].mul_add(fs.0 as f32, hidsum);
             hidsum = wfs[i + N_HIDDEN].mul_add(fs.1 as f32, hidsum + wdc[i]);
             // sigmoid
-            *h = 1f32 / ((-hidsum).exp() + 1.0);
+            // *h = 1f32 / ((-hidsum).exp() + 1.0);
+            // relu
+            *h = if hidsum > 0.0 {hidsum} else {0.0};
         }
 
         let mut sum = self.wl2bias();
@@ -964,7 +966,10 @@ impl Weight {
                 hidsum2 = h1.mul_add(wh[j + i * N_HIDDEN], hidsum2);
                 // hidsum2 += h1 * wh[j + i * N_HIDDEN];
             }
-            sum += wh2[i] / ((-hidsum2).exp() + 1f32)
+            // sigmoid
+            // sum += wh2[i] / ((-hidsum2).exp() + 1f32)
+            // relu
+            sum += if hidsum2 > 0.0 {wh2[i] * hidsum2} else {0.0};
         }
         sum
     }
