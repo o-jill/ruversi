@@ -21,3 +21,9 @@ cassio: -cassio
 # path: ./bin/mEdax-aarch64
 # evfile: data/eval.dat
 # cassio: -cassio
+
+# against ruversi w/ cassio protocol
+#curdir: ../ruversi2/
+#edax: ./target/release/ruversi
+#evfile: --ev1 ./data/evaltable.txt
+#cassio: --oep
