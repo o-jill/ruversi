@@ -2087,27 +2087,15 @@ impl Weight {
                 let wdc2 = x86_64::_mm256_load_ps(wdc.as_ptr().add(hidx + 8));
                 let h1234 = x86_64::_mm256_add_ps(h1, wdc1);
                 let h5678 = x86_64::_mm256_add_ps(h2, wdc2);
-
-                let emx1 = Weight::expmx_ps_simd256(h1234);
-                let emx2 = Weight::expmx_ps_simd256(h5678);
-                let one = x86_64::_mm256_set1_ps(1.0);
-                let hsp141 = x86_64::_mm256_add_ps(emx1, one);
-                let hsp142 = x86_64::_mm256_add_ps(emx2, one);
-                // let wh4 = x86_64::_mm256_load_ps(wh.as_ptr().add(hidx));
-
-                let y41 = x86_64::_mm256_div_ps(one, hsp141);
-                let y42 = x86_64::_mm256_div_ps(one, hsp142);
-                // let rhsp14 = x86_64::_mm_rcp_ps(hsp14);
-                // let two = x86_64::_mm_set1_ps(2.0);
-                // let x2 = x86_64::_mm_mul_ps(rhsp14, hsp14);
-                // let x3 = x86_64::_mm_sub_ps(two, x2);
-                // let x4 = x86_64::_mm_mul_ps(rhsp14, x3);
-                // let y4 = x86_64::_mm_mul_ps(w24, x4);
-
+                // relu
+                let zero = x86_64::_mm256_setzero_ps();
+                let y41 = x86_64::_mm256_max_ps(zero, h1234);
+                let y42 = x86_64::_mm256_max_ps(zero, h5678);
                 x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(i), y41);
                 x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(i + 8), y42);
             }
         }
+
         // 2nd layer to output
         let mut res = self.wl2bias();
         let wh = self.wlayer1();
@@ -2117,7 +2105,7 @@ impl Weight {
         let mut hid2 = [0f32 ; N_HIDDEN2];
         for i in 0..N_HIDDEN2 {
             let mut hidsum2 = wdc1[i];
-            let mut sum4 = [0f32 ; 8];
+            let mut sum4 = [0f32 ; N_HIDDEN / 4];
             for j in (0..N_HIDDEN).step_by(16) {
                 let idx = i * N_HIDDEN + j;
                 unsafe {
@@ -2138,21 +2126,17 @@ impl Weight {
                 hidsum2 += h;
             }
             hid2[i] = hidsum2;
-            // res += wh2[i] / ((-hidsum2).exp() + 1f32);
         }
-        unsafe {
+        unsafe {  // relu
             let x1 = x86_64::_mm256_loadu_ps(hid2.as_ptr());
             let x2 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(8));
-            let emx41 = Weight::expmx_ps_simd256(x1);
-            let emx42 = Weight::expmx_ps_simd256(x2);
-            let one = x86_64::_mm256_set1_ps(1f32);
-            let hsp1 = x86_64::_mm256_add_ps(emx41, one);
-            let hsp2 = x86_64::_mm256_add_ps(emx42, one);
-
+            let zero = x86_64::_mm256_setzero_ps();
+            let h1 = x86_64::_mm256_max_ps(zero, x1);
+            let h2 = x86_64::_mm256_max_ps(zero, x2);
             let w1 = x86_64::_mm256_load_ps(wh2.as_ptr());
             let w2 = x86_64::_mm256_load_ps(wh2.as_ptr().add(8));
-            let y1 = x86_64::_mm256_div_ps(w1, hsp1);
-            let y2 = x86_64::_mm256_div_ps(w2, hsp2);
+            let y1 = x86_64::_mm256_mul_ps(h1, w1);
+            let y2 = x86_64::_mm256_mul_ps(h2, w2);
             let y3 = x86_64::_mm256_add_ps(y1, y2);
             let s1 = x86_64::_mm256_extractf128_ps(y3, 0);
             let s2 = x86_64::_mm256_extractf128_ps(y3, 1);
