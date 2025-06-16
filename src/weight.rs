@@ -1517,22 +1517,10 @@ impl Weight {
                 let wdc42 = x86_64::_mm_load_ps(wdc[i + 4..].as_ptr());
                 let h1234 = x86_64::_mm_add_ps(h1234, wdc4);
                 let h5678 = x86_64::_mm_add_ps(h5678, wdc42);
-
-                let emx4 = Weight::expmx_ps_simd(h1234);
-                let emx42 = Weight::expmx_ps_simd(h5678);
-                let one = x86_64::_mm_set1_ps(1.0);
-                let hsp14 = x86_64::_mm_add_ps(emx4, one);
-                let hsp142 = x86_64::_mm_add_ps(emx42, one);
-                // let wh4 = x86_64::_mm_load_ps(wh[hidx..].as_ptr());
-
-                let y4 = x86_64::_mm_div_ps(one, hsp14);
-                let y42 = x86_64::_mm_div_ps(one, hsp142);
-                // let rhsp14 = x86_64::_mm_rcp_ps(hsp14);
-                // let two = x86_64::_mm_set1_ps(2.0);
-                // let x2 = x86_64::_mm_mul_ps(rhsp14, hsp14);
-                // let x3 = x86_64::_mm_sub_ps(two, x2);
-                // let x4 = x86_64::_mm_mul_ps(rhsp14, x3);
-                // let y4 = x86_64::_mm_mul_ps(w24, x4);
+                // relu
+                let zero = x86_64::_mm_setzero_ps();
+                let y4 = x86_64::_mm_max_ps(h1234, zero);
+                let y42 = x86_64::_mm_max_ps(h5678, zero);
 
                 x86_64::_mm_store_ps(hid.as_mut_ptr().add(i), y4);
                 x86_64::_mm_store_ps(hid.as_mut_ptr().add(i + 4), y42);
@@ -1579,29 +1567,25 @@ impl Weight {
             // res += wh2[i] / ((-hidsum2).exp() + 1f32);
             hid2[i] = hidsum2;
         }
-        unsafe {
+        unsafe {  // relu
             let h1 = x86_64::_mm_load_ps(hid2.as_ptr());
             let h2 = x86_64::_mm_load_ps(hid2.as_ptr().add(4));
             let h3 = x86_64::_mm_load_ps(hid2.as_ptr().add(8));
             let h4 = x86_64::_mm_load_ps(hid2.as_ptr().add(12));
-            let emx41 = Weight::expmx_ps_simd(h1);
-            let emx42 = Weight::expmx_ps_simd(h2);
-            let emx43 = Weight::expmx_ps_simd(h3);
-            let emx44 = Weight::expmx_ps_simd(h4);
-            let one = x86_64::_mm_set1_ps(1.0);
-            let hsp141 = x86_64::_mm_add_ps(emx41, one);
-            let hsp142 = x86_64::_mm_add_ps(emx42, one);
-            let hsp143 = x86_64::_mm_add_ps(emx43, one);
-            let hsp144 = x86_64::_mm_add_ps(emx44, one);
+            let zero = x86_64::_mm_setzero_ps();
+            let h1 = x86_64::_mm_max_ps(h1, zero);
+            let h2 = x86_64::_mm_max_ps(h2, zero);
+            let h3 = x86_64::_mm_max_ps(h3, zero);
+            let h4 = x86_64::_mm_max_ps(h4, zero);
             let wh21 = x86_64::_mm_load_ps(wh2.as_ptr());
             let wh22 = x86_64::_mm_load_ps(wh2.as_ptr().add(4));
             let wh23 = x86_64::_mm_load_ps(wh2.as_ptr().add(8));
             let wh24 = x86_64::_mm_load_ps(wh2.as_ptr().add(12));
 
-            let y1 = x86_64::_mm_div_ps(wh21, hsp141);
-            let y2 = x86_64::_mm_div_ps(wh22, hsp142);
-            let y3 = x86_64::_mm_div_ps(wh23, hsp143);
-            let y4 = x86_64::_mm_div_ps(wh24, hsp144);
+            let y1 = x86_64::_mm_mul_ps(wh21, h1);
+            let y2 = x86_64::_mm_mul_ps(wh22, h2);
+            let y3 = x86_64::_mm_mul_ps(wh23, h3);
+            let y4 = x86_64::_mm_mul_ps(wh24, h4);
             let y12 = x86_64::_mm_add_ps(y1, y2);
             let y34 = x86_64::_mm_add_ps(y3, y4);
             let y1234 = x86_64::_mm_add_ps(y12, y34);
