@@ -367,3 +367,133 @@ pub fn showhelp(msg : &str) {
         size of minibatch. default 128.
 ");
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_defaults() {
+        // デフォルト引数（引数なし）の場合のフィールド値を確認
+        let args = vec!["prog".to_string()];
+        let opt = MyOption::new(args).unwrap();
+        assert_eq!(opt.depth, 7);
+        // eta のデフォルト値は None
+        assert_eq!(opt.eta, None);
+        // duellv のデフォルト値は 5
+        assert_eq!(opt.duellv, 5);
+        // edaxconfig のデフォルト値は空文字列
+        assert_eq!(opt.edaxconfig, "");
+        // evaltable1 のデフォルト値は空文字列
+        assert_eq!(opt.evaltable1, "");
+        // evaltable2 のデフォルト値は空文字列
+        assert_eq!(opt.evaltable2, "");
+        // initpos のデフォルト値は空文字列
+        assert_eq!(opt.initpos, "");
+        // mode のデフォルト値は Mode::None
+        assert_eq!(opt.mode, Mode::None);
+        // n のデフォルト値は None
+        assert_eq!(opt.n, None);
+        // opponent のデフォルト値は Opponent::None
+        assert_eq!(opt.opponent, Opponent::None);
+        // repeat のデフォルト値は None
+        assert_eq!(opt.repeat, None);
+        // rfen のデフォルト値は空文字列
+        assert_eq!(opt.rfen, "");
+        // progress のデフォルト値は空のベクタ
+        assert_eq!(opt.progress, Vec::<u32>::new());
+        // think のデフォルト値は空文字列
+        assert_eq!(opt.think, "");
+        // outtrain のデフォルト値は空文字列
+        assert_eq!(opt.outtrain, "");
+        // turn のデフォルト値は board::NONE
+        assert_eq!(opt.turn, board::NONE);
+        // trmode のデフォルト値は TrainingMode::OneByOne
+        assert_eq!(opt.trmode, TrainingMode::OneByOne);
+        // minibsize のデフォルト値は 128
+        assert_eq!(opt.minibsize, 128);
+        // verbose のデフォルト値は Verbose::Normal
+        assert_eq!(opt.verbose, Verbose::Normal);
+        // treedump のデフォルト値は None
+        assert_eq!(opt.treedump, None);
+    }
+
+    #[test]
+    fn test_valid_depth() {
+        // --depthオプションで値を指定した場合の動作を確認
+        let args = vec!["prog".to_string(), "--depth".to_string(), "10".to_string()];
+        let opt = MyOption::new(args).unwrap();
+        // depth フィールドが 10 になっているか確認
+        assert_eq!(opt.depth, 10);
+    }
+
+    #[test]
+    fn test_invalid_depth() {
+        // 無効なdepth(0)の場合、エラーになることを確認
+        let args = vec!["prog".to_string(), "--depth".to_string(), "0".to_string()];
+        let err = MyOption::new(args).unwrap_err();
+        // エラーメッセージに "invalid number" が含まれることを確認
+        assert!(err.contains("invalid number"));
+    }
+
+    #[test]
+    fn test_eta() {
+        // --eta オプションの値のパースを確認
+        let args = vec!["prog".to_string(), "--eta".to_string(), "0.5".to_string()];
+        let opt = MyOption::new(args).unwrap();
+        // eta フィールドが Some(0.5) になっているか確認
+        assert_eq!(opt.eta, Some(0.5));
+    }
+
+    #[test]
+    fn test_silent_option() {
+        // --silent オプションで verbose フィールドが Silent になることを確認するテスト
+        let args = vec!["prog".to_string(), "--silent".to_string()];
+        let opt = MyOption::new(args).unwrap();
+        // verbose が Verbose::Silent かどうか確認
+        assert_eq!(opt.verbose, Verbose::Silent);
+        // .is_silent() メソッドでも確認
+        assert!(opt.verbose.is_silent());
+    }
+
+    #[test]
+    fn test_verbose_option() {
+        // --verbose オプションで verbose フィールドが Verbose になることを確認するテスト
+        let args = vec!["prog".to_string(), "--verbose".to_string()];
+        let opt = MyOption::new(args).unwrap();
+        // verbose が Verbose::Verbose かどうか確認
+        assert_eq!(opt.verbose, Verbose::Verbose);
+        // .is_verbose() メソッドでも確認
+        assert!(opt.verbose.is_verbose());
+    }
+
+
+    #[test]
+    fn test_ev1_file_not_exist_should_fail() {
+        // --ev1 で存在しないファイルを指定した場合、Errが返ることを確認
+        let args = vec![
+            "prog".to_string(),
+            "--ev1".to_string(),
+            "this_file_should_not_exist.ev".to_string(),
+        ];
+        let err = MyOption::new(args).unwrap_err();
+        // エラーメッセージに "failed find" やファイル名が含まれていることを確認
+        assert!(err.contains("failed find"));
+        assert!(err.contains("this_file_should_not_exist.ev"));
+    }
+
+    #[test]
+    fn test_ev2_file_not_exist_should_fail() {
+        // --ev2 で存在しないファイルを指定した場合、Errが返ることを確認
+        let args = vec![
+            "prog".to_string(),
+            "--ev2".to_string(),
+            "another_missing_file.ev".to_string(),
+        ];
+        let err = MyOption::new(args).unwrap_err();
+        // エラーメッセージに "failed find" やファイル名が含まれていることを確認
+        assert!(err.contains("failed find"));
+        assert!(err.contains("another_missing_file.ev"));
+    }
+}
