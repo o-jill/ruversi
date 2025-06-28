@@ -301,18 +301,18 @@ impl DuelResult {
         }
     }
 
-    pub fn dump(&self) {
-        let twin = self.win[0] + self.win[1];
-        let tdraw = self.draw[0] + self.draw[1];
-        let tlose = self.lose[0] + self.lose[1];
-        let tsen = self.win[0] + self.lose[1] + tdraw;
-        let tgo = self.win[1] + self.lose[0] + tdraw;
-        let winrate = twin as f64 / (self.total - tdraw) as f64;
+    pub fn duel_summary(win : &[u32], lose : &[u32], draw : &[u32], total : &u32) {
+        let twin = win[0] + win[1];
+        let tdraw = draw[0] + draw[1];
+        let tlose = lose[0] + lose[1];
+        let tsen = win[0] + lose[1] + tdraw;
+        let tgo = win[1] + lose[0] + tdraw;
+        let winrate = twin as f64 / (total - tdraw) as f64;
         let winrate100 = 100.0 * winrate;
         let r = 400.0 * (twin as f64 / tlose as f64).log10();
 
-        let err_margin = if self.total > tdraw {
-            let se = (winrate * (1.0 - winrate) / self.total as f64).sqrt();
+        let err_margin = if *total > tdraw {
+            let se = (winrate * (1.0 - winrate) / *total as f64).sqrt();
             400.0 / std::f64::consts::LN_10 * se
         } else {
             0.0
@@ -320,12 +320,13 @@ impl DuelResult {
         let confidence_interval = err_margin * 1.96;  // 95%信頼区間
 
         println!(
-            "total,{},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate100:.2}%,R,{r:+.1},{confidence_interval:+.1}",
-            self.total);
-        println!("ev1 @@,win,{},draw,{},lose,{}",
-            self.win[0], self.draw[0], self.lose[0]);
-        println!("ev1 [],win,{},draw,{},lose,{}",
-            self.win[1], self.draw[1], self.lose[1]);
+            "total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate100:.2}%,R,{r:+.1},{confidence_interval:+.1}");
+        println!("ev1 @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
+        println!("ev1 [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
+    }
+
+    pub fn dump(&self) {
+        Self::duel_summary(&self.win, &self.draw, &self.lose, &self.total);
     }
 }
 
@@ -620,23 +621,8 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             kifu::GOTEWIN => {win[1] += 1;},
             _ => {}
         }
-        let twin = win[0] + win[1];
-        let tdraw = draw[0] + draw[1];
-        let tlose = lose[0] + lose[1];
-        let tsen = win[0] + lose[1] + tdraw;
-        let tgo = win[1] + lose[0] + tdraw;
-        let winrate = 100.0 * twin as f64 / (total - tdraw) as f64;
-        let r = 400.0 * (twin as f64 / tlose as f64).log10();
-        let err_margin = if total > tdraw {
-            let se = (winrate * (1.0 - winrate) / total as f64).sqrt();
-            400.0 / std::f64::consts::LN_10 * se
-        } else {
-            0.0
-        };
-        let confidence_interval = err_margin * 1.96;  // 95%信頼区間
-        println!("total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate:.2}%,R,{r:+.1},{confidence_interval:+.1}");
-        println!("ev1 @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
-        println!("ev1 [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
+
+        DuelResult::duel_summary(&win, &draw, &lose, &total);
     }
     println!("ev1:{}", MYOPT.get().unwrap().evaltable1);
     println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
@@ -798,23 +784,8 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             kifu::GOTEWIN => {win[1] += 1;},
             _ => {}
         }
-        let twin = win[0] + win[1];
-        let tdraw = draw[0] + draw[1];
-        let tlose = lose[0] + lose[1];
-        let tsen = win[0] + lose[1] + tdraw;
-        let tgo = win[1] + lose[0] + tdraw;
-        let winrate = 100.0 * twin as f64 / (total - tdraw) as f64;
-        let r = 400.0 * (twin as f64 / tlose as f64).log10();
-        let err_margin = if total > tdraw {
-            let se = (winrate * (1.0 - winrate) / total as f64).sqrt();
-            400.0 / std::f64::consts::LN_10 * se
-        } else {
-            0.0
-        };
-        let confidence_interval = err_margin * 1.96;  // 95%信頼区間
-        println!("total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate:.2}%,R,{r:+.1},{confidence_interval:+.1}");
-        println!("ext @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
-        println!("ext [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
+
+        DuelResult::duel_summary(&win, &draw, &lose, &total);
     }
 }
 
@@ -903,23 +874,8 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
             kifu::GOTEWIN => {win[1] += 1;},
             _ => {}
         }
-        let twin = win[0] + win[1];
-        let tdraw = draw[0] + draw[1];
-        let tlose = lose[0] + lose[1];
-        let tsen = win[0] + lose[1] + tdraw;
-        let tgo = win[1] + lose[0] + tdraw;
-        let winrate = 100.0 * twin as f64 / (total - tdraw) as f64;
-        let r = 400.0 * (twin as f64 / tlose as f64).log10();
-        let err_margin = if total > tdraw {
-            let se = (winrate * (1.0 - winrate) / total as f64).sqrt();
-            400.0 / std::f64::consts::LN_10 * se
-        } else {
-            0.0
-        };
-        let confidence_interval = err_margin * 1.96;  // 95%信頼区間
-        println!("total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate:.2}%,R,{r:+.1},{confidence_interval:+.1}");
-        println!("ext @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
-        println!("ext [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
+
+        DuelResult::duel_summary(&win, &draw, &lose, &total);
     }
 }
 
@@ -1028,23 +984,8 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
             kifu::GOTEWIN => {win[1] += 1;},
             _ => {}
         }
-        let twin = win[0] + win[1];
-        let tdraw = draw[0] + draw[1];
-        let tlose = lose[0] + lose[1];
-        let tsen = win[0] + lose[1] + tdraw;
-        let tgo = win[1] + lose[0] + tdraw;
-        let winrate = 100.0 * twin as f64 / (total - tdraw) as f64;
-        let r = 400.0 * (twin as f64 / tlose as f64).log10();
-        let err_margin = if total > tdraw {
-            let se = (winrate * (1.0 - winrate) / total as f64).sqrt();
-            400.0 / std::f64::consts::LN_10 * se
-        } else {
-            0.0
-        };
-        let confidence_interval = err_margin * 1.96;  // 95%信頼区間
-        println!("total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate:.2}%,R,{r:+.1},{confidence_interval:+.1}");
-        println!("ext @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
-        println!("ext [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
+
+        DuelResult::duel_summary(&win, &draw, &lose, &total);
     }
 }
 
