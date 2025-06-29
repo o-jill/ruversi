@@ -301,7 +301,7 @@ impl DuelResult {
         }
     }
 
-    pub fn duel_summary(win : &[u32], lose : &[u32], draw : &[u32], total : &u32) {
+    pub fn duel_summary(win : &[u32], draw : &[u32], lose : &[u32], total : &u32) {
         let twin = win[0] + win[1];
         let tdraw = draw[0] + draw[1];
         let tlose = lose[0] + lose[1];
