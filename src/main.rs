@@ -319,10 +319,16 @@ impl DuelResult {
         };
         let confidence_interval = err_margin * 1.96;  // 95%信頼区間
 
+        println!("total,win,draw,lose,balance-s,balance-g,winrate,R,95%");
         println!(
-            "total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate100:.2}%,R,{r:+.1},{confidence_interval:+.1}");
-        println!("ev1 @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
-        println!("ev1 [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
+            "{total},{twin},{tdraw},{tlose},{tsen},{tgo},{winrate100:.2}%,{r:+.1},{confidence_interval:.1}");
+        println!("ev1   ,win,draw,lose");
+        println!("ev1 @@,{},{},{}", win[0], draw[0], lose[0]);
+        println!("ev1 [],{},{},{}", win[1], draw[1], lose[1]);
+        // println!(
+        //     "total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate100:.2}%,R,{r:+.1},{confidence_interval:+.1}");
+        // println!("ev1 @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
+        // println!("ev1 [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
     }
 
     pub fn dump(&self) {
