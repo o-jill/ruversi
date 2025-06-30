@@ -148,7 +148,9 @@ def genhistogram(histogram)
   res += "<textarea id=histogram cols=40>stats\n"
   avg = sum / n.to_f
   stdev = Math.sqrt(sqsum / n - avg * avg).round(2)
-  res += "N, #{n}, avg, #{avg.round(2)}, stdev,#{stdev}, median, #{median}, mode, #{mode}, #{modefreq}\n"
+  # res += "N, #{n}, avg, #{avg.round(2)}, stdev, #{stdev}, median, #{median}, mode, #{mode}, #{modefreq}\n"
+  res += "N, avg, stdev, median, mode, \n"
+  res += "#{n}, #{avg.round(2)}, #{stdev}, #{median}, #{mode}, #{modefreq}\n"
   res += "score histogram\n"
   for i in 0..128
     res += "#{(i - 64)}, #{histogram[i]}\n"
@@ -170,6 +172,7 @@ def read(lines)
   gote = ""
   ev1 = ""
   ev2 = ""
+  prev_was_total = false;  # 前の行はtotalのヘッダ部
   lines.each {|line|
     if line.start_with?("val:")
       term = line.split(' ')
@@ -186,6 +189,14 @@ def read(lines)
       end
       # res += val + "\n"
       next
+    end
+
+    if prev_was_total
+        if line =~ /^\d+,\d+,\d+,\d+,\d+,\d+,/
+            total += '<br>' + line
+            next
+        end
+        prev_was_total = false;
     end
 
     next if line =~ /^\d+ /
@@ -213,14 +224,19 @@ def read(lines)
     next if line[0] == "@" || line[0] == "["
     if line.start_with?("total")
       total = line
+      prev_was_total = true;
     end
     if line.start_with?("ev1 @")
       m = /win,(\d+),draw,(\d+),lose,(\d+)/.match(line)
+      #     win, draw, lose
+      m = /(\d+),(\d+),(\d+)/.match(line) unless m
       sente = "#{m[1]} / #{m[2]} / #{m[3]}"
       next
     end
     if line.start_with?("ev1 [")
       m = /win,(\d+),draw,(\d+),lose,(\d+)/.match(line)
+      #     win, draw, lose
+      m = /(\d+),(\d+),(\d+)/.match(line) unless m
       gote = "#{m[1]} / #{m[2]} / #{m[3]}"
       next
     end
