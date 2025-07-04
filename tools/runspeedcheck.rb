@@ -125,6 +125,34 @@ def learn()
   puts("deprecated.")
 end
 
+# ev2:data/evaltable.txt
+# ev1:data/evaltable.txt
+# ev1 [],4,0,0
+# ev1 @@,0,0,4
+# ev1   ,win,draw,lose
+# 8,4,0,4,0,8,50.00%,+0.0,60.2
+# total,win,draw,lose,balance-s,balance-g,winrate,R,95%
+def gameresult_table(lines, elapsed)
+  # p lines
+  value = 0
+  games = 1
+  prev_line = ""
+  lines.each do |line|
+    puts line
+
+    # ex.
+    # 8687,1630,56,7001,...
+    # total,win,draw,lose,...
+    if line.start_with?("total,win,draw")
+      m = /^(\d+),(\d+),(\d+),/.match(prev_line)
+      games = m[1].to_i
+      break
+    end
+
+    prev_line = line
+  end
+end
+
 # total,8,win,4,draw,0,lose,4,balance,0,8,50.00%,R,+0.0
 # ev1 @@,win,0,draw,0,lose,4
 # ev1 [],win,4,draw,0,lose,0
@@ -132,8 +160,8 @@ end
 # ev2:data/evaltable.txt
 def gameresult(lines, elapsed)
   # p lines
-  value = 0;
-  games = 1;
+  value = 0
+  games = 1
   lines.each {|line|
     puts line
 
@@ -190,7 +218,8 @@ def game()
     end
  
     # gameresult(tail(RESULT, 5), elapsed)
-    gameresult(txtout.split("\n").reverse, elapsed)
+    # gameresult(txtout.split("\n").reverse, elapsed)
+    gameresult_table(txtout.split("\n").reverse, elapsed)
     listelapsed << elapsed
   end
 
