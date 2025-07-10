@@ -504,7 +504,6 @@ function parseascii2(txt, layers, converter) {
     result += converter(weights[i]) + '|';
     ++i;
   }
-  i += layers[0][2];
   result += '|\n\nfixed stones white  \n\n|';
   result += header + row + '\n';
   for (let l = 0; l < layers[1]; ++l) {
@@ -540,7 +539,7 @@ function parseascii2(txt, layers, converter) {
     result += '|   ';
     ali += '|---';
     tmp += '|' + converter(weights[i]);
-    i += 1;
+    ++i;
   }
   result += ali + tmp + '|\n\n';
 
@@ -551,11 +550,13 @@ function parseascii2(txt, layers, converter) {
     result += '|   ';
     ali += '|---';
     tmp += '|' + converter(weights[i]);
-    i += 1;
+    ++i;
   }
   result += ali + tmp + '|\n\n';
+
   result += 'hidden2-bias  \n\n';
   result += converter(weights[i]) + '<br>';
+
   return result;
 }
 
