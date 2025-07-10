@@ -222,6 +222,10 @@ function num2marklinear(n) {
   return levelm[i];
 }
 
+function num2txt(n) {
+  return n.toFixed(2);
+}
+
 function parseascii(txt, layers, converter) {
   let result = '';
   weights = txt.split(',').map(Number);
@@ -663,7 +667,9 @@ function runasc2(type) {
   let layers = readheader2(txt[0]);
   // out.innerHTML = parseascii(txt[1], layers);
   if (type == "linear") {
-    out.innerHTML = markdown.parse(parseascii2(txt[1], layers, num2marklinear));
+    out.innerHTML =
+        /*markdown.parse(parseascii2(txt[1], layers, num2txt));*/
+        markdown.parse(parseascii2(txt[1], layers, num2marklinear));
   } else if (type == "log10") {
     // out.innerHTML = markdown.parse(parseasciitbl(txt[1], layers, num2markLog2));
     out.innerHTML = parseasciitbl2(txt[1], layers, num2markLog2);
