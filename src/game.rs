@@ -2,6 +2,7 @@ use super::*;
 
 use std::io::{self, Write};
 use std::sync::{Arc, RwLock};
+use typed_arena::Arena;
 
 pub struct GameBB {
     ban : bitboard::BitBoard,
@@ -39,7 +40,9 @@ impl GameBB {
     pub fn is_verbose(&self) -> bool {self.verbose}
 
     #[allow(dead_code)]
-    pub fn start(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, nodebb::NodeBB)>, depth : u8)
+    pub fn start(&mut self,
+            f : for<'a> fn(&bitboard::BitBoard, u8, wei : &Arena<nodebb::NodeBB<'a>>) -> Option<(f32, &'a nodebb::NodeBB<'a>)>,
+            depth : u8)
             -> Result<(), String> {
         loop {
             // show
@@ -47,7 +50,8 @@ impl GameBB {
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // think
             let st = Instant::now();
-            let (val, node) = f(&self.ban, depth).unwrap();
+            let arena = Arena::new();
+            let (val, node) = f(&self.ban, depth, &arena).unwrap();
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
@@ -55,7 +59,7 @@ impl GameBB {
                 println!("val:{val:+5.1} {} {}msec",
                     node.dump(), ft.as_millis());
             }
-            let best = node.best.unwrap();
+            let best = node.best.as_ref().unwrap();
             let x = best.x;
             let y = best.y;
             // apply move
@@ -86,7 +90,9 @@ impl GameBB {
         Ok(())
     }
 
-    pub fn starto(&mut self, f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>, depth : u8)
+    pub fn starto(&mut self,
+        f : for<'a> fn(&bitboard::BitBoard, u8, &'a Arena<nodebb::NodeBB<'a>>) -> Option<(f32, &'a nodebb::NodeBB<'a>)>,
+        depth : u8)
             -> Result<(), String> {
         loop {
             // show
@@ -94,7 +100,8 @@ impl GameBB {
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // think
             let st = Instant::now();
-            let (val, node) = f(&self.ban, depth).unwrap();
+            let arena = Arena::new();
+            let (val, node) = f(&self.ban, depth, &arena).unwrap();
 
             let ft = st.elapsed();
             if self.is_verbose() {
@@ -132,17 +139,20 @@ impl GameBB {
         Ok(())
     }
 
-    pub fn startgk(&mut self, f : fn(&bitboard::BitBoard, u8, &mut nodebb::NodeBB, &weight::Weight) -> Option<f32>, depth : u8)
+    pub fn startgk(&mut self,
+        f: for<'a> fn(&bitboard::BitBoard, u8, &weight::Weight, &'a Arena<nodebb::NodeBB<'a>>) -> Option<(f32, &'a nodebb::NodeBB<'a>)>,
+        depth : u8)
             -> Result<(), String> {
         loop {
             let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
-            let mut node = nodebb::NodeBB::new(0, 0, depth, bitboard::NONE);
+            // let mut node = nodebb::NodeBB::new(0, 0, depth, bitboard::NONE);
             // show
             // self.ban.put();
             // println!("{}", self.ban.to_str());
             // think
             // let st = Instant::now();
-            let _val = f(&self.ban, depth, &mut node, wei).unwrap();
+            let arena = Arena::new();
+            let (_val, node) = f(&self.ban, depth, wei, &arena).unwrap();
 
             // let ft = st.elapsed();
             // println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
@@ -319,7 +329,7 @@ impl GameBB {
     }
 
     pub fn starto_against_stdin(&mut self,
-            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
+            f : for<'a> fn(&bitboard::BitBoard, u8, &'a Arena<nodebb::NodeBB<'a>>) -> Option<(f32, &'a nodebb::NodeBB<'a>)>,
             depth : u8, turnin : i8) -> Result<(), String> {
         loop {
             let x;
@@ -370,7 +380,8 @@ impl GameBB {
                 if self.is_verbose() {println!("{}", self.ban.to_str());}
                 // think
                 let st = Instant::now();
-                let (val, node) = f(&self.ban, depth).unwrap();
+                let arena = Arena::new();
+                let (val, node) = f(&self.ban, depth, &arena).unwrap();
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
@@ -490,7 +501,7 @@ impl GameBB {
     /// # Returns  
     /// () or Error message.
     pub fn starto_against_edax(&mut self,
-            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
+            f : for<'a> fn(&bitboard::BitBoard, u8, &'a Arena< nodebb::NodeBB<'a>>) -> Option<(f32, &'a nodebb::NodeBB<'a>)>,
             depth : u8, turnin : i8, econf : &str) -> Result<(), String> {
         let er = edaxrunner::EdaxRunner::from_config(econf)?;
 
@@ -522,7 +533,8 @@ impl GameBB {
             } else {
                 // think
                 let st = Instant::now();
-                let (val, node) = f(&self.ban, depth).unwrap();
+                let arena = Arena::new();
+                let (val, node) = f(&self.ban, depth, &arena).unwrap();
                 let ft = st.elapsed();
                 if self.is_verbose() {
                     println!("val:{val:+5.1} {} {}msec",
@@ -568,7 +580,7 @@ impl GameBB {
     /// # Returns  
     /// () or Error message.
     pub fn starto_against_ruversi(&mut self,
-        f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
+        f : for<'a> fn(&bitboard::BitBoard, u8, &'a Arena<nodebb::NodeBB<'a>>) -> Option<(f32, &'a nodebb::NodeBB<'a>)>,
         depth : u8, turnin : i8, econf : &str) -> Result<(), String> {
         let mut rr = edaxrunner::RuversiRunner::from_config(econf)?;
         rr.set_verbose(self.verbose);
@@ -600,7 +612,8 @@ impl GameBB {
             } else {
                 // think
                 let st = Instant::now();
-                let (val, node) = f(&self.ban, depth).unwrap();
+                let arena = Arena::new();
+                let (val, node) = f(&self.ban, depth, &arena).unwrap();
                 let ft = st.elapsed();
                 if self.is_verbose() {
                     println!("  val:{val:+5.1} {} {}msec",
@@ -646,7 +659,7 @@ impl GameBB {
     /// # Returns  
     /// () or Error message.
     pub fn start_against_via_cassio(&mut self,
-            f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
+            f : for<'a> fn(&bitboard::BitBoard, u8, &'a Arena<nodebb::NodeBB<'a>>) -> Option<(f32, &'a nodebb::NodeBB<'a>)>,
             depth : u8, turnin : i8, cconf : &str) -> Result<(), String> {
         let er = edaxrunner::CassioRunner::from_config(cconf)?;
         let mut cassio =
@@ -712,7 +725,8 @@ impl GameBB {
             } else {
                 // think
                 let st = Instant::now();
-                let (val, node) = f(&self.ban, depth).unwrap();
+                let arena = Arena::new();
+                let (val, node) = f(&self.ban, depth, &arena).unwrap();
                 let ft = st.elapsed();
                 if self.is_verbose() {
                     println!("val:{val:+5.1} {} {}msec",
@@ -819,7 +833,7 @@ impl GameBB {
     /// - et1 : SENTE
     /// - et2 : GOTE
     pub fn starto_with_2et(&mut self,
-        f : fn(&bitboard::BitBoard, u8) -> Option<(f32, &nodebb::NodeBB)>,
+        f : for<'a> fn(&bitboard::BitBoard, u8, &'a Arena<nodebb::NodeBB<'a>>) -> Option<(f32, &'a nodebb::NodeBB<'a>)>,
         depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
         loop {
@@ -838,7 +852,8 @@ impl GameBB {
             }
             // think
             let st = Instant::now();
-            let (val, node) = f(&self.ban, depth).unwrap();
+            let arena = Arena::new();
+            let (val, node) = f(&self.ban, depth, &arena).unwrap();
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
@@ -878,7 +893,7 @@ impl GameBB {
     /// - et1 : SENTE
     /// - et2 : GOTE
     pub fn starto_with_2et_mt(&mut self,
-        f : fn(&bitboard::BitBoard, u8, &mut nodebb::NodeBB, &weight::Weight) -> Option<f32>,
+        f : for<'a> fn(&bitboard::BitBoard, u8, &weight::Weight, &'a Arena<nodebb::NodeBB<'a>>) -> Option<(f32, &'a nodebb::NodeBB<'a>)>,
         depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
         loop {
@@ -886,18 +901,12 @@ impl GameBB {
             // self.ban.put();
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
-            let wei;
-            let mut node =
-                if self.ban.teban == bitboard::SENTE {
-                    wei = et1;
-                    nodebb::NodeBB::new(0, 0, depth, bitboard::NONE)
-                } else {
-                    wei = et2;
-                    nodebb::NodeBB::new(0, 0, depth, bitboard::NONE)
-                };
+            let wei =
+                if self.ban.teban == bitboard::SENTE {et1} else {et2};
             // think
             let st = Instant::now();
-            let val = f(&self.ban, depth, &mut node, wei).unwrap();
+            let arena = Arena::new();
+            let (val, node) = f(&self.ban, depth, wei, &arena).unwrap();
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();

@@ -5,6 +5,7 @@ use std::thread;
 use std::sync::mpsc;
 use rand::Rng;
 use rand::distributions::{Distribution, Uniform};
+use typed_arena::Arena;
 use std::sync::{Arc, Mutex};
 
 mod cassio;
@@ -144,8 +145,9 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
                 ban.put();
 
                 let st = Instant::now();
+                let arena = Arena::new();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                    nodebb::think_ab_simple(&ban, depth, &arena).unwrap();
                     // nodebb::NodeBB::thinko_ab(&ban, depth).unwrap();
                     // nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
                 let ft = st.elapsed();
@@ -188,13 +190,13 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
                     //     // nodebb::NodeBB::think_ab_extract2,
                     //     nodebb::NodeBB::think_ab,
                     //     depth).unwrap()
-                    g.startgk(nodebb::NodeBB::thinko_ab_simple_gk, depth).unwrap();
+                    // g.startgk(nodebb::NodeBB::think_ab_simple_gk::<_, _, _>, depth).unwrap();
+                    g.startgk(nodebb::think_ab_simple_gk, depth).unwrap();
                     //g.starto(nodebb::NodeBB::thinko_ab_simple, depth).unwrap();
                     // g.starto(nodebb::NodeBB::thinko_ab_extract2, depth).unwrap();
                 },
                 "all" => {
-                    // g.start(nodebb::NodeBB::think, depth).unwrap()
-                    g.starto(nodebb::NodeBB::thinko, depth).unwrap();
+                    g.starto(nodebb::think_simple, depth).unwrap();
                 },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -379,10 +381,10 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                 match think {
                     "" | "ab" => {
                         // g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w3, &w4).unwrap()
-                        g.starto_with_2et_mt(nodebb::NodeBB::thinko_ab_simple_gk, depth, &w3, &w4).unwrap()
+                        g.starto_with_2et_mt(nodebb::think_ab_simple_gk, depth, &w3, &w4).unwrap()
                     },
                     "all" => {
-                        g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w3, &w4).unwrap()
+                        g.starto_with_2et(nodebb::think_simple, depth, &w3, &w4).unwrap()
                     },
                     _ => { panic!("unknown thinking method.") }
                 }
@@ -410,10 +412,10 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                 let think = MYOPT.get().unwrap().think.as_str();
                 match think {
                     "" | "ab" => {
-                        g.starto_with_2et_mt(nodebb::NodeBB::thinko_ab_simple_gk, depth, &w4, &w3).unwrap()
+                        g.starto_with_2et_mt(nodebb::think_ab_simple_gk, depth, &w4, &w3).unwrap()
                     },
                     "all" => {
-                        g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w4, &w3).unwrap()
+                        g.starto_with_2et(nodebb::think_simple, depth, &w4, &w3).unwrap()
                     },
                     _ => { panic!("unknown thinking method.") }
                 }
@@ -444,10 +446,10 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::think_ab_simple, depth, &w1, &w2).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::think_simple, depth, &w1, &w2).unwrap()
                 },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -476,10 +478,10 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::think_ab_simple, depth, &w2, &w1).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::think_simple, depth, &w2, &w1).unwrap()
                 },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -549,12 +551,12 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                     //     // nodebb::NodeBB::think_ab_extract2,
                     //     nodebb::NodeBB::think_ab,
                     //     depth, &w1, &w2).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::think_ab_simple, depth, &w1, &w2).unwrap()
                     // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w1, &w2).unwrap()
                     // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w1, &w2).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::think_simple, depth, &w1, &w2).unwrap()
                     // g.start_with_2et(nodebb::NodeBB::think, depth, &w1, &w2).unwrap()
                 },
                 // "" => {
@@ -594,12 +596,12 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                 "" | "ab" => {
                     // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, depth, &w1, &w2).unwrap()
                     // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::think_ab_simple, depth, &w2, &w1).unwrap()
                     // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w2, &w1).unwrap()
                     // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w2, &w1).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::think_simple, depth, &w2, &w1).unwrap()
                     // g.start_with_2et(nodebb::NodeBB::think, depth, &w2, &w1).unwrap()
                 },
                 // "" => {
@@ -679,11 +681,11 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
                 match think {
                     "" | "ab" => {
                         // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_simple
+                        nodebb::think_ab_simple
                         // nodebb::NodeBB::thinko_ab_extract2
                     },
                     "all" => {
-                        nodebb::NodeBB::thinko
+                        nodebb::think_simple
                     },
                     _ => { panic!("unknown thinking method.") }
                 }, depth, turn, econf).unwrap();
@@ -745,11 +747,11 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
                 match think {
                     "" | "ab" => {
                         // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_simple
+                        nodebb::think_ab_simple
                         // nodebb::NodeBB::thinko_ab_extract2
                     },
                     "all" => {
-                        nodebb::NodeBB::thinko
+                        nodebb::think_simple
                     },
                     _ => { panic!("unknown thinking method.") }
                 }, depth, turn, econf).unwrap();
@@ -830,11 +832,11 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
                 match think {
                     "" | "ab" => {
                         // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_simple
+                        nodebb::think_ab_simple
                         // nodebb::NodeBB::thinko_ab_extract2
                     },
                     "all" => {
-                        nodebb::NodeBB::thinko
+                        nodebb::think_simple
                     },
                     _ => { panic!("unknown thinking method.") }
                 }, depth, turn, econf).unwrap();
@@ -860,11 +862,11 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
                 match think {
                     "" | "ab" => {
                         // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_simple
+                        nodebb::think_ab_simple
                         // nodebb::NodeBB::thinko_ab_extract2
                     },
                     "all" => {
-                        nodebb::NodeBB::thinko
+                        nodebb::think_simple
                     },
                     _ => { panic!("unknown thinking method.") }
                 }, depth, turn, econf).unwrap();
@@ -917,10 +919,10 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
             g.starto_against_ruversi(
                 match think {
                     "" | "ab" => {
-                        nodebb::NodeBB::thinko_ab_simple
+                        nodebb::think_ab_simple
                     },
                     "all" => {
-                        nodebb::NodeBB::thinko
+                        nodebb::think_simple
                     },
                     _ => { panic!("unknown thinking method.") }
                 }, depth, turn, econf).unwrap();
@@ -958,10 +960,10 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
             g.starto_against_ruversi(
                 match think {
                     "" | "ab" => {
-                        nodebb::NodeBB::thinko_ab_simple
+                        nodebb::think_ab_simple
                     },
                     "all" => {
-                        nodebb::NodeBB::thinko
+                        nodebb::think_simple
                     },
                     _ => { panic!("unknown thinking method.") }
                 }, depth, turn, econf).unwrap();
@@ -1041,12 +1043,12 @@ fn play(depth : u8, turnh: i8) {
         g.starto_against_stdin(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::thinko_ab_simple
+                    nodebb::think_ab_simple
                     // nodebb::NodeBB::thinko_ab_extract2
                     // nodebb::NodeBB::think_ab
                 },
                 "all" => {
-                    nodebb::NodeBB::thinko
+                    nodebb::think_simple
                 },
                 _ => { panic!("unknown thinking method.") }
             }, depth, turnh).unwrap();
@@ -1095,11 +1097,11 @@ fn edax(depth : u8, turnh: i8) {
             match think {
                 "" | "ab" => {
                     // nodebb::NodeBB::think_ab_extract2
-                    nodebb::NodeBB::thinko_ab_simple
+                    nodebb::think_ab_simple
                     // nodebb::NodeBB::thinko_ab_extract2
                 },
                 "all" => {
-                    nodebb::NodeBB::thinko
+                    nodebb::think_simple
                 },
                 _ => { panic!("unknown thinking method.") }
             }, depth, turnh, econf).unwrap();
@@ -1138,12 +1140,10 @@ fn vs_ruversi(depth : u8, turnh: i8) {
         g.starto_against_ruversi(
             match think {
                 "" | "ab" => {
-                    // nodebb::NodeBB::think_ab_extract2
-                    nodebb::NodeBB::thinko_ab_simple
-                    // nodebb::NodeBB::thinko_ab_extract2
+                    nodebb::think_ab_simple
                 },
                 "all" => {
-                    nodebb::NodeBB::thinko
+                    nodebb::think_simple
                 },
                 _ => { panic!("unknown thinking method.") }
             }, depth, turnh, econf).unwrap();

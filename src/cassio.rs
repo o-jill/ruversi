@@ -6,6 +6,7 @@ use std::process::{Child, ChildStdin, ChildStdout};
 use std::thread::{sleep, spawn};
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use std::time::Duration;
+use typed_arena::Arena;
 
 const HEADER : &str = "ENGINE-PROTOCOL ";
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -20,8 +21,10 @@ pub struct OthelloEngineProtocol {
 impl OthelloEngineProtocol {
     pub fn new() -> Self {
         let log = OpenOptions::new().create(true)
-            .append(true).open("/tmp/ruversi.log");
-
+            .append(true).open("./tmp/ruversi.log");
+        if let Err(ref e) = log {
+            println!("{e:?}");
+        }
         OthelloEngineProtocol {
             logg : log.unwrap(),
             // thread : None,
@@ -70,8 +73,9 @@ impl OthelloEngineProtocol {
                 let _precision = elem[5].parse::<f32>().unwrap();
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
+                let arena = Arena::new();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                    nodebb::think_ab_simple(&ban, depth, &arena).unwrap();
                 let ft = st.elapsed();
                 // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let mvstr;
@@ -126,8 +130,9 @@ impl OthelloEngineProtocol {
                 let _precision = elem[4].parse::<f32>().unwrap();
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
+                let arena = Arena::new();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                    nodebb::think_ab_simple(&ban, depth, &arena).unwrap();
                 let ft = st.elapsed();
                 // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let mvstr;
