@@ -312,7 +312,7 @@ pub fn think_simple<'a>(ban : &bitboard::BitBoard, depth : u8, arena : &'a Arena
 
     let wei = unsafe{WEIGHT.as_ref().unwrap()};
 
-    let (val, node) = think_internal(ban, depth, 0, 0, wei, &arena)?;
+    let (val, node) = think_internal(ban, depth, 0, 0, wei, arena)?;
     let val = val * ban.teban as f32;
 
     Some((val, node))
@@ -346,7 +346,7 @@ pub fn think_ab_simple<'a>(ban : &bitboard::BitBoard, depth : u8, arena : &'a Ar
 
     let alpha : f32 = -123456.7;
     let beta : f32 = 123456.7;
-    let (val,  node) = think_internal_ab( ban, depth, 0, 0, alpha, beta, wei, &arena);
+    let (val,  node) = think_internal_ab( ban, depth, 0, 0, alpha, beta, wei, arena);
     let val = val * ban.teban as f32;
 
     Some((val, node))
@@ -399,7 +399,7 @@ pub fn think_internal_ab<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : 
         node.hyoka = val;
         return (val * fteban, node);
     } else if depth == 0 {
-        let val = NodeBB::evaluate(&ban, wei);
+        let val = NodeBB::evaluate(ban, wei);
         node.hyoka = val;
         return (val * fteban, node);
     }
