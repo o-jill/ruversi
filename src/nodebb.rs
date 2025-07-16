@@ -250,7 +250,7 @@ pub fn think_internal<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : u8,
         node.hyoka = val;
         return Some((val, node));
     }
-    if depth <= 0 {
+    if depth == 0 {
         let val = NodeBB::evaluate(ban, wei);
         node.hyoka = val;
         return Some((val, node));
@@ -398,7 +398,7 @@ pub fn think_internal_ab<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : 
         let val = ban.countf32();
         node.hyoka = val;
         return (val * fteban, node);
-    } else if depth <= 0 {
+    } else if depth == 0 {
         let val = NodeBB::evaluate(&ban, wei);
         node.hyoka = val;
         return (val * fteban, node);
