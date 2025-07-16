@@ -160,7 +160,7 @@ impl Gtp {
                     // nodebb::NodeBB::thinko_ab_extract2(&self.ban, depth).unwrap();
                 let ft = st.elapsed();
                 eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
-                let best = node.best.as_ref().unwrap();
+                let best = &node.best;
                 let xy = best.pos();
                 if xy == "00" {
                     self.ban.pass();

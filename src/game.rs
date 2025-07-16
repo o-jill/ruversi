@@ -59,7 +59,7 @@ impl GameBB {
                 println!("val:{val:+5.1} {} {}msec",
                     node.dump(), ft.as_millis());
             }
-            let best = node.best.as_ref().unwrap();
+            let best = &node.best;
             let x = best.x;
             let y = best.y;
             // apply move
@@ -108,7 +108,7 @@ impl GameBB {
                 println!("val:{val:+5.1} {} {}msec",
                     node.dump(), ft.as_millis());
             }
-            let best = node.best.as_ref().unwrap();
+            let best = &node.best;
             let x = best.x;
             let y = best.y;
             // apply move
@@ -156,7 +156,7 @@ impl GameBB {
 
             // let ft = st.elapsed();
             // println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
-            let best = node.best.as_ref().unwrap();
+            let best = &node.best;
             let x = best.x;
             let y = best.y;
             // apply move
@@ -296,7 +296,7 @@ impl GameBB {
                 if self.is_verbose() {
                     println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
                 }
-                let best = node.best.unwrap();
+                let best = &node.best;
                 x = best.x;
                 y = best.y;
             }
@@ -389,7 +389,7 @@ impl GameBB {
                     println!("val:{val:+5.1} {} {}msec",
                         node.dump(), ft.as_millis());
                 }
-                let best = node.best.as_ref().unwrap();
+                let best = &node.best;
                 x = best.x;
                 y = best.y;
             }
@@ -461,7 +461,7 @@ impl GameBB {
                     println!("val:{val:+5.1} {} {}msec",
                         node.dump(), ft.as_millis());
                 }
-                let best = node.best.unwrap();
+                let best = &node.best;
                 x = best.x;
                 y = best.y;
             }
@@ -540,7 +540,7 @@ impl GameBB {
                     println!("val:{val:+5.1} {} {}msec",
                         node.dump(), ft.as_millis());
                 }
-                let best = node.best.as_ref().unwrap();
+                let best = &node.best;
                 x = best.x;
                 y = best.y;
             }
@@ -619,7 +619,7 @@ impl GameBB {
                     println!("  val:{val:+5.1} {} {}msec",
                         node.dump(), ft.as_millis());
                 }
-                let best = node.best.as_ref().unwrap();
+                let best = &node.best;
                 x = best.x;
                 y = best.y;
             }
@@ -732,7 +732,7 @@ impl GameBB {
                     println!("val:{val:+5.1} {} {}msec",
                         node.dump(), ft.as_millis());
                 }
-                let best = node.best.as_ref().unwrap();
+                let best = &node.best;
                 x = best.x;
                 y = best.y;
             }
@@ -798,7 +798,7 @@ impl GameBB {
                 println!("val:{val:+5.1} {} {}msec",
                     node.dump(), ft.as_millis());
             }
-            let best = node.best.unwrap();
+            let best = &node.best;
             let x = best.x;
             let y = best.y;
             // apply move
@@ -858,7 +858,7 @@ impl GameBB {
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
-            let best = node.best.as_ref().unwrap();
+            let best = &node.best;
             let x = best.x;
             let y = best.y;
             // apply move
@@ -909,7 +909,7 @@ impl GameBB {
             let (val, node) = f(&self.ban, depth, wei, &arena).unwrap();
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
-            let best = node.best.as_ref().unwrap();
+            let best = &node.best;
             let x = best.x;
             let y = best.y;
             // apply move

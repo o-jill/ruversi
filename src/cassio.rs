@@ -79,15 +79,16 @@ impl OthelloEngineProtocol {
                 let ft = st.elapsed();
                 // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let mvstr;
-                if let Some(best) = node.best.as_ref() {
+                let best = &node.best;
+                if best.is_invalid() {
+                    mvstr = "--".to_string();
+                } else {
                     let xy = best.pos();
                     if xy == "00" {
                         mvstr = "Pa".to_string();
                     } else {
                         mvstr = xy.to_uppercase();
                     }
-                } else {
-                    mvstr = "--".to_string();
                 }
 
                 let range =
@@ -136,15 +137,16 @@ impl OthelloEngineProtocol {
                 let ft = st.elapsed();
                 // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let mvstr;
-                if let Some(best) = node.best.as_ref() {
+                let best = &node.best;
+                if best.is_invalid() {
+                    mvstr = "--".to_string();
+                } else {
                     let xy = best.pos();
                     if xy == "00" {
                         mvstr = "Pa".to_string();
                     } else {
                         mvstr = xy.to_uppercase();
                     }
-                } else {
-                    mvstr = "--".to_string();
                 }
 
                 let range =

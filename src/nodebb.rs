@@ -70,13 +70,23 @@ impl Best {
     pub fn to_str(&self) -> String {
         format!("h:{} {}", self.hyoka, self.pos())
     }
+
+    pub fn is_invalid(&self) -> bool {
+        self.x == 255
+    }
+}
+
+impl Default for Best {
+    fn default() -> Self {
+        Best { hyoka : -999999.0, x: 255, y: 255 }
+    }
 }
 
 pub struct NodeBB<'a> {
     child : Vec<&'a NodeBB<'a>>,
-    hyoka : Option<f32>,
+    hyoka : f32,
     pub kyokumen : usize,
-    pub best : Option<Best>,
+    pub best : Best,
     pub x : u8,
     pub y : u8,
     depth : u8,
@@ -104,9 +114,9 @@ impl <'a> NodeBB<'a> {
     pub fn new(x : u8, y : u8, depth : u8, teban : i8) -> NodeBB<'a> {
         NodeBB {
             child : Vec::<&'a NodeBB>::new(),
-            hyoka : None,
+            hyoka : -999999.0,
             kyokumen : 1,
-            best : None,
+            best : Best::default(),
             x,
             y,
             depth,
@@ -115,8 +125,10 @@ impl <'a> NodeBB<'a> {
     }
 
     fn asignbest(&mut self, hyoka : f32, x : u8, y : u8) {
-        self.hyoka = Some(hyoka);
-        self.best = Some(Best::new(hyoka, x, y));
+        self.hyoka = hyoka;
+        self.best.hyoka = hyoka;
+        self.best.x = x;
+        self.best.y = y;
     }
 
     #[cfg(target_arch="x86_64")]
@@ -162,9 +174,9 @@ impl <'a> NodeBB<'a> {
         let mut ret = String::default();
         let mut n = self;
         loop {
-            if n.best.is_none() {break;}
+            if n.best.is_invalid() {break;}
 
-            let best = n.best.as_ref().unwrap();
+            let best = &n.best;
             let x = best.x;
             let y = best.y;
             if n.child.len() == 1 {
@@ -206,19 +218,20 @@ impl <'a> NodeBB<'a> {
         let mut ret = String::default();
 
         let x;let y;
-        if let Some(best) = self.best.as_ref() {
-            x = best.x;
-            y = best.y;
-        } else {
+        let best = &self.best;
+        if best.is_invalid() {
             x = 99;
             y = 99;
+        } else {
+            x = best.x;
+            y = best.y;
         }
         for ch in self.child.iter() {
             let best = if ch.x == x && ch.y == y {
                 "!"
             } else { "" };
             ret += &format!("{} {}{} {:.1}\n",
-                "*".repeat(offset), best, &ch.to_xy(), ch.hyoka.unwrap_or(-99f32));
+                "*".repeat(offset), best, &ch.to_xy(), ch.hyoka);
 
             if !ch.child.is_empty() {
                 ret += &ch.dumptree_sub(offset + 1);
@@ -234,12 +247,12 @@ pub fn think_internal<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : u8,
     let node = arena.alloc(NodeBB::new(x, y, depth, teban));
     if ban.nblank() == 0 || ban.is_passpass() {
         let val = ban.countf32();
-        node.hyoka = Some(val);
+        node.hyoka = val;
         return Some((val, node));
     }
     if depth == 0 {
         let val = NodeBB::evaluate(ban, wei);
-        node.hyoka = Some(val);
+        node.hyoka = val;
         return Some((val, node));
     }
     let teban = ban.teban;
@@ -249,7 +262,7 @@ pub fn think_internal<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : u8,
     // no more empty cells
     if moves.is_none() {
         let val = ban.countf32();
-        node.hyoka = Some(val);
+        node.hyoka = val;
         return Some((val, node));
     }
     let moves = moves.unwrap();
@@ -261,18 +274,16 @@ pub fn think_internal<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : u8,
 
         node.kyokumen += ch.kyokumen;
         node.child.push(ch);
-        let best = node.best.as_ref();
+        let best = &node.best;
         let fteban = teban as f32;
-        if best.is_none()
-            || best.unwrap().hyoka * fteban < val * fteban {
-            node.best = Some(Best::new(val, mvx, mvy));
-            node.hyoka = Some(val);
+        if best.is_invalid() || best.hyoka * fteban < val * fteban {
+            node.asignbest(val, mvx, mvy);
         } else {
             // node.child[node.child.len() - 1].as_ref().unwrap().release();
             // node.child[idx].release();
         }
     }
-    Some((node.hyoka.unwrap(), node))
+    Some((node.hyoka, node))
 }
 
 #[allow(dead_code)]
@@ -385,11 +396,11 @@ pub fn think_internal_ab<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : 
     let fteban = teban as f32;
     if ban.nblank() == 0 || ban.is_passpass() {
         let val = ban.countf32();
-        node.hyoka = Some(val);
+        node.hyoka = val;
         return (val * fteban, node);
     } else if depth <= 0 {
         let val = NodeBB::evaluate(&ban, wei);
-        node.hyoka = Some(val);
+        node.hyoka = val;
         return (val * fteban, node);
     }
 
