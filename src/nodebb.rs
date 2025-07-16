@@ -473,11 +473,11 @@ fn test_nodebb() {
     let nodede = arena.alloc(NodeBB::new(6, 5, 4, bitboard::NONE));
     let nodefg = arena.alloc(NodeBB::new(8, 7, 4, bitboard::NONE));
 
-    let mut nodebc = arena.alloc(NodeBB::new(4, 3, 5, bitboard::NONE));
+    let nodebc = arena.alloc(NodeBB::new(4, 3, 5, bitboard::NONE));
     nodebc.kyokumen = 3210;
     assert_eq!(nodebc.dumpv(), "val:None, 3210 nodes. ");
 
-    let mut node9a = arena.alloc(NodeBB::new(2, 1, 5, bitboard::SENTE));
+    let node9a = arena.alloc(NodeBB::new(2, 1, 5, bitboard::SENTE));
     node9a.kyokumen = 4321;
     node9a.hyoka = 99.9;
     node9a.best = Best::new(99.9, 8, 7);
@@ -485,11 +485,11 @@ fn test_nodebb() {
     node9a.child.push(nodefg);
     assert_eq!(node9a.dumpv(), "val:Some(99.9), 4321 nodes. h7");
 
-    let mut node56 = arena.alloc(NodeBB::new(5, 6, 6, bitboard::NONE));
+    let node56 = arena.alloc(NodeBB::new(5, 6, 6, bitboard::NONE));
     node56.kyokumen = 6543;
     assert_eq!(node56.dumpv(), "val:None, 6543 nodes. ");
 
-    let mut node78 = arena.alloc(NodeBB::new(7, 8, 6, bitboard::NONE));
+    let node78 = arena.alloc(NodeBB::new(7, 8, 6, bitboard::NONE));
     node78.kyokumen = 5432;
     node78.hyoka = 99.9;
     node78.best = Best::new(99.9, 2, 1);
@@ -497,7 +497,7 @@ fn test_nodebb() {
     node78.child.push(node9a);
     assert_eq!(node78.dumpv(), "val:Some(99.9), 5432 nodes. B1h7");
 
-    let mut node12 = arena.alloc(NodeBB::new(1, 2, 7, bitboard::SENTE));
+    let node12 = arena.alloc(NodeBB::new(1, 2, 7, bitboard::SENTE));
     node12.kyokumen = 8765;
     node12.child.push(node56);
     node12.hyoka = 99.9;
@@ -505,11 +505,11 @@ fn test_nodebb() {
     node12.child.push(node78);
     assert_eq!(node12.dumpv(), "val:Some(99.9), 8765 nodes. g8B1h7");
 
-    let mut node34 = arena.alloc(NodeBB::new(3, 4, 7, bitboard::GOTE));
+    let node34 = arena.alloc(NodeBB::new(3, 4, 7, bitboard::GOTE));
     node34.kyokumen = 7654;
     assert_eq!(node34.dumpv(), "val:None, 7654 nodes. ");
 
-    let mut node = arena.alloc(NodeBB::new(99, 2, 8, bitboard::NONE));
+    let node = arena.alloc(NodeBB::new(99, 2, 8, bitboard::NONE));
     node.hyoka = 99.9;
     node.kyokumen = 9876;
     node.best = Best::new(99.9, 1, 2);
