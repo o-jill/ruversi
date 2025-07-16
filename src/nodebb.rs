@@ -250,7 +250,7 @@ pub fn think_internal<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : u8,
         node.hyoka = val;
         return Some((val, node));
     }
-    if depth == 0 {
+    if depth <= 0 {
         let val = NodeBB::evaluate(ban, wei);
         node.hyoka = val;
         return Some((val, node));
@@ -270,7 +270,7 @@ pub fn think_internal<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : u8,
     for (mvx, mvy) in moves {
         let newban = ban.r#move(mvx, mvy).unwrap();
         // let idx = node.child.len();
-        let (val, ch) = think_internal(&newban, depth, mvx, mvy, wei, arena)?;
+        let (val, ch) = think_internal(&newban, depth - 1, mvx, mvy, wei, arena)?;
 
         node.kyokumen += ch.kyokumen;
         node.child.push(ch);

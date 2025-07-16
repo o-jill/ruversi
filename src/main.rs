@@ -138,6 +138,7 @@ fn trial() {
 /// - rfen : RFEN text to be thought.
 /// - depth : depth to think.
 fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
+    let think = MYOPT.get().unwrap().think.as_str();
     if cfg!(feature="bitboard") {
             match bitboard::BitBoard::from(rfen) {
             Err(msg) => {println!("{}", msg)},
@@ -147,9 +148,11 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
                 let st = Instant::now();
                 let arena = Arena::with_capacity(2_000_000);
                 let (val, node) =
-                    nodebb::think_ab_simple(&ban, depth, &arena).unwrap();
-                    // nodebb::NodeBB::thinko_ab(&ban, depth).unwrap();
-                    // nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
+                    if think == "all" {
+                        nodebb::think_simple(&ban, depth, &arena).unwrap()
+                    } else {
+                        nodebb::think_ab_simple(&ban, depth, &arena).unwrap()
+                    };
                 let ft = st.elapsed();
                 println!("val:{:.4?} {} {}msec", val, node.dump(), ft.as_millis());
                 if let Some(path) = treepath {
