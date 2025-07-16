@@ -450,70 +450,69 @@ pub fn think_internal_ab<'a>(ban : &bitboard::BitBoard, depth : u8, x : u8, y : 
         node.child.push(ch);
         if newalpha < val {
             newalpha = val;
-            node.best = Some(Best::new(val, mvx, mvy));
-            node.hyoka = Some(val);
-        } else if node.best.is_none() {
-            node.best = Some(Best::new(val, mvx, mvy));
-            node.hyoka = Some(val);
+            node.asignbest(val, mvx, mvy);
+        } else if node.best.is_invalid() {
+            node.asignbest(val, mvx, mvy);
         } else {
             // ch.release();
         }
         if newalpha >= beta {
             // cut
-            node.hyoka = Some(newalpha);
+            node.hyoka = newalpha;
             return (newalpha, node);
         }
     }
-    node.hyoka = Some(newalpha);
+    node.hyoka = newalpha;
     (newalpha, node)
 }
 
 
 #[test]
 fn test_nodebb() {
-    let nodede = NodeBB::new(6, 5, 4, bitboard::NONE);
-    let nodefg = NodeBB::new(8, 7, 4, bitboard::NONE);
+    let arena = Arena::new();
+    let nodede = arena.alloc(NodeBB::new(6, 5, 4, bitboard::NONE));
+    let nodefg = arena.alloc(NodeBB::new(8, 7, 4, bitboard::NONE));
 
-    let mut nodebc = NodeBB::new(4, 3, 5, bitboard::NONE);
+    let mut nodebc = arena.alloc(NodeBB::new(4, 3, 5, bitboard::NONE));
     nodebc.kyokumen = 3210;
     assert_eq!(nodebc.dumpv(), "val:None, 3210 nodes. ");
 
-    let mut node9a = NodeBB::new(2, 1, 5, bitboard::SENTE);
+    let mut node9a = arena.alloc(NodeBB::new(2, 1, 5, bitboard::SENTE));
     node9a.kyokumen = 4321;
-    node9a.hyoka = Some(99.9);
-    node9a.best = Some(Best::new(99.9, 8, 7));
+    node9a.hyoka = 99.9;
+    node9a.best = Best::new(99.9, 8, 7);
     node9a.child.push(nodede);
     node9a.child.push(nodefg);
     assert_eq!(node9a.dumpv(), "val:Some(99.9), 4321 nodes. h7");
 
-    let mut node56 = NodeBB::new(5, 6, 6, bitboard::NONE);
+    let mut node56 = arena.alloc(NodeBB::new(5, 6, 6, bitboard::NONE));
     node56.kyokumen = 6543;
     assert_eq!(node56.dumpv(), "val:None, 6543 nodes. ");
 
-    let mut node78 = NodeBB::new(7, 8, 6, bitboard::NONE);
+    let mut node78 = arena.alloc(NodeBB::new(7, 8, 6, bitboard::NONE));
     node78.kyokumen = 5432;
-    node78.hyoka = Some(99.9);
-    node78.best = Some(Best::new(99.9, 2, 1));
+    node78.hyoka = 99.9;
+    node78.best = Best::new(99.9, 2, 1);
     node78.child.push(nodebc);
     node78.child.push(node9a);
     assert_eq!(node78.dumpv(), "val:Some(99.9), 5432 nodes. B1h7");
 
-    let mut node12 = NodeBB::new(1, 2, 7, bitboard::SENTE);
+    let mut node12 = arena.alloc(NodeBB::new(1, 2, 7, bitboard::SENTE));
     node12.kyokumen = 8765;
     node12.child.push(node56);
-    node12.hyoka = Some(99.9);
-    node12.best = Some(Best::new(99.9, 7, 8));
+    node12.hyoka = 99.9;
+    node12.best = Best::new(99.9, 7, 8);
     node12.child.push(node78);
     assert_eq!(node12.dumpv(), "val:Some(99.9), 8765 nodes. g8B1h7");
 
-    let mut node34 = NodeBB::new(3, 4, 7, bitboard::GOTE);
+    let mut node34 = arena.alloc(NodeBB::new(3, 4, 7, bitboard::GOTE));
     node34.kyokumen = 7654;
     assert_eq!(node34.dumpv(), "val:None, 7654 nodes. ");
 
-    let mut node = NodeBB::new(99, 2, 8, bitboard::NONE);
-    node.hyoka = Some(99.9);
+    let mut node = arena.alloc(NodeBB::new(99, 2, 8, bitboard::NONE));
+    node.hyoka = 99.9;
     node.kyokumen = 9876;
-    node.best = Some(Best::new(99.9, 1, 2));
+    node.best = Best::new(99.9, 1, 2);
     node.child.push(node12);
     node.child.push(node34);
     assert_eq!(node.dumpv(), "val:Some(99.9), 9876 nodes. A2g8B1h7");
