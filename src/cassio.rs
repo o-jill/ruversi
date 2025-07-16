@@ -73,7 +73,7 @@ impl OthelloEngineProtocol {
                 let _precision = elem[5].parse::<f32>().unwrap();
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
-                let arena = Arena::new();
+                let arena = Arena::with_capacity(2_000_000);
                 let (val, node) =
                     nodebb::think_ab_simple(&ban, depth, &arena).unwrap();
                 let ft = st.elapsed();
@@ -131,7 +131,7 @@ impl OthelloEngineProtocol {
                 let _precision = elem[4].parse::<f32>().unwrap();
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
-                let arena = Arena::new();
+                let arena = Arena::with_capacity(2_000_000);
                 let (val, node) =
                     nodebb::think_ab_simple(&ban, depth, &arena).unwrap();
                 let ft = st.elapsed();

@@ -145,7 +145,7 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
                 ban.put();
 
                 let st = Instant::now();
-                let arena = Arena::new();
+                let arena = Arena::with_capacity(2_000_000);
                 let (val, node) =
                     nodebb::think_ab_simple(&ban, depth, &arena).unwrap();
                     // nodebb::NodeBB::thinko_ab(&ban, depth).unwrap();

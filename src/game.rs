@@ -50,7 +50,7 @@ impl GameBB {
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // think
             let st = Instant::now();
-            let arena = Arena::new();
+            let arena = Arena::with_capacity(2_000_000);
             let (val, node) = f(&self.ban, depth, &arena).unwrap();
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
@@ -100,7 +100,7 @@ impl GameBB {
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // think
             let st = Instant::now();
-            let arena = Arena::new();
+            let arena = Arena::with_capacity(2_000_000);
             let (val, node) = f(&self.ban, depth, &arena).unwrap();
 
             let ft = st.elapsed();
@@ -151,7 +151,7 @@ impl GameBB {
             // println!("{}", self.ban.to_str());
             // think
             // let st = Instant::now();
-            let arena = Arena::new();
+            let arena = Arena::with_capacity(2_000_000);
             let (_val, node) = f(&self.ban, depth, wei, &arena).unwrap();
 
             // let ft = st.elapsed();
@@ -380,7 +380,7 @@ impl GameBB {
                 if self.is_verbose() {println!("{}", self.ban.to_str());}
                 // think
                 let st = Instant::now();
-                let arena = Arena::new();
+                let arena = Arena::with_capacity(2_000_000);
                 let (val, node) = f(&self.ban, depth, &arena).unwrap();
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
@@ -533,7 +533,7 @@ impl GameBB {
             } else {
                 // think
                 let st = Instant::now();
-                let arena = Arena::new();
+                let arena = Arena::with_capacity(2_000_000);
                 let (val, node) = f(&self.ban, depth, &arena).unwrap();
                 let ft = st.elapsed();
                 if self.is_verbose() {
@@ -612,7 +612,7 @@ impl GameBB {
             } else {
                 // think
                 let st = Instant::now();
-                let arena = Arena::new();
+                let arena = Arena::with_capacity(2_000_000);
                 let (val, node) = f(&self.ban, depth, &arena).unwrap();
                 let ft = st.elapsed();
                 if self.is_verbose() {
@@ -725,7 +725,7 @@ impl GameBB {
             } else {
                 // think
                 let st = Instant::now();
-                let arena = Arena::new();
+                let arena = Arena::with_capacity(2_000_000);
                 let (val, node) = f(&self.ban, depth, &arena).unwrap();
                 let ft = st.elapsed();
                 if self.is_verbose() {
@@ -852,7 +852,7 @@ impl GameBB {
             }
             // think
             let st = Instant::now();
-            let arena = Arena::new();
+            let arena = Arena::with_capacity(2_000_000);
             let (val, node) = f(&self.ban, depth, &arena).unwrap();
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
@@ -905,7 +905,7 @@ impl GameBB {
                 if self.ban.teban == bitboard::SENTE {et1} else {et2};
             // think
             let st = Instant::now();
-            let arena = Arena::new();
+            let arena = Arena::with_capacity(2_000_000);
             let (val, node) = f(&self.ban, depth, wei, &arena).unwrap();
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
