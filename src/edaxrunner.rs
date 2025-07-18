@@ -115,8 +115,9 @@ impl EdaxRunner {
         // launch edax
         let cmd = match self.spawn(obf) {
             Err(msg) => {
-                return Err(format!("error running edax... [{}], config:[{}]",
-                            msg, self.to_str()))
+                return Err(
+                    format!("error running edax... [{msg}], config:[{}]",
+                        self.to_str()))
             },
             Ok(prcs) => prcs,
         };
@@ -127,7 +128,7 @@ impl EdaxRunner {
         let lines : Vec<_> = txt.split("\n").collect();
         // println!("{}", lines[2]);
         let pos = lines[2].chars().position(|c| c.is_alphabetic());
-        if pos.is_none() {return Err(format!("EDAX:\"{}\"", txt));}
+        if pos.is_none() {return Err(format!("EDAX:\"{txt}\""));}
         let i = pos.unwrap();
         let mut xtxt = lines[2].chars().nth(i).unwrap().to_ascii_lowercase().to_string();
         xtxt.push(lines[2].chars().nth(i + 1).unwrap());
@@ -222,8 +223,9 @@ impl RuversiRunner {
         // launch edax
         let cmd = match self.spawn(rfen) {
             Err(msg) => {
-                return Err(format!("error running ruversi... [{}], config:[{}]",
-                            msg, self.to_str()))
+                return Err(format!(
+                    "error running ruversi... [{msg}], config:[{}]",
+                    self.to_str()))
             },
             Ok(prcs) => prcs,
         };

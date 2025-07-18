@@ -253,14 +253,14 @@ impl GameBB {
                         let yy = txt.chars().nth(1).unwrap().to_digit(10);
                         if yy.is_none() {
                             if self.is_verbose() {
-                                println!("invalid position : {}", txt);
+                                println!("invalid position : {txt}");
                             }
                             continue;
                         }
                         let yy = yy.unwrap() as u8;
                         if xx > 8 || yy > 8 {
                             if self.is_verbose() {
-                                println!("invalid position : {}", txt);
+                                println!("invalid position : {txt}");
                             }
                             continue;
                         }
@@ -271,7 +271,7 @@ impl GameBB {
                             break;
                         }
                         if self.is_verbose() {
-                            println!("{} is not allowed.", txt);
+                            println!("{txt} is not allowed.");
                         }
                     }
                 }
@@ -346,14 +346,14 @@ impl GameBB {
                         let yy = txt.chars().nth(1).unwrap().to_digit(10);
                         if yy.is_none() {
                             if self.is_verbose() {
-                                println!("invalid position : {}", txt);
+                                println!("invalid position : {txt}");
                             }
                             continue;
                         }
                         let yy = yy.unwrap() as u8;
                         if xx > 8 || yy > 8 {
                             if self.is_verbose() {
-                                println!("invalid position : {}", txt);
+                                println!("invalid position : {txt}");
                             }
                             continue;
                         }
@@ -363,7 +363,7 @@ impl GameBB {
                             y = yy;
                             break;
                         }
-                        if self.is_verbose() {println!("{} is not allowed.", txt);}
+                        if self.is_verbose() {println!("{txt} is not allowed.");}
                     }
                 }
             } else {
@@ -1095,12 +1095,12 @@ impl Game {
                         let xx = "0abcdefgh".find(txt.chars().nth(0).unwrap()).unwrap_or(10) as u8;
                         let yy = txt.chars().nth(1).unwrap().to_digit(10);
                         if yy.is_none() {
-                            if self.is_verbose() {println!("invalid position : {}", txt);}
+                            if self.is_verbose() {println!("invalid position : {txt}");}
                             continue;
                         }
                         let yy = yy.unwrap();
                         if xx > 8 || yy > 8 {
-                            if self.is_verbose() {println!("invalid position : {}", txt);}
+                            if self.is_verbose() {println!("invalid position : {txt}");}
                             continue;
                         }
                         let pos = (xx, yy as u8);
@@ -1109,7 +1109,7 @@ impl Game {
                             y = yy as u8;
                             break;
                         }
-                        if self.is_verbose() {println!("{} is not allowed.", txt);}
+                        if self.is_verbose() {println!("{txt} is not allowed.");}
                     }
                 }
            } else {
