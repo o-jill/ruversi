@@ -571,6 +571,14 @@ impl Board {
         sum
     }
 
+    pub fn stones(&self) -> u32 {
+        let mut sum = 0;
+        for c in self.cells.iter() {
+            sum += c.abs();
+        }
+        sum as u32
+    }
+
     pub fn is_full(&self) -> bool {
         for c in self.cells.iter() {
             if *c == BLANK {

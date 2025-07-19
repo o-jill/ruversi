@@ -122,20 +122,20 @@ impl NodeBB {
     #[cfg(target_arch="x86_64")]
     fn evaluate(ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
         if cfg!(feature="nosimd") {
-            wei.evaluatev7bb(ban)
+            wei.evaluatev9bb(ban)
         } else if cfg!(feature="avx") {
-            wei.evaluatev7bb_simdavx(ban)
+            wei.evaluatev9bb_simdavx(ban)
         } else {
-            wei.evaluatev7bb_simd(ban)
+            wei.evaluatev9bb_simd(ban)
         }
     }
 
     #[cfg(target_arch="aarch64")]
     fn evaluate(ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
         if cfg!(feature="nosimd") {
-            wei.evaluatev7bb(ban)
+            wei.evaluatev9bb(ban)
         } else {
-            wei.evaluatev7bb_simd_mul(ban)
+            wei.evaluatev9bb_simd_mul(ban)
         }
     }
 

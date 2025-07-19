@@ -899,6 +899,11 @@ impl BitBoard {
     }
 
     #[allow(dead_code)]
+    pub fn stones(&self) -> u32 {
+        (self.black | self.white).count_ones()
+    }
+
+    #[allow(dead_code)]
     pub fn rotate90(&self) -> BitBoard {
         let mut black = 0;
         let mut white = 0;
