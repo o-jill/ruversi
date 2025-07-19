@@ -578,7 +578,8 @@ impl Weight {
             return Err(format!("size mismatch v9:{WSZV9} != {nsz}"));
         }
 
-        self.weight[progress * N_WEIGHT_PAD..].copy_from_slice(&newtable);
+        let offset = progress * N_WEIGHT_PAD;
+        self.weight[offset..offset + N_WEIGHT].copy_from_slice(&newtable);
         // println!("v9:{:?}", self.weight);
         Ok(())
     }
