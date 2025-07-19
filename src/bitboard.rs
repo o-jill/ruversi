@@ -248,7 +248,7 @@ impl BitBoard {
                     y += 1;
                 },
                 _ => {
-                    return Err(format!("unknown letter rfen [{}]", ch));
+                    return Err(format!("unknown letter rfen [{ch}]"));
                 }
             }
         }
@@ -305,7 +305,7 @@ impl BitBoard {
             for _x in 0..NUMCELL {
                 let cb = (bit & black) != 0;
                 let cw = (bit & white) != 0;
-                // println!("bit:0x{:016x}, cb:{}, cw:{}", bit, cb, cw);
+                // println!("bit:0x{bit:016x}, cb:{cb}, cw:{cw}");
                 bit_right!(bit);
                 let c = if cb {SENTE} else if cw {GOTE} else {BLANK};
                 if c == old {
@@ -445,12 +445,12 @@ impl BitBoard {
                         "__"
                     };
             }
-            println!("{}|", line);
+            println!("{line}|");
         }
         println!("{}", 
             match self.teban {
-                SENTE => { format!("{}'s turn.", STONE_SENTE)},
-                GOTE => { format!("{}'s turn.", STONE_GOTE)},
+                SENTE => { format!("{STONE_SENTE}'s turn.")},
+                GOTE => { format!("{STONE_GOTE}'s turn.")},
                 _ => {"finished.".to_string()}
             }
         )
@@ -514,7 +514,7 @@ impl BitBoard {
      */
     fn reverse(&mut self, x : usize, y : usize) {
         if x > 7 || y > 7 {
-            panic!("{},{} is out of range.", x, y);
+            panic!("{x},{y} is out of range.");
         }
 
         let color = self.teban;
@@ -898,6 +898,7 @@ impl BitBoard {
         (self.black | self.white) == 0xffffffffffffffff
     }
 
+    #[allow(dead_code)]
     pub fn rotate90(&self) -> BitBoard {
         let mut black = 0;
         let mut white = 0;
@@ -926,6 +927,7 @@ impl BitBoard {
         b
     }
 
+    #[allow(dead_code)]
     pub fn rotate180(&self) -> BitBoard {
         let mut b = BitBoard::new();
         b.teban = self.teban;
@@ -1045,7 +1047,7 @@ impl BitBoard {
             let mut wbit = 0x0000000000010103 << BitBoard::index(x - 1, 0);
             // let mut wbit = 0x0000000000000107 << BitBoard::index(x - 1, 0);
             for _y in 0..6 {
-                // println!("bit:{:b}, wbit:{:b}", bit, wbit);
+                // println!("bit:{bit:b}, wbit:{wbit:b}");
 
                 if (bit & (fcellsb | fcellsw)) != 0 {
                    // println!("if fcb | fcw");
@@ -1056,16 +1058,16 @@ impl BitBoard {
 
                 if (bit & black) != 0 {
                     if (fcellsb & wbit) != wbit {
-                        // println!("fcellsb : {:b}", fcellsb);
+                        // println!("fcellsb : {fcellsb:b}");
                         break;
                     }
 
                     fcellsb |= bit;
                     cnt += 1;
-                    // println!("fcellsb : {:b}, {}", fcellsb, cnt);
+                    // println!("fcellsb : {fcellsb:b}, {cnt}");
                 } else if (bit & white) != 0 {
                     if (fcellsw & wbit) != wbit {
-                        // println!("fcellsw : {:b}", fcellsw);
+                        // println!("fcellsw : {fcellsw:b}");
                         break;
                     }
 
@@ -1100,9 +1102,9 @@ impl BitBoard {
 
                     fcellsw |= bit;
                     cnt += 1;
-                    // println!("xy: {:x}, {:x}", x, _y);
-                    // println!("bit:{:x}, wbit:{:x}", bit, wbit);
-                    // println!("fcellsw : {:b}, {}", fcellsw, cnt);
+                    // println!("xy: {x:x}, {y:x}");
+                    // println!("bit:{bit:x}, wbit:{wbit:x}");
+                    // println!("fcellsw : {fcellsw:b}, {cnt}");
                 } else {
                     break;
                 }
@@ -1252,7 +1254,7 @@ impl BitBoard {
             let mut bit : u64 = LSB_CELL << BitBoard::index(1, y);
             let mut wbit = 0x0000000000070100 << BitBoard::index(0, y - 1);
             for _x in 1..7 {
-                // println!("bit:{:08x}, wbit:{:08x}", bit, wbit);
+                // println!("bit:{bit:08x}, wbit:{wbit:08x}");
 
                 if (bit & (fcellsb | fcellsw)) != 0 {
                     bit_right!(bit);
@@ -1270,7 +1272,7 @@ impl BitBoard {
 
                     fcellsw |= bit;
                     cnt += 1;
-                    // println!("fcellsw : {:08x}, {}", fcellsw, cnt);
+                    // println!("fcellsw : {fcellsw:08x}, {cnt}");
                 } else {
                     break;
                 }
@@ -1357,7 +1359,7 @@ pub fn count_emptycells(rfen : &str) -> Result<i8, String> {
                 return Ok(count);
             },
             _ => {
-                return Err(format!("unknown letter rfen [{}]", ch));
+                return Err(format!("unknown letter rfen [{ch}]"));
             }
         }
     }

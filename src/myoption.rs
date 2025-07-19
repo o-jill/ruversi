@@ -288,7 +288,7 @@ impl MyOption {
                         }
                     },
                     Err(err) => {
-                        return Err(format!("failed read {} {}. ({})", old, e, err));
+                        return Err(format!("failed read {old} {e}. ({err})"));
                     }
                 }
                 old.clear();
@@ -302,7 +302,7 @@ impl MyOption {
                 opt.treedump = Some(e.to_string());
                 old.clear();
             } else {
-                println!("unknown option: {}", e);
+                println!("unknown option: {e}");
             }
         }
         Ok(opt)
@@ -313,7 +313,7 @@ impl MyOption {
 /// # Arguments
 /// * `str` - some message to be put before options.
 pub fn showhelp(msg : &str) {
-    println!("{}\n", msg);
+    println!("{msg}\n");
 
     println!("options:
   --duel N   play games from some situations with evaltable1 and 2. N is optional. 1 ~ default 5 ~ 13.

@@ -83,7 +83,7 @@ impl Board {
                 },
                 '/' => {},
                 _ => {
-                    return Err(format!("unknown letter rfen [{}]", ch));
+                    return Err(format!("unknown letter rfen [{ch}]"));
                 }
             }
         }
@@ -208,12 +208,12 @@ impl Board {
                         "__"
                     };
             }
-            println!("{}|", line);
+            println!("{line}|");
         }
         println!("{}", 
             match self.teban {
-                SENTE => { format!("{}'s turn.", STONE_SENTE)},
-                GOTE => { format!("{}'s turn.", STONE_GOTE)},
+                SENTE => { format!("{STONE_SENTE}'s turn.")},
+                GOTE => { format!("{STONE_GOTE}'s turn.")},
                 _ => {"finished.".to_string()}
             }
         )
@@ -580,6 +580,7 @@ impl Board {
         true
     }
 
+    #[allow(dead_code)]
     pub fn rotate180(&self) -> Board {
         let mut b = Board::new();
         b.teban = self.teban;

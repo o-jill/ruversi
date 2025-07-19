@@ -212,10 +212,10 @@ impl Kifu {
         }
         let score = self.score.unwrap();
         if score.is_negative() {
-            return format!("GOTE won. {}", score);
+            return format!("GOTE won. {score}");
         }
         if score.is_positive() {
-            return format!("SENTE won. {}", score);
+            return format!("SENTE won. {score}");
         }
         String::from("DRAW.")
     }

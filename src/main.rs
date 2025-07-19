@@ -53,7 +53,7 @@ fn trial() {
                     // ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb_simd(&bib);
                 }
                 if yres != ires {
-                    println!("eval: {} == {}", yres, ires);
+                    println!("eval: {yres} == {ires}");
                 }
             } else {
             }
@@ -69,12 +69,12 @@ fn trial() {
         )}).collect::<Vec<String>>().iter().filter(|&fnm| {
             fnm.contains(".txt")
         }).cloned().collect::<Vec<String>>();
-    println!("{:?}", files);
+    println!("{files:?}");
 
     let ban = board::Board::new();
     ban.put();
     let rfen = "aAaAaAaA/BbBb/C2c/dD/E3/2f/g1/H b";
-    println!("rfen: {}", rfen);
+    println!("rfen: {rfen}");
     let ban = board::Board::from(rfen).unwrap();
     ban.put();
     println!("RFEN:{}", ban.to_str());
@@ -84,7 +84,7 @@ fn trial() {
     let st = Instant::now();
     let (val, node) = node::Node::think( &ban, 7).unwrap();
     let ft = st.elapsed();
-    println!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+    println!("val:{val:?} {} {}msec", node.dump(), ft.as_millis());
 
     println!("candidate:{:?}", ban.genmove());
     let ban2 = ban.r#move(3, 4).unwrap();
@@ -97,7 +97,7 @@ fn trial() {
     let (tx, rx) = mpsc::channel();
     let th = thread::spawn(move ||
         for i in 0..10 {
-            let msg = format!("thread: -- {} -- -- -- --", i);
+            let msg = format!("thread: -- {i} -- -- -- --");
             tx.send(msg).unwrap();
             thread::sleep(Duration::from_secs_f32(0.5))
         }
@@ -139,7 +139,7 @@ fn trial() {
 fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
     if cfg!(feature="bitboard") {
             match bitboard::BitBoard::from(rfen) {
-            Err(msg) => {println!("{}", msg)},
+            Err(msg) => {println!("{msg}")},
             Ok(ban) => {
                 ban.put();
 
@@ -149,10 +149,10 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
                     // nodebb::NodeBB::thinko_ab(&ban, depth).unwrap();
                     // nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
                 let ft = st.elapsed();
-                println!("val:{:.4?} {} {}msec", val, node.dump(), ft.as_millis());
+                println!("val:{val:.4?} {} {}msec", node.dump(), ft.as_millis());
                 if let Some(path) = treepath {
                     if let Err(e) = node.dumptree(0, path) {
-                        eprintln!("{}@{} {}", e.to_string(),file!(), line!());
+                        eprintln!("{e}@{} {}", file!(), line!());
                     } else {
                         println!("put tree into {path}.")
                     }
@@ -161,7 +161,7 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
         }
     } else {
         match board::Board::from(rfen) {
-            Err(msg) => {println!("{}", msg)},
+            Err(msg) => {println!("{msg}")},
             Ok(ban) => {
                 ban.put();
 
@@ -169,7 +169,7 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
                 let (val, node) =
                     node::Node::vb_think_ab(&ban, depth).unwrap();
                 let ft = st.elapsed();
-                println!("val:{:.4?} {} {}msec", val, node.dump(), ft.as_millis());
+                println!("val:{val:.4?} {} {}msec", node.dump(), ft.as_millis());
             }
         }
     }
@@ -219,7 +219,7 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
         // store kifu
         let kifuname = format!("./kifu/kifu{grp}{idx:05}.txt");
         let mut f = File::create(kifuname).unwrap();
-        let content = format!("{}{}", kifu::HEADER, kifutxt);
+        let content = format!("{}{kifutxt}", kifu::HEADER);
         f.write_all(content.as_bytes()).unwrap();
     }
 }
@@ -999,19 +999,19 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
 /// # Arguments
 /// - path : file path.
 fn readeval(path: &str) {
-    println!("read eval table: {}", path);
+    println!("read eval table: {path}");
     if cfg!(feature="bitboard") {
         // println!("read weight for bitboard");
         unsafe {
             if let Err(msg) = nodebb::WEIGHT.as_mut().unwrap().read(path) {
-                panic!("{}", msg);
+                panic!("{msg}");
             }
         }
     } else {
         // println!("read weight for byteboard");
         unsafe {
             if let Err(msg) = node::WEIGHT.as_mut().unwrap().read(path) {
-                panic!("{}", msg);
+                panic!("{msg}");
             }
         }
     }
@@ -1179,7 +1179,7 @@ pub fn postxt(x : u8, y : u8) -> String {
         return String::from("PASS");
     }
 
-    format!("{}{}", bitboard::STR_GOTE.chars().nth(x as usize).unwrap(), y)
+    format!("{}{y}", bitboard::STR_GOTE.chars().nth(x as usize).unwrap())
 }
 
 /// generate RFENs by moving 2 stones with a RFEN.
@@ -1445,7 +1445,7 @@ fn main() {
                         turn
                     });
             },
-            _ => {panic!("{:?} is not supported yet.", opp)},
+            _ => {panic!("{opp:?} is not supported yet.")},
         }
     }
     if *mode == myoption::Mode::Rfen {
