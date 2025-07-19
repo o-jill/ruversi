@@ -47,9 +47,9 @@ fn trial() {
                 let ires;
                 unsafe {
                     // yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev3(&byb);
-                    yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev3_simd(&byb);
+                    yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev9(&byb);
                     // ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb(&bib);
-                    ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb_simdavx(&bib);
+                    ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev9bb_simdavx(&bib);
                     // ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb_simd(&bib);
                 }
                 if yres != ires {
