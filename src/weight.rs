@@ -30,7 +30,7 @@ const N_WEIGHT : usize =
   (N_INPUT + 1) * N_HIDDEN + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
 
 const N_WEIGHT_PAD :usize = ((N_WEIGHT + 7) / 8) * 8;
-const N_PROGRESS_DIV : usize = 3;
+pub const N_PROGRESS_DIV : usize = 3;  // 序盤中盤終盤
 
 #[allow(dead_code)]
 const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + 4 + 1;
