@@ -925,6 +925,10 @@ impl Weight {
     }
 
     pub fn evaluatev9(&self, ban : &board::Board) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.count() as f32;
+        }
+
         let prgs = ban.progress();
         let cells = &ban.cells;
         let teban = ban.teban as f32;
@@ -965,6 +969,10 @@ impl Weight {
     }
 
     pub fn evaluatev9bb(&self, ban : &bitboard::BitBoard) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.countf32();
+        }
+
         let prgs = ban.progress();
         let black = ban.black;
         let white = ban.white;
@@ -1016,6 +1024,10 @@ impl Weight {
 
     #[cfg(target_arch="x86_64")]
     pub fn evaluatev9bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.countf32();
+        }
+
         let prgs = ban.progress();
         let black = ban.black;
         let white = ban.white;
@@ -1218,6 +1230,10 @@ impl Weight {
 
     #[cfg(target_arch="aarch64")]
     pub fn evaluatev9bb_simd_mul(&self, ban : &bitboard::BitBoard) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.countf32();
+        }
+
         let prgs = ban.progress();
         // println!("cnt:{cnt}, prgs:{prgs}");
         let black = ban.black;
@@ -1373,6 +1389,10 @@ impl Weight {
 
     #[cfg(target_arch="x86_64")]
     pub fn evaluatev9bb_simdavx(&self, ban : &bitboard::BitBoard) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.countf32();
+        }
+
         let prgs = ban.progress();
         let black = ban.black;
         let white = ban.white;
