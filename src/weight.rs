@@ -514,6 +514,7 @@ impl Weight {
                         EvalFile::V9 => {
                             self.readv9(&l, idx)?;
                             idx += 1;
+                            if idx >= N_PROGRESS_DIV {return Ok(());}
                         },
                         _ => {}
                     }
