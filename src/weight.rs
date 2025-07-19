@@ -425,7 +425,8 @@ impl Weight {
     }
 
     pub fn wban(&self, progress : usize) -> &[f32] {
-        &self.weight[progress * N_WEIGHT_PAD..]
+        let offset = progress * N_WEIGHT_PAD;
+        &self.weight[offset..]
     }
 
     pub fn wteban(&self, progress : usize) -> &[f32] {
@@ -435,7 +436,7 @@ impl Weight {
 
     pub fn wfixedstones(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
-      &self.weight[offset + N_WEIGHT_FIXST_B..offset + N_WEIGHT_INPUTBIAS]
+        &self.weight[offset + N_WEIGHT_FIXST_B..offset + N_WEIGHT_INPUTBIAS]
     }
 
     pub fn wfixedstone_b(&self, progress : usize) -> &[f32] {
@@ -924,8 +925,7 @@ impl Weight {
     }
 
     pub fn evaluatev9(&self, ban : &board::Board) -> f32 {
-        let cnt = ban.stones() as usize;
-        let prgs = ((cnt - 4) * N_PROGRESS_DIV) / 60;
+        let prgs = ban.progress();
         let cells = &ban.cells;
         let teban = ban.teban as f32;
         
@@ -965,8 +965,7 @@ impl Weight {
     }
 
     pub fn evaluatev9bb(&self, ban : &bitboard::BitBoard) -> f32 {
-        let cnt = ban.stones() as usize;
-        let prgs = ((cnt - 4) * N_PROGRESS_DIV) / 60;
+        let prgs = ban.progress();
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
@@ -1017,8 +1016,7 @@ impl Weight {
 
     #[cfg(target_arch="x86_64")]
     pub fn evaluatev9bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
-        let cnt = ban.stones() as usize;
-        let prgs = ((cnt - 4) * N_PROGRESS_DIV) / 60;
+        let prgs = ban.progress();
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
@@ -1220,8 +1218,7 @@ impl Weight {
 
     #[cfg(target_arch="aarch64")]
     pub fn evaluatev9bb_simd_mul(&self, ban : &bitboard::BitBoard) -> f32 {
-        let cnt = ban.stones() as usize;
-        let prgs = ((cnt - 4) * N_PROGRESS_DIV) / 60;
+        let prgs = ban.progress();
         // println!("cnt:{cnt}, prgs:{prgs}");
         let black = ban.black;
         let white = ban.white;
@@ -1376,8 +1373,7 @@ impl Weight {
 
     #[cfg(target_arch="x86_64")]
     pub fn evaluatev9bb_simdavx(&self, ban : &bitboard::BitBoard) -> f32 {
-        let cnt = ban.stones() as usize;
-        let prgs = ((cnt - 4) * N_PROGRESS_DIV) / 60;
+        let prgs = ban.progress();
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;

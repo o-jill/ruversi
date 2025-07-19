@@ -1,3 +1,5 @@
+use super::*;
+
 pub const SENTE : i8 = 1;
 pub const BLANK : i8 = 0;
 pub const GOTE : i8 = -1;
@@ -901,6 +903,24 @@ impl BitBoard {
     #[allow(dead_code)]
     pub fn stones(&self) -> u32 {
         (self.black | self.white).count_ones()
+    }
+
+    pub fn progress(&self) -> usize {
+        let cnt = self.stones() as usize;
+        let ret = ((cnt - 4) * weight::N_PROGRESS_DIV) / 60;
+        #[cfg(test)]
+        {
+            if ret >= weight::N_PROGRESS_DIV {
+                return weight::N_PROGRESS_DIV -1;
+            }
+        }
+        ret
+    }
+
+    #[allow(dead_code)]
+    pub fn is_progress(&self, prgs : usize) -> bool {
+        let cnt = self.stones() as usize;
+        ((cnt - 4) * weight::N_PROGRESS_DIV) / 60 == prgs
     }
 
     #[allow(dead_code)]
