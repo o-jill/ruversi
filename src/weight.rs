@@ -1683,9 +1683,9 @@ fn testweight() {
         ban.put();
         let mut w = weight::Weight::new();
         w.init();
-        let res_nosimde = w.evaluatev9bb(&bban, prgs);
-        let res_simd = w.evaluatev9bb_simd(&bban, prgs);
-        let res_simdavx = w.evaluatev9bb_simdavx(&bban, prgs);
+        let res_nosimde = w.evaluatev9bb(&bban);
+        let res_simd = w.evaluatev9bb_simd(&bban);
+        let res_simdavx = w.evaluatev9bb_simdavx(&bban);
         assert!(dbg_assert_eq(&res_nosimde, &res_simd));
         assert!(dbg_assert_eq(&res_nosimde, &res_simdavx));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
