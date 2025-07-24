@@ -1,3 +1,5 @@
+use super::*;
+
 pub const SENTE : i8 = 1;
 pub const BLANK : i8 = 0;
 pub const GOTE : i8 = -1;
@@ -896,6 +898,28 @@ impl BitBoard {
 
     pub fn is_full(&self) -> bool {
         (self.black | self.white) == 0xffffffffffffffff
+    }
+
+    #[allow(dead_code)]
+    pub fn stones(&self) -> u32 {
+        (self.black | self.white).count_ones()
+    }
+
+    pub fn progress(&self) -> usize {
+        let cnt = self.stones() as usize;
+        let ret = ((cnt - 4) * weight::N_PROGRESS_DIV) / 60;
+        #[cfg(test)]
+        {
+            if ret >= weight::N_PROGRESS_DIV {
+                return weight::N_PROGRESS_DIV -1;
+            }
+        }
+        ret
+    }
+
+    #[allow(dead_code)]
+    pub fn is_progress(&self, prgs : usize) -> bool {
+        self.progress() == prgs
     }
 
     #[allow(dead_code)]
@@ -6285,5 +6309,52 @@ fn testbitbrd() {
         let result = ban.rotate180().checkreverse(5, 0);
         if result != res {ban.rotate180().put();}
         assert_eq!(result, res);
+    }
+}
+
+#[test]
+fn test_progress() {
+    let tbl_prgs = [
+        // 4~23
+        ("8/8/8/3aA3/3Aa3/8/8/8 b", 0), ("8/8/8/3aA3/3Ab2/8/8/8 b", 0),
+        ("8/8/8/3aA3/3Ac1/8/8/8 b", 0), ("8/8/8/3aA3/3Ad/8/8/8 b",  0),
+        ("8/8/8/3aA3/2Bd/8/8/8 b",  0), ("8/8/8/3aA3/1Cd/8/8/8 b",  0),
+        ("8/8/8/3aA3/Dd/8/8/8 b",   0), ("8/8/8/3aB2/Dd/8/8/8 b",   0),
+        ("8/8/8/3aC1/Dd/8/8/8 b",   0), ("8/8/8/3aD/Dd/8/8/8 b",    0),
+        ("8/8/8/2bD/Dd/8/8/8 b",    0), ("8/8/8/1cD/Dd/8/8/8 b",    0),
+        ("8/8/8/dD/Dd/8/8/8 b",     0), ("8/8/7a/dD/Dd/8/8/8 b",    0),
+        ("8/8/6b/dD/Dd/8/8/8 b",    0), ("8/8/5c/dD/Dd/8/8/8 b",    0),
+        ("8/8/4d/dD/Dd/8/8/8 b",    0), ("8/8/3e/dD/Dd/8/8/8 b",    0),
+        ("8/8/2f/dD/Dd/8/8/8 b",    0), ("8/8/1g/dD/Dd/8/8/8 b",    0),
+        // 24~43
+        ("8/8/h/dD/Dd/8/8/8 b",     1), ("8/A7/h/dD/Dd/8/8/8 b",    1),
+        ("8/B6/h/dD/Dd/8/8/8 b",    1), ("8/C5/h/dD/Dd/8/8/8 b",    1),
+        ("8/D4/h/dD/Dd/8/8/8 b",    1), ("8/E3/h/dD/Dd/8/8/8 b",    1),
+        ("8/F2/h/dD/Dd/8/8/8 b",    1), ("8/G1/h/dD/Dd/8/8/8 b",    1),
+        ("8/H/h/dD/Dd/8/8/8 b",     1), ("a7/H/h/dD/Dd/8/8/8 b",    1),
+        ("b6/H/h/dD/Dd/8/8/8 b",    1), ("c5/H/h/dD/Dd/8/8/8 b",    1),
+        ("d4/H/h/dD/Dd/8/8/8 b",    1), ("e3/H/h/dD/Dd/8/8/8 b",    1),
+        ("f2/H/h/dD/Dd/8/8/8 b",    1), ("g1/H/h/dD/Dd/8/8/8 b",    1),
+        ("h/H/h/dD/Dd/8/8/8 b",     1), ("h/H/h/dD/Dd/7A/8/8 b",    1),
+        ("h/H/h/dD/Dd/6B/8/8 b",    1), ("h/H/h/dD/Dd/5C/8/8 b",    1),
+        // 44~63
+        ("h/H/h/dD/Dd/4D/8/8 b",    2), ("h/H/h/dD/Dd/3E/8/8 b",    2),
+        ("h/H/h/dD/Dd/2F/8/8 b",    2), ("h/H/h/dD/Dd/1G/8/8 b",    2),
+        ("h/H/h/dD/Dd/H/8/8 b",     2), ("h/H/h/dD/Dd/H/7a/8 b",    2),
+        ("h/H/h/dD/Dd/H/6b/8 b",    2), ("h/H/h/dD/Dd/H/5c/8 b",    2),
+        ("h/H/h/dD/Dd/H/4d/8 b",    2), ("h/H/h/dD/Dd/H/3e/8 b",    2),
+        ("h/H/h/dD/Dd/H/2f/8 b",    2), ("h/H/h/dD/Dd/H/1g/8 b",    2),
+        ("h/H/h/dD/Dd/H/h/8 b",     2), ("h/H/h/dD/Dd/H/h/7A b",    2),
+        ("h/H/h/dD/Dd/H/h/6B b",    2), ("h/H/h/dD/Dd/H/h/5C b",    2),
+        ("h/H/h/dD/Dd/H/h/4D b",    2), ("h/H/h/dD/Dd/H/h/3E b",    2),
+        ("h/H/h/dD/Dd/H/h/2F b",    2), ("h/H/h/dD/Dd/H/h/1G b",    2),
+        // 63
+        ("h/H/h/dD/Dd/H/h/H b",     2),
+    ];
+    for (rfen, prgs) in tbl_prgs {
+        let ban = BitBoard::from(rfen).unwrap();
+        if ban.progress() != prgs {println!("progress({rfen})");}
+        assert_eq!(ban.progress(), prgs);
+        assert!(ban.is_progress(prgs));
     }
 }

@@ -96,11 +96,7 @@ impl Node {
             if cfg!(feature="nnv1") || cfg!(feature="nnv2") {
                 panic!("unsupported feature!");
             } else {
-                if cfg!(feature = "nosimd") {
-                    WEIGHT.as_ref().unwrap().evaluatev7(ban)
-                } else {
-                    WEIGHT.as_ref().unwrap().evaluatev3_simd(ban)
-                }
+                WEIGHT.as_ref().unwrap().evaluatev9(ban)
             }
         }
     }
@@ -108,7 +104,7 @@ impl Node {
     #[cfg(target_arch="aarch64")]
     fn evaluate(ban : &board::Board) -> f32 {
         unsafe {
-            WEIGHT.as_ref().unwrap().evaluatev7(ban)
+            WEIGHT.as_ref().unwrap().evaluatev9(ban)
         }
     }
 

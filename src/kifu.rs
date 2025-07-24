@@ -123,15 +123,8 @@ pub struct Kifu {
     pub score : Option<i8>,
 }
 
-impl Kifu {
-    pub fn new() -> Kifu {
-        Kifu {
-            list : Vec::<Te>::new(),
-            score : None,
-        }
-    }
-
-    pub fn from(lines : &Vec<&str>) -> Kifu {
+impl From<&Vec<&str>> for Kifu {
+    fn from(lines : &Vec<&str>) -> Kifu {
         let mut ret = Kifu {
             list : Vec::<Te>::new(),
             score : None,
@@ -157,6 +150,15 @@ impl Kifu {
         //     ret.score = Some(0);
         // }
         ret
+    }
+}
+
+impl Kifu {
+    pub fn new() -> Kifu {
+        Kifu {
+            list : Vec::<Te>::new(),
+            score : None,
+        }
     }
 
     #[allow(dead_code)]

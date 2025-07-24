@@ -122,20 +122,20 @@ impl NodeBB {
     #[cfg(target_arch="x86_64")]
     fn evaluate(ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
         if cfg!(feature="nosimd") {
-            wei.evaluatev7bb(ban)
+            wei.evaluatev9bb(ban)
         } else if cfg!(feature="avx") {
-            wei.evaluatev7bb_simdavx(ban)
+            wei.evaluatev9bb_simdavx(ban)
         } else {
-            wei.evaluatev7bb_simd(ban)
+            wei.evaluatev9bb_simd(ban)
         }
     }
 
     #[cfg(target_arch="aarch64")]
     fn evaluate(ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
         if cfg!(feature="nosimd") {
-            wei.evaluatev7bb(ban)
+            wei.evaluatev9bb(ban)
         } else {
-            wei.evaluatev7bb_simd_mul(ban)
+            wei.evaluatev9bb_simd_mul(ban)
         }
     }
 
@@ -327,12 +327,10 @@ impl NodeBB {
     pub fn think_internal(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight)
             -> Option<f32> {
         let depth = node.depth;
-        if ban.nblank() == 0 || ban.is_passpass() {
-            return Some(ban.countf32());
-        }
-        if depth == 0 {
+        if ban.is_full() || ban.is_passpass() || depth == 0 {
             return Some(NodeBB::evaluate(ban, wei));
         }
+
         let teban = ban.teban;
         // let sum = 0;
         let moves = ban.genmove();
@@ -1570,9 +1568,7 @@ impl NodeBB {
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let ch = node.child.last_mut().unwrap();
             let val =
-                if newban.nblank() == 0 || newban.is_passpass() {
-                    newban.countf32() * fteban
-                } else if depth <= 1 {
+                if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
                     NodeBB::evaluate(&newban, wei) * fteban
                 } else {
                     -NodeBB::think_internal_ab(ch, &newban, -beta, -newalpha, wei)

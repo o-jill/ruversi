@@ -16,6 +16,13 @@ pub struct EdaxRunner {
     evfile : String
 }
 
+impl std::fmt::Display for EdaxRunner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "obf:{}, curdir:{}, edax:{}, evfile:{}",
+               self.obfpath, self.curdir, self.path, self.evfile)
+    }
+}
+
 impl EdaxRunner {
     pub fn new() -> EdaxRunner {
         EdaxRunner {
@@ -90,8 +97,7 @@ impl EdaxRunner {
 
     #[allow(dead_code)]
     pub fn to_str(&self) -> String {
-        format!("obf:{}, curdir:{}, edax:{}, evfile:{}",
-                self.obfpath, self.curdir, self.path, self.evfile)
+        format!("{self}")
     }
 
     pub fn obf2file(&self, obf : &str) {
@@ -148,6 +154,13 @@ pub struct RuversiRunner {
     verbose : bool,
 }
 
+impl std::fmt::Display for RuversiRunner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "curdir:{}, ruversi:{}, evfile:{}",
+               self.curdir, self.path, self.evfile)
+    }
+}
+
 impl RuversiRunner {
     pub fn new() -> RuversiRunner {
         RuversiRunner {
@@ -176,8 +189,7 @@ impl RuversiRunner {
 
     #[allow(dead_code)]
     pub fn to_str(&self) -> String {
-        format!("curdir:{}, ruversi:{}, evfile:{}",
-                self.curdir, self.path, self.evfile)
+        format!("{self}")
     }
 
     /// read config from a file.
@@ -274,7 +286,7 @@ impl Display for CassioRunner {
                 self.curdir, self.path, self.evfile, self.cas)
     }
 }
-    
+
 impl CassioRunner {
     pub fn new() -> Self {
         Self {

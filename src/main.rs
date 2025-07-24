@@ -47,9 +47,9 @@ fn trial() {
                 let ires;
                 unsafe {
                     // yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev3(&byb);
-                    yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev3_simd(&byb);
+                    yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev9(&byb);
                     // ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb(&bib);
-                    ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb_simdavx(&bib);
+                    ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev9bb_simdavx(&bib);
                     // ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb_simd(&bib);
                 }
                 if yres != ires {
@@ -345,13 +345,13 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         panic!("duel level:{duellv} is not supported...");
     }
 
-    let mut w1 = weight::Weight::new();
+    let mut w1 = Box::new(weight::Weight::new());
     w1.read(ev1).unwrap();
-    let mut w2 = weight::Weight::new();
+    let mut w2 = Box::new(weight::Weight::new());
     w2.read(ev2).unwrap();
-    let mut w3 = weight::Weight::new();
+    let mut w3 = Box::new(weight::Weight::new());
     w3.copy(&w1);
-    let mut w4 = weight::Weight::new();
+    let mut w4 = Box::new(weight::Weight::new());
     w4.copy(&w2);
     let dresult = Arc::new(Mutex::new(DuelResult::new()));
     let dresult2 = dresult.clone();
