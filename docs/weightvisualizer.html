@@ -688,7 +688,7 @@ function readheader4(header) {
   let layers = header.split(/[ -]/);
   // console.log(layers);
   let sets_x = layers[1];  // "3x"
-  let sets = sets_x[0] - 0;
+  let sets = sets_x.substring(0, sets_x.length - 1) - 0;
 
   let result = [1, 1, 1, 1, 1];
   let out = Number(layers[5]);
