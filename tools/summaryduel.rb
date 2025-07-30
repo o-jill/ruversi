@@ -277,5 +277,5 @@ function showgame() {
  }
 }
 </script>
-</head><body><h1>duel summary</h1>#{read(readlines)}<body></html>
+</head><body><h1>duel summary</h1>#{read(STDIN.readlines(external_encoding: 'bom|utf-8'))}<body></html>
 EOT
