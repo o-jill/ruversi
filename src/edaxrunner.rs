@@ -503,7 +503,7 @@ evfile::/tmp/myevfile.dat
         assert_eq!(rr.curdir, "../ruversi2");
         assert_eq!(rr.path, "./target/release/ruversi");
         assert_eq!(rr.evfile, "data/evaltable.txt");
-        assert_eq!(rr.verbose, true);
+        assert!(rr.verbose);
     }
 
     #[test]
@@ -511,9 +511,9 @@ evfile::/tmp/myevfile.dat
         // set_verbose で verbose フィールドが変更されることを確認
         let mut rr = RuversiRunner::new();
         rr.set_verbose(false);
-        assert_eq!(rr.verbose, false);
+        assert!(!rr.verbose);
         rr.set_verbose(true);
-        assert_eq!(rr.verbose, true);
+        assert!(rr.verbose);
     }
 
     #[test]
