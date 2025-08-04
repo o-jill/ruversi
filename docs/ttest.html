@@ -70,6 +70,10 @@ function readdataarray(txt) {
         sep = "\n";
     }
     let elements = txt.split(sep);
+    // 末尾の空要素を削除
+    while (elements.length > 0 && elements[elements.length - 1] === "") {
+        elements.pop();
+    }
     return elements.map((e) => e.trim() - 0);
 }
 
