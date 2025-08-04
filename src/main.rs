@@ -64,7 +64,7 @@ fn trial() {
     let files = files.filter_map(|entry| {
         entry.ok().and_then(|e|
             e.path().file_name().and_then(|n|
-                n.to_str().map(|s| String::from(s))
+                n.to_str().map(String::from)
             )
         )}).collect::<Vec<String>>().iter().filter(|&fnm| {
             fnm.contains(".txt")
@@ -515,6 +515,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 /// # Arguments
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
+#[allow(dead_code)]
 fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");

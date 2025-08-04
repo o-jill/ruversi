@@ -36,29 +36,45 @@ pub const N_PROGRESS_DIV : usize = 3;  // 序盤中盤終盤
 const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + 4 + 1;
 #[allow(dead_code)]
 const WSZV2 : usize = WSZV1;
+#[allow(dead_code)]
 const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * 4 + 4 + 1;
+#[allow(dead_code)]
 const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * 8 + 8 + 1;
+#[allow(dead_code)]
 const WSZV5 : usize = (board::CELL_2D + 1 + 2 + 1) * 16 + 16 + 1;
+#[allow(dead_code)]
 const WSZV6 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
+#[allow(dead_code)]
 const WSZV7 : usize = (board::CELL_2D + 1 + 2 + 1) * 32
         + (32 + 1) * 16 + 16 + 1;
 const WSZV8 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN
         + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
 const WSZV9 : usize = WSZV8;
 
+#[allow(dead_code)]
 const EXP_HI : f64 = 88.3762626647949;
+#[allow(dead_code)]
 const EXP_LO : f64 = -EXP_HI;
 
+#[allow(dead_code)]
 const CEPHES_LOG2EF : f64 = std::f64::consts::LOG2_E;
 // const CEPHES_LOG2EF : f64 = 1.44269504088896341;
+#[allow(dead_code)]
 const CEPHES_EXP_C1 : f64 = 0.693359375;
+#[allow(dead_code)]
 const CEPHES_EXP_C2 : f64 = -2.12194440e-4;
 
+#[allow(dead_code)]
 const CEPHES_EXP_P0 : f64 = 1.9875691500E-4;
+#[allow(dead_code)]
 const CEPHES_EXP_P1 : f64 = 1.3981999507E-3;
+#[allow(dead_code)]
 const CEPHES_EXP_P2 : f64 = 8.3334519073E-3;
+#[allow(dead_code)]
 const CEPHES_EXP_P3 : f64 = 4.1665795894E-2;
+#[allow(dead_code)]
 const CEPHES_EXP_P4 : f64 = 1.6666665459E-1;
+#[allow(dead_code)]
 const CEPHES_EXP_P5 : f64 = 5.0000001201E-1;
 
 
@@ -124,6 +140,10 @@ pub struct Bit2F32 {
 }
 
 impl Bit2F32 {
+    /// # Safety
+    ///
+    /// # Arguments
+    /// - `idx` - index of the table.
     pub unsafe fn addr(&self, idx : usize) -> *const f32 {
         self.table.as_ptr().add(idx * 8)
     }
