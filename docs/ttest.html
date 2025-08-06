@@ -70,6 +70,10 @@ function readdataarray(txt) {
         sep = "\n";
     }
     let elements = txt.split(sep);
+    // 末尾の空要素を削除
+    while (elements.length > 0 && elements[elements.length - 1] === "") {
+        elements.pop();
+    }
     return elements.map((e) => e.trim() - 0);
 }
 
@@ -98,8 +102,8 @@ function calc3() {
         return;
     }
 
-    let [a1, sd1] = calcavgvar(d1);
-    let [a2, sd2] = calcavgvar(d2);
+    let [a1, sd1] = calcavgsd(d1);
+    let [a2, sd2] = calcavgsd(d2);
 
     let [t, p] = ttest(a1, sd1, N1, a2, sd2, N2);
 
@@ -108,8 +112,8 @@ function calc3() {
         (p < thr) ? "<span style='color:red;font-size:3em;'>different</span>"
                   : "<span style='color:green;font-size:3em;'>not different</span>";
     document.getElementById("stats3").innerHTML =
-        "d1:" + avgvar1[0] + " ± " + Math.sqrt(avgvar1[1]) + " N=" + d1.length
-      + "<br>d2:" + avgvar2[0] + " ± " + Math.sqrt(avgvar2[1]) + " N=" + d2.length
+        "d1:" + a1 + " ± " + Math.sqrt(sd1) + " N=" + d1.length
+      + "<br>d2:" + a2 + " ± " + Math.sqrt(sd2) + " N=" + d2.length
       + "<br>t:" + t + " p:" + p;
 }
 </script>
