@@ -220,18 +220,18 @@ impl MyOption {
                 if e.contains("-N") {
                     let n : Vec<&str> = e.split("N").collect();
                     let n = n[1].parse::<usize>();
-                    if n.is_ok() {
-                        opt.n = Some(n.unwrap());
+                    if let Ok(n) = n {
+                        opt.n = Some(n);
                     } else {
                         return Err(format!("invalid option: {e}"));
                     }
                 }
             } else if old == "--repeat" {
                 let rpt = e.parse::<usize>();
-                if rpt.is_err() {
-                    return Err(format!("invalid option: {old} {e}"));
+                if let Ok(repeat) = rpt {
+                    opt.repeat = Some(repeat);
                 } else {
-                    opt.repeat = Some(rpt.unwrap());
+                    return Err(format!("invalid option: {old} {e}"));
                 }
                 old.clear();
             } else if old == "--progress" {
@@ -241,10 +241,10 @@ impl MyOption {
                 old.clear();
             } else if old == "--minibatch" {
                 let mbs = e.parse::<usize>();
-                if mbs.is_err() {
-                    return Err(format!("invalid option: {old} {e}"));
+                if let Ok(minibatchsize) = mbs {
+                    opt.minibsize = minibatchsize;
                 } else {
-                    opt.minibsize = mbs.unwrap();
+                    return Err(format!("invalid option: {old} {e}"));
                 }
                 old.clear();
             } else if old == "--Edconf" || old == "--Ruconf" {
@@ -256,10 +256,10 @@ impl MyOption {
                 old.clear();
             } else if old == "--eta" {
                 let eta = e.parse::<f32>();
-                if eta.is_err() {
-                    return Err(format!("invalid option: {old} {e}"));
+                if let Ok(eta) = eta {
+                    opt.eta = Some(eta);
                 } else {
-                    opt.eta = Some(eta.unwrap());
+                    return Err(format!("invalid option: {old} {e}"));
                 }
                 old.clear();
             } else if old == "--ev1" {
