@@ -1623,8 +1623,9 @@ impl Weight {
                     let x2 = x86_64::_mm256_loadu_ps(sum4.as_ptr().add(i + 8));
                     let s1 = x86_64::_mm256_add_ps(x1, x2);
                     let s2 = x86_64::_mm256_extractf128_ps(s1, 1);
-                    let s4 = x86_64::_mm256_castps256_ps128(s1);
-                    let h1 = x86_64::_mm_hadd_ps(s4, s4);
+                    let s3 = x86_64::_mm256_castps256_ps128(s1);
+                    let h1 = x86_64::_mm_add_ps(s2, s3);
+                    let h1 = x86_64::_mm_hadd_ps(h1, h1);
                     let h2 = x86_64::_mm_hadd_ps(h1, h1);
                     hidsum2 += x86_64::_mm_cvtss_f32(h2);
                 }
