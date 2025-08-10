@@ -1108,7 +1108,6 @@ impl Weight {
                     sum4 = x86_64::_mm_setzero_ps();
                 }
                 const M : usize = 16;
-                let bit4 = 0x0f;
                 for idx in (0..board::CELL_2D).step_by(M) {
                     unsafe {
                         let c1 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx));
@@ -1449,8 +1448,8 @@ impl Weight {
             for idx in (0..bitboard::CELL_2D).step_by(32) {
                 let bi1 = bit8 & (black >> idx) as usize;
                 let wi1 = bit8 & (white >> idx) as usize;
-                let bi2 = bit8 & (black >> idx + 8) as usize;
-                let wi2 = bit8 & (white >> idx + 8) as usize;
+                let bi2 = bit8 & (black >> (idx + 8)) as usize;
+                let wi2 = bit8 & (white >> (idx + 8)) as usize;
                 let bi3 = bit8 & (black >> (idx + 16)) as usize;
                 let wi3 = bit8 & (white >> (idx + 16)) as usize;
                 let bi4 = bit8 & (black >> (idx + 24)) as usize;
