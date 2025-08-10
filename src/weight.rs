@@ -1061,6 +1061,38 @@ impl Weight {
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
 
+        let mut cells = Vec::with_capacity(bitboard::CELL_2D);
+        unsafe {
+            cells.set_len(bitboard::CELL_2D);
+            let c_ptr : *mut f32 = cells.as_mut_ptr();
+            let bit4 = 0xf;
+            for idx in (0..bitboard::CELL_2D).step_by(16) {
+                let bi1 = bit4 & (black >> idx) as usize;
+                let wi1 = bit4 & (white >> idx) as usize;
+                let bi2 = bit4 & (black >> (idx + 4)) as usize;
+                let wi2 = bit4 & (white >> (idx + 4)) as usize;
+                let bi3 = bit4 & (black >> (idx + 8)) as usize;
+                let wi3 = bit4 & (white >> (idx + 8)) as usize;
+                let bi4 = bit4 & (black >> (idx + 12)) as usize;
+                let wi4 = bit4 & (white >> (idx + 12)) as usize;
+                let b41 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi1));
+                let b42 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi2));
+                let b43 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi3));
+                let b44 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi4));
+                let w41 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi1));
+                let w42 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi2));
+                let w43 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi3));
+                let w44 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi4));
+                let c1 = x86_64::_mm_sub_ps(b41, w41);
+                let c2 = x86_64::_mm_sub_ps(b42, w42);
+                let c3 = x86_64::_mm_sub_ps(b43, w43);
+                let c4 = x86_64::_mm_sub_ps(b44, w44);
+                x86_64::_mm_storeu_ps(c_ptr.add(idx), c1);
+                x86_64::_mm_storeu_ps(c_ptr.add(idx + 4), c2);
+                x86_64::_mm_storeu_ps(c_ptr.add(idx + 8), c3);
+                x86_64::_mm_storeu_ps(c_ptr.add(idx + 12), c4);
+            }
+        }
         let mut hid = [0f32 ; N_HIDDEN];
         const N : usize = 8;
 
@@ -1077,30 +1109,12 @@ impl Weight {
                 }
                 const M : usize = 16;
                 let bit4 = 0x0f;
-                for j in 0..board::CELL_2D / M {
-                    let idx = j * M;
-                    let bi1 = bit4 & (black >> idx) as usize;
-                    let wi1 = bit4 & (white >> idx) as usize;
-                    let bi2 = bit4 & (black >> (idx + 4)) as usize;
-                    let wi2 = bit4 & (white >> (idx + 4)) as usize;
-                    let bi3 = bit4 & (black >> (idx + 8)) as usize;
-                    let wi3 = bit4 & (white >> (idx + 8)) as usize;
-                    let bi4 = bit4 & (black >> (idx + 12)) as usize;
-                    let wi4 = bit4 & (white >> (idx + 12)) as usize;
-
+                for idx in (0..board::CELL_2D).step_by(M) {
                     unsafe {
-                        let b41 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi1));
-                        let b42 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi2));
-                        let b43 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi3));
-                        let b44 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(bi4));
-                        let w41 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi1));
-                        let w42 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi2));
-                        let w43 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi3));
-                        let w44 = x86_64::_mm_load_ps(TBL8_BIT2F32.addr(wi4));
-                        let c1 = x86_64::_mm_sub_ps(b41, w41);
-                        let c2 = x86_64::_mm_sub_ps(b42, w42);
-                        let c3 = x86_64::_mm_sub_ps(b43, w43);
-                        let c4 = x86_64::_mm_sub_ps(b44, w44);
+                        let c1 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx));
+                        let c2 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx + 4));
+                        let c3 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx + 8));
+                        let c4 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx + 12));
 
                         let x41 = x86_64::_mm_load_ps(w1.as_ptr().add(idx));
                         let x42 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 4));
