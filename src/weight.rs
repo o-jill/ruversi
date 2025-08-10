@@ -1061,10 +1061,9 @@ impl Weight {
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
 
-        let mut cells = Vec::with_capacity(bitboard::CELL_2D);
+        let mut cells : Vec<f32> = Vec::with_capacity(bitboard::CELL_2D);
         unsafe {
-            cells.set_len(bitboard::CELL_2D);
-            let c_ptr : *mut f32 = cells.as_mut_ptr();
+            let c_ptr  = cells.spare_capacity_mut().as_mut_ptr() as *mut f32;
             let bit4 = 0xf;
             for idx in (0..bitboard::CELL_2D).step_by(16) {
                 let bi1 = bit4 & (black >> idx) as usize;
@@ -1092,6 +1091,7 @@ impl Weight {
                 x86_64::_mm_storeu_ps(c_ptr.add(idx + 8), c3);
                 x86_64::_mm_storeu_ps(c_ptr.add(idx + 12), c4);
             }
+            cells.set_len(bitboard::CELL_2D);
         }
         let mut hid = [0f32 ; N_HIDDEN];
         const N : usize = 8;
@@ -1442,10 +1442,9 @@ impl Weight {
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
         let mut sumn = [0f32 ; N];
-        let mut cells = Vec::with_capacity(bitboard::CELL_2D);
+        let mut cells : Vec<f32> = Vec::with_capacity(bitboard::CELL_2D);
         unsafe {
-            cells.set_len(bitboard::CELL_2D);
-            let c_ptr : *mut f32 = cells.as_mut_ptr();
+            let c_ptr = cells.spare_capacity_mut().as_mut_ptr() as *mut f32;
             let bit8 = 0xff;
             for idx in (0..bitboard::CELL_2D).step_by(32) {
                 let bi1 = bit8 & (black >> idx) as usize;
@@ -1473,7 +1472,8 @@ impl Weight {
                 x86_64::_mm256_storeu_ps(c_ptr.add(idx + 16), f83);
                 x86_64::_mm256_storeu_ps(c_ptr.add(idx + 24), f84);
             }
-        };
+            cells.set_len(bitboard::CELL_2D);
+        }
         for hidx in (0..N_HIDDEN).step_by(N) {
             for m in (0..N).step_by(8) {
                 let mut sum88 = [0f32 ; N * 8 / 2];
