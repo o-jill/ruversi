@@ -1611,15 +1611,27 @@ impl Weight {
                     let mul1 = x86_64::_mm256_mul_ps(x1, w1);
                     let mul2 = x86_64::_mm256_mul_ps(x2, w2);
                     let s12 = x86_64::_mm256_add_ps(mul1, mul2);
-                    let s1 = x86_64::_mm256_extractf128_ps(s12, 0);
+                    let s1 = x86_64::_mm256_castps256_ps128(s12);
                     let s2 = x86_64::_mm256_extractf128_ps(s12, 1);
                     let s4 = x86_64::_mm_add_ps(s1, s2);
                     x86_64::_mm_store_ps(sum4.as_mut_ptr().add(j / 4), s4);
                 }
             }
-            for h in sum4 {
-                hidsum2 += h;
+            for (i, _s) in sum4.iter().enumerate().step_by(16) {
+                unsafe {
+                    let x1 = x86_64::_mm256_loadu_ps(sum4.as_ptr().add(i));
+                    let x2 = x86_64::_mm256_loadu_ps(sum4.as_ptr().add(i + 8));
+                    let s1 = x86_64::_mm256_add_ps(x1, x2);
+                    let s2 = x86_64::_mm256_extractf128_ps(s1, 1);
+                    let s4 = x86_64::_mm256_castps256_ps128(s1);
+                    let h1 = x86_64::_mm_hadd_ps(s4, s4);
+                    let h2 = x86_64::_mm_hadd_ps(h1, h1);
+                    hidsum2 += x86_64::_mm_cvtss_f32(h2);
+                }
             }
+            // for h in sum4 {
+            //     hidsum2 += h;
+            // }
             hid2[i] = hidsum2;
         }
         unsafe {  // relu
