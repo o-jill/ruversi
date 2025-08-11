@@ -1281,10 +1281,10 @@ impl Weight {
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
         let mut cells : Vec<f32> = Vec::with_capacity(bitboard::CELL_2D);
+        let c_ptr  = cells.spare_capacity_mut().as_mut_ptr() as *mut f32;
+        let bit4 = 0xff;
         unsafe {
-            let c_ptr  = cells.spare_capacity_mut().as_mut_ptr() as *mut f32;
-            let bit4 = 0xf;
-            for idx in (0..bitboard::CELL_2D).step_by(16) {
+            for idx in (0..bitboard::CELL_2D).step_by(2 * bitboard::NUMCELL) {
                 let bi1 = bit4 & (black >> idx) as usize;
                 let wi1 = bit4 & (white >> idx) as usize;
                 let bi3 = bit4 & (black >> (idx + bitboard::NUMCELL)) as usize;
@@ -1314,17 +1314,16 @@ impl Weight {
                 let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
                 for idx in (0..bitboard::CELL_2D).step_by(2 * bitboard::NUMCELL) {
                     unsafe {
-                        let c12 = vld1q_f32_x2(cells.as_ptr().add(idx));
-                        let c34 = vld1q_f32_x2(cells.as_ptr().add(idx + 8));
+                        let c = vld1q_f32_x4(cells.as_ptr().add(idx));
                         let w = vld1q_f32_x4(w1.as_ptr().add(idx));
-                        let w1 = vmulq_f32(w.0, c12.0);
-                        let w12 = vmulq_f32(w.1, c12.1);
-                        let w2 = vmulq_f32(w.2, c34.0);
-                        let w22 = vmulq_f32(w.3, c34.1);
-                        let sum = vaddq_f32(w1, w12);
-                        let sum2 = vaddq_f32(w2, w22);
-                        let sum = vaddvq_f32(vaddq_f32(sum, sum2));
-                        *elem += sum;
+                        let w1 = vmulq_f32(w.0, c.0);
+                        let w2 = vmulq_f32(w.1, c.1);
+                        let w3 = vmulq_f32(w.2, c.2);
+                        let w4 = vmulq_f32(w.3, c.3);
+                        let sum = vaddq_f32(w1, w2);
+                        let sum2 = vaddq_f32(w3, w4);
+                        let sum3 = vaddq_f32(sum, sum2);
+                        *elem += vaddvq_f32(sum3);
                     }
                 }
             }
@@ -1380,8 +1379,8 @@ impl Weight {
         let wdc1 = self.wl1bias(prgs);
         let wh2 = self.wlayer2(prgs);
         let mut hid2 = [0f32 ; N_HIDDEN2];
+        hid2.copy_from_slice(wdc1);
         for (i, h2) in hid2.iter_mut().enumerate() {
-            let mut hidsum = wdc1[i];
             for j in (0..N_HIDDEN).step_by(32) {
                unsafe {
                     let inp = vld1q_f32_x4(hid.as_ptr().add(j));
