@@ -1310,7 +1310,6 @@ impl Weight {
             let mut sumn = [0f32 ; N];
 
             for (n, elem) in sumn.iter_mut().enumerate() {
-                let mut ret = 0f32;
                 let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
                 for idx in (0..bitboard::CELL_2D).step_by(2 * bitboard::NUMCELL) {
                     unsafe {
