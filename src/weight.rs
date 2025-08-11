@@ -1309,11 +1309,11 @@ impl Weight {
         for i in (0..N_HIDDEN).step_by(N) {
             let mut sumn = [0f32 ; N];
 
-            for (n, elem) in sumn.iter_mut().enumerate() {
-                let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
-                for idx in (0..bitboard::CELL_2D).step_by(2 * bitboard::NUMCELL) {
-                    unsafe {
-                        let c = vld1q_f32_x4(cells.as_ptr().add(idx));
+            for idx in (0..bitboard::CELL_2D).step_by(2 * bitboard::NUMCELL) {
+                unsafe {
+                    let c = vld1q_f32_x4(cells.as_ptr().add(idx));
+                    for (n, elem) in sumn.iter_mut().enumerate() {
+                        let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
                         let w = vld1q_f32_x4(w1.as_ptr().add(idx));
                         let w1 = vmulq_f32(w.0, c.0);
                         let w2 = vmulq_f32(w.1, c.1);
@@ -1379,10 +1379,10 @@ impl Weight {
         let wh2 = self.wlayer2(prgs);
         let mut hid2 = [0f32 ; N_HIDDEN2];
         hid2.copy_from_slice(wdc1);
-        for (i, h2) in hid2.iter_mut().enumerate() {
-            for j in (0..N_HIDDEN).step_by(32) {
-               unsafe {
-                    let inp = vld1q_f32_x4(hid.as_ptr().add(j));
+        for j in (0..N_HIDDEN).step_by(32) {
+            unsafe {
+                let inp = vld1q_f32_x4(hid.as_ptr().add(j));
+                for (i, h2) in hid2.iter_mut().enumerate() {
                     let wei = vld1q_f32_x4(wh.as_ptr().add(i * N_HIDDEN + j));
                     let mul0 = vmulq_f32(inp.0, wei.0);
                     let mul1 = vmulq_f32(inp.1, wei.1);
