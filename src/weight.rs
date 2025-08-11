@@ -1280,6 +1280,30 @@ impl Weight {
         let wtbn = self.wteban(prgs);
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
+        let mut cells : Vec<f32> = Vec::with_capacity(bitboard::CELL_2D);
+        unsafe {
+            let c_ptr  = cells.spare_capacity_mut().as_mut_ptr() as *mut f32;
+            let bit4 = 0xf;
+            for idx in (0..bitboard::CELL_2D).step_by(16) {
+                let bi1 = bit4 & (black >> idx) as usize;
+                let wi1 = bit4 & (white >> idx) as usize;
+                let bi3 = bit4 & (black >> (idx + bitboard::NUMCELL)) as usize;
+                let wi3 = bit4 & (white >> (idx + bitboard::NUMCELL)) as usize;
+                let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
+                let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
+                let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
+                let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi3));
+                let c1 = vsubq_f32(b12.0, w12.0);
+                let c2 = vsubq_f32(b12.1, w12.1);
+                let c3 = vsubq_f32(b34.0, w34.0);
+                let c4 = vsubq_f32(b34.1, w34.1);
+                vst1q_f32(c_ptr.add(idx), c1);
+                vst1q_f32(c_ptr.add(idx + 4), c2);
+                vst1q_f32(c_ptr.add(idx + 8), c3);
+                vst1q_f32(c_ptr.add(idx + 12), c4);
+            }
+            cells.set_len(bitboard::CELL_2D);
+        }
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
         for i in (0..N_HIDDEN).step_by(N) {
@@ -1296,20 +1320,13 @@ impl Weight {
                     let wi3 = bit8 & (white >> (idx + bitboard::NUMCELL)) as usize;
         
                     unsafe {
-                        let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
-                        let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
-                        let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
-                        let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi3));
-
-                        let c1 = vsubq_f32(b12.0, w12.0);
-                        let c2 = vsubq_f32(b12.1, w12.1);
-                        let c3 = vsubq_f32(b34.0, w34.0);
-                        let c4 = vsubq_f32(b34.1, w34.1);
+                        let c12 = vld1q_f32_x2(cells.as_ptr().add(idx));
+                        let c34 = vld1q_f32_x2(cells.as_ptr().add(idx));
                         let w = vld1q_f32_x4(w1.as_ptr().add(idx));
-                        let w1 = vmulq_f32(w.0, c1);
-                        let w12 = vmulq_f32(w.1, c2);
-                        let w2 = vmulq_f32(w.2, c3);
-                        let w22 = vmulq_f32(w.3, c4);
+                        let w1 = vmulq_f32(w.0, c12.0);
+                        let w12 = vmulq_f32(w.1, c12.1);
+                        let w2 = vmulq_f32(w.2, c34.0);
+                        let w22 = vmulq_f32(w.3, c34.1);
                         let sum = vaddq_f32(w1, w12);
                         let sum2 = vaddq_f32(w2, w22);
                         let sum = vaddvq_f32(vaddq_f32(sum, sum2));
