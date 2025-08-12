@@ -1280,40 +1280,49 @@ impl Weight {
         let wtbn = self.wteban(prgs);
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
+        let mut cells : Vec<f32> = Vec::with_capacity(bitboard::CELL_2D);
+        let c_ptr  = cells.spare_capacity_mut().as_mut_ptr() as *mut f32;
+        let bit4 = 0xff;
+        unsafe {
+            for idx in (0..bitboard::CELL_2D).step_by(2 * bitboard::NUMCELL) {
+                let bi1 = bit4 & (black >> idx) as usize;
+                let wi1 = bit4 & (white >> idx) as usize;
+                let bi3 = bit4 & (black >> (idx + bitboard::NUMCELL)) as usize;
+                let wi3 = bit4 & (white >> (idx + bitboard::NUMCELL)) as usize;
+                let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
+                let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
+                let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
+                let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi3));
+                let c1 = vsubq_f32(b12.0, w12.0);
+                let c2 = vsubq_f32(b12.1, w12.1);
+                let c3 = vsubq_f32(b34.0, w34.0);
+                let c4 = vsubq_f32(b34.1, w34.1);
+                vst1q_f32(c_ptr.add(idx), c1);
+                vst1q_f32(c_ptr.add(idx + 4), c2);
+                vst1q_f32(c_ptr.add(idx + 8), c3);
+                vst1q_f32(c_ptr.add(idx + 12), c4);
+            }
+            cells.set_len(bitboard::CELL_2D);
+        }
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
         for i in (0..N_HIDDEN).step_by(N) {
-            let mut sumn = [0.0f32 ; N];
+            let mut sumn = [0f32 ; N];
 
-            for n in 0..N {
-                let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
-                for y in (0..board::NUMCELL).step_by(2) {
-                    let bit8 = 0xff;
-                    let idx = y * bitboard::NUMCELL;
-                    let bi1 = bit8 & (black >> idx) as usize;
-                    let wi1 = bit8 & (white >> idx) as usize;
-                    let bi3 = bit8 & (black >> (idx + bitboard::NUMCELL)) as usize;
-                    let wi3 = bit8 & (white >> (idx + bitboard::NUMCELL)) as usize;
-        
-                    unsafe {
-                        let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
-                        let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
-                        let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
-                        let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi3));
-
-                        let c1 = vsubq_f32(b12.0, w12.0);
-                        let c2 = vsubq_f32(b12.1, w12.1);
-                        let c3 = vsubq_f32(b34.0, w34.0);
-                        let c4 = vsubq_f32(b34.1, w34.1);
+            for idx in (0..bitboard::CELL_2D).step_by(2 * bitboard::NUMCELL) {
+                unsafe {
+                    let c = vld1q_f32_x4(cells.as_ptr().add(idx));
+                    for (n, elem) in sumn.iter_mut().enumerate() {
+                        let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
                         let w = vld1q_f32_x4(w1.as_ptr().add(idx));
-                        let w1 = vmulq_f32(w.0, c1);
-                        let w12 = vmulq_f32(w.1, c2);
-                        let w2 = vmulq_f32(w.2, c3);
-                        let w22 = vmulq_f32(w.3, c4);
-                        let sum = vaddq_f32(w1, w12);
-                        let sum2 = vaddq_f32(w2, w22);
-                        let sum = vaddvq_f32(vaddq_f32(sum, sum2));
-                        sumn[n] += sum;
+                        let w1 = vmulq_f32(w.0, c.0);
+                        let w2 = vmulq_f32(w.1, c.1);
+                        let w3 = vmulq_f32(w.2, c.2);
+                        let w4 = vmulq_f32(w.3, c.3);
+                        let sum = vaddq_f32(w1, w2);
+                        let sum2 = vaddq_f32(w3, w4);
+                        let sum3 = vaddq_f32(sum, sum2);
+                        *elem += vaddvq_f32(sum3);
                     }
                 }
             }
@@ -1351,6 +1360,7 @@ impl Weight {
                 // vst1q_f32(sumn.as_mut_ptr().add(4), sum42);
                 // vst1q_f32(sumn.as_mut_ptr().add(8), sum43);
                 // vst1q_f32(sumn.as_mut_ptr().add(12), sum44);
+                // relu
                 let zero = vmovq_n_f32(0.0);
                 let rl1 = vmaxq_f32(zero, sum41);
                 let rl2 = vmaxq_f32(zero, sum42);
@@ -1361,9 +1371,6 @@ impl Weight {
                 vst1q_f32(hid.as_mut_ptr().add(i + 8), rl3);
                 vst1q_f32(hid.as_mut_ptr().add(i + 12), rl4);
             }
-            // for n in 0 .. N {  // relu
-            //     hid[i + n] = if sumn[n] > 0f32 {sumn[n]} else {0f32};
-            // }
         }
         // 2nd layer to output
         let mut res = self.wl2bias(prgs);
@@ -1371,11 +1378,11 @@ impl Weight {
         let wdc1 = self.wl1bias(prgs);
         let wh2 = self.wlayer2(prgs);
         let mut hid2 = [0f32 ; N_HIDDEN2];
-        for i in 0..N_HIDDEN2 {
-            let mut hidsum = wdc1[i];
-            for j in (0..N_HIDDEN).step_by(32) {
-               unsafe {
-                    let inp = vld1q_f32_x4(hid.as_ptr().add(j));
+        hid2.copy_from_slice(wdc1);
+        for j in (0..N_HIDDEN).step_by(32) {
+            unsafe {
+                let inp = vld1q_f32_x4(hid.as_ptr().add(j));
+                for (i, h2) in hid2.iter_mut().enumerate() {
                     let wei = vld1q_f32_x4(wh.as_ptr().add(i * N_HIDDEN + j));
                     let mul0 = vmulq_f32(inp.0, wei.0);
                     let mul1 = vmulq_f32(inp.1, wei.1);
@@ -1391,11 +1398,9 @@ impl Weight {
                     let mul3 = vmlaq_f32(mul1, inp.3, wei.3);
                     let add42 = vaddq_f32(mul2, mul3);
                     let add4 = vaddq_f32(add4, add42);
-                    hidsum += vaddvq_f32(add4);
+                    *h2 += vaddvq_f32(add4);
                 }
             }
-            // hid2[i] = if hidsum > 0f32 {hidsum} else {0f32};
-            hid2[i] = hidsum;
         }
         for (i, _h) in hid2.iter().enumerate().step_by(16) {
             unsafe {
