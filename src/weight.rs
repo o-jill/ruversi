@@ -1198,9 +1198,9 @@ impl Weight {
         let wdc1 = self.wl1bias(prgs);
         let wh2 = self.wlayer2(prgs);
         let mut hid2 = [0f32 ; N_HIDDEN2];
+        let mut sum4 = [0f32 ; 4 * N_HIDDEN2];
         for i in 0..N_HIDDEN2 {
             let mut hidsum2 = wdc1[i];
-            let mut sum4 = [0f32 ; 4];
             let mut s4 = unsafe {x86_64::_mm_setzero_ps()};
             for j in (0..N_HIDDEN).step_by(16) {
                 let idx = i * N_HIDDEN + j;
@@ -1225,12 +1225,30 @@ impl Weight {
                     s4 = x86_64::_mm_add_ps(s1234, s4);
                 }
             }
-            unsafe {x86_64::_mm_storeu_ps(sum4.as_mut_ptr(), s4);}
-            for h in sum4 {
-                hidsum2 += h;
+            unsafe {x86_64::_mm_storeu_ps(sum4.as_mut_ptr().add(i * 4), s4);}
+        }
+        for i in (0..N_HIDDEN2).step_by(4) {
+            unsafe {
+                let mut a = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4));
+                let mut b = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4 + 4));
+                let mut c = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4 + 8));
+                let mut d = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4 + 12));
+                let a0c0a1c1 = x86_64::_mm_unpacklo_ps(a, c);
+                let b0d0b1d1 = x86_64::_mm_unpacklo_ps(b, d);
+                let a2c2a3c3 = x86_64::_mm_unpackhi_ps(a, c);
+                let b2d2b3d3 = x86_64::_mm_unpackhi_ps(b, d);
+                let a0 = x86_64::_mm_unpacklo_ps(a0c0a1c1, b0d0b1d1);
+                let a1 = x86_64::_mm_unpackhi_ps(a0c0a1c1, b0d0b1d1);
+                let a2 = x86_64::_mm_unpacklo_ps(a2c2a3c3, b2d2b3d3);
+                let a3 = x86_64::_mm_unpackhi_ps(a2c2a3c3, b2d2b3d3);
+                let s1 = x86_64::_mm_add_ps(a0, a1);
+                let s2 = x86_64::_mm_add_ps(a2, a3);
+                let s3 = x86_64::_mm_add_ps(s1, s2);
+
+                let dc = x86_64::_mm_load_ps(wdc1.as_ptr().add(i));
+                let s4 = x86_64::_mm_add_ps(s3, dc);
+                x86_64::_mm_storeu_ps(hid2.as_mut_ptr().add(i), s4);
             }
-            // res += wh2[i] / ((-hidsum2).exp() + 1f32);
-            hid2[i] = hidsum2;
         }
         unsafe {  // relu
             let h1 = x86_64::_mm_loadu_ps(hid2.as_ptr());
@@ -1273,9 +1291,9 @@ impl Weight {
         let black = ban.black;
         let white = ban.white;
         let teban = ban.teban as f32;
-        
+
         let (fsb, fsw) = ban.fixedstones();
-        
+
         let ow = self.wban(prgs);
         let wtbn = self.wteban(prgs);
         let wfs = self.wfixedstones(prgs);
