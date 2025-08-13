@@ -214,7 +214,8 @@ impl MyOption {
                 } else if e == "--treedump" {
                     old = e;
                     opt.treedump = Some("treeinfo.puml".to_string());
-                // } else {
+                } else {
+                    panic!("unknown option: {e}");
                 }
             } else if old.is_empty() && e.starts_with("-") {
                 if e.contains("-N") {
@@ -225,6 +226,8 @@ impl MyOption {
                     } else {
                         return Err(format!("invalid option: {e}"));
                     }
+                } else {
+                    panic!("unknown option: {e}");
                 }
             } else if old == "--repeat" {
                 let rpt = e.parse::<usize>();
@@ -303,7 +306,7 @@ impl MyOption {
                 opt.treedump = Some(e.to_string());
                 old.clear();
             } else {
-                println!("unknown option: {e}");
+                panic!("unknown option: {e}");
             }
         }
         Ok(opt)
