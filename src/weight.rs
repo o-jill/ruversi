@@ -506,7 +506,10 @@ impl Weight {
         }
         let mut format = EvalFile::Unknown;
         let file = File::open(path);
-        if file.is_err() {return Err(file.err().unwrap().to_string());}
+        if let Err(e) = file {
+            eprintln!("path: {path}");
+            return Err(e.to_string());
+        }
 
         let mut idx = 0;
         let file = file.unwrap();
@@ -592,7 +595,8 @@ impl Weight {
 
     fn readv9(&mut self, line : &str, progress : usize) -> Result<(), String> {
         let csv = line.split(",").collect::<Vec<_>>();
-        let newtable : Vec<f32> = csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+        let newtable : Vec<f32> =
+                csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
         let nsz = newtable.len();
         if WSZV9 != nsz {
             return Err(format!("size mismatch v9:{WSZV9} != {nsz}"));
@@ -1228,10 +1232,10 @@ impl Weight {
         }
         for i in (0..N_HIDDEN2).step_by(4) {
             unsafe {
-                let mut a = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4));
-                let mut b = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4 + 4));
-                let mut c = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4 + 8));
-                let mut d = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4 + 12));
+                let a = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4));
+                let b = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4 + 4));
+                let c = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4 + 8));
+                let d = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4 + 12));
                 let a0c0a1c1 = x86_64::_mm_unpacklo_ps(a, c);
                 let b0d0b1d1 = x86_64::_mm_unpacklo_ps(b, d);
                 let a2c2a3c3 = x86_64::_mm_unpackhi_ps(a, c);
@@ -1654,32 +1658,43 @@ impl Weight {
                     let w4 = x86_64::_mm256_load_ps(wh.as_ptr().add(idx + 24));
                     let mul1 = x86_64::_mm256_mul_ps(x1, w1);
                     let mul2 = x86_64::_mm256_mul_ps(x2, w2);
-                    let mul3 = x86_64::_mm256_mul_ps(x3, w3);
-                    let mul4 = x86_64::_mm256_mul_ps(x4, w4);
-                    let s12 = x86_64::_mm256_add_ps(mul1, mul2);
-                    let s34 = x86_64::_mm256_add_ps(mul3, mul4);
+                    // let mul3 = x86_64::_mm256_mul_ps(x3, w3);
+                    // let mul4 = x86_64::_mm256_mul_ps(x4, w4);
+                    // let s12 = x86_64::_mm256_add_ps(mul1, mul2);
+                    // let s34 = x86_64::_mm256_add_ps(mul3, mul4);
+                    let s12 = x86_64::_mm256_fmadd_ps(x3, w3, mul1);
+                    let s34 = x86_64::_mm256_fmadd_ps(x4, w4, mul2);
                     let s1234 = x86_64::_mm256_add_ps(s12, s34);
-                    x86_64::_mm256_storeu_ps(sumhn.as_mut_ptr().add(i * 8), s1234);
+                    x86_64::_mm256_storeu_ps(
+                            sumhn.as_mut_ptr().add(i * 8), s1234);
                 }
                 for (k, _hn) in sumhn.iter().enumerate().step_by(32) {
                     use std::arch::x86_64::_mm256_extractf128_ps;
 
-                    let a = x86_64::_mm256_loadu_ps(sumhn.as_ptr().add(k));  // a0~a7
-                    let b = x86_64::_mm256_loadu_ps(sumhn.as_ptr().add(k + 8));  // a8~a15
-                    let c = x86_64::_mm256_loadu_ps(sumhn.as_ptr().add(k + 16));  // b0~b7
-                    let d = x86_64::_mm256_loadu_ps(sumhn.as_ptr().add(k + 24));  // b8~b15
+                    let a = x86_64::_mm256_loadu_ps(
+                            sumhn.as_ptr().add(k));  // a0~a7
+                    let b = x86_64::_mm256_loadu_ps(
+                            sumhn.as_ptr().add(k + 8));  // a8~a15
+                    let c = x86_64::_mm256_loadu_ps(
+                            sumhn.as_ptr().add(k + 16));  // b0~b7
+                    let d = x86_64::_mm256_loadu_ps(
+                            sumhn.as_ptr().add(k + 24));  // b8~b15
                     let a0c0 = x86_64::_mm256_unpacklo_ps(a, b);
                     let b0d0 = x86_64::_mm256_unpacklo_ps(c, d);
                     let a2c2 = x86_64::_mm256_unpackhi_ps(a, b);
                     let b2d2 = x86_64::_mm256_unpackhi_ps(c, d);
                     let s1 = x86_64::_mm256_add_ps(a0c0, a2c2);
                     let s2 = x86_64::_mm256_add_ps(b0d0, b2d2);
-                    let t1 = x86_64::_mm256_shuffle_ps(s1, s2, ((1 << 6) | (0 << 4) | (1 << 2) | 0));
-                    let t2 = x86_64::_mm256_shuffle_ps(s1, s2, ((3 << 6) | (2 << 4) | (3 << 2) | 2));
+                    let t1 = x86_64::_mm256_shuffle_ps(s1, s2,
+                            0b01000100/*(1 << 6) | (0 << 4) | (1 << 2) | 0*/);
+                    let t2 = x86_64::_mm256_shuffle_ps(s1, s2,
+                            0b11101110/*(3 << 6) | (2 << 4) | (3 << 2) | 2*/);
                     let s3 = x86_64::_mm256_add_ps(t1, t2);
                     let s4 = _mm256_extractf128_ps(s3, 1);
-                    let s5 = x86_64::_mm_add_ps(s4, x86_64::_mm256_castps256_ps128(s3));
-                    let hn2 = x86_64::_mm_loadu_ps(hid2.as_mut_ptr().add(k / 8));
+                    let s5 = x86_64::_mm_add_ps(
+                            s4, x86_64::_mm256_castps256_ps128(s3));
+                    let hn2 = x86_64::_mm_loadu_ps(
+                            hid2.as_mut_ptr().add(k / 8));
                     let s6 = x86_64::_mm_add_ps(s5, hn2);
                     x86_64::_mm_storeu_ps(hid2.as_mut_ptr().add(k / 8), s6);
                 }
