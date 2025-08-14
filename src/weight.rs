@@ -1199,33 +1199,32 @@ impl Weight {
         let wh2 = self.wlayer2(prgs);
         let mut hid2 = [0f32 ; N_HIDDEN2];
         let mut sum4 = [0f32 ; 4 * N_HIDDEN2];
-        for i in 0..N_HIDDEN2 {
-            let mut hidsum2 = wdc1[i];
-            let mut s4 = unsafe {x86_64::_mm_setzero_ps()};
-            for j in (0..N_HIDDEN).step_by(16) {
-                let idx = i * N_HIDDEN + j;
-                unsafe {
-                    let x1 = x86_64::_mm_loadu_ps(hid.as_ptr().add(j));
-                    let x2 = x86_64::_mm_loadu_ps(hid.as_ptr().add(j + 4));
-                    let x3 = x86_64::_mm_loadu_ps(hid.as_ptr().add(j + 8));
-                    let x4 = x86_64::_mm_loadu_ps(hid.as_ptr().add(j + 12));
+        for j in (0..N_HIDDEN).step_by(16) {
+            unsafe {
+                let x1 = x86_64::_mm_loadu_ps(hid.as_ptr().add(j));
+                let x2 = x86_64::_mm_loadu_ps(hid.as_ptr().add(j + 4));
+                let x3 = x86_64::_mm_loadu_ps(hid.as_ptr().add(j + 8));
+                let x4 = x86_64::_mm_loadu_ps(hid.as_ptr().add(j + 12));
+                for i in 0..N_HIDDEN2 {
+                    let idx = i * N_HIDDEN + j;
                     let w1 = x86_64::_mm_load_ps(wh.as_ptr().add(idx));
                     let w2 = x86_64::_mm_load_ps(wh.as_ptr().add(idx + 4));
                     let w3 = x86_64::_mm_load_ps(wh.as_ptr().add(idx + 8));
                     let w4 = x86_64::_mm_load_ps(wh.as_ptr().add(idx + 12));
                     let mul1 = x86_64::_mm_mul_ps(x1, w1);
                     let mul2 = x86_64::_mm_mul_ps(x2, w2);
-                    let mul3 = x86_64::_mm_mul_ps(x3, w3);
-                    let mul4 = x86_64::_mm_mul_ps(x4, w4);
-                    let s12 = x86_64::_mm_add_ps(mul1, mul2);
-                    let s34 = x86_64::_mm_add_ps(mul3, mul4);
-                    // let s12 = x86_64::_mm_fmadd_ps(x3, w3, mul1);
-                    // let s34 = x86_64::_mm_fmadd_ps(x4, w4, mul2);
+                    // let mul3 = x86_64::_mm_mul_ps(x3, w3);
+                    // let mul4 = x86_64::_mm_mul_ps(x4, w4);
+                    // let s12 = x86_64::_mm_add_ps(mul1, mul2);
+                    // let s34 = x86_64::_mm_add_ps(mul3, mul4);
+                    let s12 = x86_64::_mm_fmadd_ps(x3, w3, mul1);
+                    let s34 = x86_64::_mm_fmadd_ps(x4, w4, mul2);
                     let s1234 = x86_64::_mm_add_ps(s12, s34);
-                    s4 = x86_64::_mm_add_ps(s1234, s4);
+                    let s4 = x86_64::_mm_loadu_ps(sum4.as_ptr().add(i * 4));
+                    let s4 = x86_64::_mm_add_ps(s1234, s4);
+                    x86_64::_mm_storeu_ps(sum4.as_mut_ptr().add(i * 4), s4);
                 }
             }
-            unsafe {x86_64::_mm_storeu_ps(sum4.as_mut_ptr().add(i * 4), s4);}
         }
         for i in (0..N_HIDDEN2).step_by(4) {
             unsafe {
