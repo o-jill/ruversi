@@ -14,11 +14,11 @@ use std::arch::aarch64::*;
  * hidden: 8 + 1
  * output: 1
  */
-const N_INPUT : usize = board::CELL_2D + 1 + 2;
+const N_INPUT : usize = bitboard::CELL_2D + 1 + 2;
 const N_HIDDEN : usize = 128;
 pub const N_HIDDEN2 : usize = 16;
 const N_OUTPUT : usize = 1;
-const N_WEIGHT_TEBAN : usize =  board::CELL_2D * N_HIDDEN;
+const N_WEIGHT_TEBAN : usize =  bitboard::CELL_2D * N_HIDDEN;
 const N_WEIGHT_FIXST_B : usize = N_WEIGHT_TEBAN + N_HIDDEN;
 const N_WEIGHT_FIXST_W : usize = N_WEIGHT_FIXST_B + N_HIDDEN;
 const N_WEIGHT_INPUTBIAS : usize = N_WEIGHT_FIXST_W + N_HIDDEN;
@@ -33,21 +33,21 @@ const N_WEIGHT_PAD :usize = N_WEIGHT.div_ceil(8) * 8;
 pub const N_PROGRESS_DIV : usize = 3;  // 序盤中盤終盤
 
 #[allow(dead_code)]
-const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + 4 + 1;
+const WSZV1 : usize = (bitboard::CELL_2D + 1 + 1) * 4 + 4 + 1;
 #[allow(dead_code)]
 const WSZV2 : usize = WSZV1;
 #[allow(dead_code)]
-const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * 4 + 4 + 1;
+const WSZV3 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * 4 + 4 + 1;
 #[allow(dead_code)]
-const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * 8 + 8 + 1;
+const WSZV4 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * 8 + 8 + 1;
 #[allow(dead_code)]
-const WSZV5 : usize = (board::CELL_2D + 1 + 2 + 1) * 16 + 16 + 1;
+const WSZV5 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * 16 + 16 + 1;
 #[allow(dead_code)]
-const WSZV6 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
+const WSZV6 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
 #[allow(dead_code)]
-const WSZV7 : usize = (board::CELL_2D + 1 + 2 + 1) * 32
+const WSZV7 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * 32
         + (32 + 1) * 16 + 16 + 1;
-const WSZV8 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN
+const WSZV8 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN
         + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
 const WSZV9 : usize = WSZV8;
 
@@ -753,7 +753,7 @@ impl Weight {
             let mut sum44 : [f32 ; N * 4] = [0f32 ; N * 4];
 
             const M : usize = 16;
-            for idx in (0..board::CELL_2D).step_by(M) {
+            for idx in (0..bitboard::CELL_2D).step_by(M) {
                 unsafe {
                     let c1 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx));
                     let c2 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx + 4));
@@ -761,7 +761,7 @@ impl Weight {
                     let c4 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx + 12));
 
                     for n in 0..N {
-                        let w1 = &ow[(i + n) * board::CELL_2D .. (i + n + 1) * board::CELL_2D];
+                        let w1 = &ow[(i + n) * bitboard::CELL_2D .. (i + n + 1) * bitboard::CELL_2D];
 
                         let x41 = x86_64::_mm_load_ps(w1.as_ptr().add(idx));
                         let x42 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 4));
@@ -1148,7 +1148,7 @@ impl Weight {
             for m in (0..N).step_by(8) {
                 let mut sum88 = [0f32 ; N * 8 / 2];
                 const M : usize = 32;
-                for idx in (0..board::CELL_2D).step_by(M) {
+                for idx in (0..bitboard::CELL_2D).step_by(M) {
                     unsafe {
                         let f81 = x86_64::_mm256_loadu_ps(
                                 cells.as_ptr().add(idx));
@@ -1421,7 +1421,7 @@ fn testweight() {
     ];
     for rfen in rfens.iter() {
         let bban = bitboard::BitBoard::from(rfen).unwrap();
-        let ban = board::Board::from(rfen).unwrap();
+        let ban = bitboard::BitBoard::from(rfen).unwrap();
         ban.put();
         let mut w = weight::Weight::new();
         w.init();
@@ -1467,7 +1467,7 @@ fn testweight() {
     ];
     for rfen in rfens.iter() {
         let bban = bitboard::BitBoard::from(rfen).unwrap();
-        let ban = board::Board::from(rfen).unwrap();
+        let ban = bitboard::Board::from(rfen).unwrap();
         ban.put();
         let mut w = weight::Weight::new();
         w.init();

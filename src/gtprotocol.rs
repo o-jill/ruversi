@@ -245,11 +245,7 @@ impl Gtp {
             "set_game" => {
                 if elem[idx + 1] == "Othello" {
                     self.respond(id);
-                    if cfg!(feature="bitboard") {
-                        nodebb::init_weight();
-                    } else {
-                        node::init_weight();
-                    }
+                    nodebb::init_weight();
                     unsafe {
                         match nodebb::WEIGHT.as_mut().unwrap().read(&self.ev) {
                             Err(emsg) => {

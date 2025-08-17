@@ -58,12 +58,12 @@ impl Best {
 
     pub fn pos(&self) -> String {
         format!("{}{}",
-            // if teban == board::SENTE {
-            //     board::STONE_SENTE
+            // if teban == bitboard::SENTE {
+            //     bitboard::STONE_SENTE
             // } else {
-            //     board::STONE_GOTE
+            //     bitboard::STONE_GOTE
             // },
-            board::STR_SENTE.chars().nth(self.x as usize).unwrap(), self.y)
+            bitboard::STR_SENTE.chars().nth(self.x as usize).unwrap(), self.y)
     }
 
     #[allow(dead_code)]
@@ -1496,9 +1496,9 @@ impl NodeBB {
             let best = node.best.as_ref();
             let val = val.unwrap();
             let fteban = teban as f32;
-            if teban == board::SENTE && alpha < val {
+            if teban == bitboard::SENTE && alpha < val {
                 alpha = val;
-            } else if teban == board::GOTE && beta > val {
+            } else if teban == bitboard::GOTE && beta > val {
                 beta = val;
             }
             if best.is_none() || best.unwrap().hyoka * fteban < val * fteban {
@@ -1577,10 +1577,10 @@ impl NodeBB {
 
     pub fn to_xy(&self) -> String {
         format!("{}{}",
-            if self.teban == board::SENTE {
-                board::STR_SENTE
+            if self.teban == bitboard::SENTE {
+                bitboard::STR_SENTE
             } else {
-                board::STR_GOTE
+                bitboard::STR_GOTE
             }.chars().nth(self.x as usize).unwrap(),
             self.y)
     }

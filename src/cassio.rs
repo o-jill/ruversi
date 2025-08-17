@@ -225,11 +225,7 @@ impl OthelloEngineProtocol {
         self.log("started!!!").unwrap();
         self.log(path).unwrap();
 
-        if cfg!(feature="bitboard") {
-            nodebb::init_weight();
-        } else {
-            node::init_weight();
-        }
+        nodebb::init_weight();
         unsafe {
             nodebb::WEIGHT.as_mut().unwrap().read(path)?
         }
@@ -256,7 +252,7 @@ impl OthelloEngineProtocolServer {
         OthelloEngineProtocolServer {
             ply1 : Some(ch),
             ply2 : None,
-            turn : board::NONE,
+            turn : bitboard::NONE,
         }
     }
 
@@ -264,18 +260,18 @@ impl OthelloEngineProtocolServer {
         OthelloEngineProtocolServer {
             ply1 : Some(ch1),
             ply2 : Some(ch2),
-            turn : board::NONE,
+            turn : bitboard::NONE,
         }
     }
 
     pub fn setturn(&mut self, trn : i8) {self.turn = trn;}
 
     fn selectplayer(&mut self) -> Result<&mut Child, String> {
-        if self.turn == board::NONE {
+        if self.turn == bitboard::NONE {
             return Err("turn is NONE!".to_string());
         }
 
-        Ok(if self.turn == board::SENTE {
+        Ok(if self.turn == bitboard::SENTE {
             self.ply1.as_mut().unwrap()
         } else {
             self.ply2.as_mut().unwrap()

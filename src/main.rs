@@ -8,7 +8,6 @@ use rand::distributions::{Distribution, Uniform};
 use std::sync::{Arc, Mutex};
 
 mod cassio;
-mod board;
 mod bitboard;
 mod edaxrunner;
 // mod extractrfen;
@@ -16,9 +15,7 @@ mod game;
 mod gtprotocol;
 mod initialpos;
 mod myoption;
-mod node;
 mod nodebb;
-mod shnode;
 mod kifu;
 // mod trainer;
 mod transptable;
@@ -31,29 +28,6 @@ static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::O
 #[allow(dead_code)]
 #[cfg(target_arch="x86_64")]
 fn trial() {
-    let ban = board::Board::new();
-    ban.put();
-    let rfen = "aAaAaAaA/BbBb/C2c/dD/E3/2f/g1/H b";
-    println!("rfen: {rfen}");
-    let ban = board::Board::from(rfen).unwrap();
-    ban.put();
-    println!("RFEN:{}", ban.to_str());
-    let mut ban = board::Board::init();
-    ban.flipturn();
-    ban.put();
-    let st = Instant::now();
-    let (val, node) = node::Node::think( &ban, 7).unwrap();
-    let ft = st.elapsed();
-    println!("val:{val:?} {} {}msec", node.dump(), ft.as_millis());
-
-    println!("candidate:{:?}", ban.genmove());
-    let ban2 = ban.r#move(3, 4).unwrap();
-    ban2.put();
-    println!("candidate:{:?}", ban2.genmove());
-    let ban2 = ban2.r#move(3, 3).unwrap();
-    ban2.put();
-    println!("candidate:{:?}", ban2.genmove());
-
     let mut kifu = kifu::Kifu::new();
     kifu.append(0, 0, 1, String::new());
     kifu.append(1, 1, 1, String::new());
@@ -64,9 +38,6 @@ fn trial() {
     kifu.append(6, 6, -1, String::new());
     kifu.append(7, 7, 0, String::new());
     print!("{}", kifu.to_str());
-
-    let mut g = game::Game::new();
-    g.start(node::Node::think, 7).unwrap();
 }
 
 #[allow(dead_code)]
@@ -79,78 +50,48 @@ fn trial() {
 /// - rfen : RFEN text to be thought.
 /// - depth : depth to think.
 fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
-    if cfg!(feature="bitboard") {
-            match bitboard::BitBoard::from(rfen) {
-            Err(msg) => {println!("{msg}")},
-            Ok(ban) => {
-                ban.put();
+    match bitboard::BitBoard::from(rfen) {
+    Err(msg) => {println!("{msg}")},
+    Ok(ban) => {
+        ban.put();
 
-                let st = Instant::now();
-                let (val, node) =
-                    nodebb::NodeBB::think_ab_simple(&ban, depth).unwrap();
-                    // nodebb::NodeBB::think_ab(&ban, depth).unwrap();
-                    // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap();
-                let ft = st.elapsed();
-                println!("val:{val:.4?} {} {}msec", node.dump(), ft.as_millis());
-                if let Some(path) = treepath {
-                    if let Err(e) = node.dumptree(0, path) {
-                        eprintln!("{e}@{} {}", file!(), line!());
-                    } else {
-                        println!("put tree into {path}.")
-                    }
-                }
+        let st = Instant::now();
+        let (val, node) =
+            nodebb::NodeBB::think_ab_simple(&ban, depth).unwrap();
+            // nodebb::NodeBB::think_ab(&ban, depth).unwrap();
+            // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap();
+        let ft = st.elapsed();
+        println!("val:{val:.4?} {} {}msec", node.dump(), ft.as_millis());
+        if let Some(path) = treepath {
+            if let Err(e) = node.dumptree(0, path) {
+                eprintln!("{e}@{} {}", file!(), line!());
+            } else {
+                println!("put tree into {path}.")
             }
         }
-    } else {
-        match board::Board::from(rfen) {
-            Err(msg) => {println!("{msg}")},
-            Ok(ban) => {
-                ban.put();
-
-                let st = Instant::now();
-                let (val, node) =
-                    node::Node::vb_think_ab(&ban, depth).unwrap();
-                let ft = st.elapsed();
-                println!("val:{val:.4?} {} {}msec", node.dump(), ft.as_millis());
-            }
-        }
+    },
     }
 }
 
 fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
     for (idx, rfen) in rfentbl.iter().enumerate() {
         let think = MYOPT.get().unwrap().think.as_str();
-        let kifutxt = if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            // play
-            match think {
-                "" | "ab" => {
-                    g.startgk(nodebb::NodeBB::think_ab_simple_gk, depth).unwrap();
-                    // g.starto(nodebb::NodeBB::think_ab_simple, depth).unwrap();
-                },
-                "all" => {
-                    // g.start(nodebb::NodeBB::think, depth).unwrap()
-                    g.starto(nodebb::NodeBB::thinko, depth).unwrap();
-                },
-                _ => { panic!("unknown thinking method.") }
-            }
-            g.kifu.to_str()
-        } else {
-            // prepare game
-            let mut g = game::Game::from(rfen);
-            // play
-            match think {
-                "" | "ab" => {
-                    g.start(node::Node::think_ab, depth).unwrap()
-                },
-                "all" => {
-                    g.start(node::Node::think, depth).unwrap()
-                },
-                _ => { panic!("unknown thinking method.") }
-            }
-            g.kifu.to_str()
-        };
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        // play
+        match think {
+            "" | "ab" => {
+                g.startgk_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth).unwrap();
+                // g.startgk(nodebb::NodeBB::think_ab_simple_gk, depth).unwrap();
+                // g.starto(nodebb::NodeBB::think_ab_simple, depth).unwrap();
+            },
+            "all" => {
+                // g.start(nodebb::NodeBB::think, depth).unwrap()
+                g.starto(nodebb::NodeBB::thinko, depth).unwrap();
+            },
+            _ => { panic!("unknown thinking method.") }
+        }
+        let kifutxt = g.kifu.to_str();
 
         // store kifu
         let kifuname = format!("./kifu/kifu{grp}{idx:05}.txt");
@@ -305,64 +246,42 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 
     let thrd = thread::spawn(move || {
         let verbose = !silent;
-        let mut result;
         for rfen in rfen1.iter() {
-            if cfg!(feature="bitboard") {
-                // prepare game
-                let mut g = game::GameBB::from(rfen);
-                g.set_verbose(verbose);
-                // play
-                match think {
-                    "" | "ab" => {
-                        // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w3, &w4).unwrap()
-                        g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w3, &w4).unwrap()
-                    },
-                    "all" => {
-                        g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w3, &w4).unwrap()
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }
-                let dresult = g.kifu.winner();
-                result = dresult.unwrap();
-            } else {
-                // prepare game
-                let mut g = game::Game::from(rfen);
-                g.set_verbose(verbose);
-                g.start_with_2et(
-                    node::Node::think_ab,
-                    depth, &w3, &w4).unwrap();
-                let dresult = g.kifu.winner();
-                result = dresult.unwrap();
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
+            // play
+            match think {
+                "" | "ab" => {
+                    // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w3, &w4).unwrap()
+                    g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w3, &w4).unwrap()
+                },
+                "all" => {
+                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w3, &w4).unwrap()
+                },
+                _ => { panic!("unknown thinking method.") }
             }
+            let result = g.kifu.winner().unwrap();
             {
                 let mut dr = dresult2.lock().unwrap();
                 dr.sresult(result);
             }
-            if cfg!(feature="bitboard") {
-                // prepare game
-                let mut g = game::GameBB::from(rfen);
-                g.set_verbose(verbose);
-                // play
-                let think = MYOPT.get().unwrap().think.as_str();
-                match think {
-                    "" | "ab" => {
-                        g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w4, &w3).unwrap()
-                    },
-                    "all" => {
-                        g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w4, &w3).unwrap()
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }
-                let dresult = g.kifu.winner();
-                result = dresult.unwrap();
-            } else {
-                // prepare game
-                let mut g = game::Game::from(rfen);
-                g.set_verbose(verbose);
-                g.start_with_2et(node::Node::think_ab, depth, &w4, &w3).unwrap();
-                let dresult = g.kifu.winner();
-                result = dresult.unwrap();
+
+            // prepare game
+            let mut g = game::GameBB::from(rfen);
+            g.set_verbose(verbose);
+            // play
+            let think = MYOPT.get().unwrap().think.as_str();
+            match think {
+                "" | "ab" => {
+                    g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w4, &w3).unwrap()
+                },
+                "all" => {
+                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w4, &w3).unwrap()
+                },
+                _ => { panic!("unknown thinking method.") }
             }
+            let result = g.kifu.winner().unwrap();
             {
                 let mut dr = dresult2.lock().unwrap();
                 dr.gresult(result);
@@ -370,64 +289,42 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             }
         }});
 
-    let mut result;
     for rfen in rfentbl.iter() {
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            // play
-            let think = MYOPT.get().unwrap().think.as_str();
-            match think {
-                "" | "ab" => {
-                    g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w1, &w2).unwrap()
-                },
-                "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
-                },
-                _ => { panic!("unknown thinking method.") }
-            }
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
-        } else {
-            // prepare game
-            let mut g = game::Game::from(rfen);
-            g.set_verbose(verbose);
-            g.start_with_2et(
-                node::Node::think_ab,
-                depth, &w1, &w2).unwrap();
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        // play
+        let think = MYOPT.get().unwrap().think.as_str();
+        match think {
+            "" | "ab" => {
+                g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w1, &w2).unwrap()
+            },
+            "all" => {
+                g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
+            },
+            _ => { panic!("unknown thinking method.") }
         }
+        let result = g.kifu.winner().unwrap();
         {
             let mut dr = dresult.lock().unwrap();
             dr.sresult(result);
         }
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            // play
-            let think = MYOPT.get().unwrap().think.as_str();
-            match think {
-                "" | "ab" => {
-                    g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
-                },
-                "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
-                },
-                _ => { panic!("unknown thinking method.") }
-            }
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
-        } else {
-            // prepare game
-            let mut g = game::Game::from(rfen);
-            g.set_verbose(verbose);
-            g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
+
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        // play
+        let think = MYOPT.get().unwrap().think.as_str();
+        match think {
+            "" | "ab" => {
+                g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
+            },
+            "all" => {
+                g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
+            },
+            _ => { panic!("unknown thinking method.") }
         }
+        let result = g.kifu.winner().unwrap();
         {
             let mut dr = dresult.lock().unwrap();
             dr.gresult(result);
@@ -471,37 +368,28 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
     let rfentbl = &ip.rfens_all();
     for rfen in rfentbl.iter() {
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            // play
-            let think = MYOPT.get().unwrap().think.as_str();
-            match think {
-                "" | "ab" => {
-                    // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
-                    g.starto_with_2et(
-                        nodebb::NodeBB::think_ab_simple,
-                        depth, &w1, &w2).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
-                },
-                "all" => {
-                    g.starto_with_2et(
-                        nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think, depth, &w1, &w2).unwrap()
-                },
-                _ => { panic!("unknown thinking method.") }
-            }
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
-        } else {
-            // prepare game
-            let mut g = game::Game::from(rfen);
-            g.set_verbose(verbose);
-            g.start_with_2et(node::Node::think_ab, depth, &w1, &w2).unwrap();
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        // play
+        let think = MYOPT.get().unwrap().think.as_str();
+        match think {
+            "" | "ab" => {
+                // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
+                g.starto_with_2et(
+                    nodebb::NodeBB::think_ab_simple,
+                    depth, &w1, &w2).unwrap()
+                // g.starto_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
+            },
+            "all" => {
+                g.starto_with_2et(
+                    nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
+                // g.start_with_2et(nodebb::NodeBB::think, depth, &w1, &w2).unwrap()
+            },
+            _ => { panic!("unknown thinking method.") }
         }
+        let dresult = g.kifu.winner();
+        result = dresult.unwrap();
         total += 1;
         match result {
             kifu::SENTEWIN => {win[0] += 1;},
@@ -509,33 +397,24 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             kifu::GOTEWIN => {lose[0] += 1;},
             _ => {}
         }
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            // play
-            let think = MYOPT.get().unwrap().think.as_str();
-            match think {
-                "" | "ab" => {
-                    // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
-                },
-                "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
-                    // g.start_with_2et(nodebb::NodeBB::think, depth, &w2, &w1).unwrap()
-                },
-                _ => { panic!("unknown thinking method.") }
-            }
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
-        } else {
-            // prepare game
-            let mut g = game::Game::from(rfen);
-            g.set_verbose(verbose);
-            g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
-            let dresult = g.kifu.winner();
-            result = dresult.unwrap();
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        // play
+        let think = MYOPT.get().unwrap().think.as_str();
+        match think {
+            "" | "ab" => {
+                // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
+                g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
+            },
+            "all" => {
+                g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
+                // g.start_with_2et(nodebb::NodeBB::think, depth, &w2, &w1).unwrap()
+            },
+            _ => { panic!("unknown thinking method.") }
         }
+        let dresult = g.kifu.winner();
+        result = dresult.unwrap();
         total += 1;
         match result {
             kifu::SENTEWIN => {lose[1] += 1;},
@@ -574,59 +453,22 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
     let rfentbl = &ip.rfens_all();
     for rfen in rfentbl.iter() {
-        let turn = board::SENTE;
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            // play
-            // g.start_against_edax(
-            //     match think {
-            //         "" | "ab" => {
-            //             nodebb::NodeBB::think_ab
-            //         },
-            //         "all" => {
-            //             nodebb::NodeBB::think
-            //         },
-            //         _ => { panic!("unknown thinking method.") }
-            //     }, depth, turn).unwrap();
-            g.starto_against_edax(
-                match think {
-                    "" | "ab" => {
-                        nodebb::NodeBB::think_ab_simple
-                    },
-                    "all" => {
-                        nodebb::NodeBB::thinko
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn, econf).unwrap();
-            dresult = g.kifu.winner();
-        } else {
-            // prepare game
-            let mut g = game::Game::from(rfen);
-            g.set_verbose(verbose);
-            // g.start_against_edax(
-            //     match think {
-            //         "" | "ab" => {
-            //             nodebb::NodeBB::think_ab
-            //         },
-            //         "all" => {
-            //             nodebb::NodeBB::think
-            //         },
-            //         _ => { panic!("unknown thinking method.") }
-            //     }, depth, turn).unwrap();
-            g.start_against_edax(
-                match think {
-                    "" | "ab" => {
-                        node::Node::think_ab
-                    },
-                    "all" => {
-                        node::Node::think
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn).unwrap();
-            dresult = g.kifu.winner();
-        }
+        let turn = bitboard::SENTE;
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        // play
+        g.starto_against_edax(
+            match think {
+                "" | "ab" => {
+                    nodebb::NodeBB::think_ab_simple
+                },
+                "all" => {
+                    nodebb::NodeBB::thinko
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, depth, turn, econf).unwrap();
+        dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
         match result {
@@ -635,59 +477,21 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             kifu::GOTEWIN => {lose[0] += 1;},
             _ => {}
         }
-        let turn = board::GOTE;
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            // play
-            // g.start_against_edax(
-            //     match think {
-            //         "" | "ab" => {
-            //             nodebb::NodeBB::think_ab
-            //         },
-            //         "all" => {
-            //             nodebb::NodeBB::think
-            //         },
-            //         _ => { panic!("unknown thinking method.") }
-            //     }, depth, turnh).unwrap();
-            g.starto_against_edax(
-                match think {
-                    "" | "ab" => {
-                        nodebb::NodeBB::think_ab_simple
-                    },
-                    "all" => {
-                        nodebb::NodeBB::thinko
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn, econf).unwrap();
-            dresult = g.kifu.winner();
-        } else {
-            // prepare game
-            let mut g = game::Game::from(rfen);
-            g.set_verbose(verbose);
-            // g.start_against_edax(
-            //     match think {
-            //         "" | "ab" => {
-            //             nodebb::NodeBB::think_ab
-            //         },
-            //         "all" => {
-            //             nodebb::NodeBB::think
-            //         },
-            //         _ => { panic!("unknown thinking method.") }
-            //     }, depth, turnh).unwrap();
-            g.start_against_edax(
-                match think {
-                    "" | "ab" => {
-                        node::Node::think_ab_extract2
-                    },
-                    "all" => {
-                        node::Node::think
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn).unwrap();
-            dresult = g.kifu.winner();
-        }
+        let turn = bitboard::GOTE;
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        g.starto_against_edax(
+            match think {
+                "" | "ab" => {
+                    nodebb::NodeBB::think_ab_simple
+                },
+                "all" => {
+                    nodebb::NodeBB::thinko
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, depth, turn, econf).unwrap();
+        dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
         match result {
@@ -726,26 +530,22 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
     let rfentbl = &ip.rfens_all();
     for rfen in rfentbl.iter() {
-        let turn = board::SENTE;
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            // play
-            g.start_against_via_cassio(
-                match think {
-                    "" | "ab" => {
-                        nodebb::NodeBB::think_ab_simple
-                    },
-                    "all" => {
-                        nodebb::NodeBB::thinko
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn, econf).unwrap();
-            dresult = g.kifu.winner();
-        } else {
-            unimplemented!()
-        }
+        let turn = bitboard::SENTE;
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        // play
+        g.start_against_via_cassio(
+            match think {
+                "" | "ab" => {
+                    nodebb::NodeBB::think_ab_simple
+                },
+                "all" => {
+                    nodebb::NodeBB::thinko
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, depth, turn, econf).unwrap();
+        dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
         match result {
@@ -754,26 +554,22 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
             kifu::GOTEWIN => {lose[0] += 1;},
             _ => {}
         }
-        let turn = board::GOTE;
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            // play
-            g.start_against_via_cassio(
-                match think {
-                    "" | "ab" => {
-                        nodebb::NodeBB::think_ab_simple
-                    },
-                    "all" => {
-                        nodebb::NodeBB::thinko
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn, econf).unwrap();
-            dresult = g.kifu.winner();
-        } else {
-            unimplemented!()
-        }
+        let turn = bitboard::GOTE;
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        // play
+        g.start_against_via_cassio(
+            match think {
+                "" | "ab" => {
+                    nodebb::NodeBB::think_ab_simple
+                },
+                "all" => {
+                    nodebb::NodeBB::thinko
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, depth, turn, econf).unwrap();
+        dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
         match result {
@@ -811,38 +607,21 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
     let rfentbl = &ip.rfens_all();
     for rfen in rfentbl.iter() {
-        let turn = board::SENTE;
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            g.starto_against_ruversi(
-                match think {
-                    "" | "ab" => {
-                        nodebb::NodeBB::think_ab_simple
-                    },
-                    "all" => {
-                        nodebb::NodeBB::thinko
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn, econf).unwrap();
-            dresult = g.kifu.winner();
-        } else {
-            // prepare game
-            let mut g = game::Game::from(rfen);
-            g.set_verbose(verbose);
-            g.start_against_edax(
-                match think {
-                    "" | "ab" => {
-                        node::Node::think_ab
-                    },
-                    "all" => {
-                        node::Node::think
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn).unwrap();
-            dresult = g.kifu.winner();
-        }
+        let turn = bitboard::SENTE;
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        g.starto_against_ruversi(
+            match think {
+                "" | "ab" => {
+                    nodebb::NodeBB::think_ab_simple
+                },
+                "all" => {
+                    nodebb::NodeBB::thinko
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, depth, turn, econf).unwrap();
+        dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
         match result {
@@ -851,39 +630,22 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
             kifu::GOTEWIN => {lose[0] += 1;},
             _ => {}
         }
-        let turn = board::GOTE;
-        if cfg!(feature="bitboard") {
-            // prepare game
-            let mut g = game::GameBB::from(rfen);
-            g.set_verbose(verbose);
-            // play
-            g.starto_against_ruversi(
-                match think {
-                    "" | "ab" => {
-                        nodebb::NodeBB::think_ab_simple
-                    },
-                    "all" => {
-                        nodebb::NodeBB::thinko
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn, econf).unwrap();
-            dresult = g.kifu.winner();
-        } else {
-            // prepare game
-            let mut g = game::Game::from(rfen);
-            g.set_verbose(verbose);
-            g.start_against_edax(
-                match think {
-                    "" | "ab" => {
-                        node::Node::think_ab
-                    },
-                    "all" => {
-                        node::Node::think
-                    },
-                    _ => { panic!("unknown thinking method.") }
-                }, depth, turn).unwrap();
-            dresult = g.kifu.winner();
-        }
+        let turn = bitboard::GOTE;
+        // prepare game
+        let mut g = game::GameBB::from(rfen);
+        g.set_verbose(verbose);
+        // play
+        g.starto_against_ruversi(
+            match think {
+                "" | "ab" => {
+                    nodebb::NodeBB::think_ab_simple
+                },
+                "all" => {
+                    nodebb::NodeBB::thinko
+                },
+                _ => { panic!("unknown thinking method.") }
+            }, depth, turn, econf).unwrap();
+        dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
         match result {
@@ -902,19 +664,10 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
 /// - path : file path.
 fn readeval(path: &str) {
     println!("read eval table: {path}");
-    if cfg!(feature="bitboard") {
-        // println!("read weight for bitboard");
-        unsafe {
-            if let Err(msg) = nodebb::WEIGHT.as_mut().unwrap().read(path) {
-                panic!("{msg}");
-            }
-        }
-    } else {
-        // println!("read weight for byteboard");
-        unsafe {
-            if let Err(msg) = node::WEIGHT.as_mut().unwrap().read(path) {
-                panic!("{msg}");
-            }
+    // println!("read weight for bitboard");
+    unsafe {
+        if let Err(msg) = nodebb::WEIGHT.as_mut().unwrap().read(path) {
+            panic!("{msg}");
         }
     }
 }
@@ -924,47 +677,30 @@ fn readeval(path: &str) {
 /// - depth : depth to think.
 /// - turnh : your turn.
 fn play(depth : u8, turnh: i8) {
-    if cfg!(feature="bitboard") {
-        // prepare game
-        let mut g = game::GameBB::new();
-        // play
-        let think = MYOPT.get().unwrap().think.as_str();
-        // g.start_against_stdin(
-        //     match think {
-        //         "" | "ab" => {
-        //             nodebb::NodeBB::think_ab
-        //         },
-        //         "all" => {
-        //             nodebb::NodeBB::think
-        //         },
-        //         _ => { panic!("unknown thinking method.") }
-        //     }, depth, turnh).unwrap();
-        g.starto_against_stdin(
-            match think {
-                "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple
-                },
-                "all" => {
-                    nodebb::NodeBB::thinko
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turnh).unwrap();
-    } else {
-        // prepare game
-        let mut g = game::Game::new();
-        // play
-        let think = MYOPT.get().unwrap().think.as_str();
-        g.start_against_stdin(
-            match think {
-                "" | "ab" => {
-                    node::Node::think_ab
-                },
-                "all" => {
-                    node::Node::think
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turnh).unwrap();
-        }
+    // prepare game
+    let mut g = game::GameBB::new();
+    // play
+    let think = MYOPT.get().unwrap().think.as_str();
+    // g.start_against_stdin(
+    //     match think {
+    //         "" | "ab" => {
+    //             nodebb::NodeBB::think_ab
+    //         },
+    //         "all" => {
+    //             nodebb::NodeBB::think
+    //         },
+    //         _ => { panic!("unknown thinking method.") }
+    //     }, depth, turnh).unwrap();
+    g.starto_against_stdin(
+        match think {
+            "" | "ab" => {
+                nodebb::NodeBB::think_ab_simple
+            },
+            "all" => {
+                nodebb::NodeBB::thinko
+            },
+            _ => { panic!("unknown thinking method.") }
+        }, depth, turnh).unwrap();
 }
 
 /// play a game ruversi vs Edax.
@@ -972,48 +708,31 @@ fn play(depth : u8, turnh: i8) {
 /// - depth : depth to think.
 /// - turnh : Edax's turn.
 fn edax(depth : u8, turnh: i8) {
-    if cfg!(feature="bitboard") {
-        // prepare game
-        let mut g = game::GameBB::new();
-        // play
-        let econf = MYOPT.get().unwrap().edaxconfig.as_str();
-        let think = MYOPT.get().unwrap().think.as_str();
-        // g.start_against_edax(
-        //     match think {
-        //         "" | "ab" => {
-        //             nodebb::NodeBB::think_ab
-        //         },
-        //         "all" => {
-        //             nodebb::NodeBB::think
-        //         },
-        //         _ => { panic!("unknown thinking method.") }
-        //     }, depth, turnh).unwrap();
-        g.starto_against_edax(
-            match think {
-                "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple
-                },
-                "all" => {
-                    nodebb::NodeBB::thinko
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turnh, econf).unwrap();
-    } else {
-        // prepare game
-        let mut g = game::Game::new();
-        // play
-        let think = MYOPT.get().unwrap().think.as_str();
-        g.start_against_edax(
+    // prepare game
+    let mut g = game::GameBB::new();
+    // play
+    let econf = MYOPT.get().unwrap().edaxconfig.as_str();
+    let think = MYOPT.get().unwrap().think.as_str();
+    // g.start_against_edax(
+    //     match think {
+    //         "" | "ab" => {
+    //             nodebb::NodeBB::think_ab
+    //         },
+    //         "all" => {
+    //             nodebb::NodeBB::think
+    //         },
+    //         _ => { panic!("unknown thinking method.") }
+    //     }, depth, turnh).unwrap();
+    g.starto_against_edax(
         match think {
             "" | "ab" => {
-                node::Node::think_ab
+                nodebb::NodeBB::think_ab_simple
             },
             "all" => {
-                node::Node::think
+                nodebb::NodeBB::thinko
             },
             _ => { panic!("unknown thinking method.") }
-        }, depth, turnh).unwrap();
-    }
+        }, depth, turnh, econf).unwrap();
 }
 
 /// play a game ruversi vs another ruversi.
@@ -1022,41 +741,22 @@ fn edax(depth : u8, turnh: i8) {
 /// - turnh : another ruversi's turn.
 fn vs_ruversi(depth : u8, turnh: i8) {
     let verbose = !MYOPT.get().unwrap().verbose.is_silent();
-    if cfg!(feature="bitboard") {
-        // prepare game
-        let mut g = game::GameBB::new();
-        g.set_verbose(verbose);
-        // play
-        let econf = MYOPT.get().unwrap().edaxconfig.as_str();
-        let think = MYOPT.get().unwrap().think.as_str();
-        g.starto_against_ruversi(
-            match think {
-                "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple
-                },
-                "all" => {
-                    nodebb::NodeBB::thinko
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turnh, econf).unwrap();
-    } else {
-        panic!("byteboard is not supported...");
-
-        // // prepare game
-        // let mut g = game::Game::new();
-        // // play
-        // let think = MYOPT.get().unwrap().think.as_str();
-        // g.start_against_ruversi(
-        // match think {
-        //     "" | "ab" => {
-        //         node::Node::think_ab
-        //     },
-        //     "all" => {
-        //         node::Node::think
-        //     },
-        //     _ => { panic!("unknown thinking method.") }
-        // }, depth, turnh).unwrap();
-    }
+    // prepare game
+    let mut g = game::GameBB::new();
+    g.set_verbose(verbose);
+    // play
+    let econf = MYOPT.get().unwrap().edaxconfig.as_str();
+    let think = MYOPT.get().unwrap().think.as_str();
+    g.starto_against_ruversi(
+        match think {
+            "" | "ab" => {
+                nodebb::NodeBB::think_ab_simple
+            },
+            "all" => {
+                nodebb::NodeBB::thinko
+            },
+            _ => { panic!("unknown thinking method.") }
+        }, depth, turnh, econf).unwrap();
 }
 
 /// show command options and exit(1).
@@ -1249,11 +949,7 @@ fn main() {
     println!("Hello, reversi world!");
     println!("mode:{mode:?}");
 
-    if cfg!(feature="bitboard") {
-        nodebb::init_weight();
-    } else {
-        node::init_weight();
-    }
+    nodebb::init_weight();
 
     // trial();
 
@@ -1309,9 +1005,9 @@ fn main() {
             myoption::Opponent::Cui => {
                 play(
                     depth,
-                    if turn == board::NONE {
+                    if turn == bitboard::NONE {
                         let mut rng = rand::thread_rng();
-                        if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
+                        if rng.gen::<bool>() {bitboard::SENTE} else {bitboard::GOTE}
                     } else {
                         turn
                     });
@@ -1319,9 +1015,9 @@ fn main() {
             myoption::Opponent::Edax => {
                 edax(
                     depth,
-                    if turn == board::NONE {
+                    if turn == bitboard::NONE {
                         let mut rng = rand::thread_rng();
-                        if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
+                        if rng.gen::<bool>() {bitboard::SENTE} else {bitboard::GOTE}
                     } else {
                         turn
                     });
@@ -1329,9 +1025,9 @@ fn main() {
             myoption::Opponent::Ruversi => {
                 vs_ruversi(
                     depth,
-                    if turn == board::NONE {
+                    if turn == bitboard::NONE {
                         let mut rng = rand::thread_rng();
-                        if rng.gen::<bool>() {board::SENTE} else {board::GOTE}
+                        if rng.gen::<bool>() {bitboard::SENTE} else {bitboard::GOTE}
                     } else {
                         turn
                     });
