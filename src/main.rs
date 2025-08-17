@@ -253,7 +253,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             match think {
                 "" | "ab" => {
                     // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w3, &w4).unwrap()
-                    g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w3, &w4).unwrap()
+                    g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w3, &w4).unwrap()
+                    // g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w3, &w4).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w3, &w4).unwrap()
@@ -273,7 +274,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w4, &w3).unwrap()
+                    g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w4, &w3).unwrap()
+                    // g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w4, &w3).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w4, &w3).unwrap()
@@ -296,7 +298,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         let think = MYOPT.get().unwrap().think.as_str();
         match think {
             "" | "ab" => {
-                g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w1, &w2).unwrap()
+                g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
+                // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w1, &w2).unwrap()
             },
             "all" => {
                 g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
@@ -316,7 +319,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         let think = MYOPT.get().unwrap().think.as_str();
         match think {
             "" | "ab" => {
-                g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
+                g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
+                // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
             },
             "all" => {
                 g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
