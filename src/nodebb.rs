@@ -140,8 +140,11 @@ impl NodeBB {
     }
 
     fn evalwtt(ban : &bitboard::BitBoard, wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
-        let id = if cfg!(feature="nosimd") {ban.to_id()} else {ban.to_id_simd()};
-        tt.check_or_append(&id, || NodeBB::evaluate(ban, wei))
+        if let Some(val) = tt.check(ban) {
+            val
+        } else {
+            Self::evaluate(ban, wei)
+        }
     }
 
     pub fn thinko(ban : &bitboard::BitBoard, depth : u8)
