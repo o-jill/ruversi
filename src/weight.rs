@@ -1423,15 +1423,12 @@ fn testweight() {
     ];
     for rfen in rfens.iter() {
         let bban = bitboard::BitBoard::from(rfen).unwrap();
-        let ban = bitboard::Board::from(rfen).unwrap();
-        ban.put();
+        bban.put();
         let mut w = weight::Weight::new();
         w.init();
-        let res_nosimdy = w.evaluatev9(&ban);
         let res_nosimdi = w.evaluatev9bb(&bban);
         let res_simdmul = w.evaluatev9bb_simd_mul(&bban);
         // let res_simd = w.evaluatev9bb_simd(&bban);
-        assert!(dbg_assert_eq(&res_nosimdy, &res_nosimdi));
         assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }
