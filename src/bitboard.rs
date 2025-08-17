@@ -366,64 +366,18 @@ impl BitBoard {
         }
     }
 
-    pub fn to_id(&self)-> [u8 ; 16] {
-        let mut res : [u8 ; 16] = [0 ; 16];
-        let mut bit : u64 = LSB_CELL;
-        let black = self.black;
-        let white = self.white;
-        let tbn : u8 = if self.teban == SENTE { 0x00 } else { 0x80 };
-        let mut idx = 0;
-        for _y in 0..NUMCELL {
-            let mut id : u8 = 0;
-            for _x in 0..4 {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                bit_right!(bit);
-                let c = if cb {SENTE} else if cw {GOTE} else {BLANK};
-
-                id = id * 3 + (c + 1) as u8;
-            }
-            res[idx] = id | tbn;
-            idx += 1;
-
-            id = 0;
-            for _x in 0..4 {
-                let cb = (bit & black) != 0;
-                let cw = (bit & white) != 0;
-                bit_right!(bit);
-                let c = if cb {SENTE} else if cw {GOTE} else {BLANK};
-
-                id = id * 3 + (c + 1) as u8;
-            }
-            res[idx] = id | tbn;
-            idx += 1;
-        }
-        res
-    }
-
-    pub fn to_id_simd(&self)-> [u8 ; 16] {
-        self.to_id()
-        // let mut res : [u8 ; 16] = [0 ; 16];
-        // let tbn : i8 = if self.teban == SENTE { 0x00 } else { -128 };
-        // unsafe {
-        //     let mut sum16 = x86_64::_mm_setzero_si128();
-        //     for i in 0..CELL_2D / 16 {
-        //         let ci816 = x86_64::_mm_load_si128(
-        //             self.cells[i * 16..].as_ptr() as *const x86_64::__m128i);
-        //         // -1 ~ +1 -> 0 ~ 2
-        //         let one16 = x86_64::_mm_set1_epi8(1);
-        //         let cu816 = x86_64::_mm_add_epi8(ci816, one16);
-
-        //         let three8 = x86_64::_mm_set1_epi16(3);
-        //         sum16 = x86_64::_mm_mullo_epi16(three8, sum16);
-        //         sum16 = x86_64::_mm_add_epi16(sum16, cu816);
-        //     }
-        //     let tbn16 = x86_64::_mm_set1_epi8(tbn);
-        //     let sum16 = x86_64::_mm_or_si128(tbn16, sum16);
-        //     x86_64::_mm_store_si128(
-        //         res.as_mut_ptr() as *mut x86_64::__m128i, sum16);
-        // }
-        // res
+    pub fn hash(&self) -> u64 {
+        // 乱数テーブルや定数（適当に大きくて奇妙な値を使う）
+        const K1: u64 = 0x9e3779b185ebca87;
+        const K2: u64 = 0xc2b2ae3d27d4eb4f;
+        let mut h = self.black.wrapping_mul(K1) ^ self.white.wrapping_mul(K2);
+        // さらに混ぜる
+        h ^= h >> 33;
+        h = h.wrapping_mul(0xff51afd7ed558ccd);
+        h ^= h >> 33;
+        h = h.wrapping_mul(0xc4ceb9fe1a85ec53);
+        h ^= h >> 33;
+        h
     }
 
     pub fn put(&self) {

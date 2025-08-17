@@ -47,6 +47,7 @@ impl TTEntry {
         self.black == b.black && self.white == b.white && self.teban == b.teban
     }
 
+    #[allow(dead_code)]
     pub fn is_hash(&self, hash : u64, teban : i8) -> bool {
         self.hash == hash && self.teban == teban
     }
@@ -71,6 +72,7 @@ impl TranspositionTable {
         Self { list: vec![TTEntry::default() ; sz] }
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         for l in self.list.iter_mut() {
             // l.hit = 0;
@@ -78,22 +80,8 @@ impl TranspositionTable {
         }
     }
 
-    fn hash(b : &bitboard::BitBoard) -> u64 {
-        // 乱数テーブルや定数（適当に大きくて奇妙な値を使う）
-        const K1: u64 = 0x9e3779b185ebca87;
-        const K2: u64 = 0xc2b2ae3d27d4eb4f;
-        let mut h = b.black.wrapping_mul(K1) ^ b.white.wrapping_mul(K2);
-        // さらに混ぜる
-        h ^= h >> 33;
-        h = h.wrapping_mul(0xff51afd7ed558ccd);
-        h ^= h >> 33;
-        h = h.wrapping_mul(0xc4ceb9fe1a85ec53);
-        h ^= h >> 33;
-        h
-    }
-
     pub fn check(&mut self, b : &bitboard::BitBoard) -> Option<f32> {
-        let h = Self::hash(b);
+        let h = b.hash();
         let idx = (h & (MAXSIZE - 1) as u64) as usize;
         if self.list[idx].is_hit(b) {
         // if self.list[idx].is_hash(h, b.teban) {
@@ -104,11 +92,12 @@ impl TranspositionTable {
     }
 
     pub fn append(&mut self, b : &bitboard::BitBoard, hy : f32) {
-        let h = Self::hash(b);
+        let h = b.hash();
         let idx = (h & (MAXSIZE - 1) as u64) as usize;
         self.list[idx] = TTEntry::from(h, b, hy);
     }
 
+    #[allow(dead_code)]
     pub fn dump(&self) {
         print!("ht:");
         // for i in self.list.iter() {
