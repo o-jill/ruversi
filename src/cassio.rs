@@ -73,7 +73,7 @@ impl OthelloEngineProtocol {
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                    nodebb::NodeBB::think_ab_simple(&ban, depth).unwrap();
                 let ft = st.elapsed();
                 // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let mvstr;
@@ -129,7 +129,7 @@ impl OthelloEngineProtocol {
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                    nodebb::NodeBB::think_ab_simple(&ban, depth).unwrap();
                 let ft = st.elapsed();
                 // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let mvstr;

@@ -31,46 +31,6 @@ static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::O
 #[allow(dead_code)]
 #[cfg(target_arch="x86_64")]
 fn trial() {
-    if false {
-        let die = Uniform::from(-1..=1);
-        let mut rng = rand::thread_rng();
-        let mut cells : [i8 ; 64] = [0 ; 64];
-        for _i in 0..50 {
-            for c in cells.iter_mut() {
-                *c = die.sample(&mut rng);
-            }
-            let tbn = die.sample(&mut rng);
-            let byb = board::Board::fromarray(cells, tbn);
-            let bib = bitboard::BitBoard::from(&byb.to_str()).unwrap();
-            if false {
-                let yres;
-                let ires;
-                unsafe {
-                    // yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev3(&byb);
-                    yres = nodebb::WEIGHT.as_ref().unwrap().evaluatev9(&byb);
-                    // ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb(&bib);
-                    ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev9bb_simdavx(&bib);
-                    // ires = nodebb::WEIGHT.as_ref().unwrap().evaluatev3bb_simd(&bib);
-                }
-                if yres != ires {
-                    println!("eval: {yres} == {ires}");
-                }
-            } else {
-            }
-        }
-        panic!("stoppppppp!!!!");
-    }
-    let files = std::fs::read_dir("./kifu/").unwrap();
-    let files = files.filter_map(|entry| {
-        entry.ok().and_then(|e|
-            e.path().file_name().and_then(|n|
-                n.to_str().map(String::from)
-            )
-        )}).collect::<Vec<String>>().iter().filter(|&fnm| {
-            fnm.contains(".txt")
-        }).cloned().collect::<Vec<String>>();
-    println!("{files:?}");
-
     let ban = board::Board::new();
     ban.put();
     let rfen = "aAaAaAaA/BbBb/C2c/dD/E3/2f/g1/H b";
@@ -94,15 +54,6 @@ fn trial() {
     ban2.put();
     println!("candidate:{:?}", ban2.genmove());
 
-    let (tx, rx) = mpsc::channel();
-    let th = thread::spawn(move ||
-        for i in 0..10 {
-            let msg = format!("thread: -- {i} -- -- -- --");
-            tx.send(msg).unwrap();
-            thread::sleep(Duration::from_secs_f32(0.5))
-        }
-    );
-
     let mut kifu = kifu::Kifu::new();
     kifu.append(0, 0, 1, String::new());
     kifu.append(1, 1, 1, String::new());
@@ -113,15 +64,6 @@ fn trial() {
     kifu.append(6, 6, -1, String::new());
     kifu.append(7, 7, 0, String::new());
     print!("{}", kifu.to_str());
-
-    th.join().unwrap();
-    loop {
-        let received = rx.recv();
-        if received.is_err() {
-            break;
-        }
-        println!("{}", received.unwrap());
-    }
 
     let mut g = game::Game::new();
     g.start(node::Node::think, 7).unwrap();
@@ -145,9 +87,9 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
 
                 let st = Instant::now();
                 let (val, node) =
-                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
-                    // nodebb::NodeBB::thinko_ab(&ban, depth).unwrap();
-                    // nodebb::NodeBB::thinko_ab_extract2(&ban, depth).unwrap();
+                    nodebb::NodeBB::think_ab_simple(&ban, depth).unwrap();
+                    // nodebb::NodeBB::think_ab(&ban, depth).unwrap();
+                    // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap();
                 let ft = st.elapsed();
                 println!("val:{val:.4?} {} {}msec", node.dump(), ft.as_millis());
                 if let Some(path) = treepath {
@@ -184,13 +126,8 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
             // play
             match think {
                 "" | "ab" => {
-                    // g.start(
-                    //     // nodebb::NodeBB::think_ab_extract2,
-                    //     nodebb::NodeBB::think_ab,
-                    //     depth).unwrap()
-                    g.startgk(nodebb::NodeBB::thinko_ab_simple_gk, depth).unwrap();
-                    //g.starto(nodebb::NodeBB::thinko_ab_simple, depth).unwrap();
-                    // g.starto(nodebb::NodeBB::thinko_ab_extract2, depth).unwrap();
+                    g.startgk(nodebb::NodeBB::think_ab_simple_gk, depth).unwrap();
+                    // g.starto(nodebb::NodeBB::think_ab_simple, depth).unwrap();
                 },
                 "all" => {
                     // g.start(nodebb::NodeBB::think, depth).unwrap()
@@ -205,7 +142,6 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
             // play
             match think {
                 "" | "ab" => {
-                    // g.start(node::Node::think_ab_extract2, depth).unwrap()
                     g.start(node::Node::think_ab, depth).unwrap()
                 },
                 "all" => {
@@ -378,8 +314,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                 // play
                 match think {
                     "" | "ab" => {
-                        // g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w3, &w4).unwrap()
-                        g.starto_with_2et_mt(nodebb::NodeBB::thinko_ab_simple_gk, depth, &w3, &w4).unwrap()
+                        // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w3, &w4).unwrap()
+                        g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w3, &w4).unwrap()
                     },
                     "all" => {
                         g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w3, &w4).unwrap()
@@ -410,7 +346,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
                 let think = MYOPT.get().unwrap().think.as_str();
                 match think {
                     "" | "ab" => {
-                        g.starto_with_2et_mt(nodebb::NodeBB::thinko_ab_simple_gk, depth, &w4, &w3).unwrap()
+                        g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w4, &w3).unwrap()
                     },
                     "all" => {
                         g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w4, &w3).unwrap()
@@ -444,7 +380,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w1, &w2).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
@@ -458,7 +394,6 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             let mut g = game::Game::from(rfen);
             g.set_verbose(verbose);
             g.start_with_2et(
-                // node::Node::think_ab_extract2,
                 node::Node::think_ab,
                 depth, &w1, &w2).unwrap();
             let dresult = g.kifu.winner();
@@ -476,7 +411,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
@@ -489,7 +424,6 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             // prepare game
             let mut g = game::Game::from(rfen);
             g.set_verbose(verbose);
-            // g.start_with_2et(node::Node::think_ab_extract2, depth, &w2, &w1).unwrap();
             g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
             let dresult = g.kifu.winner();
             result = dresult.unwrap();
@@ -545,24 +479,17 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    // g.start_with_2et(
-                    //     // nodebb::NodeBB::think_ab_extract3,
-                    //     // nodebb::NodeBB::think_ab_extract2,
-                    //     nodebb::NodeBB::think_ab,
-                    //     depth, &w1, &w2).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w1, &w2).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w1, &w2).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w1, &w2).unwrap()
+                    // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(
+                        nodebb::NodeBB::think_ab_simple,
+                        depth, &w1, &w2).unwrap()
+                    // g.starto_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
+                    g.starto_with_2et(
+                        nodebb::NodeBB::thinko, depth, &w1, &w2).unwrap()
                     // g.start_with_2et(nodebb::NodeBB::think, depth, &w1, &w2).unwrap()
                 },
-                // "" => {
-                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, depth, &w1, &w2).unwrap()
-                //     g.startsh_with_2et(shnode::ShNode::think_ab, depth, &w1, &w2).unwrap()
-                //     // g.startsh_with_2et(shnode::ShNode::think, depth, &w1, &w2).unwrap()
-                // },
                 _ => { panic!("unknown thinking method.") }
             }
             let dresult = g.kifu.winner();
@@ -571,10 +498,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             // prepare game
             let mut g = game::Game::from(rfen);
             g.set_verbose(verbose);
-            g.start_with_2et(
-                // node::Node::think_ab_extract2,
-                node::Node::think_ab,
-                depth, &w1, &w2).unwrap();
+            g.start_with_2et(node::Node::think_ab, depth, &w1, &w2).unwrap();
             let dresult = g.kifu.winner();
             result = dresult.unwrap();
         }
@@ -593,21 +517,13 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    // g.start_with_2et(nodebb::NodeBB::think_ab_extract2, depth, &w1, &w2).unwrap()
                     // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
-                    g.starto_with_2et(nodebb::NodeBB::thinko_ab_simple, depth, &w2, &w1).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab, depth, &w2, &w1).unwrap()
-                    // g.starto_with_2et(nodebb::NodeBB::thinko_ab_extract2, depth, &w2, &w1).unwrap()
+                    g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
                 },
                 "all" => {
                     g.starto_with_2et(nodebb::NodeBB::thinko, depth, &w2, &w1).unwrap()
                     // g.start_with_2et(nodebb::NodeBB::think, depth, &w2, &w1).unwrap()
                 },
-                // "" => {
-                //     // g.startsh_with_2et(shnode::ShNode::think_ab_extract2, depth, &w2, &w1).unwrap()
-                //     g.startsh_with_2et(shnode::ShNode::think_ab, depth, &w2, &w1).unwrap()
-                //     // g.startsh_with_2et(shnode::ShNode::think, depth, &w2, &w1).unwrap()
-                // },
                 _ => { panic!("unknown thinking method.") }
             }
             let dresult = g.kifu.winner();
@@ -616,7 +532,6 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
             // prepare game
             let mut g = game::Game::from(rfen);
             g.set_verbose(verbose);
-            // g.start_with_2et(node::Node::think_ab_extract2, depth, &w2, &w1).unwrap();
             g.start_with_2et(node::Node::think_ab, depth, &w2, &w1).unwrap();
             let dresult = g.kifu.winner();
             result = dresult.unwrap();
@@ -668,7 +583,6 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             // g.start_against_edax(
             //     match think {
             //         "" | "ab" => {
-            //             // nodebb::NodeBB::think_ab_extract2
             //             nodebb::NodeBB::think_ab
             //         },
             //         "all" => {
@@ -679,9 +593,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             g.starto_against_edax(
                 match think {
                     "" | "ab" => {
-                        // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_simple
-                        // nodebb::NodeBB::thinko_ab_extract2
+                        nodebb::NodeBB::think_ab_simple
                     },
                     "all" => {
                         nodebb::NodeBB::thinko
@@ -696,7 +608,6 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             // g.start_against_edax(
             //     match think {
             //         "" | "ab" => {
-            //             // nodebb::NodeBB::think_ab_extract2
             //             nodebb::NodeBB::think_ab
             //         },
             //         "all" => {
@@ -707,8 +618,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             g.start_against_edax(
                 match think {
                     "" | "ab" => {
-                        // nodebb::NodeBB::think_ab_extract2
-                        node::Node::think_ab_extract2
+                        node::Node::think_ab
                     },
                     "all" => {
                         node::Node::think
@@ -734,7 +644,6 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             // g.start_against_edax(
             //     match think {
             //         "" | "ab" => {
-            //             // nodebb::NodeBB::think_ab_extract2
             //             nodebb::NodeBB::think_ab
             //         },
             //         "all" => {
@@ -745,9 +654,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             g.starto_against_edax(
                 match think {
                     "" | "ab" => {
-                        // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_simple
-                        // nodebb::NodeBB::thinko_ab_extract2
+                        nodebb::NodeBB::think_ab_simple
                     },
                     "all" => {
                         nodebb::NodeBB::thinko
@@ -762,7 +669,6 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             // g.start_against_edax(
             //     match think {
             //         "" | "ab" => {
-            //             // nodebb::NodeBB::think_ab_extract2
             //             nodebb::NodeBB::think_ab
             //         },
             //         "all" => {
@@ -773,7 +679,6 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
             g.start_against_edax(
                 match think {
                     "" | "ab" => {
-                        // nodebb::NodeBB::think_ab_extract2
                         node::Node::think_ab_extract2
                     },
                     "all" => {
@@ -830,9 +735,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
             g.start_against_via_cassio(
                 match think {
                     "" | "ab" => {
-                        // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_simple
-                        // nodebb::NodeBB::thinko_ab_extract2
+                        nodebb::NodeBB::think_ab_simple
                     },
                     "all" => {
                         nodebb::NodeBB::thinko
@@ -860,9 +763,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
             g.start_against_via_cassio(
                 match think {
                     "" | "ab" => {
-                        // nodebb::NodeBB::think_ab_extract2
-                        nodebb::NodeBB::thinko_ab_simple
-                        // nodebb::NodeBB::thinko_ab_extract2
+                        nodebb::NodeBB::think_ab_simple
                     },
                     "all" => {
                         nodebb::NodeBB::thinko
@@ -918,7 +819,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
             g.starto_against_ruversi(
                 match think {
                     "" | "ab" => {
-                        nodebb::NodeBB::thinko_ab_simple
+                        nodebb::NodeBB::think_ab_simple
                     },
                     "all" => {
                         nodebb::NodeBB::thinko
@@ -933,7 +834,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
             g.start_against_edax(
                 match think {
                     "" | "ab" => {
-                        node::Node::think_ab_extract2
+                        node::Node::think_ab
                     },
                     "all" => {
                         node::Node::think
@@ -959,7 +860,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
             g.starto_against_ruversi(
                 match think {
                     "" | "ab" => {
-                        nodebb::NodeBB::thinko_ab_simple
+                        nodebb::NodeBB::think_ab_simple
                     },
                     "all" => {
                         nodebb::NodeBB::thinko
@@ -974,7 +875,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
             g.start_against_edax(
                 match think {
                     "" | "ab" => {
-                        node::Node::think_ab_extract2
+                        node::Node::think_ab
                     },
                     "all" => {
                         node::Node::think
@@ -1031,7 +932,6 @@ fn play(depth : u8, turnh: i8) {
         // g.start_against_stdin(
         //     match think {
         //         "" | "ab" => {
-        //             // nodebb::NodeBB::think_ab_extract2
         //             nodebb::NodeBB::think_ab
         //         },
         //         "all" => {
@@ -1042,9 +942,7 @@ fn play(depth : u8, turnh: i8) {
         g.starto_against_stdin(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::thinko_ab_simple
-                    // nodebb::NodeBB::thinko_ab_extract2
-                    // nodebb::NodeBB::think_ab
+                    nodebb::NodeBB::think_ab_simple
                 },
                 "all" => {
                     nodebb::NodeBB::thinko
@@ -1059,7 +957,6 @@ fn play(depth : u8, turnh: i8) {
         g.start_against_stdin(
             match think {
                 "" | "ab" => {
-                    // node::Node::think_ab_extract2
                     node::Node::think_ab
                 },
                 "all" => {
@@ -1084,7 +981,6 @@ fn edax(depth : u8, turnh: i8) {
         // g.start_against_edax(
         //     match think {
         //         "" | "ab" => {
-        //             // nodebb::NodeBB::think_ab_extract2
         //             nodebb::NodeBB::think_ab
         //         },
         //         "all" => {
@@ -1095,9 +991,7 @@ fn edax(depth : u8, turnh: i8) {
         g.starto_against_edax(
             match think {
                 "" | "ab" => {
-                    // nodebb::NodeBB::think_ab_extract2
-                    nodebb::NodeBB::thinko_ab_simple
-                    // nodebb::NodeBB::thinko_ab_extract2
+                    nodebb::NodeBB::think_ab_simple
                 },
                 "all" => {
                     nodebb::NodeBB::thinko
@@ -1112,7 +1006,6 @@ fn edax(depth : u8, turnh: i8) {
         g.start_against_edax(
         match think {
             "" | "ab" => {
-                // node::Node::think_ab_extract2
                 node::Node::think_ab
             },
             "all" => {
@@ -1139,9 +1032,7 @@ fn vs_ruversi(depth : u8, turnh: i8) {
         g.starto_against_ruversi(
             match think {
                 "" | "ab" => {
-                    // nodebb::NodeBB::think_ab_extract2
-                    nodebb::NodeBB::thinko_ab_simple
-                    // nodebb::NodeBB::thinko_ab_extract2
+                    nodebb::NodeBB::think_ab_simple
                 },
                 "all" => {
                     nodebb::NodeBB::thinko
@@ -1158,7 +1049,6 @@ fn vs_ruversi(depth : u8, turnh: i8) {
         // g.start_against_ruversi(
         // match think {
         //     "" | "ab" => {
-        //         // node::Node::think_ab_extract2
         //         node::Node::think_ab
         //     },
         //     "all" => {
