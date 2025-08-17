@@ -598,50 +598,6 @@ impl Weight {
         self.weight.copy_from_slice(&src.weight);
     }
 
-    pub fn evaluatev9(&self, ban : &board::Board) -> f32 {
-        if ban.is_full() || ban.is_passpass() {
-            return ban.count() as f32;
-        }
-
-        let prgs = ban.progress();
-        let cells = &ban.cells;
-        let teban = ban.teban as f32;
-        
-        let fs = ban.fixedstones();
-        
-        let mut sum = self.wl2bias(prgs);
-        
-        let ow = self.wban(prgs);
-        let wtbn = self.wteban(prgs);
-        let wfs = self.wfixedstones(prgs);
-        let wdc = self.wibias(prgs);
-        let wh = self.wlayer1(prgs);
-        let whdc = self.wl1bias(prgs);
-        let wh2 = self.wlayer2(prgs);
-        let mut hid = [0f32 ; N_HIDDEN];
-        for i in 0..N_HIDDEN {
-            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
-            let mut hidsum : f32 = wdc[i];
-            for (idx, c)  in cells.iter().enumerate() {
-                hidsum += *c as f32 * w1[idx];
-            }
-            hidsum += teban * wtbn[i];
-            hidsum += wfs[i] * fs.0 as f32;
-            hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
-
-            hid[i] = if hidsum > 0f32 {hidsum} else {0f32};
-        }
-        for j in 0..N_HIDDEN2 {
-            let whd = &wh[j * N_HIDDEN .. j * N_HIDDEN + N_HIDDEN];
-            let mut hidsum : f32 = whdc[j];
-            for (idx, c)  in hid.iter().enumerate() {
-                hidsum += *c * whd[idx];
-            }
-            sum += if hidsum > 0f32 {wh2[j] * hidsum} else {0f32};
-        }
-        sum
-    }
-
     pub fn evaluatev9bb(&self, ban : &bitboard::BitBoard) -> f32 {
         if ban.is_full() || ban.is_passpass() {
             return ban.countf32();
@@ -1161,7 +1117,7 @@ impl Weight {
 
                         for n in 0..N / 2 {
                             let index = hidx + m + n;
-                            let w1 = &ow[index * board::CELL_2D .. (index + 1) * board::CELL_2D];
+                            let w1 = &ow[index * bitboard::CELL_2D .. (index + 1) * bitboard::CELL_2D];
                             let mut sum8 = x86_64::_mm256_loadu_ps(
                                     sum88[n * 8..].as_ptr());
 
