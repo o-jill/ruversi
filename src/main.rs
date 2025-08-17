@@ -962,7 +962,7 @@ fn main() {
             println!("default eval table file was not found!!");
             println!("random numbers are used as eval table.");
         }
-    } else {
+    } else if *mode != myoption::Mode::Duel {
         readeval(path);
     }
 
