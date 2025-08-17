@@ -81,8 +81,7 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
         // play
         match think {
             "" | "ab" => {
-                g.startgk_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth).unwrap();
-                // g.startgk(nodebb::NodeBB::think_ab_simple_gk, depth).unwrap();
+                g.startgk(nodebb::NodeBB::think_ab_simple_gk, depth).unwrap();
                 // g.starto(nodebb::NodeBB::think_ab_simple, depth).unwrap();
             },
             "all" => {
