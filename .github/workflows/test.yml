@@ -51,14 +51,22 @@ jobs:
       run: ruby ./tools/runspeedcheck.rb search
     - name: Speed check game
       run: ruby ./tools/runspeedcheck.rb game
-    - name: Speed check search
+    - name: Speed check search avx
       run: ruby ./tools/runspeedcheck.rb search
       env:
         FEATURES: '--features=avx'
-    - name: Speed check game
+    - name: Speed check game avx
       run: ruby ./tools/runspeedcheck.rb game
       env:
         FEATURES: '--features=avx'
+    - name: Speed check search avx tt
+      run: ruby ./tools/runspeedcheck.rb search
+      env:
+        FEATURES: '--features=avx,withtt'
+    - name: Speed check game avx tt
+      run: ruby ./tools/runspeedcheck.rb game
+      env:
+        FEATURES: '--features=avx,withtt'
     - name: check error run clippy
       if: ${{ steps.ruclippy.outcome == 'failure' }}
       run: |
@@ -103,6 +111,14 @@ jobs:
       run: ruby ./tools/runspeedcheck.rb search
     - name: Speed check game
       run: ruby ./tools/runspeedcheck.rb game
+    - name: Speed check search tt
+      run: ruby ./tools/runspeedcheck.rb search
+      env:
+        FEATURES: '--features=withtt'
+    - name: Speed check game tt
+      run: ruby ./tools/runspeedcheck.rb game
+      env:
+        FEATURES: '--features=withtt'
 
   build_mac:
     runs-on: macos-latest
@@ -125,11 +141,6 @@ jobs:
       run: |
         echo ${{ steps.rubuild.outcome }} == 'failure'
         exit 1
-    - name: check error run clippy
-      if: ${{ steps.ruclippy.outcome == 'failure' }}
-      run: |
-        echo ${{ steps.ruclippy.outcome }} == 'failure'
-        exit 1
     - name: check error run test
       if: ${{ steps.rutest.outcome == 'failure' }}
       run: |
@@ -141,3 +152,16 @@ jobs:
       run: ruby ./tools/runspeedcheck.rb search
     - name: Speed check game
       run: ruby ./tools/runspeedcheck.rb game
+    - name: Speed check search tt
+      run: ruby ./tools/runspeedcheck.rb search
+      env:
+        FEATURES: '--features=withtt'
+    - name: Speed check game tt
+      run: ruby ./tools/runspeedcheck.rb game
+      env:
+        FEATURES: '--features=withtt'
+    - name: check error run clippy
+      if: ${{ steps.ruclippy.outcome == 'failure' }}
+      run: |
+        echo ${{ steps.ruclippy.outcome }} == 'failure'
+        exit 1
