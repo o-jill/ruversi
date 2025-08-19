@@ -72,10 +72,10 @@ impl TranspositionTable {
         Self { list: vec![TTEntry::default() ; sz] }
     }
 
-    #[allow(dead_code)]
     pub fn clear(&mut self) {
         for l in self.list.iter_mut() {
-            // l.hit = 0;
+            l.teban = bitboard::NONE;
+            l.hit = 0;
             l.hash = 0;
         }
     }
