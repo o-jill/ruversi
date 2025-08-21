@@ -5,8 +5,10 @@
 
 # REPEAT=5
 REPEAT=20
+# REPEAT=50
 
 EVFILE='data/evaltable.txt'
+# EVFILE='../tigerdenversi/weights.txt'
 
 DATESTR=Time.now.strftime('%Y%m%d%H%M%S')
 RESULT="speedcheck#{DATESTR}.txt"

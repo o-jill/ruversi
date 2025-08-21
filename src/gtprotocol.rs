@@ -18,6 +18,7 @@ pub struct Gtp {
     emsg : String,
     ban : bitboard::BitBoard,
     ev: String,
+    tt : transptable::TranspositionTable,
 }
 
 impl Gtp {
@@ -29,6 +30,7 @@ impl Gtp {
             emsg : String::new(),
             ban : bitboard::BitBoard::new(),
             ev : String::new(),
+            tt : transptable::TranspositionTable::default(),
         }
     }
 
@@ -115,6 +117,7 @@ impl Gtp {
 // not_implemented_yet();
                 self.ban = bitboard::BitBoard::from(
                     "8/8/8/3aA3/3Aa3/8/8/8 b").unwrap();
+                self.tt.clear();
                 self.respond(id);
             },
             "genmove" => {
@@ -153,9 +156,10 @@ impl Gtp {
                 }
                 let depth = 7;
                 let st = Instant::now();
-                let (val, node) =
-                    nodebb::NodeBB::thinko_ab_simple(&self.ban, depth).unwrap();
-                    // nodebb::NodeBB::thinko_ab_extract2(&self.ban, depth).unwrap();
+                let mut node = nodebb::NodeBB::root(depth);
+                let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
+                let val =
+                    nodebb::NodeBB::think_ab_simple_gk_tt(&self.ban, depth, &mut node, wei, &mut self.tt).unwrap();
                 let ft = st.elapsed();
                 eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let best = node.best.as_ref().unwrap();
@@ -246,11 +250,8 @@ impl Gtp {
             "set_game" => {
                 if elem[idx + 1] == "Othello" {
                     self.respond(id);
-                    if cfg!(feature="bitboard") {
-                        nodebb::init_weight();
-                    } else {
-                        node::init_weight();
-                    }
+                    self.tt.clear();
+                    nodebb::init_weight();
                     unsafe {
                         match nodebb::WEIGHT.as_mut().unwrap().read(&self.ev) {
                             Err(emsg) => {

@@ -10,23 +10,31 @@ use std::time::Duration;
 const HEADER : &str = "ENGINE-PROTOCOL ";
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+static mut TRTABLE : Option<transptable::TranspositionTable> = None;
+
 pub struct OthelloEngineProtocol {
     logg : File,
     // thread : Option<JoinHandle<()>>,
     cmd : String,
     running : Arc<AtomicBool>,
+    // tt : transptable::TranspositionTable,
 }
 
 impl OthelloEngineProtocol {
     pub fn new() -> Self {
+        let mut path = std::env::temp_dir();
+        path.push("/ruversi.log");
         let log = OpenOptions::new().create(true)
-            .append(true).open("/tmp/ruversi.log");
+            .append(true).open(path);
+
+        unsafe{TRTABLE = Some(transptable::TranspositionTable::default());}
 
         OthelloEngineProtocol {
             logg : log.unwrap(),
             // thread : None,
             cmd : String::default(),
             running : Arc::new(AtomicBool::default()),
+            // tt : transptable::TranspositionTable::default(),
         }
     }
 
@@ -70,8 +78,11 @@ impl OthelloEngineProtocol {
                 let _precision = elem[5].parse::<f32>().unwrap();
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
-                let (val, node) =
-                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
+                let mut node = nodebb::NodeBB::root(depth);
+                let tt = unsafe {TRTABLE.as_mut().unwrap()};
+                let val =
+                    nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, tt).unwrap();
                 let ft = st.elapsed();
                 // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let mvstr;
@@ -126,8 +137,11 @@ impl OthelloEngineProtocol {
                 let _precision = elem[4].parse::<f32>().unwrap();
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
-                let (val, node) =
-                    nodebb::NodeBB::thinko_ab_simple(&ban, depth).unwrap();
+                let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
+                let mut node = nodebb::NodeBB::root(depth);
+                let tt = unsafe {TRTABLE.as_mut().unwrap()};
+                let val =
+                    nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, tt).unwrap();
                 let ft = st.elapsed();
                 // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
                 let mvstr;
@@ -198,6 +212,8 @@ impl OthelloEngineProtocol {
         }
 
         if body.starts_with("empty-hash") {
+            let tt = unsafe {TRTABLE.as_mut().unwrap()};
+            tt.clear();
             println!("ready.");
             self.log(body).unwrap();
             return Ok(false);
@@ -223,11 +239,7 @@ impl OthelloEngineProtocol {
         self.log("started!!!").unwrap();
         self.log(path).unwrap();
 
-        if cfg!(feature="bitboard") {
-            nodebb::init_weight();
-        } else {
-            node::init_weight();
-        }
+        nodebb::init_weight();
         unsafe {
             nodebb::WEIGHT.as_mut().unwrap().read(path)?
         }
@@ -254,7 +266,7 @@ impl OthelloEngineProtocolServer {
         OthelloEngineProtocolServer {
             ply1 : Some(ch),
             ply2 : None,
-            turn : board::NONE,
+            turn : bitboard::NONE,
         }
     }
 
@@ -262,18 +274,18 @@ impl OthelloEngineProtocolServer {
         OthelloEngineProtocolServer {
             ply1 : Some(ch1),
             ply2 : Some(ch2),
-            turn : board::NONE,
+            turn : bitboard::NONE,
         }
     }
 
     pub fn setturn(&mut self, trn : i8) {self.turn = trn;}
 
     fn selectplayer(&mut self) -> Result<&mut Child, String> {
-        if self.turn == board::NONE {
+        if self.turn == bitboard::NONE {
             return Err("turn is NONE!".to_string());
         }
 
-        Ok(if self.turn == board::SENTE {
+        Ok(if self.turn == bitboard::SENTE {
             self.ply1.as_mut().unwrap()
         } else {
             self.ply2.as_mut().unwrap()

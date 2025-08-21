@@ -114,7 +114,7 @@ impl MyOption {
             repeat : None,
             rfen : String::new(),
             think : String::new(),
-            turn : board::NONE,
+            turn : bitboard::NONE,
             trmode : TrainingMode::OneByOne,
             minibsize : 128,
             verbose : Verbose::Normal,
@@ -163,13 +163,13 @@ impl MyOption {
                     }
                 } else if e == "--playb" {
                     opt.mode = Mode::Play;
-                    opt.turn = board::SENTE;
+                    opt.turn = bitboard::SENTE;
                     if opt.opponent == Opponent::None {
                         opt.opponent = Opponent::Cui;
                     }
                 } else if e == "--playw" {
                     opt.mode = Mode::Play;
-                    opt.turn = board::GOTE;
+                    opt.turn = bitboard::GOTE;
                     if opt.opponent == Opponent::None {
                         opt.opponent = Opponent::Cui;
                     }
@@ -412,7 +412,7 @@ mod tests {
         // outtrain のデフォルト値は空文字列
         assert_eq!(opt.outtrain, "");
         // turn のデフォルト値は board::NONE
-        assert_eq!(opt.turn, board::NONE);
+        assert_eq!(opt.turn, bitboard::NONE);
         // trmode のデフォルト値は TrainingMode::OneByOne
         assert_eq!(opt.trmode, TrainingMode::OneByOne);
         // minibsize のデフォルト値は 128

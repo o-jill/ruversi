@@ -14,11 +14,11 @@ use std::arch::aarch64::*;
  * hidden: 8 + 1
  * output: 1
  */
-const N_INPUT : usize = board::CELL_2D + 1 + 2;
+const N_INPUT : usize = bitboard::CELL_2D + 1 + 2;
 const N_HIDDEN : usize = 128;
 pub const N_HIDDEN2 : usize = 16;
 const N_OUTPUT : usize = 1;
-const N_WEIGHT_TEBAN : usize =  board::CELL_2D * N_HIDDEN;
+const N_WEIGHT_TEBAN : usize =  bitboard::CELL_2D * N_HIDDEN;
 const N_WEIGHT_FIXST_B : usize = N_WEIGHT_TEBAN + N_HIDDEN;
 const N_WEIGHT_FIXST_W : usize = N_WEIGHT_FIXST_B + N_HIDDEN;
 const N_WEIGHT_INPUTBIAS : usize = N_WEIGHT_FIXST_W + N_HIDDEN;
@@ -33,50 +33,23 @@ const N_WEIGHT_PAD :usize = N_WEIGHT.div_ceil(8) * 8;
 pub const N_PROGRESS_DIV : usize = 3;  // 序盤中盤終盤
 
 #[allow(dead_code)]
-const WSZV1 : usize = (board::CELL_2D + 1 + 1) * 4 + 4 + 1;
+const WSZV1 : usize = (bitboard::CELL_2D + 1 + 1) * 4 + 4 + 1;
 #[allow(dead_code)]
 const WSZV2 : usize = WSZV1;
 #[allow(dead_code)]
-const WSZV3 : usize = (board::CELL_2D + 1 + 2 + 1) * 4 + 4 + 1;
+const WSZV3 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * 4 + 4 + 1;
 #[allow(dead_code)]
-const WSZV4 : usize = (board::CELL_2D + 1 + 2 + 1) * 8 + 8 + 1;
+const WSZV4 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * 8 + 8 + 1;
 #[allow(dead_code)]
-const WSZV5 : usize = (board::CELL_2D + 1 + 2 + 1) * 16 + 16 + 1;
+const WSZV5 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * 16 + 16 + 1;
 #[allow(dead_code)]
-const WSZV6 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
+const WSZV6 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN + N_HIDDEN + 1;
 #[allow(dead_code)]
-const WSZV7 : usize = (board::CELL_2D + 1 + 2 + 1) * 32
+const WSZV7 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * 32
         + (32 + 1) * 16 + 16 + 1;
-const WSZV8 : usize = (board::CELL_2D + 1 + 2 + 1) * N_HIDDEN
+const WSZV8 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN
         + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
 const WSZV9 : usize = WSZV8;
-
-#[allow(dead_code)]
-const EXP_HI : f64 = 88.3762626647949;
-#[allow(dead_code)]
-const EXP_LO : f64 = -EXP_HI;
-
-#[allow(dead_code)]
-const CEPHES_LOG2EF : f64 = std::f64::consts::LOG2_E;
-// const CEPHES_LOG2EF : f64 = 1.44269504088896341;
-#[allow(dead_code)]
-const CEPHES_EXP_C1 : f64 = 0.693359375;
-#[allow(dead_code)]
-const CEPHES_EXP_C2 : f64 = -2.12194440e-4;
-
-#[allow(dead_code)]
-const CEPHES_EXP_P0 : f64 = 1.9875691500E-4;
-#[allow(dead_code)]
-const CEPHES_EXP_P1 : f64 = 1.3981999507E-3;
-#[allow(dead_code)]
-const CEPHES_EXP_P2 : f64 = 8.3334519073E-3;
-#[allow(dead_code)]
-const CEPHES_EXP_P3 : f64 = 4.1665795894E-2;
-#[allow(dead_code)]
-const CEPHES_EXP_P4 : f64 = 1.6666665459E-1;
-#[allow(dead_code)]
-const CEPHES_EXP_P5 : f64 = 5.0000001201E-1;
-
 
 // v2
 // 8/8/1A6/2Ab3/2C3/8/8/8 w
@@ -625,374 +598,6 @@ impl Weight {
         self.weight.copy_from_slice(&src.weight);
     }
 
-    /**
-     * exp(-x)
-     * 
-     * # Arguments  
-     * * `x` - [4 ; f32]  
-     * * `y` - [exp(-x[0]), exp(-x[1]), exp(-x[2]), exp(-x[3])]  
-     */
-    #[cfg(target_arch="x86_64")]
-    fn expmx_ps( x : *const f32, y : *mut f32) {
-        unsafe {
-            let x4 = x86_64::_mm_load_ps(x);
-            let y4 = Weight::expmx_ps_simd(x4);
-            x86_64::_mm_store_ps(y, y4);
-        }
-    }
-
-    /**
-     * exp(-x)
-     * 
-     * # Arguments  
-     * * `x` - [4 ; f32]  
-     * * `y` - [exp(-x[0]), exp(-x[1]), exp(-x[2]), exp(-x[3])]  
-     */
-    #[cfg(target_arch="aarch64")]
-    fn expmx_ps( x : *const f32, y : *mut f32) {
-        unsafe {
-            let x4 = vld1q_f32(x);
-            let y4 = Weight::expmx_ps_simd(x4);
-            vst1q_f32(y, y4);
-        }
-    }
-
-    /**
-     * exp(-x)
-     * 
-     * # Arguments  
-     * * `x4` - [4 ; f32] as x86_64::__m128
-     * 
-     * # Return value  
-     * [exp(-x4[0]), exp(-x4[1]), exp(-x4[2]), exp(-x4[3])] as x86_64::__m128.
-     */
-    #[cfg(target_arch="x86_64")]
-    unsafe fn expmx_ps_simd(x4 : x86_64::__m128) -> x86_64::__m128 {
-        // let x4 = x86_64::_mm_load_ps(x);
-        // clip x
-        let max4 = x86_64::_mm_set1_ps(EXP_HI as f32);
-        let x4 = x86_64::_mm_min_ps(x4, max4);
-        let min4 = x86_64::_mm_set1_ps(EXP_LO as f32);
-        let x4 = x86_64::_mm_max_ps(x4, min4);
-        let m1 = x86_64::_mm_set1_ps(-1.0);
-        let x4 = x86_64::_mm_mul_ps(x4, m1);
-
-        /* express exp(x) as exp(g + n*log(2)) */
-        let log2ef = x86_64::_mm_set1_ps(CEPHES_LOG2EF as f32);
-        let fx = x86_64::_mm_mul_ps(x4, log2ef);
-        let zp5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5 as f32);
-        let fx = x86_64::_mm_add_ps(fx, zp5);
-        let emm0 = x86_64::_mm_cvtps_epi32(fx);
-        let tmp = x86_64::_mm_cvtepi32_ps(emm0);
-
-        let mask = x86_64::_mm_cmpgt_ps(tmp, fx);
-        let one = x86_64::_mm_set1_ps(1.0);
-        let mask = x86_64::_mm_and_ps(mask, one);
-        let fx = x86_64::_mm_sub_ps(tmp, mask);
-
-        let c1 = x86_64::_mm_set1_ps(CEPHES_EXP_C1 as f32);
-        let tmp = x86_64::_mm_mul_ps(fx, c1);
-        let c2 = x86_64::_mm_set1_ps(CEPHES_EXP_C2 as f32);
-        let z4 = x86_64::_mm_mul_ps(fx, c2);
-        let x4 = x86_64::_mm_sub_ps(x4, tmp);
-        let x4 = x86_64::_mm_sub_ps(x4, z4);
-
-        let z4 = x86_64::_mm_mul_ps(x4, x4);
-
-        let y4 = x86_64::_mm_set1_ps(CEPHES_EXP_P0 as f32);
-        let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p1 = x86_64::_mm_set1_ps(CEPHES_EXP_P1 as f32);
-        let y4 = x86_64::_mm_add_ps(y4, exp_p1);
-        let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p2 = x86_64::_mm_set1_ps(CEPHES_EXP_P2 as f32);
-        let y4 = x86_64::_mm_add_ps(y4, exp_p2);
-        let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p3 = x86_64::_mm_set1_ps(CEPHES_EXP_P3 as f32);
-        let y4 = x86_64::_mm_add_ps(y4, exp_p3);
-        let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p4 = x86_64::_mm_set1_ps(CEPHES_EXP_P4 as f32);
-        let y4 = x86_64::_mm_add_ps(y4, exp_p4);
-        let y4 = x86_64::_mm_mul_ps(y4, x4);
-        let exp_p5 = x86_64::_mm_set1_ps(CEPHES_EXP_P5 as f32);
-        let y4 = x86_64::_mm_add_ps(y4, exp_p5);
-        let y4 = x86_64::_mm_mul_ps(y4, z4);
-        let y4 = x86_64::_mm_add_ps(y4, x4);
-        let y4 = x86_64::_mm_add_ps(y4, one);
-
-        let emm0 = x86_64::_mm_cvttps_epi32(fx);
-        let _pi32_0x7f = x86_64::_mm_set1_epi32(0x7f);
-        let emm0 = x86_64::_mm_add_epi32(emm0, _pi32_0x7f);
-        let emm0 = x86_64::_mm_slli_epi32(emm0, 23);
-        let pow2n = x86_64::_mm_castsi128_ps(emm0);
-
-        let y4 = x86_64::_mm_mul_ps(y4, pow2n);
-        y4
-        // x86_64::_mm_store_ps(y, y4);
-    }
-
-    /**
-     * exp(-x)
-     * 
-     * # Arguments  
-     * * `x4` - [4 ; f32] as x86_64::__m128
-     * 
-     * # Return value  
-     * [exp(-x4[0]), exp(-x4[1]), exp(-x4[2]), exp(-x4[3])] as x86_64::__m128.
-     */
-    #[cfg(target_arch="aarch64")]
-    unsafe fn expmx_ps_simd(x4 : float32x4_t) -> float32x4_t {
-        // clip x
-        let max4 = vmovq_n_f32(EXP_HI as f32);
-        let x4 = vminq_f32(x4, max4);
-        let min4 = vmovq_n_f32(EXP_LO as f32);
-        let x4 = vmaxq_f32(x4, min4);
-        let m1 = vmovq_n_f32(-1.0);
-        let x4 = vmulq_f32(x4, m1);
-
-        /* express exp(x) as exp(g + n*log(2)) */
-        let log2ef = vmovq_n_f32(CEPHES_LOG2EF as f32);
-        let zp5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
-        let fx = vmlaq_f32(zp5, x4, log2ef);
-        let emm0 = vcvtq_s32_f32(fx);
-        let tmp = vcvtq_f32_s32(emm0);
-
-        let mask = vcgtq_f32(tmp, fx);
-        let one = vmovq_n_f32(1.0);
-        let mask = vreinterpretq_f32_u32(vandq_u32(
-                mask, vreinterpretq_u32_f32(one)));
-        let fx = vsubq_f32(tmp, mask);
-
-        let c1 = vmovq_n_f32(CEPHES_EXP_C1 as f32);
-        let tmp = vmulq_f32(fx, c1);
-        let c2 = vmovq_n_f32(CEPHES_EXP_C2 as f32);
-        let z4 = vmulq_f32(fx, c2);
-        let x4 = vsubq_f32(x4, tmp);
-        let x4 = vsubq_f32(x4, z4);
-
-        let z4 = vmulq_f32(x4, x4);
-
-        let y4 = vmovq_n_f32(CEPHES_EXP_P0 as f32);
-        let exp_p1 = vmovq_n_f32(CEPHES_EXP_P1 as f32);
-        let y4 = vmlaq_f32(exp_p1, y4, x4);
-        let exp_p2 = vmovq_n_f32(CEPHES_EXP_P2 as f32);
-        let y4 = vmlaq_f32(exp_p2, y4, x4);
-        let exp_p3 = vmovq_n_f32(CEPHES_EXP_P3 as f32);
-        let y4 = vmlaq_f32(exp_p3, y4, x4);
-        let exp_p4 = vmovq_n_f32(CEPHES_EXP_P4 as f32);
-        let y4 = vmlaq_f32(exp_p4, y4, x4);
-        let exp_p5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
-        let y4 = vmlaq_f32(exp_p5, y4, x4);
-        let y4 = vmlaq_f32(x4, y4, z4);
-        let y4 = vaddq_f32(y4, one);
-
-        let emm0 = vcvtq_s32_f32(fx);
-        let _pi32_0x7f = vmovq_n_s32(0x7f);
-        let emm0 = vaddq_s32(emm0, _pi32_0x7f);
-        let emm0 = vshlq_n_s32(emm0, 23);
-        let pow2n = vreinterpretq_f32_s32(emm0);
-
-        vmulq_f32(y4, pow2n)
-    }
-
-    #[inline]
-    #[cfg(target_arch="aarch64")]
-    unsafe fn expmx_ps_simdx2(x41 : float32x4_t, x42 : float32x4_t)
-            -> (float32x4_t, float32x4_t) {
-        // clip x
-        let max4 = vmovq_n_f32(EXP_HI as f32);
-        let x41 = vminq_f32(x41, max4);
-        let x42 = vminq_f32(x42, max4);
-        let min4 = vmovq_n_f32(EXP_LO as f32);
-        let x41 = vmaxq_f32(x41, min4);
-        let x42 = vmaxq_f32(x42, min4);
-        let m1 = vmovq_n_f32(-1.0);
-        let x41 = vmulq_f32(x41, m1);
-        let x42 = vmulq_f32(x42, m1);
-
-        /* express exp(x) as exp(g + n*log(2)) */
-        let log2ef = vmovq_n_f32(CEPHES_LOG2EF as f32);
-        let zp5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
-        let fx1 = vmlaq_f32(zp5, x41, log2ef);
-        let fx2 = vmlaq_f32(zp5, x42, log2ef);
-        let emm01 = vcvtq_s32_f32(fx1);
-        let emm02 = vcvtq_s32_f32(fx2);
-        let tmp1 = vcvtq_f32_s32(emm01);
-        let tmp2 = vcvtq_f32_s32(emm02);
-
-        let mask1 = vcgtq_f32(tmp1, fx2);
-        let mask2 = vcgtq_f32(tmp2, fx2);
-        let one = vmovq_n_f32(1.0);
-        let mask1 = vreinterpretq_f32_u32(vandq_u32(
-                mask1, vreinterpretq_u32_f32(one)));
-        let mask2 = vreinterpretq_f32_u32(vandq_u32(
-                mask2, vreinterpretq_u32_f32(one)));
-        let fx1 = vsubq_f32(tmp1, mask1);
-        let fx2 = vsubq_f32(tmp2, mask2);
-
-        let c1 = vmovq_n_f32(CEPHES_EXP_C1 as f32);
-        let tmp1 = vmulq_f32(fx1, c1);
-        let tmp2 = vmulq_f32(fx2, c1);
-        let c2 = vmovq_n_f32(CEPHES_EXP_C2 as f32);
-        let z41 = vmulq_f32(fx1, c2);
-        let z42 = vmulq_f32(fx2, c2);
-        let x41 = vsubq_f32(x41, tmp1);
-        let x42 = vsubq_f32(x42, tmp2);
-        let x41 = vsubq_f32(x41, z41);
-        let x42 = vsubq_f32(x42, z42);
-
-        let z41 = vmulq_f32(x41, x41);
-        let z42 = vmulq_f32(x42, x42);
-
-        let y4 = vmovq_n_f32(CEPHES_EXP_P0 as f32);
-        let exp_p1 = vmovq_n_f32(CEPHES_EXP_P1 as f32);
-        let y41 = vmlaq_f32(exp_p1, y4, x41);
-        let y42 = vmlaq_f32(exp_p1, y4, x42);
-        let exp_p2 = vmovq_n_f32(CEPHES_EXP_P2 as f32);
-        let y41 = vmlaq_f32(exp_p2, y41, x41);
-        let y42 = vmlaq_f32(exp_p2, y42, x42);
-        let exp_p3 = vmovq_n_f32(CEPHES_EXP_P3 as f32);
-        let y41 = vmlaq_f32(exp_p3, y41, x41);
-        let y42 = vmlaq_f32(exp_p3, y42, x42);
-        let exp_p4 = vmovq_n_f32(CEPHES_EXP_P4 as f32);
-        let y41 = vmlaq_f32(exp_p4, y41, x41);
-        let y42 = vmlaq_f32(exp_p4, y42, x42);
-        let exp_p5 = vmovq_n_f32(CEPHES_EXP_P5 as f32);
-        let y41 = vmlaq_f32(exp_p5, y41, x41);
-        let y42 = vmlaq_f32(exp_p5, y42, x42);
-        let y41 = vmlaq_f32(x41, y41, z41);
-        let y42 = vmlaq_f32(x42, y42, z42);
-        let y41 = vaddq_f32(y41, one);
-        let y42 = vaddq_f32(y42, one);
-
-        let emm01 = vcvtq_s32_f32(fx1);
-        let emm02 = vcvtq_s32_f32(fx2);
-        let _pi32_0x7f = vmovq_n_s32(0x7f);
-        let emm01 = vaddq_s32(emm01, _pi32_0x7f);
-        let emm02 = vaddq_s32(emm02, _pi32_0x7f);
-        let emm01 = vshlq_n_s32(emm01, 23);
-        let emm02 = vshlq_n_s32(emm02, 23);
-        let pow2n1 = vreinterpretq_f32_s32(emm01);
-        let pow2n2 = vreinterpretq_f32_s32(emm02);
-        (vmulq_f32(y41, pow2n1), vmulq_f32(y42, pow2n2))
-    }
-
-    /**
-     * exp(-x)
-     * 
-     * # Arguments  
-     * * `x4` - [4 ; f32] as x86_64::__m128
-     * 
-     * # Return value  
-     * [exp(-x4[0]), exp(-x4[1]), exp(-x4[2]), exp(-x4[3])] as x86_64::__m128.
-     */
-    #[cfg(target_arch="x86_64")]
-    unsafe fn expmx_ps_simd256(x4 : x86_64::__m256) -> x86_64::__m256 {
-        // let x4 = x86_64::_mm_load_ps(x);
-        // clip x
-        let max4 = x86_64::_mm256_set1_ps(EXP_HI as f32);
-        let x4 = x86_64::_mm256_min_ps(x4, max4);
-        let min4 = x86_64::_mm256_set1_ps(EXP_LO as f32);
-        let x4 = x86_64::_mm256_max_ps(x4, min4);
-        let m1 = x86_64::_mm256_set1_ps(-1.0);
-        let x4 = x86_64::_mm256_mul_ps(x4, m1);
-
-        /* express exp(x) as exp(g + n*log(2)) */
-        let log2ef = x86_64::_mm256_set1_ps(CEPHES_LOG2EF as f32);
-        let fx = x86_64::_mm256_mul_ps(x4, log2ef);
-        let zp5 = x86_64::_mm256_set1_ps(CEPHES_EXP_P5 as f32);
-        let fx = x86_64::_mm256_add_ps(fx, zp5);
-        let emm0 = x86_64::_mm256_cvtps_epi32(fx);
-        let tmp = x86_64::_mm256_cvtepi32_ps(emm0);
-
-        let mask = x86_64::_mm256_cmp_ps(tmp, fx, x86_64::_CMP_GT_OS);
-        let one = x86_64::_mm256_set1_ps(1.0);
-        let mask = x86_64::_mm256_and_ps(mask, one);
-        let fx = x86_64::_mm256_sub_ps(tmp, mask);
-
-        let c1 = x86_64::_mm256_set1_ps(CEPHES_EXP_C1 as f32);
-        let tmp = x86_64::_mm256_mul_ps(fx, c1);
-        let c2 = x86_64::_mm256_set1_ps(CEPHES_EXP_C2 as f32);
-        let z4 = x86_64::_mm256_mul_ps(fx, c2);
-        let x4 = x86_64::_mm256_sub_ps(x4, tmp);
-        let x4 = x86_64::_mm256_sub_ps(x4, z4);
-
-        let z4 = x86_64::_mm256_mul_ps(x4, x4);
-
-        let y4 = x86_64::_mm256_set1_ps(CEPHES_EXP_P0 as f32);
-        let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p1 = x86_64::_mm256_set1_ps(CEPHES_EXP_P1 as f32);
-        let y4 = x86_64::_mm256_add_ps(y4, exp_p1);
-        let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p2 = x86_64::_mm256_set1_ps(CEPHES_EXP_P2 as f32);
-        let y4 = x86_64::_mm256_add_ps(y4, exp_p2);
-        let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p3 = x86_64::_mm256_set1_ps(CEPHES_EXP_P3 as f32);
-        let y4 = x86_64::_mm256_add_ps(y4, exp_p3);
-        let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p4 = x86_64::_mm256_set1_ps(CEPHES_EXP_P4 as f32);
-        let y4 = x86_64::_mm256_add_ps(y4, exp_p4);
-        let y4 = x86_64::_mm256_mul_ps(y4, x4);
-        let exp_p5 = x86_64::_mm256_set1_ps(CEPHES_EXP_P5 as f32);
-        let y4 = x86_64::_mm256_add_ps(y4, exp_p5);
-        let y4 = x86_64::_mm256_mul_ps(y4, z4);
-        let y4 = x86_64::_mm256_add_ps(y4, x4);
-        let y4 = x86_64::_mm256_add_ps(y4, one);
-
-        let emm0 = x86_64::_mm256_cvttps_epi32(fx);
-        let _pi32_0x7f = x86_64::_mm256_set1_epi32(0x7f);
-        let emm0 = x86_64::_mm256_add_epi32(emm0, _pi32_0x7f);
-        let emm0 = x86_64::_mm256_slli_epi32(emm0, 23);
-        let pow2n = x86_64::_mm256_castsi256_ps(emm0);
-
-        let y4 = x86_64::_mm256_mul_ps(y4, pow2n);
-        y4
-        // x86_64::_mm_store_ps(y, y4);
-    }
-
-    pub fn evaluatev9(&self, ban : &board::Board) -> f32 {
-        if ban.is_full() || ban.is_passpass() {
-            return ban.count() as f32;
-        }
-
-        let prgs = ban.progress();
-        let cells = &ban.cells;
-        let teban = ban.teban as f32;
-        
-        let fs = ban.fixedstones();
-        
-        let mut sum = self.wl2bias(prgs);
-        
-        let ow = self.wban(prgs);
-        let wtbn = self.wteban(prgs);
-        let wfs = self.wfixedstones(prgs);
-        let wdc = self.wibias(prgs);
-        let wh = self.wlayer1(prgs);
-        let whdc = self.wl1bias(prgs);
-        let wh2 = self.wlayer2(prgs);
-        let mut hid = [0f32 ; N_HIDDEN];
-        for i in 0..N_HIDDEN {
-            let w1 = &ow[i * board::CELL_2D .. (i + 1) * board::CELL_2D];
-            let mut hidsum : f32 = wdc[i];
-            for (idx, c)  in cells.iter().enumerate() {
-                hidsum += *c as f32 * w1[idx];
-            }
-            hidsum += teban * wtbn[i];
-            hidsum += wfs[i] * fs.0 as f32;
-            hidsum += wfs[i + N_HIDDEN] * fs.1 as f32;
-
-            hid[i] = if hidsum > 0f32 {hidsum} else {0f32};
-        }
-        for j in 0..N_HIDDEN2 {
-            let whd = &wh[j * N_HIDDEN .. j * N_HIDDEN + N_HIDDEN];
-            let mut hidsum : f32 = whdc[j];
-            for (idx, c)  in hid.iter().enumerate() {
-                hidsum += *c * whd[idx];
-            }
-            sum += if hidsum > 0f32 {wh2[j] * hidsum} else {0f32};
-        }
-        sum
-    }
-
     pub fn evaluatev9bb(&self, ban : &bitboard::BitBoard) -> f32 {
         if ban.is_full() || ban.is_passpass() {
             return ban.countf32();
@@ -1104,7 +709,7 @@ impl Weight {
             let mut sum44 : [f32 ; N * 4] = [0f32 ; N * 4];
 
             const M : usize = 16;
-            for idx in (0..board::CELL_2D).step_by(M) {
+            for idx in (0..bitboard::CELL_2D).step_by(M) {
                 unsafe {
                     let c1 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx));
                     let c2 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx + 4));
@@ -1112,7 +717,7 @@ impl Weight {
                     let c4 = x86_64::_mm_loadu_ps(cells.as_ptr().add(idx + 12));
 
                     for n in 0..N {
-                        let w1 = &ow[(i + n) * board::CELL_2D .. (i + n + 1) * board::CELL_2D];
+                        let w1 = &ow[(i + n) * bitboard::CELL_2D .. (i + n + 1) * bitboard::CELL_2D];
 
                         let x41 = x86_64::_mm_load_ps(w1.as_ptr().add(idx));
                         let x42 = x86_64::_mm_load_ps(w1.as_ptr().add(idx + 4));
@@ -1499,7 +1104,7 @@ impl Weight {
             for m in (0..N).step_by(8) {
                 let mut sum88 = [0f32 ; N * 8 / 2];
                 const M : usize = 32;
-                for idx in (0..board::CELL_2D).step_by(M) {
+                for idx in (0..bitboard::CELL_2D).step_by(M) {
                     unsafe {
                         let f81 = x86_64::_mm256_loadu_ps(
                                 cells.as_ptr().add(idx));
@@ -1512,7 +1117,7 @@ impl Weight {
 
                         for n in 0..N / 2 {
                             let index = hidx + m + n;
-                            let w1 = &ow[index * board::CELL_2D .. (index + 1) * board::CELL_2D];
+                            let w1 = &ow[index * bitboard::CELL_2D .. (index + 1) * bitboard::CELL_2D];
                             let mut sum8 = x86_64::_mm256_loadu_ps(
                                     sum88[n * 8..].as_ptr());
 
@@ -1717,25 +1322,6 @@ impl Weight {
         }
         res
     }
-
-    #[allow(dead_code)]
-    fn learn(&mut self, _ban : &board::Board, _winner : i8, _eta : f32) {
-    }
-
-    #[allow(dead_code)]
-    fn learnbb(&mut self, _ban : &bitboard::BitBoard, _winner : i8, _eta : f32) {
-    }
-
-    #[allow(dead_code)]
-    fn learnbbdiff(&self, _ban : &bitboard::BitBoard, _winner : i8, _eta : f32, _dfw : &mut Weight) {
-    }
-
-    #[allow(dead_code)]
-    fn learnbbminib(&self, banscores : &[&(bitboard::BitBoard, i8)], eta : f32, dfw : &mut Weight) {
-        for (ban , winner) in banscores.iter() {
-            self.learnbbdiff(ban, *winner, eta, dfw);
-        }
-    }
 }
 
 #[allow(dead_code)]
@@ -1791,7 +1377,7 @@ fn testweight() {
     ];
     for rfen in rfens.iter() {
         let bban = bitboard::BitBoard::from(rfen).unwrap();
-        let ban = board::Board::from(rfen).unwrap();
+        let ban = bitboard::BitBoard::from(rfen).unwrap();
         ban.put();
         let mut w = weight::Weight::new();
         w.init();
@@ -1837,15 +1423,12 @@ fn testweight() {
     ];
     for rfen in rfens.iter() {
         let bban = bitboard::BitBoard::from(rfen).unwrap();
-        let ban = board::Board::from(rfen).unwrap();
-        ban.put();
+        bban.put();
         let mut w = weight::Weight::new();
         w.init();
-        let res_nosimdy = w.evaluatev9(&ban);
         let res_nosimdi = w.evaluatev9bb(&bban);
         let res_simdmul = w.evaluatev9bb_simd_mul(&bban);
         // let res_simd = w.evaluatev9bb_simd(&bban);
-        assert!(dbg_assert_eq(&res_nosimdy, &res_nosimdi));
         assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }

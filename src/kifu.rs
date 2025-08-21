@@ -33,8 +33,8 @@ impl Te {
             return None;
         }
         let teban = match elem[1] {
-            board::STONE_SENTE => board::SENTE,
-            board::STONE_GOTE => board::GOTE,
+            bitboard::STONE_SENTE => bitboard::SENTE,
+            bitboard::STONE_GOTE => bitboard::GOTE,
             _ => return None
         };
         let x : usize;
@@ -62,8 +62,8 @@ impl Te {
         format!(
             "{} {} {} {}\n",
             i, match self.teban {
-                board::SENTE => { board::STONE_SENTE },
-                board::GOTE => { board::STONE_GOTE },
+                bitboard::SENTE => { bitboard::STONE_SENTE },
+                bitboard::GOTE => { bitboard::STONE_GOTE },
                 _ => { "  " },
             },
             self.pos(), self.rfen)
@@ -72,18 +72,18 @@ impl Te {
 
 #[test]
 fn testte() {
-    let te = Te::new(0, 0, board::SENTE, "abcdefgh".to_string());
+    let te = Te::new(0, 0, bitboard::SENTE, "abcdefgh".to_string());
     assert_eq!(0, te.x);
     assert_eq!(0, te.y);
-    assert_eq!(board::SENTE, te.teban);
+    assert_eq!(bitboard::SENTE, te.teban);
     assert_eq!("abcdefgh", te.rfen);
     assert_eq!("PS", te.pos());
     assert_eq!("99 @@ PS abcdefgh\n", te.to_str(99));
 
-    let te = Te::new(3, 4, board::GOTE, "ABCDEFGH".to_string());
+    let te = Te::new(3, 4, bitboard::GOTE, "ABCDEFGH".to_string());
     assert_eq!(3, te.x);
     assert_eq!(4, te.y);
-    assert_eq!(board::GOTE, te.teban);
+    assert_eq!(bitboard::GOTE, te.teban);
     assert_eq!("ABCDEFGH", te.rfen);
     assert_eq!("c4", te.pos());
     assert_eq!("23 [] c4 ABCDEFGH\n", te.to_str(23));
@@ -102,7 +102,7 @@ fn testte() {
     let te = te.unwrap();
     assert_eq!(1, te.x);
     assert_eq!(1, te.y);
-    assert_eq!(board::SENTE, te.teban);
+    assert_eq!(bitboard::SENTE, te.teban);
     assert_eq!("rfen b", te.rfen);
     assert_eq!("a1", te.pos());
     assert_eq!("1 @@ a1 rfen b\n", te.to_str(1));
@@ -112,7 +112,7 @@ fn testte() {
     let te = te.unwrap();
     assert_eq!(8, te.x);
     assert_eq!(8, te.y);
-    assert_eq!(board::GOTE, te.teban);
+    assert_eq!(bitboard::GOTE, te.teban);
     assert_eq!("rfen w", te.rfen);
     assert_eq!("h8", te.pos());
     assert_eq!("2 [] h8 rfen w\n", te.to_str(2));
@@ -258,19 +258,19 @@ fn testkifu() {
     assert_eq!(te.pos(), "h5");
     assert_eq!(te.x, 8);
     assert_eq!(te.y, 5);
-    assert_eq!(te.teban, board::SENTE);
+    assert_eq!(te.teban, bitboard::SENTE);
     assert_eq!(te.rfen, "dD/AdC/BcC/BaAbAa/Af1/AaAaA1a1/BcC/G1 b");
     let te = kifu.nth(1);
     assert_eq!(te.pos(), "f6");
     assert_eq!(te.x, 6);
     assert_eq!(te.y, 6);
-    assert_eq!(te.teban, board::GOTE);
+    assert_eq!(te.teban, bitboard::GOTE);
     assert_eq!(te.rfen, "dD/AdC/BcC/BaAbB/H/AaAaA1A1/BcC/G1 w");
     let te = kifu.nth(2);
     assert_eq!(te.pos(), "PS");
     assert_eq!(te.x, 0);
     assert_eq!(te.y, 0);
-    assert_eq!(te.teban, board::SENTE);
+    assert_eq!(te.teban, bitboard::SENTE);
     assert_eq!(te.rfen, "dD/AdC/BcC/BdB/DbB/AaAcA1/BcC/G1 b");
     assert_eq!(kifu.score, Some(4));
     assert_eq!(kifu.winner(), Some(SENTEWIN));

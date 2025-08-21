@@ -11,7 +11,7 @@ once_cell = "1.12"
 regex = "1"
 
 [features]
-default = ["bitboard"]
+default = []
 nosimd = []
 nnv1 = []
 nnv2 = []
@@ -19,9 +19,9 @@ nnv3 = []
 nnv4 = []
 # nnv5 = []
 withtt = []  # use transposition table
-bitboard = []
-byteboard = []
-avx = ["bitboard"] ## including AVX and BMI2
+# bitboard = []
+# deprecated  byteboard = []
+avx = [] ## including AVX and BMI2
 
 [lib]
 name="mylib"
