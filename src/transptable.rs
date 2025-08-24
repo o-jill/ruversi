@@ -82,7 +82,8 @@ impl TranspositionTable {
 
     pub fn check(&mut self, b : &bitboard::BitBoard) -> Option<f32> {
         let h = b.hash();
-        let idx = (h & (MAXSIZE - 1) as u64) as usize;
+        let sz = self.list.len();
+        let idx = (h & (sz - 1) as u64) as usize;
         if self.list[idx].is_hit(b) {
         // if self.list[idx].is_hash(h, b.teban) {
             Some(self.list[idx].hyoka)
@@ -93,7 +94,8 @@ impl TranspositionTable {
 
     pub fn append(&mut self, b : &bitboard::BitBoard, hy : f32) {
         let h = b.hash();
-        let idx = (h & (MAXSIZE - 1) as u64) as usize;
+        let sz = self.list.len();
+        let idx = (h & (sz - 1) as u64) as usize;
         self.list[idx] = TTEntry::from(h, b, hy);
     }
 

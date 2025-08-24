@@ -70,7 +70,7 @@ pub struct MyOption {
     pub minibsize : usize,
     pub verbose : Verbose,
     pub treedump : Option<String>,
-    pub cachesize : i32,
+    cachesize : i32,
 }
 
 impl MyOption {
@@ -329,6 +329,10 @@ impl MyOption {
         }
         Ok(opt)
     }
+
+    pub fn cachesize_actual(&self) -> usize {
+        self.cachesize as usize * 1024
+    }
 }
 
 /// Show command options.
@@ -531,6 +535,7 @@ mod tests {
             "prog".to_string(), "--cachesize".to_string(),"100".to_string(),];
         let opt = MyOption::new(args).unwrap();
         assert_eq!(opt.cachesize, 100);
+        assert_eq!(opt.cachesize_actual(), 100 * 1024);
         let args = vec![
             "prog".to_string(), "--cachesize".to_string(),"0".to_string(),];
         let err = MyOption::new(args).unwrap_err();

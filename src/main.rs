@@ -49,8 +49,8 @@ fn trial() {
 /// # Arguments
 /// - rfen : RFEN text to be thought.
 /// - depth : depth to think.
-fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
-    let mut tt = transptable::TranspositionTable::default();
+fn verbose(rfen : &str, depth : u8, treepath : &Option<String>, cachesz : usize) {
+    let mut tt = transptable::TranspositionTable::with_capacity(cachesz);
     let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
     match bitboard::BitBoard::from(rfen) {
     Err(msg) => {println!("{msg}")},
@@ -76,11 +76,12 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>) {
     }
 }
 
-fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
+fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str, cachesz: usize) {
     for (idx, rfen) in rfentbl.iter().enumerate() {
         let think = MYOPT.get().unwrap().think.as_str();
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         // play
         match think {
             "" | "ab" => {
@@ -103,17 +104,17 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str) {
     }
 }
 
-fn genkifu_para(rfentbl : &[String], depth : u8, grp : &str) {
+fn genkifu_para(rfentbl : &[String], depth : u8, grp : &str, cachesz: usize) {
     let n = rfentbl.len();
     let rfentbl1 = rfentbl[0..n/2].to_vec();
     let rfentbl2 = &rfentbl[n/2..];
 
     let grp1 = format!("{grp}0");
     let sub = thread::spawn(move || {
-            genkifu_single(&rfentbl1, depth, &grp1);
+            genkifu_single(&rfentbl1, depth, &grp1, cachesz);
         });
 
-    genkifu_single(rfentbl2, depth, &format!("{grp}1"));
+    genkifu_single(rfentbl2, depth, &format!("{grp}1"), cachesz);
 
     sub.join().unwrap();
 }
@@ -121,7 +122,7 @@ fn genkifu_para(rfentbl : &[String], depth : u8, grp : &str) {
 /// generate kifu
 /// # Arguments
 /// - n : None or Some(0 - 19). index in 20 group.
-fn gen_kifu(n : Option<usize>, depth : u8) {
+fn gen_kifu(n : Option<usize>, depth : u8, cachesz : usize) {
     let mut ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     ip.append(initialpos::INITIALPOSFILE7).unwrap();
     let rfentbl =
@@ -140,8 +141,8 @@ fn gen_kifu(n : Option<usize>, depth : u8) {
         &rfentbl[b..e]
     };
 
-    genkifu_para(rfentbl, depth, &format!("{grp:02}"));
-    // genkifu_single(rfentbl, depth, &format!("{grp:02}"));
+    genkifu_para(rfentbl, depth, &format!("{grp:02}"), cachesz);
+    // genkifu_single(rfentbl, depth, &format!("{grp:02}"), cachesz);
 }
 
 struct DuelResult {
@@ -219,7 +220,7 @@ impl DuelResult {
 /// # Arguments
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
-fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
+fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -251,6 +252,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         for rfen in rfen1.iter() {
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_cachesize(cachesz);
             g.set_verbose(verbose);
             // play
             match think {
@@ -272,6 +274,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 
             // prepare game
             let mut g = game::GameBB::from(rfen);
+            g.set_cachesize(cachesz);
             g.set_verbose(verbose);
             // play
             let think = MYOPT.get().unwrap().think.as_str();
@@ -296,6 +299,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
     for rfen in rfentbl.iter() {
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
         let think = MYOPT.get().unwrap().think.as_str();
@@ -317,6 +321,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
         let think = MYOPT.get().unwrap().think.as_str();
@@ -353,7 +358,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 /// - ev1 : eval table 1.
 /// - ev2 : eval table 2.
 #[allow(dead_code)]
-fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
+fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -376,6 +381,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
     for rfen in rfentbl.iter() {
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
         let think = MYOPT.get().unwrap().think.as_str();
@@ -405,6 +411,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
         }
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
         let think = MYOPT.get().unwrap().think.as_str();
@@ -439,7 +446,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_edax(duellv : i8, depth : u8) {
+fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -462,6 +469,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         let turn = bitboard::SENTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
         g.starto_against_edax(
@@ -486,6 +494,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
         let turn = bitboard::GOTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         g.starto_against_edax(
             match think {
@@ -515,7 +524,7 @@ fn duel_vs_edax(duellv : i8, depth : u8) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_cassio(duellv : i8, depth : u8) {
+fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -539,6 +548,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
         let turn = bitboard::SENTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
         g.start_against_via_cassio(
@@ -563,6 +573,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
         let turn = bitboard::GOTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
         g.start_against_via_cassio(
@@ -593,7 +604,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8) {
 /// # Arguments
 /// - duellv : duel level.
 /// - depth : searching depth.
-fn duel_vs_ruversi(duellv : i8, depth : u8) {
+fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
@@ -616,6 +627,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         let turn = bitboard::SENTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         g.starto_against_ruversi(
             match think {
@@ -639,6 +651,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8) {
         let turn = bitboard::GOTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
+        g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
         g.starto_against_ruversi(
@@ -682,9 +695,10 @@ fn readeval(path: &str) {
 /// # Arguments
 /// - depth : depth to think.
 /// - turnh : your turn.
-fn play(depth : u8, turnh: i8) {
+fn play(depth : u8, turnh: i8, cachesz : usize) {
     // prepare game
     let mut g = game::GameBB::new();
+    g.set_cachesize(cachesz);
     // play
     let think = MYOPT.get().unwrap().think.as_str();
     // g.start_against_stdin(
@@ -713,9 +727,10 @@ fn play(depth : u8, turnh: i8) {
 /// # Arguments
 /// - depth : depth to think.
 /// - turnh : Edax's turn.
-fn edax(depth : u8, turnh: i8) {
+fn edax(depth : u8, turnh: i8, cachesz : usize) {
     // prepare game
     let mut g = game::GameBB::new();
+    g.set_cachesize(cachesz);
     // play
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();
@@ -745,10 +760,11 @@ fn edax(depth : u8, turnh: i8) {
 /// # Arguments
 /// - depth : depth to think.
 /// - turnh : another ruversi's turn.
-fn vs_ruversi(depth : u8, turnh: i8) {
+fn vs_ruversi(depth : u8, turnh: i8, cachesz : usize) {
     let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     // prepare game
     let mut g = game::GameBB::new();
+    g.set_cachesize(cachesz);
     g.set_verbose(verbose);
     // play
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
@@ -975,10 +991,11 @@ fn main() {
 
     // trial();
     let depth = MYOPT.get().unwrap().depth;
+    let cachesz = MYOPT.get().unwrap().cachesize_actual();
 
     if *mode == myoption::Mode::None || *mode == myoption::Mode::GenKifu {
         let n = MYOPT.get().unwrap().n;
-        gen_kifu(n, depth);
+        gen_kifu(n, depth, cachesz);
     }
     if *mode == myoption::Mode::Learn {
         eprintln!("learning was deprecated. please use tigerdenversi instead.");
@@ -987,8 +1004,8 @@ fn main() {
         let ev1 = &MYOPT.get().unwrap().evaltable1;
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         let duellv = MYOPT.get().unwrap().duellv;
-        duel_para(ev1, ev2, duellv, depth);
-        // duel(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose);
+        duel_para(ev1, ev2, duellv, depth, cachesz);
+        // duel(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose, cachesz);
     }
     if *mode == myoption::Mode::DuelExt {
         let duellv = MYOPT.get().unwrap().duellv;
@@ -996,12 +1013,12 @@ fn main() {
         println!("opponent:{opp:?}");
         match opp {
             myoption::Opponent::Ruversi => {
-                duel_vs_ruversi(duellv, depth);
+                duel_vs_ruversi(duellv, depth, cachesz);
             },
             myoption::Opponent::Cassio => {
-                duel_vs_cassio(duellv, depth);
+                duel_vs_cassio(duellv, depth, cachesz);
             },
-            _ => {duel_vs_edax(duellv, depth);}
+            _ => {duel_vs_edax(duellv, depth, cachesz);}
         }
     }
     if *mode == myoption::Mode::Play {
@@ -1016,7 +1033,7 @@ fn main() {
                         if rng.gen::<bool>() {bitboard::SENTE} else {bitboard::GOTE}
                     } else {
                         turn
-                    });
+                    }, cachesz);
             },
             myoption::Opponent::Edax => {
                 edax(
@@ -1026,7 +1043,7 @@ fn main() {
                         if rng.gen::<bool>() {bitboard::SENTE} else {bitboard::GOTE}
                     } else {
                         turn
-                    });
+                    }, cachesz);
             },
             myoption::Opponent::Ruversi => {
                 vs_ruversi(
@@ -1036,7 +1053,7 @@ fn main() {
                         if rng.gen::<bool>() {bitboard::SENTE} else {bitboard::GOTE}
                     } else {
                         turn
-                    });
+                    }, cachesz);
             },
             _ => {panic!("{opp:?} is not supported yet.")},
         }
@@ -1044,7 +1061,7 @@ fn main() {
     if *mode == myoption::Mode::Rfen {
         let rfen = &MYOPT.get().unwrap().rfen;
         let treepath = &MYOPT.get().unwrap().treedump;
-        verbose(rfen, depth, treepath);
+        verbose(rfen, depth, treepath, cachesz);
     }
     if *mode == myoption::Mode::InitPos {
         let tag = &MYOPT.get().unwrap().initpos;
