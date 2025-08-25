@@ -8,6 +8,7 @@ type SearchFn = fn(&bitboard::BitBoard, u8, &mut nodebb::NodeBB, &weight::Weight
 pub struct GameBB {
     ban : bitboard::BitBoard,
     pub kifu : kifu::Kifu,
+    cachesize : usize,
     verbose : bool
 }
 
@@ -16,6 +17,7 @@ impl GameBB {
         GameBB {
             ban : bitboard::BitBoard::new(),
             kifu : kifu::Kifu::new(),
+            cachesize : 100,
             verbose : true,
         }
     }
@@ -24,8 +26,13 @@ impl GameBB {
         GameBB {
             ban: bitboard::BitBoard::from(rfen).unwrap(),
             kifu: kifu::Kifu::new(),
+            cachesize : 100,
             verbose : true,
         }
+    }
+
+    pub fn set_cachesize(&mut self, cachesz : usize) {
+        self.cachesize = cachesz;
     }
 
     pub fn set_verbose(&mut self, vb : bool) {
@@ -37,7 +44,7 @@ impl GameBB {
     #[allow(dead_code)]
     pub fn start(&mut self, f : SearchFn, depth : u8)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             // show
@@ -86,7 +93,7 @@ impl GameBB {
     }
 
     pub fn starto(&mut self, f : SearchFn, depth : u8) -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             // show
@@ -134,7 +141,7 @@ impl GameBB {
     }
 
     pub fn startgk(&mut self, f : SearchFn, depth : u8) -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             // tt.clear();
@@ -183,7 +190,7 @@ impl GameBB {
     pub fn start_against_stdin(
             &mut self, f : SearchFn, depth : u8, turnin : i8)
                 -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             let x;
@@ -278,7 +285,7 @@ impl GameBB {
 
     pub fn starto_against_stdin(&mut self,
             f : SearchFn, depth : u8, turnin : i8) -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             let x;
@@ -374,7 +381,7 @@ impl GameBB {
     pub fn start_against_edax(&mut self,
             f : SearchFn, depth : u8, turnin : i8) -> Result<(), String> {
         let er = edaxrunner::EdaxRunner::new();
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             let x;
@@ -456,7 +463,7 @@ impl GameBB {
                 -> Result<(), String> {
         let er = edaxrunner::EdaxRunner::from_config(econf)?;
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         loop {
             // show
             if self.is_verbose() {println!("{}", self.ban.to_str());}
@@ -534,7 +541,7 @@ impl GameBB {
     pub fn starto_against_ruversi(&mut self,
         f : SearchFn, depth : u8, turnin : i8, econf : &str)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         let mut rr = edaxrunner::RuversiRunner::from_config(econf)?;
         rr.set_verbose(self.verbose);
@@ -615,7 +622,7 @@ impl GameBB {
     pub fn start_against_via_cassio(&mut self,
             f : SearchFn, depth : u8, turnin : i8, cconf : &str)
                 -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         let er = edaxrunner::CassioRunner::from_config(cconf)?;
         let mut cassio =
@@ -729,7 +736,7 @@ impl GameBB {
     pub fn start_with_2et(&mut self,
         f : SearchFn, depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             // show
@@ -793,7 +800,7 @@ impl GameBB {
     pub fn starto_with_2et(&mut self,
         f : SearchFn, depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             // show
@@ -854,7 +861,7 @@ impl GameBB {
     pub fn starto_with_2et_mt(&mut self,
         f : SearchFn, depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         loop {
             // show
             // self.ban.put();
@@ -911,7 +918,7 @@ impl GameBB {
     pub fn starto_with_2et_mt_tt(&mut self,
         f : SearchFn, depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::default();
+        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         loop {
             // tt.clear();
             // show

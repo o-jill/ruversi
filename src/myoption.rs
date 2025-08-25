@@ -70,6 +70,7 @@ pub struct MyOption {
     pub minibsize : usize,
     pub verbose : Verbose,
     pub treedump : Option<String>,
+    cachesize : i32,
 }
 
 impl MyOption {
@@ -81,6 +82,7 @@ impl MyOption {
     /// # Return value
     /// instance of MyOptions.<br>
     /// default:<br>
+    /// - cachesize : 1024
     /// - depth: 7
     /// - eta: None
     /// - duellv: 5
@@ -119,6 +121,7 @@ impl MyOption {
             minibsize : 128,
             verbose : Verbose::Normal,
             treedump : None,
+            cachesize : 1024,
         };
         let mut old = String::new();
         let mut skip = 0;
@@ -178,7 +181,8 @@ impl MyOption {
                     old = e;
                 } else if [
                         "--depth", "--Edconf", "--eta", "--ev1", "--ev2",
-                         "--progress", "--Ruconf", "--repeat", "--trainout",
+                        "--progress", "--Ruconf", "--repeat", "--trainout",
+                        "--cachesize",
                     ].contains(&e.as_str()) {
                     old = e;
                 } else if e == "--help" || e == "-h" {
@@ -305,11 +309,29 @@ impl MyOption {
             } else if old == "--treedump" {
                 opt.treedump = Some(e.to_string());
                 old.clear();
+            } else if old == "--cachesize" {
+                match e.parse::<i32>() {
+                    Ok(sz) => {
+                        if sz <= 0 {
+                            return Err(format!("cachesize {sz} is invalid number."));
+                        } else {
+                            opt.cachesize = sz;
+                        }
+                    },
+                    Err(err) => {
+                        return Err(format!("failed read {old} {e}. ({err})"));
+                    }
+                }
+                old.clear();
             } else {
-                panic!("unknown option: {e}");
+                panic!("unknown option: {e}  old:{old}");
             }
         }
         Ok(opt)
+    }
+
+    pub fn cachesize_actual(&self) -> usize {
+        self.cachesize as usize * 1024
     }
 }
 
@@ -339,6 +361,7 @@ pub fn showhelp(msg : &str) {
     --thinkall  search every node. (no pruning)
     --depth x   searching depth. default 7.
     --silent    reduce console outputs.
+    --cachesize sz  # of cache table size in kilo. default 1024.
   Duel:
     --ev1 <path>  a file for board evaluation.
     --ev2 <path>  a file for board evaluation.
@@ -421,6 +444,7 @@ mod tests {
         assert_eq!(opt.verbose, Verbose::Normal);
         // treedump のデフォルト値は None
         assert_eq!(opt.treedump, None);
+        assert_eq!(opt.cachesize, 1024);
     }
 
     #[test]
@@ -499,5 +523,26 @@ mod tests {
         // エラーメッセージに "failed find" やファイル名が含まれていることを確認
         assert!(err.contains("failed find"));
         assert!(err.contains("another_missing_file.ev"));
+    }
+
+    #[test]
+    fn test_cachesize() {
+        let args = vec![
+            "prog".to_string(), "--cachesize".to_string()];
+        let opt = MyOption::new(args).unwrap();
+        assert_eq!(opt.cachesize, 1024);
+        let args = vec![
+            "prog".to_string(), "--cachesize".to_string(),"100".to_string(),];
+        let opt = MyOption::new(args).unwrap();
+        assert_eq!(opt.cachesize, 100);
+        assert_eq!(opt.cachesize_actual(), 100 * 1024);
+        let args = vec![
+            "prog".to_string(), "--cachesize".to_string(),"0".to_string(),];
+        let err = MyOption::new(args).unwrap_err();
+        assert_eq!(err, "cachesize 0 is invalid number.");
+        let args = vec![
+            "prog".to_string(), "--cachesize".to_string(),"A".to_string(),];
+        let err = MyOption::new(args).unwrap_err();
+        assert_eq!(err, "failed read --cachesize A. (invalid digit found in string)");
     }
 }
