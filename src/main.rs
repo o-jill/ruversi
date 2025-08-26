@@ -125,20 +125,20 @@ fn genkifu_para(rfentbl : &[String], depth : u8, grp : &str, cachesz: usize) {
 fn gen_kifu(n : Option<usize>, depth : u8, cachesz : usize) {
     let mut ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     ip.append(initialpos::INITIALPOSFILE7).unwrap();
-    let rfentbl =
+    let rfentbl_src =
             ip.rfens_uniq(&["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN"]);
 
     let grp;
-    let rfentbl = if n.is_none() {
-        grp = 0;
-        &rfentbl
+    let rfentbl = if let Some(group) = n {
+        grp = group;
+        const N_GROUP : usize = 100;
+        let sz = rfentbl_src.len();
+        let b = sz * grp / N_GROUP;
+        let e = sz * (grp + 1) / N_GROUP;
+        &rfentbl_src[b..e]
     } else {
-        let group = 100;
-        grp = n.unwrap();
-        let sz = rfentbl.len();
-        let b = sz * grp / group;
-        let e = sz * (grp + 1) / group;
-        &rfentbl[b..e]
+        grp = 0;
+        &rfentbl_src
     };
 
     genkifu_para(rfentbl, depth, &format!("{grp:02}"), cachesz);
