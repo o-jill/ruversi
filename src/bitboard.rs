@@ -814,30 +814,39 @@ impl BitBoard {
     /// - Some(vec![])  : no available cells. pass.
     /// - Some(Vec![n]) : available cells.
     pub fn genmove(&self) -> Option<Vec<(u8, u8)>> {
-        let mut ret = Vec::<(u8, u8)>::new();
         let stones = self.black | self.white;
+        if stones == u64::MAX {return None;}
+
+        let mut bits = 0;
         let mut bit = LSB_CELL;
         for y in 0..NUMCELL {
             for x in 0..NUMCELL {
                 let exist = bit & stones;
-                bit_right!(bit);
                 if exist != 0 {
+                    bit_right!(bit);
                     continue;
                 }
 
-                // nblank += 1;
                 if self.checkreverse(x, y) {
-                    ret.push((x as u8 + 1, y as u8 + 1));
+                    bits |= bit;
                 }
+                bit_right!(bit);
             }
         }
-        if ret.is_empty() {  // pass
-            return if self.is_full() {
-                None
-            } else {
-                // Some(vec![])
-                Some(vec![(0, 0)])
-            }
+
+        let sz = bits.count_ones() as usize;
+        if sz == 0 {  // pass
+            // return Some(vec![]);
+            return Some(vec![(0, 0)]);
+        }
+
+        let mut remain = bits;
+        let mut ret = Vec::with_capacity(sz);
+        while remain != 0 {
+            let idx = remain.trailing_zeros() as u8;
+            ret.push((1 + idx % NUMCELL as u8, 1 + idx / NUMCELL as u8));
+            remain ^= 1 << idx;
+            // remain &= !(1 << idx);
         }
         Some(ret)
     }
