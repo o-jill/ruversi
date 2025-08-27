@@ -65,7 +65,7 @@ impl GameBB {
             let x = best.x;
             let y = best.y;
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -113,7 +113,7 @@ impl GameBB {
             let x = best.x;
             let y = best.y;
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -159,7 +159,7 @@ impl GameBB {
             let x = best.x;
             let y = best.y;
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -204,8 +204,8 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0].0;
-                    y = movable[0].1;
+                    x = movable[0] % bitboard::NUMCELL as u8;
+                    y = movable[0] / bitboard::NUMCELL as u8;
                 } else {
                     loop {
                         if self.is_verbose() {print!("your turn[a1 ~ h8]:");}
@@ -228,7 +228,7 @@ impl GameBB {
                             }
                             continue;
                         }
-                        let pos = (xx, yy);
+                        let pos = bitboard::BitBoard::cell(xx, yy);
                         if movable.contains(&pos) {
                             x = xx;
                             y = yy;
@@ -256,7 +256,7 @@ impl GameBB {
                 y = best.y;
             }
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -299,8 +299,8 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0].0;
-                    y = movable[0].1;
+                    x = movable[0] % bitboard::NUMCELL as u8;
+                    y = movable[0] / bitboard::NUMCELL as u8;
                 } else {
                     loop {
                         if self.is_verbose() {print!("your turn[a1 ~ h8]:");}
@@ -323,7 +323,7 @@ impl GameBB {
                             }
                             continue;
                         }
-                        let pos = (xx, yy);
+                        let pos = bitboard::BitBoard::cell(xx, yy);
                         if movable.contains(&pos) {
                             x = xx;
                             y = yy;
@@ -350,7 +350,7 @@ impl GameBB {
                 y = best.y;
             }
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -396,8 +396,8 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0].0;
-                    y = movable[0].1;
+                    x = movable[0] % bitboard::NUMCELL as u8;
+                    y = movable[0] / bitboard::NUMCELL as u8;
                 } else {
                     // launch edax
                     match er.run(&self.ban.to_obf()) {
@@ -424,7 +424,7 @@ impl GameBB {
                 y = best.y;
             }
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -477,8 +477,8 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0].0;
-                    y = movable[0].1;
+                    x = movable[0] % bitboard::NUMCELL as u8;
+                    y = movable[0] / bitboard::NUMCELL as u8;
                 } else {
                     // launch edax
                     match er.run(&self.ban.to_obf()) {
@@ -504,7 +504,7 @@ impl GameBB {
                 y = best.y;
             }
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -558,8 +558,8 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0].0;
-                    y = movable[0].1;
+                    x = movable[0] % bitboard::NUMCELL as u8;
+                    y = movable[0] / bitboard::NUMCELL as u8;
                 } else {
                     // launch another Ruversi
                     match rr.run(&self.ban.to_str()) {
@@ -585,7 +585,7 @@ impl GameBB {
                 y = best.y;
             }
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -647,8 +647,8 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0].0;
-                    y = movable[0].1;
+                    x = movable[0] % bitboard::NUMCELL as u8;
+                    y = movable[0] / bitboard::NUMCELL as u8;
                 } else {
                     // launch edax
                     let alpha = -64f32;
@@ -702,7 +702,7 @@ impl GameBB {
 
             if x <= 8 {
                 // apply move
-                let ban = self.ban.r#move(x, y).unwrap();
+                let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
                 self.ban = ban;
@@ -767,7 +767,7 @@ impl GameBB {
             let x = best.x;
             let y = best.y;
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -828,7 +828,7 @@ impl GameBB {
             let x = best.x;
             let y = best.y;
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -885,7 +885,7 @@ impl GameBB {
             let x = best.x;
             let y = best.y;
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -943,7 +943,7 @@ impl GameBB {
             let x = best.x;
             let y = best.y;
             // apply move
-            let ban = self.ban.r#move(x, y).unwrap();
+            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;

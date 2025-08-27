@@ -832,12 +832,14 @@ fn geninitpos(tag : &str) -> Result<(), String>{
 
         let mut moves = moves.unwrap();
         if moves.is_empty() {
-            moves.push((0, 0));
+            moves.push(bitboard::BitBoard::cell(0, 0));
         }
-        for (mvx, mvy) in moves.iter() {
-            let mvstr = postxt(*mvx, *mvy);
+        for mv in moves.iter() {
+            let mvx = mv % bitboard::NUMCELL as u8;
+            let mvy = mv / bitboard::NUMCELL as u8;
+            let mvstr = postxt(mvx, mvy);
 
-            let ban2 = ban.r#move(*mvx, *mvy).unwrap();
+            let ban2 = ban.r#move(*mv).unwrap();
             let moves2 = ban2.genmove();
             if moves2.is_none() {  // no empty cells.
                 continue;
@@ -845,11 +847,13 @@ fn geninitpos(tag : &str) -> Result<(), String>{
 
             let mut moves2 = moves2.unwrap();
             if moves2.is_empty() {
-                moves2.push((0, 0));
+                moves2.push(bitboard::BitBoard::cell(0, 0));
             }
-            for (mvx2, mvy2) in moves2.iter() {
-                let mvstr2 = postxt(*mvx2, *mvy2);
-                let ban3 = ban2.r#move(*mvx2, *mvy2).unwrap();
+            for mv2 in moves.iter() {
+                let mvx2 = mv2 % bitboard::NUMCELL as u8;
+                let mvy2 = mv2 / bitboard::NUMCELL as u8;
+                let mvstr2 = postxt(mvx2, mvy2);
+                let ban3 = ban2.r#move(*mv2).unwrap();
                 println!("{},  // ****** {mvstr} {mvstr2}", ban3.to_str());
             }
         }

@@ -176,8 +176,10 @@ impl NodeBB {
         }
         let moves = moves.unwrap();
 
-        for (mvx, mvy) in moves {
-            let newban = ban.r#move(mvx, mvy).unwrap();
+        for mv in moves {
+            let mvx = mv % bitboard::NUMCELL as u8;
+            let mvy = mv / bitboard::NUMCELL as u8;
+            let newban = ban.r#move(mv).unwrap();
             let idx = node.child.len();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let val = NodeBB::think_internal_tt(
@@ -228,7 +230,6 @@ impl NodeBB {
         let alpha : f32 = -123456.7;
         let beta : f32 = 123456.7;
         let val = NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt);
-        // println!("hit:{}", tt.hit());
         let val = val * ban.teban as f32;
 
         Some(val)
@@ -250,21 +251,25 @@ impl NodeBB {
         if moves.len() > 1 {
             // shallow search for move ordering.
             let fteban = teban as f32;
-            let mut aval = moves.iter().enumerate().map(|(i, &(x, y))| {
+            let mut aval = moves.iter().enumerate().map(|(i, &mv)| {
+                // let x = mv % bitboard::NUMCELL as u8;
+                // let y = mv / bitboard::NUMCELL as u8;
                 const D : u8 = 6;
                 if depth < D {  // depth:1
-                    let newban = ban.r#move(x, y).unwrap();
+                    let newban = ban.r#move(mv).unwrap();
                     let val = NodeBB::evalwtt(&newban, wei, tt);
                     (i, val * fteban)
                 } else {  // depth:2
-                    let newban = ban.r#move(x, y).unwrap();
+                    let newban = ban.r#move(mv).unwrap();
                     let value = match newban.genmove() {
                         None => {
                             newban.countf32() * fteban
                         },
                         Some(mvs) => {
-                            mvs.iter().map(|&(x, y)| {
-                                    let newban2 = newban.r#move(x, y).unwrap();
+                            mvs.iter().map(|&mv| {
+                                    // let x = mv % bitboard::NUMCELL as u8;
+                                    // let y = mv / bitboard::NUMCELL as u8;
+                                    let newban2 = newban.r#move(mv).unwrap();
                                     let val = NodeBB::evalwtt(&newban2, wei, tt);
                                     val * fteban
                                 }
@@ -280,13 +285,15 @@ impl NodeBB {
 // println!("moves:{:?}", moves);
         let fteban = teban as f32;
         node.child.reserve(moves.len());
-        for (mvx, mvy) in moves {
-            let newban = ban.r#move(mvx, mvy).unwrap();
+        for mv in moves {
+            let mvx = mv % bitboard::NUMCELL as u8;
+            let mvy = mv / bitboard::NUMCELL as u8;
+            let newban = ban.r#move(mv).unwrap();
             node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
             let ch = node.child.last_mut().unwrap();
             let val =
                 if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
-                    let val = NodeBB::evaluate(&newban, wei);
+                    let val = NodeBB::evalwtt(&newban, wei, tt);
                     val * fteban
                 } else {
                     -NodeBB::think_internal_ab_tt(ch, &newban, -beta, -newalpha, wei, tt)
