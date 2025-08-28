@@ -204,8 +204,13 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0] % bitboard::NUMCELL as u8;
-                    y = movable[0] / bitboard::NUMCELL as u8;
+                    if movable[0] == u8::MAX {  // pass
+                        x = 0;
+                        y = 0;
+                    } else {
+                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
+                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
+                    }
                 } else {
                     loop {
                         if self.is_verbose() {print!("your turn[a1 ~ h8]:");}
@@ -299,8 +304,13 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0] % bitboard::NUMCELL as u8;
-                    y = movable[0] / bitboard::NUMCELL as u8;
+                    if movable[0] == u8::MAX {  // pass
+                        x = 0;
+                        y = 0;
+                    } else {
+                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
+                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
+                    }
                 } else {
                     loop {
                         if self.is_verbose() {print!("your turn[a1 ~ h8]:");}
@@ -396,8 +406,13 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0] % bitboard::NUMCELL as u8;
-                    y = movable[0] / bitboard::NUMCELL as u8;
+                    if movable[0] == u8::MAX {  // pass
+                        x = 0;
+                        y = 0;
+                    } else {
+                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
+                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
+                    }
                 } else {
                     // launch edax
                     match er.run(&self.ban.to_obf()) {
@@ -477,8 +492,13 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0] % bitboard::NUMCELL as u8;
-                    y = movable[0] / bitboard::NUMCELL as u8;
+                    if movable[0] == u8::MAX {  // pass
+                        x = 0;
+                        y = 0;
+                    } else {
+                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
+                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
+                    }
                 } else {
                     // launch edax
                     match er.run(&self.ban.to_obf()) {
@@ -558,8 +578,13 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0] % bitboard::NUMCELL as u8;
-                    y = movable[0] / bitboard::NUMCELL as u8;
+                    if movable[0] == u8::MAX {  // pass
+                        x = 0;
+                        y = 0;
+                    } else {
+                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
+                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
+                    }
                 } else {
                     // launch another Ruversi
                     match rr.run(&self.ban.to_str()) {
@@ -647,8 +672,13 @@ impl GameBB {
                     x = 0;
                     y = 0;
                 } else if movable.len() == 1 {
-                    x = movable[0] % bitboard::NUMCELL as u8;
-                    y = movable[0] / bitboard::NUMCELL as u8;
+                    if movable[0] == u8::MAX {  // pass
+                        x = 0;
+                        y = 0;
+                    } else {
+                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
+                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
+                    }
                 } else {
                     // launch edax
                     let alpha = -64f32;
