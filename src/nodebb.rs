@@ -296,7 +296,7 @@ impl NodeBB {
             node.kyokumen += ch.kyokumen;
             if newalpha < val {
                 newalpha = val;
-                node.best = Some(Best::new(val, mvx, mvy));
+                node.best = Some(Best::new(val, mvx + 1, mvy + 1));
             } else if node.best.is_none() {
                 node.best = Some(Best::new(val, mvx + 1, mvy + 1));
             } else {
