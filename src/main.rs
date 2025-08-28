@@ -1009,7 +1009,7 @@ fn main() {
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         let duellv = MYOPT.get().unwrap().duellv;
         duel_para(ev1, ev2, duellv, depth, cachesz);
-        // duel(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose, cachesz);
+        // duel(ev1, ev2, duellv, depth, cachesz);
     }
     if *mode == myoption::Mode::DuelExt {
         let duellv = MYOPT.get().unwrap().duellv;
