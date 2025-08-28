@@ -184,6 +184,10 @@ pub fn index2xy(xy : u8) -> (u8, u8) {
     (xy % NUMCELL as u8, xy / NUMCELL as u8)
 }
 
+pub fn cell2xy(xy : u8) -> (u8, u8) {
+    (xy % NUMCELL as u8 + 1, xy / NUMCELL as u8 + 1)
+}
+
 
 #[derive(Clone)]
 pub struct BitBoard {

@@ -13,28 +13,42 @@ static mut ND_ROOT : Option<NodeBB> = None;
 
 pub struct Best {
     pub hyoka : f32,
-    pub x : u8,
-    pub y : u8,
+    xy : u8,
 }
 
 impl Best {
-    pub fn new(hyoka : f32, x : u8, y : u8) -> Best {
-        Best { hyoka, x, y }
+    pub fn new(hyoka : f32, xy : u8) -> Best {
+        Best { hyoka, xy }
     }
 
     pub fn pos(&self) -> String {
+        let (x, y) = self.to_xy();
         format!("{}{}",
             // if teban == bitboard::SENTE {
             //     bitboard::STONE_SENTE
             // } else {
             //     bitboard::STONE_GOTE
             // },
-            bitboard::STR_SENTE.chars().nth(self.x as usize).unwrap(), self.y)
+            bitboard::STR_SENTE.chars().nth(x as usize).unwrap(), y)
     }
 
     #[allow(dead_code)]
     pub fn to_str(&self) -> String {
         format!("h:{} {}", self.hyoka, self.pos())
+    }
+
+    /**
+     * # Returns
+     * (0, 0) for PASS. Otherwise (1~8, 1~8)
+     */
+    pub fn to_xy(&self) -> (u8, u8) {
+        if self.xy == u8::MAX {return (0, 0);}
+
+        (self.xy % bitboard::NUMCELL as u8 + 1, self.xy / bitboard::NUMCELL as u8 + 1)
+    }
+
+    pub fn xypos(&self) -> u8 {
+        self.xy
     }
 }
 
@@ -82,11 +96,6 @@ impl NodeBB {
 
     pub fn root(depth : u8) -> Self {
         NodeBB::new(0, 0, depth, bitboard::NONE)
-    }
-
-    fn asignbest(&mut self, hyoka : f32, x : u8, y : u8) {
-        self.hyoka = Some(hyoka);
-        self.best = Some(Best::new(hyoka, x, y));
     }
 
     #[cfg(target_arch="x86_64")]
@@ -191,7 +200,7 @@ impl NodeBB {
             let val = val.unwrap();
             let fteban = teban as f32;
             if best.is_none() || best.unwrap().hyoka * fteban < val * fteban {
-                node.best = Some(Best::new(val, mvx + 1, mvy + 1));
+                node.best = Some(Best::new(val, mv));
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
                 node.child[idx].release();
@@ -296,9 +305,9 @@ impl NodeBB {
             node.kyokumen += ch.kyokumen;
             if newalpha < val {
                 newalpha = val;
-                node.best = Some(Best::new(val, mvx + 1, mvy + 1));
+                node.best = Some(Best::new(val, mv));
             } else if node.best.is_none() {
-                node.best = Some(Best::new(val, mvx + 1, mvy + 1));
+                node.best = Some(Best::new(val, mv));
             } else {
                 ch.release();
             }
@@ -331,8 +340,7 @@ impl NodeBB {
             if n.best.is_none() {break;}
 
             let best = n.best.as_ref().unwrap();
-            let x = best.x;
-            let y = best.y;
+            let (x, y) = best.to_xy();
             if n.child.len() == 1 {
                 n = &n.child[0];
             } else {
@@ -373,8 +381,9 @@ impl NodeBB {
 
         let x;let y;
         if let Some(best) = self.best.as_ref() {
-            x = best.x;
-            y = best.y;
+            let (xx, yy) = best.to_xy();
+            x = xx;
+            y = yy;
         } else {
             x = 99;
             y = 99;
@@ -406,7 +415,7 @@ fn test_nodebb() {
     let mut node9a = NodeBB::new(2, 1, 5, bitboard::SENTE);
     node9a.kyokumen = 4321;
     node9a.hyoka = Some(99.9);
-    node9a.best = Some(Best::new(99.9, 8, 7));
+    node9a.best = Some(Best::new(99.9, bitboard::BitBoard::cell(8, 7)));
     node9a.child.push(nodede);
     node9a.child.push(nodefg);
     assert_eq!(node9a.dumpv(), "val:Some(99.9), 4321 nodes. h7");
@@ -418,7 +427,7 @@ fn test_nodebb() {
     let mut node78 = NodeBB::new(7, 8, 6, bitboard::NONE);
     node78.kyokumen = 5432;
     node78.hyoka = Some(99.9);
-    node78.best = Some(Best::new(99.9, 2, 1));
+    node78.best = Some(Best::new(99.9, bitboard::BitBoard::cell(2, 1)));
     node78.child.push(nodebc);
     node78.child.push(node9a);
     assert_eq!(node78.dumpv(), "val:Some(99.9), 5432 nodes. B1h7");
@@ -427,7 +436,7 @@ fn test_nodebb() {
     node12.kyokumen = 8765;
     node12.child.push(node56);
     node12.hyoka = Some(99.9);
-    node12.best = Some(Best::new(99.9, 7, 8));
+    node12.best = Some(Best::new(99.9, bitboard::BitBoard::cell(7, 8)));
     node12.child.push(node78);
     assert_eq!(node12.dumpv(), "val:Some(99.9), 8765 nodes. g8B1h7");
 
@@ -438,7 +447,7 @@ fn test_nodebb() {
     let mut node = NodeBB::new(99, 2, 8, bitboard::NONE);
     node.hyoka = Some(99.9);
     node.kyokumen = 9876;
-    node.best = Some(Best::new(99.9, 1, 2));
+    node.best = Some(Best::new(99.9, bitboard::BitBoard::cell(1, 2)));
     node.child.push(node12);
     node.child.push(node34);
     assert_eq!(node.dumpv(), "val:Some(99.9), 9876 nodes. A2g8B1h7");

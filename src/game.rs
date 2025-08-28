@@ -62,8 +62,7 @@ impl GameBB {
                     node.dump(), ft.as_millis());
             }
             let best = node.best.unwrap();
-            let x = best.x;
-            let y = best.y;
+            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
@@ -110,8 +109,7 @@ impl GameBB {
                     node.dump(), ft.as_millis());
             }
             let best = node.best.as_ref().unwrap();
-            let x = best.x;
-            let y = best.y;
+            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
@@ -156,8 +154,7 @@ impl GameBB {
             // let ft = st.elapsed();
             // println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.as_ref().unwrap();
-            let x = best.x;
-            let y = best.y;
+            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
@@ -257,8 +254,9 @@ impl GameBB {
                     println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
                 }
                 let best = node.best.unwrap();
-                x = best.x;
-                y = best.y;
+                let (xx, yy) = best.to_xy();
+                x = xx;
+                y = yy;
             }
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
@@ -356,8 +354,9 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
-                x = best.x;
-                y = best.y;
+                let (xx, yy) = best.to_xy();
+                x = xx;
+                y = yy;
             }
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
@@ -435,8 +434,9 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.unwrap();
-                x = best.x;
-                y = best.y;
+                let (xx, yy) = best.to_xy();
+                x = xx;
+                y = yy;
             }
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
@@ -520,8 +520,9 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
-                x = best.x;
-                y = best.y;
+                let (xx, yy) = best.to_xy();
+                x = xx;
+                y = yy;
             }
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
@@ -606,8 +607,9 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
-                x = best.x;
-                y = best.y;
+                let (xx, yy) = best.to_xy();
+                x = xx;
+                y = yy;
             }
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
@@ -726,8 +728,9 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
-                x = best.x;
-                y = best.y;
+                let (xx, yy) = best.to_xy();
+                x = xx;
+                y = yy;
             }
 
             if x <= 8 {
@@ -794,8 +797,9 @@ impl GameBB {
                     node.dump(), ft.as_millis());
             }
             let best = node.best.unwrap();
-            let x = best.x;
-            let y = best.y;
+            let (xx, yy) = best.to_xy();
+            let x = xx;
+            let y = yy;
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
@@ -855,8 +859,9 @@ impl GameBB {
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
-            let x = best.x;
-            let y = best.y;
+            let (xx, yy) = best.to_xy();
+            let x = xx;
+            let y = yy;
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
@@ -912,8 +917,7 @@ impl GameBB {
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
-            let x = best.x;
-            let y = best.y;
+            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();
@@ -970,8 +974,7 @@ impl GameBB {
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
-            let x = best.x;
-            let y = best.y;
+            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
             let rfen = self.ban.to_str();

@@ -168,7 +168,7 @@ impl Gtp {
                     self.ban.pass();
                     self.respond1(id, "pass");
                 } else {
-                    self.ban = self.ban.r#move(bitboard::BitBoard::cell(best.x, best.y)).unwrap();
+                    self.ban = self.ban.r#move(best.xypos()).unwrap();
                     self.respond1(id, &xy);
                 };
             },
