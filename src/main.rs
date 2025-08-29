@@ -832,7 +832,7 @@ fn geninitpos(tag : &str) -> Result<(), String>{
 
         let mut moves = moves.unwrap();
         if moves.is_empty() {
-            moves.push(bitboard::BitBoard::cell(0, 0));
+            moves.push(bitboard::PASS);
         }
         for mv in moves.iter() {
             let mvx = mv % bitboard::NUMCELL as u8;
@@ -847,7 +847,7 @@ fn geninitpos(tag : &str) -> Result<(), String>{
 
             let mut moves2 = moves2.unwrap();
             if moves2.is_empty() {
-                moves2.push(bitboard::BitBoard::cell(0, 0));
+                moves2.push(bitboard::PASS);
             }
             for mv2 in moves.iter() {
                 let mvx2 = mv2 % bitboard::NUMCELL as u8;

@@ -223,7 +223,7 @@ impl Gtp {
                 match Gtp::readpos(elem[idx + 2]) {
                     Some(xy) => {
                         (x, y) = xy;
-                        match self.ban.r#move(bitboard::BitBoard::cell(x, y)) {
+                        match self.ban.r#move(bitboard::cell(x, y)) {
                             Err(msg) => {
                                 self.status = Status::Error;
                                 self.emsg =

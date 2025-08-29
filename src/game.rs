@@ -63,8 +63,9 @@ impl GameBB {
             }
             let best = node.best.unwrap();
             let (x, y) = best.to_xy();
+            let xy = best.xypos();
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -109,9 +110,10 @@ impl GameBB {
                     node.dump(), ft.as_millis());
             }
             let best = node.best.as_ref().unwrap();
+            let xy = best.xypos();
             let (x, y) = best.to_xy();
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -154,9 +156,10 @@ impl GameBB {
             // let ft = st.elapsed();
             // println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.as_ref().unwrap();
+            let xy = best.xypos();
             let (x, y) = best.to_xy();
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -190,24 +193,20 @@ impl GameBB {
         let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
-            let x;
-            let y;
+            let xy;
             if self.ban.teban == turnin {
                 // show
                 if self.is_verbose() {self.ban.put();}
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
                     if self.is_verbose() {println!("auto pass.");}
-                    x = 0;
-                    y = 0;
+                    xy = bitboard::PASS;
                 } else if movable.len() == 1 {
-                    if movable[0] == u8::MAX {  // pass
-                        x = 0;
-                        y = 0;
+                    xy = if movable[0] == bitboard::PASS {  // pass
+                        bitboard::PASS
                     } else {
-                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
-                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
-                    }
+                        movable[0]
+                    };
                 } else {
                     loop {
                         if self.is_verbose() {print!("your turn[a1 ~ h8]:");}
@@ -230,10 +229,9 @@ impl GameBB {
                             }
                             continue;
                         }
-                        let pos = bitboard::BitBoard::cell(xx, yy);
+                        let pos = bitboard::cell(xx, yy);
                         if movable.contains(&pos) {
-                            x = xx;
-                            y = yy;
+                            xy = pos;
                             break;
                         }
                         if self.is_verbose() {
@@ -254,17 +252,20 @@ impl GameBB {
                     println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
                 }
                 let best = node.best.unwrap();
-                let (xx, yy) = best.to_xy();
-                x = xx;
-                y = yy;
+                xy = best.xypos();
             }
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
 
             // save to kifu
+            let (x, y) = if xy == bitboard::PASS {
+                (0, 0)  // pass
+            } else {
+                bitboard::index2xy(xy)
+            };
             self.kifu.append(x as usize, y as usize, teban, rfen);
 
             // check finished
@@ -291,24 +292,16 @@ impl GameBB {
         let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
-            let x;
-            let y;
+            let xy;
             if self.ban.teban == turnin {
                 // show
                 if self.is_verbose() {self.ban.put();}
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
                     if self.is_verbose() {println!("auto pass.");}
-                    x = 0;
-                    y = 0;
+                    xy = bitboard::PASS;
                 } else if movable.len() == 1 {
-                    if movable[0] == u8::MAX {  // pass
-                        x = 0;
-                        y = 0;
-                    } else {
-                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
-                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
-                    }
+                    xy = movable[0];
                 } else {
                     loop {
                         if self.is_verbose() {print!("your turn[a1 ~ h8]:");}
@@ -331,10 +324,9 @@ impl GameBB {
                             }
                             continue;
                         }
-                        let pos = bitboard::BitBoard::cell(xx, yy);
+                        let pos = bitboard::cell(xx, yy);
                         if movable.contains(&pos) {
-                            x = xx;
-                            y = yy;
+                            xy = pos;
                             break;
                         }
                         if self.is_verbose() {println!("{txt} is not allowed.");}
@@ -354,17 +346,20 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
-                let (xx, yy) = best.to_xy();
-                x = xx;
-                y = yy;
+                xy = best.xypos();
             }
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
 
             // save to kifu
+            let (x, y) = if xy == bitboard::PASS {
+                (0, 0)  // pass
+            } else {
+                bitboard::index2xy(xy)
+            };
             self.kifu.append(x as usize, y as usize, teban, rfen);
 
             // check finished
@@ -393,8 +388,7 @@ impl GameBB {
         let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
-            let x;
-            let y;
+            let xy;
             if self.ban.teban == turnin {
                 // show
                 if self.is_verbose() {println!("{}", self.ban.to_str());}
@@ -402,22 +396,16 @@ impl GameBB {
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
                     if self.is_verbose() {println!("auto pass.");}
-                    x = 0;
-                    y = 0;
+                    xy = bitboard::PASS;
                 } else if movable.len() == 1 {
-                    if movable[0] == u8::MAX {  // pass
-                        x = 0;
-                        y = 0;
-                    } else {
-                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
-                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
-                    }
+                    xy = movable[0];
                 } else {
                     // launch edax
                     match er.run(&self.ban.to_obf()) {
                         Ok((pos, _)) => {
-                            x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
-                            y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                            let xx = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
+                            let yy = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                            xy = bitboard::cell(xx, yy);
                         },
                         Err(msg) => panic!("error running edax... [{msg}]"),
                     }
@@ -434,17 +422,20 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.unwrap();
-                let (xx, yy) = best.to_xy();
-                x = xx;
-                y = yy;
+                xy = best.xypos();
             }
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
 
             // save to kifu
+            let (x, y) = if xy == bitboard::PASS {
+                (0, 0)  // pass
+            } else {
+                bitboard::index2xy(xy)
+            };
             self.kifu.append(x as usize, y as usize, teban, rfen);
 
             // check finished
@@ -482,29 +473,22 @@ impl GameBB {
         loop {
             // show
             if self.is_verbose() {println!("{}", self.ban.to_str());}
-            let x;
-            let y;
+            let xy;
             if self.ban.teban == turnin {
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
                     if self.is_verbose() {println!("auto pass.");}
-                    x = 0;
-                    y = 0;
+                    xy = bitboard::PASS;
                 } else if movable.len() == 1 {
-                    if movable[0] == u8::MAX {  // pass
-                        x = 0;
-                        y = 0;
-                    } else {
-                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
-                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
-                    }
+                    xy = movable[0];
                 } else {
                     // launch edax
                     match er.run(&self.ban.to_obf()) {
                         Ok((pos, _)) => {
-                            x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
-                            y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                            let xx = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
+                            let yy = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                            xy = bitboard::cell(xx, yy);
                         },
                         Err(msg) => panic!("error running edax... [{msg}]"),
                     }
@@ -520,17 +504,20 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
-                let (xx, yy) = best.to_xy();
-                x = xx;
-                y = yy;
+                xy = best.xypos();
             }
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
 
             // save to kifu
+            let (x, y) = if xy == bitboard::PASS {
+                (0, 0)  // pass
+            } else {
+                bitboard::index2xy(xy)
+            };
             self.kifu.append(x as usize, y as usize, teban, rfen);
 
             // check finished
@@ -569,29 +556,22 @@ impl GameBB {
         loop {
             // show
             if self.is_verbose() {println!("{}", self.ban.to_str());}
-            let x;
-            let y;
+            let xy;
             if self.ban.teban == turnin {
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
                     if self.is_verbose() {println!("auto pass.");}
-                    x = 0;
-                    y = 0;
+                    xy = bitboard::PASS;
                 } else if movable.len() == 1 {
-                    if movable[0] == u8::MAX {  // pass
-                        x = 0;
-                        y = 0;
-                    } else {
-                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
-                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
-                    }
+                    xy =movable[0];
                 } else {
                     // launch another Ruversi
                     match rr.run(&self.ban.to_str()) {
                         Ok((pos, _)) => {
-                            x = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
-                            y = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                            let xx = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
+                            let yy = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                            xy = bitboard::cell(xx, yy);
                         },
                         Err(msg) => panic!("error running ruversi... [{msg}]"),
                     }
@@ -607,17 +587,20 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
-                let (xx, yy) = best.to_xy();
-                x = xx;
-                y = yy;
+                xy = best.xypos();
             }
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
 
             // save to kifu
+            let (x, y) = if xy == bitboard::PASS {
+                (0, 0)  // pass
+            } else {
+                bitboard::index2xy(xy)
+            };
             self.kifu.append(x as usize, y as usize, teban, rfen);
 
             // check finished
@@ -664,23 +647,15 @@ impl GameBB {
         loop {
             // show
             if self.is_verbose() {println!("{}", self.ban.to_str());}
-            let x;
-            let y;
+            let xy;
             if self.ban.teban == turnin {
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
                     if self.is_verbose() {println!("auto pass.");}
-                    x = 0;
-                    y = 0;
+                    xy = bitboard::PASS;
                 } else if movable.len() == 1 {
-                    if movable[0] == u8::MAX {  // pass
-                        x = 0;
-                        y = 0;
-                    } else {
-                        x = movable[0] % bitboard::NUMCELL as u8 + 1;
-                        y = movable[0] / bitboard::NUMCELL as u8 + 1;
-                    }
+                    xy = movable[0];
                 } else {
                     // launch edax
                     let alpha = -64f32;
@@ -698,17 +673,16 @@ impl GameBB {
 
                             match mv[1] {
                             "Pa" => {
-                                x = 0;
-                                y = 0;
+                                xy = bitboard::PASS;
                             },
                             "--" => {
-                                x = 255;
-                                y = 255;
+                                xy = bitboard::NONE as u8;
                             },
                             _ => {
-                                x = mv[1].chars().nth(0).unwrap()
+                                let xx = mv[1].chars().nth(0).unwrap()
                                     .to_ascii_uppercase() as u8 - b'A' + 1;
-                                y = mv[1].chars().nth(1).unwrap() as u8 - b'0';
+                                let yy = mv[1].chars().nth(1).unwrap() as u8 - b'0';
+                                xy = bitboard::cell(xx, yy);
                             },
                             }
                         },
@@ -728,19 +702,22 @@ impl GameBB {
                         node.dump(), ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
-                let (xx, yy) = best.to_xy();
-                x = xx;
-                y = yy;
+                xy = best.xypos();
             }
 
-            if x <= 8 {
+            if xy != bitboard::NONE as u8 {
                 // apply move
-                let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+                let ban = self.ban.r#move(xy).unwrap();
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
                 self.ban = ban;
 
                 // save to kifu
+                let (x, y) = if xy == bitboard::PASS {
+                    (0, 0)  // pass
+                } else {
+                    bitboard::index2xy(xy)
+                };
                 self.kifu.append(x as usize, y as usize, teban, rfen);
             }
 
@@ -797,11 +774,10 @@ impl GameBB {
                     node.dump(), ft.as_millis());
             }
             let best = node.best.unwrap();
-            let (xx, yy) = best.to_xy();
-            let x = xx;
-            let y = yy;
+            let xy = best.xypos();
+            let (x, y) = best.to_xy();
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -859,11 +835,10 @@ impl GameBB {
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
-            let (xx, yy) = best.to_xy();
-            let x = xx;
-            let y = yy;
+            let xy = best.xypos();
+            let (x, y) = best.to_xy();
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -902,24 +877,18 @@ impl GameBB {
             // self.ban.put();
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
-            let wei;
-            let mut node =
-                if self.ban.teban == bitboard::SENTE {
-                    wei = et1;
-                    nodebb::NodeBB::new(0, 0, depth, bitboard::NONE)
-                } else {
-                    wei = et2;
-                    nodebb::NodeBB::new(0, 0, depth, bitboard::NONE)
-                };
+            let mut node = nodebb::NodeBB::root(depth);
+            let wei = if self.ban.teban == bitboard::SENTE {et1} else {et2};
             // think
             let st = Instant::now();
             let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
+            let xy = best.xypos();
             let (x, y) = best.to_xy();
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;
@@ -959,24 +928,18 @@ impl GameBB {
             // self.ban.put();
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
-            let wei;
-            let mut node =
-                if self.ban.teban == bitboard::SENTE {
-                    wei = et1;
-                    nodebb::NodeBB::new(0, 0, depth, bitboard::NONE)
-                } else {
-                    wei = et2;
-                    nodebb::NodeBB::new(0, 0, depth, bitboard::NONE)
-                };
+            let mut node = nodebb::NodeBB::root(depth);
+            let wei = if self.ban.teban == bitboard::SENTE {et1} else {et2};
             // think
             let st = Instant::now();
             let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
+            let xy = best.xypos();
             let (x, y) = best.to_xy();
             // apply move
-            let ban = self.ban.r#move(bitboard::BitBoard::cell(x, y)).unwrap();
+            let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
             let teban = self.ban.teban;
             self.ban = ban;

@@ -4,6 +4,7 @@ pub const SENTE : i8 = 1;
 pub const BLANK : i8 = 0;
 pub const GOTE : i8 = -1;
 pub const NONE : i8 = 127;
+pub const PASS : u8 = u8::MAX;
 pub const NUMCELL : usize = 8;
 pub const CELL_2D : usize = NUMCELL * NUMCELL;
 pub const STR_SENTE : &str = "0ABCDEFGH";
@@ -184,8 +185,24 @@ pub fn index2xy(xy : u8) -> (u8, u8) {
     (xy % NUMCELL as u8, xy / NUMCELL as u8)
 }
 
+/// # Returns  
+/// (1~8, 1~8)
+/// # Arguments
+/// - `xy` cell index(0~63).
+///   DO NOT pass xy PASS!
 pub fn cell2xy(xy : u8) -> (u8, u8) {
     (xy % NUMCELL as u8 + 1, xy / NUMCELL as u8 + 1)
+}
+
+/// # Returns  
+/// - `(0, 0)` => PASS as pass
+/// - `(x, y)` => (x-1) + (y - 1) * 8
+/// - `(x, y)` => ~~x + y * 8~~
+pub fn cell(x: u8, y: u8) -> u8 {
+    if x == 0 || y == 0 {return PASS;}
+
+    x + NUMCELL as u8 * y - 1 - NUMCELL as u8
+    // x + NUMCELL as u8 * y
 }
 
 
@@ -451,17 +468,6 @@ impl BitBoard {
 
     fn index(x: usize, y: usize) -> usize {
         x + NUMCELL * y
-    }
-
-    /// # Returns  
-    /// - `(0, 0)` => u8::MAX as pass
-    /// - `(x, y)` => (x-1) + (y - 1) * 8
-    /// - `(x, y)` => ~~x + y * 8~~
-    pub fn cell(x: u8, y: u8) -> u8 {
-        if x == 0 || y == 0 {return u8::MAX;}
-
-        x + NUMCELL as u8 * y - 1 - NUMCELL as u8
-        // x + NUMCELL as u8 * y
     }
 
     #[allow(dead_code)]
@@ -820,10 +826,10 @@ impl BitBoard {
     }
 
     /**
-     * @param xy u8::MAX : pass, 0 ~ 63 : cell index.
+     * @param xy PASS : pass, 0 ~ 63 : cell index.
      */
     pub fn r#move(&self, xy : u8) -> Result<BitBoard, &str> {
-        if xy == u8::MAX {  // pass
+        if xy == PASS {  // pass
             let mut ban = self.clone();
             ban.pass();
             return Ok(ban);
@@ -870,7 +876,7 @@ impl BitBoard {
         let sz = bits.count_ones() as usize;
         if sz == 0 {  // pass
             // return Some(vec![]);
-            return Some(vec![u8::MAX]);
+            return Some(vec![PASS]);
         }
 
         let mut remain = bits;
@@ -1417,7 +1423,7 @@ fn testbitbrd() {
     assert_eq!(b.to_obf(),
         "---------------------------XO------OX--------------------------- X");
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(5, 3), BitBoard::cell(6, 4), BitBoard::cell(3, 5), BitBoard::cell(4, 6)]));
+    assert_eq!(mv, Some(vec![cell(5, 3), cell(6, 4), cell(3, 5), cell(4, 6)]));
     let b = BitBoard::from("H/H/H/H/H/H/H/H b").unwrap();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);
@@ -1464,7 +1470,7 @@ fn testbitbrd() {
       (1 + 6 + 1 + 5 + 2 + 4 + 3 + 3 + 4 + 2 + 5 + 1 + 8));
     assert_eq!(b.to_obf(),
       "-XXXXXXOXXOOOOOOXOXOOOOOXOOXOOOOXOOOXOOOXOOOOXOOXOOOOOXOOOOOOOOO O");
-    let b = b.r#move(BitBoard::cell(1, 1));
+    let b = b.r#move(cell(1, 1));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.black, 0x0);
@@ -1478,7 +1484,7 @@ fn testbitbrd() {
     assert_eq!(b90.black, 0x7e03050911214100);
     assert_eq!(b90.white, 0x80FCFAF6EEDEBEFF);
     assert_eq!(b90.fixedstones(), (0, 15));
-    let br = b90.r#move(BitBoard::cell(1, 8));
+    let br = b90.r#move(cell(1, 8));
     assert!(br.is_ok());
     let br = br.unwrap();
     assert_eq!(br.to_str(), "h/h/h/h/h/h/h/h b");
@@ -1489,7 +1495,7 @@ fn testbitbrd() {
     assert_eq!(b180.white, 0x013f5f6f777b7dff);
     // b180.put();
     assert_eq!(b180.fixedstones(), (0, 15));
-    let b = b180.r#move(BitBoard::cell(8, 8));
+    let b = b180.r#move(cell(8, 8));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_str(), "h/h/h/h/h/h/h/h b");
@@ -1508,7 +1514,7 @@ fn testbitbrd() {
       (1 + 6 + 1 + 5 + 2 + 4 + 3 + 3 + 4 + 2 + 5 + 1 + 8));
     assert_eq!(b.to_obf(),
       "XOOOOOO-XXXXXXOOXXXXXOXOXXXXOXXOXXXOXXXOXXOXXXXOXOXXXXXOXXXXXXXX X");
-    let b = b.r#move(BitBoard::cell(8, 1));
+    let b = b.r#move(cell(8, 1));
     assert!(b.is_ok());
     let b = b.unwrap();
     b.put();
@@ -1522,7 +1528,7 @@ fn testbitbrd() {
     assert_eq!(b90.black, 0xFFBEDEEEF6FAFC80);
     assert_eq!(b90.white, 0x004121110905037E);
     assert_eq!(b90.fixedstones(), (15, 0));
-    let br = b90.r#move(BitBoard::cell(1, 1));
+    let br = b90.r#move(cell(1, 1));
     assert!(br.is_ok());
     let br = br.unwrap();
     assert_eq!(br.to_str(), "H/H/H/H/H/H/H/H w");
@@ -1541,7 +1547,7 @@ fn testbitbrd() {
       (1 + 6 + 1 + 5 + 2 + 4 + 3 + 3 + 4 + 2 + 5 + 1 + 8));
     assert_eq!(b180.to_obf(),
       "XXXXXXXXOXXXXXOXOXXXXOXXOXXXOXXXOXXOXXXXOXOXXXXXOOXXXXXX-OOOOOOX X");
-    let b = b180.r#move(BitBoard::cell(1, 8));
+    let b = b180.r#move(cell(1, 8));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.black, 0xffffffffffffffff);
@@ -1656,8 +1662,8 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 4 - 10);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(2, 2), BitBoard::cell(4, 3), BitBoard::cell(3, 4)]));
-    let b = b.r#move(BitBoard::cell(2, 2));
+    assert_eq!(mv, Some(vec![cell(2, 2), cell(4, 3), cell(3, 4)]));
+    let b = b.r#move(cell(2, 2));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_obf(),
@@ -1665,7 +1671,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 15);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(0, 0)]));
+    assert_eq!(mv, Some(vec![cell(0, 0)]));
     // assert_eq!(mv, Some(vec![]));
     let b = BitBoard::from("1A6/A1eA/1a6/1a6/1a6/1a6/1a6/1A6 b").unwrap();
     let b90 = b.rotate90();
@@ -1678,8 +1684,8 @@ fn testbitbrd() {
     assert_eq!(b90.fixedstones(), (0, 0));
     assert!(b90.checkreverse(BitBoard::index(1, 6)));
     let mv = b90.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(3, 5), BitBoard::cell(4, 6), BitBoard::cell(2, 7)]));
-    let br = b90.r#move(BitBoard::cell(2, 7));
+    assert_eq!(mv, Some(vec![cell(3, 5), cell(4, 6), cell(2, 7)]));
+    let br = b90.r#move(cell(2, 7));
     assert!(br.is_ok());
     let br = br.unwrap();
     assert_eq!(br.to_str(), "1A6/1A6/1A6/1A6/1A6/1A6/H/1A6 w");
@@ -1692,8 +1698,8 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (0, 0));
     assert_eq!(b180.count(), 4 - 10);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(6, 5), BitBoard::cell(5, 6), BitBoard::cell(7, 7)]));
-    let b = b180.r#move(BitBoard::cell(7, 7));
+    assert_eq!(mv, Some(vec![cell(6, 5), cell(5, 6), cell(7, 7)]));
+    let b = b180.r#move(cell(7, 7));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_obf(),
@@ -1701,7 +1707,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 15);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(0, 0)]));
+    assert_eq!(mv, Some(vec![cell(0, 0)]));
     // assert_eq!(mv, Some(vec![]));
     let b = BitBoard::from("2A5/2a5/Aa1dA/2a5/2a5/2a5/2a5/2A5 b").unwrap();
     assert_eq!(b.to_obf(),
@@ -1710,8 +1716,8 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (0, 0));
     assert_eq!(b.count(), 4 - 10);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(3, 3)]));
-    let b = b.r#move(BitBoard::cell(3, 3));
+    assert_eq!(mv, Some(vec![cell(3, 3)]));
+    let b = b.r#move(cell(3, 3));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_obf(),
@@ -1720,7 +1726,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 15);
     let mv = b.genmove();
     // assert_eq!(mv, Some(vec![]));
-    assert_eq!(mv, Some(vec![BitBoard::cell(0, 0)]));
+    assert_eq!(mv, Some(vec![cell(0, 0)]));
     let b = BitBoard::from("2A5/2a5/Aa1dA/2a5/2a5/2a5/2a5/2A5 b").unwrap();
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1729,8 +1735,8 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (0, 0));
     assert_eq!(b180.count(), 4 - 10);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(6, 6)]));
-    let b = b180.r#move(BitBoard::cell(6, 6));
+    assert_eq!(mv, Some(vec![cell(6, 6)]));
+    let b = b180.r#move(cell(6, 6));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_obf(),
@@ -1739,7 +1745,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 15);
     let mv = b.genmove();
     // assert_eq!(mv, Some(vec![]));
-    assert_eq!(mv, Some(vec![BitBoard::cell(0, 0)]));
+    assert_eq!(mv, Some(vec![cell(0, 0)]));
     let b = BitBoard::from("B6/A1eA/1b5/1a1a4/1a2a3/1a3a2/1a4a1/1A5A b").unwrap();
     assert_eq!(b.to_obf(),
         "XX------X-OOOOOX-OO------O-O-----O--O----O---O---O----O--X-----X X");
@@ -1748,8 +1754,8 @@ fn testbitbrd() {
     assert_eq!(b.count(), 6 - 15);
     b.put();
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(2, 2), BitBoard::cell(4, 3), BitBoard::cell(3, 4)]));
-    let b = b.r#move(BitBoard::cell(2, 2));
+    assert_eq!(mv, Some(vec![cell(2, 2), cell(4, 3), cell(3, 4)]));
+    let b = b.r#move(cell(2, 2));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_obf(),
@@ -1758,7 +1764,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 22);
     let mv = b.genmove();
     // assert_eq!(mv, Some(vec![]));
-    assert_eq!(mv, Some(vec![BitBoard::cell(0, 0)]));
+    assert_eq!(mv, Some(vec![cell(0, 0)]));
     let b = BitBoard::from("B6/A1eA/1b5/1a1a4/1a2a3/1a3a2/1a4a1/1A5A b").unwrap();
     let b180 = b.rotate180();
     assert_eq!(b180.to_obf(),
@@ -1767,8 +1773,8 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (4, 0));
     assert_eq!(b180.count(), 6 - 15);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(6, 5), BitBoard::cell(5, 6), BitBoard::cell(7, 7)]));
-    let b = b180.r#move(BitBoard::cell(7, 7));
+    assert_eq!(mv, Some(vec![cell(6, 5), cell(5, 6), cell(7, 7)]));
+    let b = b180.r#move(cell(7, 7));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_obf(),
@@ -1776,7 +1782,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (4, 0));
     assert_eq!(b.count(), 22);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(0, 0)]));
+    assert_eq!(mv, Some(vec![cell(0, 0)]));
     // assert_eq!(mv, Some(vec![]));
     let b = BitBoard::from("A1A1A3/1c4/Aa1dA/1c4/A1a1a3/2a2a2/2a3a1/2A4A b").unwrap();
     assert_eq!(b.to_obf(),
@@ -1786,8 +1792,8 @@ fn testbitbrd() {
     assert_eq!(b.count(), 8 - 17);
     let mv = b.genmove();
     // b.put();
-    assert_eq!(mv, Some(vec![BitBoard::cell(3, 3), BitBoard::cell(6, 4), BitBoard::cell(4, 6)]));
-    let b = b.r#move(BitBoard::cell(3, 3));
+    assert_eq!(mv, Some(vec![cell(3, 3), cell(6, 4), cell(4, 6)]));
+    let b = b.r#move(cell(3, 3));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_obf(),
@@ -1795,7 +1801,7 @@ fn testbitbrd() {
     assert_eq!(b.fixedstones(), (2, 0));
     assert_eq!(b.count(), 26);
     let mv = b.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(0, 0)]));
+    assert_eq!(mv, Some(vec![cell(0, 0)]));
     // assert_eq!(mv, Some(vec![]));
     let b = BitBoard::from("A1A1A3/1c4/Aa1dA/1c4/A1a1a3/2a2a2/2a3a1/2A4A b").unwrap();
     let b180 = b.rotate180();
@@ -1805,8 +1811,8 @@ fn testbitbrd() {
     assert_eq!(b180.fixedstones(), (2, 0));
     assert_eq!(b180.count(), 8 - 17);
     let mv = b180.genmove();
-    assert_eq!(mv, Some(vec![BitBoard::cell(5, 3), BitBoard::cell(3, 5), BitBoard::cell(6, 6)]));
-    let b = b180.r#move(BitBoard::cell(6, 6));
+    assert_eq!(mv, Some(vec![cell(5, 3), cell(3, 5), cell(6, 6)]));
+    let b = b180.r#move(cell(6, 6));
     assert!(b.is_ok());
     let b = b.unwrap();
     assert_eq!(b.to_obf(),
@@ -1815,7 +1821,7 @@ fn testbitbrd() {
     assert_eq!(b.count(), 26);
     let mv = b.genmove();
     // assert_eq!(mv, Some(vec![]));
-    assert_eq!(mv, Some(vec![BitBoard::cell(0, 0)]));
+    assert_eq!(mv, Some(vec![cell(0, 0)]));
     // difficult to count correctly
     // difficult to count correctly
     // let b = BitBoard::from("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap();
@@ -2022,7 +2028,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         for x in 1..=NUMCELL {
             print!("({x}{})", NUMCELL - 2 - y);
-            let ban = ban.r#move(BitBoard::cell(x as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+            let ban = ban.r#move(cell(x as u8, (NUMCELL - 2 - y) as u8)).unwrap();
             ban.put();
             for yy in 0..y {
                 assert_eq!(ban.at((x - 1) as u8, (NUMCELL - 1 - yy) as u8), GOTE);
@@ -2031,7 +2037,7 @@ fn testbitbrd_reverse() {
         let ban90 = ban.rotate90();
         for x in 1..=NUMCELL {
             print!("({}{x})", NUMCELL - 2 - y);
-            let ban = ban90.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, x as u8)).unwrap();
+            let ban = ban90.r#move(cell((NUMCELL - 2 - y) as u8, x as u8)).unwrap();
             ban.put();
             for yy in 0..y {
                 assert_eq!(ban.at((NUMCELL - 2 - 1 - yy) as u8, (x - 1) as u8), GOTE);
@@ -2040,7 +2046,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         for x in 1..=NUMCELL {
             print!("({x}{})", y + 3);
-            let ban = ban180.r#move(BitBoard::cell(x as u8, (y + 3) as u8)).unwrap();
+            let ban = ban180.r#move(cell(x as u8, (y + 3) as u8)).unwrap();
             ban.put();
             for yy in 0..y {
                 assert_eq!(ban.at((x - 1) as u8, (yy + 2) as u8), GOTE);
@@ -2049,7 +2055,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         for x in 1..=NUMCELL {
             print!("({}{x})", y + 3);
-            let ban = banm90.r#move(BitBoard::cell((y + 3) as u8, x as u8)).unwrap();
+            let ban = banm90.r#move(cell((y + 3) as u8, x as u8)).unwrap();
             ban.put();
             for yy in 0..y {
                 assert_eq!(ban.at((yy + 2) as u8, (x - 1) as u8), GOTE);
@@ -2065,7 +2071,7 @@ fn testbitbrd_reverse() {
         for x in 1..=NUMCELL {
             print!("({x}{})", NUMCELL - 2 - y);
             assert!(ban.checkreverse(BitBoard::index(x - 1, NUMCELL - 2 - 1 - y)));
-            let ban = ban.r#move(BitBoard::cell(x as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+            let ban = ban.r#move(cell(x as u8, (NUMCELL - 2 - y) as u8)).unwrap();
             ban.put();
             for yy in 0..y {
                 assert_eq!(ban.at((x - 1) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2075,7 +2081,7 @@ fn testbitbrd_reverse() {
         for x in 1..=NUMCELL {
             print!("({}{x})", NUMCELL - 2 - y);
             assert!(ban90.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x - 1)));
-            let ban = ban90.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, x as u8)).unwrap();
+            let ban = ban90.r#move(cell((NUMCELL - 2 - y) as u8, x as u8)).unwrap();
             ban.put();
             for yy in 0..y {
                 assert_eq!(ban.at((NUMCELL - 2 - 1 - yy) as u8, (x - 1) as u8), SENTE);
@@ -2085,7 +2091,7 @@ fn testbitbrd_reverse() {
         for x in 1..=NUMCELL {
             print!("({x}{})", y + 3);
             assert!(ban180.checkreverse(BitBoard::index(x - 1, y + 2)));
-            let ban = ban180.r#move(BitBoard::cell(x as u8, (y + 3) as u8)).unwrap();
+            let ban = ban180.r#move(cell(x as u8, (y + 3) as u8)).unwrap();
             ban.put();
             for yy in 0..y {
                 assert_eq!(ban.at((x - 1) as u8, (yy + 2) as u8), SENTE);
@@ -2095,7 +2101,7 @@ fn testbitbrd_reverse() {
         for x in 1..=NUMCELL {
             print!("({}{x})", y + 3);
             assert!(banm90.checkreverse(BitBoard::index(y + 2, x - 1)));
-            let ban = banm90.r#move(BitBoard::cell((y + 3) as u8, x as u8)).unwrap();
+            let ban = banm90.r#move(cell((y + 3) as u8, x as u8)).unwrap();
             ban.put();
             for yy in 0..y {
                 assert_eq!(ban.at((yy + 2) as u8, (x - 1) as u8), SENTE);
@@ -2111,7 +2117,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2123,7 +2129,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2133,7 +2139,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2143,7 +2149,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2160,7 +2166,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2172,7 +2178,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2182,7 +2188,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2192,7 +2198,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2209,7 +2215,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2221,7 +2227,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2231,7 +2237,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2241,7 +2247,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2258,7 +2264,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2270,7 +2276,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2280,7 +2286,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2290,7 +2296,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2307,7 +2313,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2319,7 +2325,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2329,7 +2335,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2339,7 +2345,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2356,7 +2362,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2368,7 +2374,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2378,7 +2384,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2388,7 +2394,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2405,7 +2411,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2417,7 +2423,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2427,7 +2433,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2437,7 +2443,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2454,7 +2460,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2466,7 +2472,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2476,7 +2482,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2486,7 +2492,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2507,7 +2513,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", NUMCELL - 2 - y, y + 2);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, y + 2)));
         ban.put();
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (y + 3) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             print!("{}{yy},", NUMCELL - 1 - yy);
@@ -2520,7 +2526,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", y + 3, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(y + 2, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((y + 3) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((y + 3) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, yy as u8), SENTE);
         }
@@ -2530,7 +2536,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - 2 - y);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 2 - 1 - y)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2540,7 +2546,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - 2 - y, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - 2 - y) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2561,7 +2567,7 @@ fn testbitbrd_reverse() {
         print!("({NUMCELL}{NUMCELL})");
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 1, NUMCELL - 1)));
         ban.put();
-        let ban = ban.r#move(BitBoard::cell(NUMCELL as u8, NUMCELL as u8)).unwrap();
+        let ban = ban.r#move(cell(NUMCELL as u8, NUMCELL as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2573,7 +2579,7 @@ fn testbitbrd_reverse() {
         print!("({NUMCELL}1");
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(NUMCELL - 1, 0)));
-        let ban = ban90.r#move(BitBoard::cell(NUMCELL as u8, 1)).unwrap();
+        let ban = ban90.r#move(cell(NUMCELL as u8, 1)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, yy as u8), SENTE);
         }
@@ -2583,7 +2589,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("(11)");
         assert!(ban180.checkreverse(BitBoard::index(0, 0)));
-        let ban = ban180.r#move(BitBoard::cell(1, 1)).unwrap();
+        let ban = ban180.r#move(cell(1, 1)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, yy as u8), SENTE);
@@ -2593,7 +2599,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("(1{NUMCELL})");
         assert!(banm90.checkreverse(BitBoard::index(0, NUMCELL - 1)));
-        let ban = banm90.r#move(BitBoard::cell(1, NUMCELL as u8)).unwrap();
+        let ban = banm90.r#move(cell(1, NUMCELL as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2611,7 +2617,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2623,7 +2629,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2633,7 +2639,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2643,7 +2649,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2661,7 +2667,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2673,7 +2679,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2683,7 +2689,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2693,7 +2699,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2711,7 +2717,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2723,7 +2729,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2733,7 +2739,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2743,7 +2749,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2761,7 +2767,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2773,7 +2779,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2783,7 +2789,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2793,7 +2799,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2811,7 +2817,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2823,7 +2829,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2833,7 +2839,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2843,7 +2849,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2861,7 +2867,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2873,7 +2879,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2883,7 +2889,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2893,7 +2899,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2911,7 +2917,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2923,7 +2929,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2933,7 +2939,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2943,7 +2949,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -2961,7 +2967,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -2973,7 +2979,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -2983,7 +2989,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -2993,7 +2999,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3011,7 +3017,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3023,7 +3029,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3033,7 +3039,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3043,7 +3049,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3061,7 +3067,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3073,7 +3079,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3083,7 +3089,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3093,7 +3099,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3111,7 +3117,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3123,7 +3129,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3133,7 +3139,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3143,7 +3149,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3161,7 +3167,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3173,7 +3179,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3183,7 +3189,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3193,7 +3199,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3211,7 +3217,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3223,7 +3229,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3233,7 +3239,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3243,7 +3249,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3261,7 +3267,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3273,7 +3279,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3283,7 +3289,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3293,7 +3299,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3311,7 +3317,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3323,7 +3329,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3333,7 +3339,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3343,7 +3349,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3361,7 +3367,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3373,7 +3379,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3383,7 +3389,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3393,7 +3399,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3411,7 +3417,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3423,7 +3429,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3433,7 +3439,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3443,7 +3449,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3460,7 +3466,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3472,7 +3478,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3482,7 +3488,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3492,7 +3498,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3509,7 +3515,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3521,7 +3527,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3531,7 +3537,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3541,7 +3547,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3558,7 +3564,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3570,7 +3576,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3580,7 +3586,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3590,7 +3596,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3607,7 +3613,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3619,7 +3625,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3629,7 +3635,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3639,7 +3645,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3656,7 +3662,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3668,7 +3674,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3678,7 +3684,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3688,7 +3694,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3705,7 +3711,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3717,7 +3723,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3727,7 +3733,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3737,7 +3743,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3754,7 +3760,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3766,7 +3772,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3776,7 +3782,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3786,7 +3792,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3807,7 +3813,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", NUMCELL - 2 - y, y + 2);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, y + 2)));
         ban.put();
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (y + 3) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             print!("{}{},", NUMCELL - 1 - yy, yy);
@@ -3820,7 +3826,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", y + 3, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(y + 2, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((y + 3) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((y + 3) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, yy as u8), SENTE);
         }
@@ -3830,7 +3836,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - 2 - y);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 2 - 1 - y)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3840,7 +3846,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - 2 - y, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - 2 - y) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3861,7 +3867,7 @@ fn testbitbrd_reverse() {
         print!("({NUMCELL}{NUMCELL})");
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 1, NUMCELL - 1)));
         ban.put();
-        let ban = ban.r#move(BitBoard::cell(NUMCELL as u8, NUMCELL as u8)).unwrap();
+        let ban = ban.r#move(cell(NUMCELL as u8, NUMCELL as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3873,7 +3879,7 @@ fn testbitbrd_reverse() {
         print!("({NUMCELL}1)");
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(NUMCELL - 1, 0)));
-        let ban = ban90.r#move(BitBoard::cell(NUMCELL as u8, 1)).unwrap();
+        let ban = ban90.r#move(cell(NUMCELL as u8, 1)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, yy as u8), SENTE);
         }
@@ -3883,7 +3889,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("(11)");
         assert!(ban180.checkreverse(BitBoard::index(0, 0)));
-        let ban = ban180.r#move(BitBoard::cell(1, 1)).unwrap();
+        let ban = ban180.r#move(cell(1, 1)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, yy as u8), SENTE);
@@ -3893,7 +3899,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("(1{NUMCELL})");
         assert!(banm90.checkreverse(BitBoard::index(0, NUMCELL - 1)));
-        let ban = banm90.r#move(BitBoard::cell(1, NUMCELL as u8)).unwrap();
+        let ban = banm90.r#move(cell(1, NUMCELL as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3911,7 +3917,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3923,7 +3929,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3933,7 +3939,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3943,7 +3949,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -3961,7 +3967,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -3973,7 +3979,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -3983,7 +3989,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -3993,7 +3999,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4011,7 +4017,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4023,7 +4029,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4033,7 +4039,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4043,7 +4049,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4061,7 +4067,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4073,7 +4079,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4083,7 +4089,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4093,7 +4099,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4111,7 +4117,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4123,7 +4129,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4133,7 +4139,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4143,7 +4149,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4161,7 +4167,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4173,7 +4179,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4183,7 +4189,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4193,7 +4199,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4211,7 +4217,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4223,7 +4229,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4233,7 +4239,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4243,7 +4249,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4261,7 +4267,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4273,7 +4279,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4283,7 +4289,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4293,7 +4299,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4311,7 +4317,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4323,7 +4329,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4333,7 +4339,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4343,7 +4349,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4361,7 +4367,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4373,7 +4379,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4383,7 +4389,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4393,7 +4399,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4411,7 +4417,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4423,7 +4429,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4433,7 +4439,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4443,7 +4449,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4461,7 +4467,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4473,7 +4479,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4483,7 +4489,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4493,7 +4499,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4511,7 +4517,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4523,7 +4529,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4533,7 +4539,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4543,7 +4549,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4561,7 +4567,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4573,7 +4579,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4583,7 +4589,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4593,7 +4599,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4611,7 +4617,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4623,7 +4629,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4633,7 +4639,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4643,7 +4649,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4661,7 +4667,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4673,7 +4679,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4683,7 +4689,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4693,7 +4699,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4711,7 +4717,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4723,7 +4729,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4733,7 +4739,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4743,7 +4749,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4760,7 +4766,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4772,7 +4778,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4782,7 +4788,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4792,7 +4798,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4809,7 +4815,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4821,7 +4827,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4831,7 +4837,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4841,7 +4847,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4858,7 +4864,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4870,7 +4876,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4880,7 +4886,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4890,7 +4896,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4907,7 +4913,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4919,7 +4925,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4929,7 +4935,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4939,7 +4945,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -4956,7 +4962,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -4968,7 +4974,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -4978,7 +4984,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -4988,7 +4994,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5005,7 +5011,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5017,7 +5023,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5027,7 +5033,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5037,7 +5043,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5054,7 +5060,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5066,7 +5072,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5076,7 +5082,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5086,7 +5092,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5104,7 +5110,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", NUMCELL - 2 - y, y + 2);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, y + 2)));
         ban.put();
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (y + 3) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             print!("{}{},", NUMCELL - 1 - yy, yy);
@@ -5117,7 +5123,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", y + 3, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(y + 2, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((y + 3) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((y + 3) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, yy as u8), SENTE);
         }
@@ -5127,7 +5133,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - 2 - y);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 2 - 1 - y)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5137,7 +5143,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - 2 - y, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - 2 - y) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5155,7 +5161,7 @@ fn testbitbrd_reverse() {
         print!("({NUMCELL}{NUMCELL})");
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 1, NUMCELL - 1)));
         ban.put();
-        let ban = ban.r#move(BitBoard::cell(NUMCELL as u8, NUMCELL as u8)).unwrap();
+        let ban = ban.r#move(cell(NUMCELL as u8, NUMCELL as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5167,7 +5173,7 @@ fn testbitbrd_reverse() {
         print!("({NUMCELL}1)");
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(NUMCELL - 1, 0)));
-        let ban = ban90.r#move(BitBoard::cell(NUMCELL as u8, 1u8)).unwrap();
+        let ban = ban90.r#move(cell(NUMCELL as u8, 1u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, yy as u8), SENTE);
         }
@@ -5177,7 +5183,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("(11)");
         assert!(ban180.checkreverse(BitBoard::index(0, 0)));
-        let ban = ban180.r#move(BitBoard::cell(1, 1)).unwrap();
+        let ban = ban180.r#move(cell(1, 1)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, yy as u8), SENTE);
@@ -5187,7 +5193,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("(1{NUMCELL})");
         assert!(banm90.checkreverse(BitBoard::index(0, NUMCELL - 1)));
-        let ban = banm90.r#move(BitBoard::cell(1, NUMCELL as u8)).unwrap();
+        let ban = banm90.r#move(cell(1, NUMCELL as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5205,7 +5211,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5217,7 +5223,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5227,7 +5233,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5237,7 +5243,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5255,7 +5261,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5267,7 +5273,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5277,7 +5283,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5287,7 +5293,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5305,7 +5311,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5317,7 +5323,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5327,7 +5333,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5337,7 +5343,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5355,7 +5361,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5367,7 +5373,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5377,7 +5383,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5387,7 +5393,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5405,7 +5411,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5417,7 +5423,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5427,7 +5433,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5437,7 +5443,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5455,7 +5461,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5467,7 +5473,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5477,7 +5483,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5487,7 +5493,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5505,7 +5511,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5517,7 +5523,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5527,7 +5533,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5537,7 +5543,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5555,7 +5561,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5567,7 +5573,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5577,7 +5583,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5587,7 +5593,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5605,7 +5611,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5617,7 +5623,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5627,7 +5633,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5637,7 +5643,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5655,7 +5661,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5667,7 +5673,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5678,7 +5684,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5688,7 +5694,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5706,7 +5712,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5718,7 +5724,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5728,7 +5734,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5738,7 +5744,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5756,7 +5762,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5768,7 +5774,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5778,7 +5784,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5788,7 +5794,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5806,7 +5812,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5818,7 +5824,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5828,7 +5834,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5838,7 +5844,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5856,7 +5862,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5868,7 +5874,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5878,7 +5884,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5888,7 +5894,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5906,7 +5912,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5918,7 +5924,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5928,7 +5934,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5938,7 +5944,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -5956,7 +5962,7 @@ fn testbitbrd_reverse() {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
-        let ban = ban.r#move(BitBoard::cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5968,7 +5974,7 @@ fn testbitbrd_reverse() {
         print!("({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
-        let ban = ban90.r#move(BitBoard::cell((x + 1) as u8, (y + 3) as u8)).unwrap();
+        let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(x as u8, yy as u8), SENTE);
         }
@@ -5978,7 +5984,7 @@ fn testbitbrd_reverse() {
         let ban180 = ban.rotate180();
         print!("({}{})", y + 3, NUMCELL - x);
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
-        let ban = ban180.r#move(BitBoard::cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
+        let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at(yy as u8, (NUMCELL - 1 - x) as u8), SENTE);
@@ -5988,7 +5994,7 @@ fn testbitbrd_reverse() {
         let banm90 = ban180.rotate90();
         print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
-        let ban = banm90.r#move(BitBoard::cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
+        let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
@@ -6000,22 +6006,22 @@ fn testbitbrd_reverse() {
     let ban0 = BitBoard::from("7A/8/8/6a1/6a1/6a1/6a1/6a1 b").unwrap();
     ban0.put();
     assert!(!ban0.checkreverse(BitBoard::index(7 - 1, 3 - 1)));
-    let ban = ban0.r#move(BitBoard::cell(7, 3)).unwrap();
+    let ban = ban0.r#move(cell(7, 3)).unwrap();
     assert_eq!(ban.black.count_ones(), 2);
     assert_eq!(ban.white.count_ones(), 5);
     let ban90 = ban0.rotate90();
     assert!(!ban90.checkreverse(BitBoard::index(3 - 1, 2 - 1)));
-    let ban = ban90.r#move(BitBoard::cell(3, 2)).unwrap();
+    let ban = ban90.r#move(cell(3, 2)).unwrap();
     assert_eq!(ban.black.count_ones(), 2);
     assert_eq!(ban.white.count_ones(), 5);
     let ban180 = ban90.rotate90();
     assert!(!ban180.checkreverse(BitBoard::index(2 - 1, 6 - 1)));
-    let ban = ban180.r#move(BitBoard::cell(2, 6)).unwrap();
+    let ban = ban180.r#move(cell(2, 6)).unwrap();
     assert_eq!(ban.black.count_ones(), 2);
     assert_eq!(ban.white.count_ones(), 5);
     let banm90 = ban180.rotate90();
     assert!(!banm90.checkreverse(BitBoard::index(6 - 1, 7 - 1)));
-    let ban = banm90.r#move(BitBoard::cell(6, 7)).unwrap();
+    let ban = banm90.r#move(cell(6, 7)).unwrap();
     assert_eq!(ban.black.count_ones(), 2);
     assert_eq!(ban.white.count_ones(), 5);
 
