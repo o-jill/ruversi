@@ -333,8 +333,8 @@ impl NodeBB {
                 bitboard::STR_SENTE
             } else {
                 bitboard::STR_GOTE
-            }.chars().nth(self.x() as usize).unwrap(),
-            self.y())
+            }.chars().nth(self.x() as usize + 1).unwrap(),
+            self.y() + 1)
     }
 
     pub fn bestorder(&self) -> String {
