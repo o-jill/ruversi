@@ -23,7 +23,7 @@ struct TTEntry {
 
 impl Default for TTEntry {
     fn default() -> Self {
-        TTEntry::new(0, 0, 0, 0, 9999f32)
+        TTEntry::new(0, 0, 0, bitboard::NONE, 9999f32)
     }
 }
 
@@ -80,7 +80,7 @@ impl TranspositionTable {
         }
     }
 
-    pub fn check(&mut self, b : &bitboard::BitBoard) -> Option<f32> {
+    pub fn check(&self, b : &bitboard::BitBoard) -> Option<f32> {
         let h = b.hash();
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
