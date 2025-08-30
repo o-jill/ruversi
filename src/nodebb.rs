@@ -13,28 +13,42 @@ static mut ND_ROOT : Option<NodeBB> = None;
 
 pub struct Best {
     pub hyoka : f32,
-    pub x : u8,
-    pub y : u8,
+    xy : u8,
 }
 
 impl Best {
-    pub fn new(hyoka : f32, x : u8, y : u8) -> Best {
-        Best { hyoka, x, y }
+    pub fn new(hyoka : f32, xy : u8) -> Best {
+        Best { hyoka, xy }
     }
 
     pub fn pos(&self) -> String {
+        let (x, y) = self.to_xy();
         format!("{}{}",
             // if teban == bitboard::SENTE {
             //     bitboard::STONE_SENTE
             // } else {
             //     bitboard::STONE_GOTE
             // },
-            bitboard::STR_SENTE.chars().nth(self.x as usize).unwrap(), self.y)
+            bitboard::STR_SENTE.chars().nth(x as usize).unwrap(), y)
     }
 
     #[allow(dead_code)]
     pub fn to_str(&self) -> String {
         format!("h:{} {}", self.hyoka, self.pos())
+    }
+
+    /**
+     * # Returns
+     * (0, 0) for PASS. Otherwise (1~8, 1~8)
+     */
+    pub fn to_xy(&self) -> (u8, u8) {
+        if self.xy == bitboard::PASS {return (0, 0);}
+
+        (self.xy % bitboard::NUMCELL as u8 + 1, self.xy / bitboard::NUMCELL as u8 + 1)
+    }
+
+    pub fn xypos(&self) -> u8 {
+        self.xy
     }
 }
 
@@ -43,8 +57,7 @@ pub struct NodeBB {
     hyoka : Option<f32>,
     pub kyokumen : usize,
     pub best : Option<Best>,
-    pub x : u8,
-    pub y : u8,
+    pub xy : u8,
     depth : u8,
     pub teban : i8,
 }
@@ -61,32 +74,26 @@ pub fn init_weight() {
 
     unsafe {
         WEIGHT = Some(weight);
-        ND_ROOT = Some(NodeBB::new(0, 0, 0, bitboard::NONE));
+        ND_ROOT = Some(NodeBB::root(0));
         INITIALIZED = true;
     }
 }
 
 impl NodeBB {
-    pub fn new(x : u8, y : u8, depth : u8, teban : i8) -> NodeBB {
+    pub fn new(xy : u8, depth : u8, teban : i8) -> NodeBB {
         NodeBB {
             child : Vec::<NodeBB>::new(),
             hyoka : None,
             kyokumen : 1,
             best : None,
-            x,
-            y,
+            xy,  // xy : x + y * bitboard::NUMCELL as u8,
             depth,
             teban,
         }
     }
 
     pub fn root(depth : u8) -> Self {
-        NodeBB::new(0, 0, depth, bitboard::NONE)
-    }
-
-    fn asignbest(&mut self, hyoka : f32, x : u8, y : u8) {
-        self.hyoka = Some(hyoka);
-        self.best = Some(Best::new(hyoka, x, y));
+        NodeBB::new(0, depth, bitboard::NONE)
     }
 
     #[cfg(target_arch="x86_64")]
@@ -176,10 +183,10 @@ impl NodeBB {
         }
         let moves = moves.unwrap();
 
-        for (mvx, mvy) in moves {
-            let newban = ban.r#move(mvx, mvy).unwrap();
+        for mv in moves {
+            let newban = ban.r#move(mv).unwrap();
             let idx = node.child.len();
-            node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
+            node.child.push(NodeBB::new(mv, depth - 1, teban));
             let val = NodeBB::think_internal_tt(
                 &mut node.child[idx], &newban, wei, tt);
 
@@ -190,7 +197,7 @@ impl NodeBB {
             let val = val.unwrap();
             let fteban = teban as f32;
             if best.is_none() || best.unwrap().hyoka * fteban < val * fteban {
-                node.best = Some(Best::new(val, mvx, mvy));
+                node.best = Some(Best::new(val, mv));
             } else {
                 // node.child[node.child.len() - 1].as_ref().unwrap().release();
                 node.child[idx].release();
@@ -228,7 +235,6 @@ impl NodeBB {
         let alpha : f32 = -123456.7;
         let beta : f32 = 123456.7;
         let val = NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt);
-        // println!("hit:{}", tt.hit());
         let val = val * ban.teban as f32;
 
         Some(val)
@@ -250,21 +256,21 @@ impl NodeBB {
         if moves.len() > 1 {
             // shallow search for move ordering.
             let fteban = teban as f32;
-            let mut aval = moves.iter().enumerate().map(|(i, &(x, y))| {
+            let mut aval = moves.iter().enumerate().map(|(i, &mv)| {
                 const D : u8 = 6;
                 if depth < D {  // depth:1
-                    let newban = ban.r#move(x, y).unwrap();
+                    let newban = ban.r#move(mv).unwrap();
                     let val = NodeBB::evalwtt(&newban, wei, tt);
                     (i, val * fteban)
                 } else {  // depth:2
-                    let newban = ban.r#move(x, y).unwrap();
+                    let newban = ban.r#move(mv).unwrap();
                     let value = match newban.genmove() {
                         None => {
                             newban.countf32() * fteban
                         },
                         Some(mvs) => {
-                            mvs.iter().map(|&(x, y)| {
-                                    let newban2 = newban.r#move(x, y).unwrap();
+                            mvs.iter().map(|&mv| {
+                                    let newban2 = newban.r#move(mv).unwrap();
                                     let val = NodeBB::evalwtt(&newban2, wei, tt);
                                     val * fteban
                                 }
@@ -280,13 +286,13 @@ impl NodeBB {
 // println!("moves:{:?}", moves);
         let fteban = teban as f32;
         node.child.reserve(moves.len());
-        for (mvx, mvy) in moves {
-            let newban = ban.r#move(mvx, mvy).unwrap();
-            node.child.push(NodeBB::new(mvx, mvy, depth - 1, teban));
+        for mv in moves {
+            let newban = ban.r#move(mv).unwrap();
+            node.child.push(NodeBB::new(mv, depth - 1, teban));
             let ch = node.child.last_mut().unwrap();
             let val =
                 if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
-                    let val = NodeBB::evaluate(&newban, wei);
+                    let val = NodeBB::evalwtt(&newban, wei, tt);
                     val * fteban
                 } else {
                     -NodeBB::think_internal_ab_tt(ch, &newban, -beta, -newalpha, wei, tt)
@@ -295,9 +301,9 @@ impl NodeBB {
             node.kyokumen += ch.kyokumen;
             if newalpha < val {
                 newalpha = val;
-                node.best = Some(Best::new(val, mvx, mvy));
+                node.best = Some(Best::new(val, mv));
             } else if node.best.is_none() {
-                node.best = Some(Best::new(val, mvx, mvy));
+                node.best = Some(Best::new(val, mv));
             } else {
                 ch.release();
             }
@@ -313,14 +319,22 @@ impl NodeBB {
         self.child.clear();
     }
 
+    pub fn x(&self) -> u8 {
+        self.xy % bitboard::NUMCELL as u8
+    }
+
+    pub fn y(&self) -> u8 {
+        self.xy / bitboard::NUMCELL as u8
+    }
+
     pub fn to_xy(&self) -> String {
         format!("{}{}",
             if self.teban == bitboard::SENTE {
                 bitboard::STR_SENTE
             } else {
                 bitboard::STR_GOTE
-            }.chars().nth(self.x as usize).unwrap(),
-            self.y)
+            }.chars().nth(self.x() as usize + 1).unwrap(),
+            self.y() + 1)
     }
 
     pub fn bestorder(&self) -> String {
@@ -330,12 +344,11 @@ impl NodeBB {
             if n.best.is_none() {break;}
 
             let best = n.best.as_ref().unwrap();
-            let x = best.x;
-            let y = best.y;
+            let xy = best.xypos();
             if n.child.len() == 1 {
                 n = &n.child[0];
             } else {
-                let m = n.child.iter().find(|&a| a.x == x && a.y == y);
+                let m = n.child.iter().find(|&a| a.xy == xy);
                 if m.is_none() {
                     return ret;
                 }
@@ -370,16 +383,13 @@ impl NodeBB {
     pub fn dumptree_sub(&self, offset : usize) -> String {
         let mut ret = String::default();
 
-        let x;let y;
-        if let Some(best) = self.best.as_ref() {
-            x = best.x;
-            y = best.y;
+        let xy = if let Some(best) = self.best.as_ref() {
+            best.xypos()
         } else {
-            x = 99;
-            y = 99;
-        }
+            99
+        };
         for ch in self.child.iter() {
-            let best = if ch.x == x && ch.y == y {
+            let best = if ch.xy == xy {
                 "!"
             } else { "" };
             ret += &format!("{} {}{} {:.1}\n",
@@ -395,49 +405,49 @@ impl NodeBB {
 
 #[test]
 fn test_nodebb() {
-    let nodede = NodeBB::new(6, 5, 4, bitboard::NONE);
-    let nodefg = NodeBB::new(8, 7, 4, bitboard::NONE);
+    let nodede = NodeBB::new(bitboard::cell(6, 5), 4, bitboard::NONE);
+    let nodefg = NodeBB::new(bitboard::cell(8, 7), 4, bitboard::NONE);
 
-    let mut nodebc = NodeBB::new(4, 3, 5, bitboard::NONE);
+    let mut nodebc = NodeBB::new(bitboard::cell(4, 3), 5, bitboard::NONE);
     nodebc.kyokumen = 3210;
     assert_eq!(nodebc.dumpv(), "val:None, 3210 nodes. ");
 
-    let mut node9a = NodeBB::new(2, 1, 5, bitboard::SENTE);
+    let mut node9a = NodeBB::new(bitboard::cell(2, 1), 5, bitboard::SENTE);
     node9a.kyokumen = 4321;
     node9a.hyoka = Some(99.9);
-    node9a.best = Some(Best::new(99.9, 8, 7));
+    node9a.best = Some(Best::new(99.9, bitboard::cell(8, 7)));
     node9a.child.push(nodede);
     node9a.child.push(nodefg);
     assert_eq!(node9a.dumpv(), "val:Some(99.9), 4321 nodes. h7");
 
-    let mut node56 = NodeBB::new(5, 6, 6, bitboard::NONE);
+    let mut node56 = NodeBB::new(bitboard::cell(5, 6), 6, bitboard::NONE);
     node56.kyokumen = 6543;
     assert_eq!(node56.dumpv(), "val:None, 6543 nodes. ");
 
-    let mut node78 = NodeBB::new(7, 8, 6, bitboard::NONE);
+    let mut node78 = NodeBB::new(bitboard::cell(7, 8), 6, bitboard::NONE);
     node78.kyokumen = 5432;
     node78.hyoka = Some(99.9);
-    node78.best = Some(Best::new(99.9, 2, 1));
+    node78.best = Some(Best::new(99.9, bitboard::cell(2, 1)));
     node78.child.push(nodebc);
     node78.child.push(node9a);
     assert_eq!(node78.dumpv(), "val:Some(99.9), 5432 nodes. B1h7");
 
-    let mut node12 = NodeBB::new(1, 2, 7, bitboard::SENTE);
+    let mut node12 = NodeBB::new(bitboard::cell(1, 2), 7, bitboard::SENTE);
     node12.kyokumen = 8765;
     node12.child.push(node56);
     node12.hyoka = Some(99.9);
-    node12.best = Some(Best::new(99.9, 7, 8));
+    node12.best = Some(Best::new(99.9, bitboard::cell(7, 8)));
     node12.child.push(node78);
     assert_eq!(node12.dumpv(), "val:Some(99.9), 8765 nodes. g8B1h7");
 
-    let mut node34 = NodeBB::new(3, 4, 7, bitboard::GOTE);
+    let mut node34 = NodeBB::new(bitboard::cell(3, 4), 7, bitboard::GOTE);
     node34.kyokumen = 7654;
     assert_eq!(node34.dumpv(), "val:None, 7654 nodes. ");
 
-    let mut node = NodeBB::new(99, 2, 8, bitboard::NONE);
+    let mut node = NodeBB::new(bitboard::cell(99, 2), 8, bitboard::NONE);
     node.hyoka = Some(99.9);
     node.kyokumen = 9876;
-    node.best = Some(Best::new(99.9, 1, 2));
+    node.best = Some(Best::new(99.9, bitboard::cell(1, 2)));
     node.child.push(node12);
     node.child.push(node34);
     assert_eq!(node.dumpv(), "val:Some(99.9), 9876 nodes. A2g8B1h7");

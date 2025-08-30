@@ -168,7 +168,7 @@ impl Gtp {
                     self.ban.pass();
                     self.respond1(id, "pass");
                 } else {
-                    self.ban = self.ban.r#move(best.x, best.y).unwrap();
+                    self.ban = self.ban.r#move(best.xypos()).unwrap();
                     self.respond1(id, &xy);
                 };
             },
@@ -223,7 +223,7 @@ impl Gtp {
                 match Gtp::readpos(elem[idx + 2]) {
                     Some(xy) => {
                         (x, y) = xy;
-                        match self.ban.r#move(x, y) {
+                        match self.ban.r#move(bitboard::cell(x, y)) {
                             Err(msg) => {
                                 self.status = Status::Error;
                                 self.emsg =

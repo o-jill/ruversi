@@ -125,20 +125,20 @@ fn genkifu_para(rfentbl : &[String], depth : u8, grp : &str, cachesz: usize) {
 fn gen_kifu(n : Option<usize>, depth : u8, cachesz : usize) {
     let mut ip = initialpos::InitialPos::read(initialpos::INITIALPOSFILE).unwrap();
     ip.append(initialpos::INITIALPOSFILE7).unwrap();
-    let rfentbl =
+    let rfentbl_src =
             ip.rfens_uniq(&["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN"]);
 
     let grp;
-    let rfentbl = if n.is_none() {
-        grp = 0;
-        &rfentbl
+    let rfentbl = if let Some(group) = n {
+        grp = group;
+        const N_GROUP : usize = 100;
+        let sz = rfentbl_src.len();
+        let b = sz * grp / N_GROUP;
+        let e = sz * (grp + 1) / N_GROUP;
+        &rfentbl_src[b..e]
     } else {
-        let group = 100;
-        grp = n.unwrap();
-        let sz = rfentbl.len();
-        let b = sz * grp / group;
-        let e = sz * (grp + 1) / group;
-        &rfentbl[b..e]
+        grp = 0;
+        &rfentbl_src
     };
 
     genkifu_para(rfentbl, depth, &format!("{grp:02}"), cachesz);
@@ -832,12 +832,14 @@ fn geninitpos(tag : &str) -> Result<(), String>{
 
         let mut moves = moves.unwrap();
         if moves.is_empty() {
-            moves.push((0, 0));
+            moves.push(bitboard::PASS);
         }
-        for (mvx, mvy) in moves.iter() {
-            let mvstr = postxt(*mvx, *mvy);
+        for mv in moves.iter() {
+            let mvx = mv % bitboard::NUMCELL as u8;
+            let mvy = mv / bitboard::NUMCELL as u8;
+            let mvstr = postxt(mvx, mvy);
 
-            let ban2 = ban.r#move(*mvx, *mvy).unwrap();
+            let ban2 = ban.r#move(*mv).unwrap();
             let moves2 = ban2.genmove();
             if moves2.is_none() {  // no empty cells.
                 continue;
@@ -845,11 +847,13 @@ fn geninitpos(tag : &str) -> Result<(), String>{
 
             let mut moves2 = moves2.unwrap();
             if moves2.is_empty() {
-                moves2.push((0, 0));
+                moves2.push(bitboard::PASS);
             }
-            for (mvx2, mvy2) in moves2.iter() {
-                let mvstr2 = postxt(*mvx2, *mvy2);
-                let ban3 = ban2.r#move(*mvx2, *mvy2).unwrap();
+            for mv2 in moves.iter() {
+                let mvx2 = mv2 % bitboard::NUMCELL as u8;
+                let mvy2 = mv2 / bitboard::NUMCELL as u8;
+                let mvstr2 = postxt(mvx2, mvy2);
+                let ban3 = ban2.r#move(*mv2).unwrap();
                 println!("{},  // ****** {mvstr} {mvstr2}", ban3.to_str());
             }
         }
@@ -1005,7 +1009,7 @@ fn main() {
         let ev2 = &MYOPT.get().unwrap().evaltable2;
         let duellv = MYOPT.get().unwrap().duellv;
         duel_para(ev1, ev2, duellv, depth, cachesz);
-        // duel(ev1, ev2, duellv, depth, MYOPT.get().unwrap().verbose, cachesz);
+        // duel(ev1, ev2, duellv, depth, cachesz);
     }
     if *mode == myoption::Mode::DuelExt {
         let duellv = MYOPT.get().unwrap().duellv;
