@@ -234,12 +234,14 @@ impl NodeBB {
 
         let alpha : f32 = -123456.7;
         let beta : f32 = 123456.7;
-        let val = NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt);
+        let val = NodeBB::think_internal_pvs_tt(node, ban, alpha, beta, wei, tt);
+        // let val = NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt);
         let val = val * ban.teban as f32;
 
         Some(val)
     }
 
+    #[allow(dead_code)]
     pub fn think_internal_ab_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
             wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
         let mut newalpha = alpha;
@@ -420,7 +422,7 @@ impl NodeBB {
             } else {
                 ch.release();
             }
-            if beta <= val {  // newalpha >= beta {
+            if beta <= val {
                 // cut
                 return val;
             }
