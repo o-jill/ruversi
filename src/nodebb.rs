@@ -315,6 +315,122 @@ impl NodeBB {
         newalpha
     }
 
+    pub fn think_internal_pvs_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
+            wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
+        let mut newalpha = alpha;
+        let depth = node.depth;
+        let teban = ban.teban;
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            panic!("moves.is_none() nblank == 0 should work!");
+            // return -ban.countf32();
+        }
+        let mut moves = moves.unwrap();
+        if moves.len() > 1 {
+            // shallow search for move ordering.
+            let fteban = teban as f32;
+            let mut aval = moves.iter().enumerate().map(|(i, &mv)| {
+                const D : u8 = 6;
+                if depth < D {  // depth:1
+                    let newban = ban.r#move(mv).unwrap();
+                    let val = NodeBB::evalwtt(&newban, wei, tt);
+                    (i, val * fteban)
+                } else {  // depth:2
+                    let newban = ban.r#move(mv).unwrap();
+                    let value = match newban.genmove() {
+                        None => {
+                            newban.countf32() * fteban
+                        },
+                        Some(mvs) => {
+                            mvs.iter().map(|&mv| {
+                                    let newban2 = newban.r#move(mv).unwrap();
+                                    let val = NodeBB::evalwtt(&newban2, wei, tt);
+                                    val * fteban
+                                }
+                            ).collect::<Vec<_>>().into_iter().reduce(f32::min).unwrap()
+                        },
+                    };
+                    (i, value)
+                }
+            }).collect::<Vec<_>>();
+            aval.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+            moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
+        }
+
+        let fteban = teban as f32;
+        node.child.reserve(moves.len());
+        let mv = moves[0];
+        let newban = ban.r#move(mv).unwrap();
+        let ch = if let Some(nd)
+            = node.child.iter_mut().find(|n| n.xy == mv) {
+            nd
+        } else {
+            node.child.push(NodeBB::new(mv, depth - 1, teban));
+            node.child.last_mut().unwrap()
+        };
+        let val =
+            if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
+                let val = NodeBB::evalwtt(&newban, wei, tt);
+                val * fteban
+            } else {
+                -NodeBB::think_internal_pvs_tt(
+                    ch, &newban, -beta, -newalpha, wei, tt)
+            };
+        ch.hyoka = Some(val);
+        node.kyokumen += ch.kyokumen;
+        node.best = Some(Best::new(val, mv));
+        if beta <= val {return val;}
+        if newalpha < val {newalpha = val;}
+
+        let mut maxval = val;
+        for &mv in moves.iter().skip(1) {
+            let newban = ban.r#move(mv).unwrap();
+            let ch = if let Some(nd)
+                = node.child.iter_mut().find(|n| n.xy == mv) {
+                nd
+            } else {
+                node.child.push(NodeBB::new(mv, depth - 1, teban));
+                node.child.last_mut().unwrap()
+            };
+            let val =
+                if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
+                    let val = NodeBB::evalwtt(&newban, wei, tt);
+                    val * fteban
+                } else {
+                    let val = -NodeBB::think_internal_pvs_tt(
+                        ch, &newban, -newalpha - 0.001, -newalpha, wei, tt);
+                    if beta <= val {
+                        val
+                    } else {
+                        if newalpha >= val {
+                            val
+                        } else {
+                            -NodeBB::think_internal_pvs_tt(
+                                ch, &newban, -beta, -val, wei, tt)
+                        }
+                    }
+                };
+            ch.hyoka = Some(val);
+            node.kyokumen += ch.kyokumen;
+            if newalpha < val {
+                newalpha = val;
+                node.best = Some(Best::new(val, mv));
+            } else {
+                ch.release();
+            }
+            if beta <= val {  // newalpha >= beta {
+                // cut
+                return val;
+            }
+            if maxval < val {
+                maxval = val;
+            }
+        }
+        maxval
+    }
+
     fn release(&mut self) {
         self.child.clear();
     }
