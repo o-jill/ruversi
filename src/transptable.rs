@@ -66,6 +66,7 @@ impl TTEntry {
         self.depth = depth;
     }
 
+    #[allow(dead_code)]
     pub fn set(&mut self, hash : u64, b : &bitboard::BitBoard, hyoka : f32, hyoka_search : f32, depth : u8) {
         self.hash = hash;
         self.black = b.black;
@@ -110,12 +111,7 @@ impl TTEntry {
      * ちょっと前の局面から探索した結果なので価値を下げる。
      */
     pub fn update_depth(&mut self, diff : u8) {
-        self.depth =
-            if self.depth > diff {
-                self.depth - diff
-            } else {
-                0
-            }
+        self.depth = self.depth.saturating_sub(diff)
     }
 
     #[allow(dead_code)]
@@ -149,6 +145,13 @@ impl TranspositionTable {
             l.hit = 0;
             l.hash = 0;
             l.hyoka_search = None;
+        }
+    }
+
+    pub fn next(&mut self) {
+        const DIFF : u8 = 8;
+        for c in self.list.iter_mut() {
+            c.update_depth(DIFF);
         }
     }
 
