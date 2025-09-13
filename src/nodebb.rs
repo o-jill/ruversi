@@ -122,7 +122,7 @@ impl NodeBB {
                 val
             } else {
                 let val = Self::evaluate(ban, wei);
-                tt.append(ban, val);
+                tt.append(ban, val, 0);
                 val
             }
         } else {
@@ -183,14 +183,13 @@ impl NodeBB {
         }
         let moves = moves.unwrap();
 
+        node.child.reserve(moves.len());
         for mv in moves {
             let newban = ban.r#move(mv).unwrap();
-            let idx = node.child.len();
             node.child.push(NodeBB::new(mv, depth - 1, teban));
-            let val = NodeBB::think_internal_tt(
-                &mut node.child[idx], &newban, wei, tt);
+            let ch = node.child.last_mut().unwrap();
+            let val = NodeBB::think_internal_tt(ch, &newban, wei, tt);
 
-            let ch = &mut node.child[idx];
             ch.hyoka = val;
             node.kyokumen += ch.kyokumen;
             let best = node.best.as_ref();
@@ -198,9 +197,11 @@ impl NodeBB {
             let fteban = teban as f32;
             if best.is_none() || best.unwrap().hyoka * fteban < val * fteban {
                 node.best = Some(Best::new(val, mv));
+                if cfg!(feature = "withtt") {
+                    tt.update(&newban, val, depth);
+                }
             } else {
-                // node.child[node.child.len() - 1].as_ref().unwrap().release();
-                node.child[idx].release();
+                ch.release();
             }
         }
         Some(node.best.as_ref().unwrap().hyoka)
@@ -235,6 +236,7 @@ impl NodeBB {
         let alpha : f32 = -123456.7;
         let beta : f32 = 123456.7;
         let val = NodeBB::think_internal_pvs_tt(node, ban, alpha, beta, wei, tt);
+        // let val = NodeBB::think_internal_ab_failhard(node, ban, alpha, beta, wei, tt);
         // let val = NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt);
         let val = val * ban.teban as f32;
 
@@ -315,6 +317,103 @@ impl NodeBB {
             }
         }
         newalpha
+    }
+
+    #[allow(dead_code)]
+    pub fn think_internal_ab_failhard(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
+            wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
+        if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
+            let val = NodeBB::evalwtt(&ban, wei, tt);
+            // return val * fteban;
+            return val;
+        }
+
+        let mut newalpha = alpha;
+        let depth = node.depth;
+        let teban = ban.teban;
+        let moves = ban.genmove();
+
+        // no more empty cells
+        if moves.is_none() {
+            panic!("moves.is_none() nblank == 0 should work!");
+            // return -ban.countf32();
+        }
+        let mut moves = moves.unwrap();
+        if moves.len() > 1 {
+            // shallow search for move ordering.
+            let fteban = teban as f32;
+            let mut aval = moves.iter().enumerate().map(|(i, &mv)| {
+                const D : u8 = 6;
+                if depth < D {  // depth:1
+                    let newban = ban.r#move(mv).unwrap();
+                    let val = NodeBB::evalwtt(&newban, wei, tt);
+                    (i, val * fteban)
+                } else {  // depth:2
+                    let newban = ban.r#move(mv).unwrap();
+                    let value = match newban.genmove() {
+                        None => {
+                            newban.countf32() * fteban
+                        },
+                        Some(mvs) => {
+                            mvs.iter().map(|&mv| {
+                                    let newban2 = newban.r#move(mv).unwrap();
+                                    let val = NodeBB::evalwtt(&newban2, wei, tt);
+                                    val * fteban
+                                }
+                            ).collect::<Vec<_>>().into_iter().reduce(f32::min).unwrap()
+                        },
+                    };
+                    (i, value)
+                }
+            }).collect::<Vec<_>>();
+            aval.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+            moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
+        }
+// println!("moves:{:?}", moves);
+        let fteban = teban as f32;
+        node.child.reserve(moves.len());
+        let mut maxval = -9999.0;
+        for mv in moves {
+            let newban = ban.r#move(mv).unwrap();
+            node.child.push(NodeBB::new(mv, depth - 1, teban));
+            let ch = if let Some(nd)
+                = node.child.iter_mut().find(|n| n.xy == mv) {
+                nd
+            } else {
+                node.child.push(NodeBB::new(mv, depth - 1, teban));
+                node.child.last_mut().unwrap()
+            };
+            let val =
+                if let Some(tt_val) = tt.check_available(&newban, depth - 1) {
+                    tt_val * fteban
+                // } else if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
+                //     let val = NodeBB::evalwtt(&newban, wei, tt);
+                //     val * fteban
+                } else {
+                    -NodeBB::think_internal_ab_failhard(ch, &newban, -beta, -newalpha, wei, tt)
+                };
+            ch.hyoka = Some(val);
+            node.kyokumen += ch.kyokumen;
+            if newalpha < val {
+                newalpha = val;
+                node.best = Some(Best::new(val, mv));
+                tt.update(ban, val, depth);
+            } else if node.best.is_none() {
+                node.best = Some(Best::new(val, mv));
+                tt.update(ban, val, depth);
+            } else {
+                // ch.release();
+            }
+            if newalpha >= beta {
+                // cut
+                return newalpha;
+            }
+            if maxval < val {
+                maxval = val;
+            }
+        }
+        maxval  // fail-hard
+        // newalpha  // fail-soft
     }
 
     pub fn think_internal_pvs_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
