@@ -235,12 +235,55 @@ impl NodeBB {
 
         let alpha : f32 = -123456.7;
         let beta : f32 = 123456.7;
-        let val = NodeBB::think_internal_pvs_tt(node, ban, alpha, beta, wei, tt);
-        // let val = NodeBB::think_internal_ab_failhard(node, ban, alpha, beta, wei, tt);
-        // let val = NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt);
+        let val = if cfg!(feature="withtt") {
+            NodeBB::think_internal_pvs_tt(node, ban, alpha, beta, wei, tt)
+            // NodeBB::think_internal_ab_failsoft(node, ban, alpha, beta, wei, tt)
+            // NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt)
+        } else {
+            NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt)
+        };
         let val = val * ban.teban as f32;
 
         Some(val)
+    }
+
+    pub fn think_mtdf(ban : &bitboard::BitBoard, depth : u8, node : &mut NodeBB,
+            wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> Option<f32> {
+        if depth == 0 {
+            return None;
+        }
+        if ban.is_passpass() {
+            return None;
+        }
+        
+        let yomikiri = 12;
+        let yose = 18;
+        let nblank = ban.nblank();
+        node.depth =
+            if nblank <= yomikiri {
+                yomikiri as u8
+            } else if nblank <= yose {
+                depth + 2
+            } else {
+                depth
+            };
+
+        let mut upper = 123.4;  // up;
+        let mut lower = -123.4;  // low;
+
+        let mut f = 0f32;
+        const EPS : f32 = 0.25;
+
+        loop {
+            let beta = if f == lower {f + EPS} else {f};
+            f = Self::think_internal_ab_failsoft(node, ban, beta - EPS, beta, wei, tt);
+            if f < beta {
+                upper = f;
+            } else {
+                lower = f;
+            }
+            if upper - lower <= EPS {break Some(f);}
+        }
     }
 
     #[allow(dead_code)]
@@ -320,12 +363,16 @@ impl NodeBB {
     }
 
     #[allow(dead_code)]
-    pub fn think_internal_ab_failhard(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
+    pub fn think_internal_ab_failsoft(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
             wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
-        if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
+        let fteban = ban.teban as f32;
+        if let Some(tt_val) = tt.check_available(ban, node.depth) {
+            return tt_val * fteban;
+            // return tt_val;
+        } else if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
             let val = NodeBB::evalwtt(&ban, wei, tt);
-            // return val * fteban;
-            return val;
+            return val * fteban;
+            // return val;
         }
 
         let mut newalpha = alpha;
@@ -370,7 +417,6 @@ impl NodeBB {
             moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
         }
 // println!("moves:{:?}", moves);
-        let fteban = teban as f32;
         node.child.reserve(moves.len());
         let mut maxval = -9999.0;
         for mv in moves {
@@ -384,14 +430,15 @@ impl NodeBB {
                 node.child.last_mut().unwrap()
             };
             let val =
-                if let Some(tt_val) = tt.check_available(&newban, depth - 1) {
-                    tt_val * fteban
+                // if let Some(tt_val) = tt.check_available(&newban, depth - 1) {
+                //     tt_val
                 // } else if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
                 //     let val = NodeBB::evalwtt(&newban, wei, tt);
                 //     val * fteban
-                } else {
-                    -NodeBB::think_internal_ab_failhard(ch, &newban, -beta, -newalpha, wei, tt)
-                };
+                // } else {
+                    -NodeBB::think_internal_ab_failsoft(ch, &newban, -beta, -newalpha, wei, tt)
+                    ;
+                // };
             ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
             if newalpha < val {
@@ -400,7 +447,8 @@ impl NodeBB {
                 tt.update(ban, val, depth);
             } else if node.best.is_none() {
                 node.best = Some(Best::new(val, mv));
-                tt.update(ban, val, depth);
+                tt.set(ban, val, depth);
+                // tt.update(ban, val, depth);
             } else {
                 // ch.release();
             }
@@ -412,8 +460,8 @@ impl NodeBB {
                 maxval = val;
             }
         }
-        maxval  // fail-hard
-        // newalpha  // fail-soft
+        maxval  // fail-soft
+        // newalpha  // fail-hard
     }
 
     pub fn think_internal_pvs_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,

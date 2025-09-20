@@ -19,7 +19,7 @@ struct TTEntry {
     pub hyoka : f32,
     pub hyoka_search : Option<f32>,
     pub hit : u16,
-    pub depth : u8,  // この数字が大きいほうがより確からしい評価値
+    // pub depth : u8,  // この数字が大きいほうがより確からしい評価値
     pub teban : i8,
 }
 
@@ -39,7 +39,7 @@ impl TTEntry {
             hyoka,
             hyoka_search,
             hit : 0,
-            depth,
+            // depth,
             teban,
         }
     }
@@ -56,14 +56,14 @@ impl TTEntry {
     }
 
     pub fn update(&mut self, hash : u64, b : &bitboard::BitBoard, hyoka_search : f32, depth : u8) {
-        if self.depth > depth {return;}
+        // if self.depth > depth {return;}
 
         // self.hash = hash;
         // self.black = b.black;
         // self.white = b.white;
         // self.teban = self.teban;
         self.hyoka_search = Some(hyoka_search);
-        self.depth = depth;
+        // self.depth = depth;
     }
 
     #[allow(dead_code)]
@@ -74,7 +74,7 @@ impl TTEntry {
         self.hyoka = hyoka;
         self.hyoka_search = Some(hyoka_search);
         self.hit = 0;
-        self.depth = depth;
+        // self.depth = depth;
         self.teban = b.teban;
     }
 
@@ -91,7 +91,7 @@ impl TTEntry {
      * true:hyokaを使って良い, false:hyokaの値はあっても信用ならないので使わない
      */
     pub fn is_available(&self, b : &bitboard::BitBoard, depth : u8) -> bool {
-        self.is_hit(b) && depth <= self.depth
+        self.is_hit(b) // && depth <= self.depth
     }
 
     /**
@@ -110,9 +110,9 @@ impl TTEntry {
      * 保存されているデータのdepthを更新する
      * ちょっと前の局面から探索した結果なので価値を下げる。
      */
-    pub fn update_depth(&mut self, diff : u8) {
-        self.depth = self.depth.saturating_sub(diff)
-    }
+    // pub fn update_depth(&mut self, diff : u8) {
+    //     self.depth = self.depth.saturating_sub(diff)
+    // }
 
     #[allow(dead_code)]
     pub fn is_hash(&self, hash : u64, teban : i8) -> bool {
@@ -122,6 +122,7 @@ impl TTEntry {
 
 pub struct TranspositionTable {
     list : Vec<TTEntry>,
+    depth : Vec<u8>,  // この数字が大きいほうがより確からしい評価値
 }
 
 impl Default for TranspositionTable {
@@ -136,7 +137,10 @@ impl TranspositionTable {
     }
 
     pub fn with_capacity(sz : usize) -> Self {
-        Self { list: vec![TTEntry::default() ; sz] }
+        Self {
+            list : vec![TTEntry::default() ; sz],
+            depth : vec![0 ; sz],
+        }
     }
 
     pub fn clear(&mut self) {
@@ -146,13 +150,47 @@ impl TranspositionTable {
             l.hash = 0;
             l.hyoka_search = None;
         }
+        for d in self.depth.iter_mut() {
+            *d = 0;
+        }
     }
 
     pub fn next(&mut self) {
+        // const DIFF : u8 = 2;
+        // const DIFF : u8 = 4;
         const DIFF : u8 = 8;
-        for c in self.list.iter_mut() {
-            c.update_depth(DIFF);
+
+        for d in self.depth.iter_mut() {
+            *d = d.saturating_sub(DIFF);
         }
+
+        // use core::arch::x86_64::*;
+        // const M :usize = 32 * 4;
+        // for i in (0..self.depth.len()).step_by(M) {
+        //     unsafe {
+        //         let diff = _mm256_set1_epi8(DIFF as i8);
+        //         let a1 = self.depth.as_mut_ptr().add(i) as *mut __m256i;
+        //         let a2 = self.depth.as_mut_ptr().add(i + 32 * 1) as *mut __m256i;
+        //         let a3 = self.depth.as_mut_ptr().add(i + 32 * 2) as *mut __m256i;
+        //         let a4 = self.depth.as_mut_ptr().add(i + 32 * 3) as *mut __m256i;
+        //         let x1 = _mm256_loadu_si256(a1);
+        //         let x2 = _mm256_loadu_si256(a2);
+        //         let x3 = _mm256_loadu_si256(a3);
+        //         let x4 = _mm256_loadu_si256(a4);
+        //         let y1 = _mm256_subs_epu8(x1, diff);
+        //         let y2 = _mm256_subs_epu8(x2, diff);
+        //         let y3 = _mm256_subs_epu8(x3, diff);
+        //         let y4 = _mm256_subs_epu8(x4, diff);
+        //         _mm256_storeu_si256(a1, y1);
+        //         _mm256_storeu_si256(a2, y2);
+        //         _mm256_storeu_si256(a3, y3);
+        //         _mm256_storeu_si256(a4, y4);
+        //     }
+        // }
+
+        // for c in self.list.iter_mut() {
+        //     c.update_depth(DIFF);
+        // }
     }
 
     pub fn check(&self, b : &bitboard::BitBoard) -> Option<f32> {
@@ -173,7 +211,8 @@ impl TranspositionTable {
         let h = b.hash();
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
-        if self.list[idx].is_available(b, depth) {
+        if self.list[idx].is_hit(b) && self.depth[idx] >= depth {
+        // if self.list[idx].is_available(b, depth) {
         // if self.list[idx].is_hit(b) {
         // if self.list[idx].is_hash(h, b.teban) {
             Some(self.list[idx].better_hyoka())
@@ -187,12 +226,17 @@ impl TranspositionTable {
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
         self.list[idx] = TTEntry::from(h, b, hy, depth);
+        self.depth[idx] =  depth;
     }
 
     pub fn set(&mut self, b : &bitboard::BitBoard, hy : f32, depth : u8) {
         let h = b.hash();
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
+
+        if self.depth[idx] > depth {return;}
+        self.depth[idx] =  depth;
+
         self.list[idx].set(h, b, hy, hy, depth);
     }
 
@@ -200,7 +244,16 @@ impl TranspositionTable {
         let h = b.hash();
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
-        self.list[idx].update(h, b, hy, depth);
+
+        if self.depth[idx] > depth {return;}
+
+        self.depth[idx] = depth;
+
+        if self.list[idx].is_hit(b) {
+            self.list[idx].update(h, b, hy, depth);
+        } else {
+            self.list[idx].set(h, b, hy, hy, depth);
+        }
     }
 
     #[allow(dead_code)]
