@@ -60,7 +60,8 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>, cachesz : usize)
         let st = Instant::now();
         let mut node = nodebb::NodeBB::root(depth);
         let val =
-            nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, &mut tt).unwrap();
+            nodebb::NodeBB::think_mtdf(&ban, depth, &mut node, wei, &mut tt).unwrap();
+            // nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, &mut tt).unwrap();
             // nodebb::NodeBB::think_ab(&ban, depth).unwrap();
             // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap();
         let ft = st.elapsed();
@@ -85,7 +86,8 @@ fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str, cachesz: usize) {
         // play
         match think {
             "" | "ab" => {
-                g.startgk(nodebb::NodeBB::think_ab_simple_gk_tt, depth).unwrap();
+                // g.startgk(nodebb::NodeBB::think_ab_simple_gk_tt, depth).unwrap();
+                g.startgk(nodebb::NodeBB::think_mtdf, depth).unwrap()
                 // g.starto(nodebb::NodeBB::think_ab_simple, depth).unwrap();
             },
             "all" => {
@@ -258,7 +260,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
             match think {
                 "" | "ab" => {
                     // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w3, &w4).unwrap()
-                    g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w3, &w4).unwrap()
+                    g.starto_with_2et_mt_tt(nodebb::NodeBB::think_mtdf, depth, &w3, &w4).unwrap()
+                    // g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w3, &w4).unwrap()
                     // g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w3, &w4).unwrap()
                 },
                 "all" => {
@@ -280,7 +283,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w4, &w3).unwrap()
+                    g.starto_with_2et_mt_tt(nodebb::NodeBB::think_mtdf, depth, &w4, &w3).unwrap()
+                    // g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w4, &w3).unwrap()
                     // g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w4, &w3).unwrap()
                 },
                 "all" => {
@@ -305,7 +309,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         let think = MYOPT.get().unwrap().think.as_str();
         match think {
             "" | "ab" => {
-                g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
+                g.starto_with_2et_mt_tt(nodebb::NodeBB::think_mtdf, depth, &w2, &w1).unwrap()
+                // g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
                 // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w1, &w2).unwrap()
             },
             "all" => {
@@ -327,7 +332,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         let think = MYOPT.get().unwrap().think.as_str();
         match think {
             "" | "ab" => {
-                g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
+                g.starto_with_2et_mt_tt(nodebb::NodeBB::think_mtdf, depth, &w2, &w1).unwrap()
+                // g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
                 // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
             },
             "all" => {
@@ -389,7 +395,8 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
             "" | "ab" => {
                 // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
                 g.starto_with_2et(
-                    nodebb::NodeBB::think_ab_simple_gk_tt,
+                    nodebb::NodeBB::think_mtdf,
+                    // nodebb::NodeBB::think_ab_simple_gk_tt,
                     depth, &w1, &w2).unwrap()
                 // g.starto_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
             },
@@ -418,7 +425,8 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         match think {
             "" | "ab" => {
                 // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
-                g.starto_with_2et(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
+                g.starto_with_2et(nodebb::NodeBB::think_mtdf, depth, &w2, &w1).unwrap()
+                // g.starto_with_2et(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
             },
             "all" => {
                 g.starto_with_2et(nodebb::NodeBB::think_simple_gk_tt, depth, &w2, &w1).unwrap()
@@ -475,7 +483,8 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         g.starto_against_edax(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
+                    nodebb::NodeBB::think_mtdf
+                    // nodebb::NodeBB::think_ab_simple_gk_tt
                 },
                 "all" => {
                     nodebb::NodeBB::think_simple_gk_tt
@@ -499,7 +508,8 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         g.starto_against_edax(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
+                    nodebb::NodeBB::think_mtdf
+                    // nodebb::NodeBB::think_ab_simple_gk_tt
                 },
                 "all" => {
                     nodebb::NodeBB::think_simple_gk_tt
@@ -554,7 +564,8 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         g.start_against_via_cassio(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
+                    nodebb::NodeBB::think_mtdf
+                    // nodebb::NodeBB::think_ab_simple_gk_tt
                 },
                 "all" => {
                     nodebb::NodeBB::think_simple_gk_tt
@@ -579,7 +590,8 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         g.start_against_via_cassio(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
+                    nodebb::NodeBB::think_mtdf
+                    // nodebb::NodeBB::think_ab_simple_gk_tt
                 },
                 "all" => {
                     nodebb::NodeBB::think_simple_gk_tt
@@ -632,7 +644,8 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         g.starto_against_ruversi(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
+                    nodebb::NodeBB::think_mtdf
+                    // nodebb::NodeBB::think_ab_simple_gk_tt
                 },
                 "all" => {
                     nodebb::NodeBB::think_simple_gk_tt
@@ -657,7 +670,8 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         g.starto_against_ruversi(
             match think {
                 "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
+                    nodebb::NodeBB::think_mtdf
+                    // nodebb::NodeBB::think_ab_simple_gk_tt
                 },
                 "all" => {
                     nodebb::NodeBB::think_simple_gk_tt
@@ -714,7 +728,8 @@ fn play(depth : u8, turnh: i8, cachesz : usize) {
     g.starto_against_stdin(
         match think {
             "" | "ab" => {
-                nodebb::NodeBB::think_ab_simple_gk_tt
+                nodebb::NodeBB::think_mtdf
+                // nodebb::NodeBB::think_ab_simple_gk_tt
             },
             "all" => {
                 nodebb::NodeBB::think_simple_gk_tt
@@ -747,7 +762,8 @@ fn edax(depth : u8, turnh: i8, cachesz : usize) {
     g.starto_against_edax(
         match think {
             "" | "ab" => {
-                nodebb::NodeBB::think_ab_simple_gk_tt
+                nodebb::NodeBB::think_mtdf
+                // nodebb::NodeBB::think_ab_simple_gk_tt
             },
             "all" => {
                 nodebb::NodeBB::think_simple_gk_tt
@@ -772,7 +788,8 @@ fn vs_ruversi(depth : u8, turnh: i8, cachesz : usize) {
     g.starto_against_ruversi(
         match think {
             "" | "ab" => {
-                nodebb::NodeBB::think_ab_simple_gk_tt
+                nodebb::NodeBB::think_mtdf
+                // nodebb::NodeBB::think_ab_simple_gk_tt
             },
             "all" => {
                 nodebb::NodeBB::think_simple_gk_tt
