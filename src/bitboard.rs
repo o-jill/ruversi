@@ -1847,6 +1847,16 @@ fn testbitbrd() {
     assert!(ban.r#move(43).is_ok());
     assert!(ban.r#move(50).is_ok());
     assert_eq!(ban.genmove().unwrap(), vec![20, 29, 43, 50]);
+
+    let ban = BitBoard::from("1aF/1aDaA/bAcB/bDaA/bAaAaB/AaF/H/H w").unwrap();
+    ban.put();
+    let mv = ban.genmove();
+    assert_eq!(mv, Some(vec![PASS]));
+
+    let ban = BitBoard::from("1aF/1aDaA/bAcB/bDaA/bAaAaB/AaF/H/H b").unwrap();
+    ban.put();
+    let mv = ban.genmove();
+    assert_eq!(mv, Some(vec![cell(1, 1), cell(1, 2)]));
 }
 
 #[test]

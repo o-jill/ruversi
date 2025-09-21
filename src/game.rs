@@ -62,7 +62,6 @@ impl GameBB {
                     node.dump(), ft.as_millis());
             }
             let best = node.best.unwrap();
-            let (x, y) = best.to_xy();
             let xy = best.xypos();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
@@ -71,7 +70,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -80,7 +79,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -113,7 +112,6 @@ impl GameBB {
             }
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -121,7 +119,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -130,7 +128,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -160,7 +158,6 @@ impl GameBB {
             // println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -168,7 +165,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -177,7 +174,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -266,12 +263,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -280,7 +272,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -362,12 +354,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -376,7 +363,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -440,12 +427,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -454,7 +436,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -524,12 +506,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -538,7 +515,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -609,12 +586,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -623,7 +595,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -728,12 +700,7 @@ impl GameBB {
                 self.ban = ban;
 
                 // save to kifu
-                let (x, y) = if xy == bitboard::PASS {
-                    (0, 0)  // pass
-                } else {
-                    bitboard::index2xy(xy)
-                };
-                self.kifu.append(x as usize, y as usize, teban, rfen);
+                self.kifu.append(xy, teban, rfen);
             }
 
             // check finished
@@ -743,7 +710,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -796,7 +763,6 @@ impl GameBB {
             }
             let best = node.best.unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -804,7 +770,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -813,7 +779,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -863,7 +829,6 @@ impl GameBB {
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -871,7 +836,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -880,7 +845,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -931,7 +896,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -940,7 +905,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 
@@ -991,7 +956,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -1000,7 +965,7 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
 

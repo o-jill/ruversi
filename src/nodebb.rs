@@ -593,6 +593,11 @@ impl NodeBB {
     }
 
     pub fn to_xy(&self) -> String {
+        if self.xy == bitboard::PASS {
+            return String::from(
+                if self.teban == bitboard::SENTE {"PS"} else {"ps"});
+        }
+
         format!("{}{}",
             if self.teban == bitboard::SENTE {
                 bitboard::STR_SENTE
