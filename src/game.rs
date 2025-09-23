@@ -888,7 +888,6 @@ impl GameBB {
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -948,7 +947,6 @@ impl GameBB {
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
