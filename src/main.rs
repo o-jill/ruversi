@@ -29,14 +29,14 @@ static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::O
 #[cfg(target_arch="x86_64")]
 fn trial() {
     let mut kifu = kifu::Kifu::new();
-    kifu.append(0, 0, 1, String::new());
-    kifu.append(1, 1, 1, String::new());
-    kifu.append(2, 2, -1, String::new());
-    kifu.append(3, 3, 1, String::new());
-    kifu.append(4, 4, -1, String::new());
-    kifu.append(5, 5, 1, String::new());
-    kifu.append(6, 6, -1, String::new());
-    kifu.append(7, 7, 0, String::new());
+    kifu.append(0,1, String::new());
+    kifu.append(1,1, String::new());
+    kifu.append(2,-1, String::new());
+    kifu.append(3,1, String::new());
+    kifu.append(4,-1, String::new());
+    kifu.append(5,1, String::new());
+    kifu.append(6,-1, String::new());
+    kifu.append(7,0, String::new());
     print!("{}", kifu.to_str());
 }
 
