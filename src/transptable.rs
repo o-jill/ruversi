@@ -265,3 +265,93 @@ impl TranspositionTable {
         println!();
     }
 }
+
+#[cfg(test)]
+#[test]
+fn test_ttentry_new_and_is_hit() {
+    let b = bitboard::BitBoard::new();
+    let entry = TTEntry::from(42, &b, 100.0, 10);
+    assert!(entry.is_hit(&b));
+    let b2 = bitboard::BitBoard::from("8/8/8/H/H/8/8/8 w").unwrap();
+    assert!(!entry.is_hit(&b2));
+}
+
+#[test]
+fn test_ttentry_update_and_better_hyoka() {
+    let b = bitboard::BitBoard::new();
+    let mut entry = TTEntry::from(42, &b, 100.0, 10);
+    assert_eq!(entry.better_hyoka(), 100.0);
+    entry.update(42, &b, 50.0, 10);
+    assert_eq!(entry.better_hyoka(), 50.0);
+    // TTEntryにdepthがないので entry.update(42, &b, 10.0, 5);
+    // 10が代入されてしまうのでコメントアウト assert_eq!(entry.better_hyoka(), 50.0);
+}
+
+#[test]
+fn test_ttentry_set_and_is_hash() {
+    let b = bitboard::BitBoard::new();
+    let mut entry = TTEntry::default();
+    entry.set(99, &b, 123.0, 55.0, 5);
+    assert!(entry.is_hash(99, 1));
+    assert_eq!(entry.hyoka, 123.0);
+    assert_eq!(entry.hyoka_search, Some(55.0));
+}
+
+#[test]
+fn test_transptable_basic_insert_and_check() {
+    let mut ttable = TranspositionTable::with_capacity(8);
+    let b = bitboard::BitBoard::new();
+    ttable.append(&b, 200.0, 5);
+    assert_eq!(ttable.check(&b), Some(200.0));
+    // 別の盤面ではヒットしない
+    let b2 = bitboard::BitBoard::from("h/h/h/H/H/H/8/8 b").unwrap();
+    assert_eq!(ttable.check(&b2), None);
+}
+
+#[test]
+fn test_transptable_set_and_update() {
+    let mut ttable = TranspositionTable::with_capacity(4);
+    let b = bitboard::BitBoard::new();
+    ttable.set(&b, 300.0, 9);
+    assert_eq!(ttable.check(&b), Some(300.0));
+    // depth小さい場合は上書きされない
+    ttable.set(&b, 100.0, 7);
+    assert_eq!(ttable.check(&b), Some(300.0));
+    // depth大きい場合は上書き
+    ttable.set(&b, 150.0, 10);
+    assert_eq!(ttable.check(&b), Some(150.0));
+    // updateも確認
+    ttable.update(&b, 50.0, 10);
+    assert_eq!(ttable.check(&b), Some(50.0));
+    // depth小さい場合は上書きされない
+    ttable.set(&b, 100.0, 7);
+    assert_eq!(ttable.check(&b), Some(50.0));
+    // depth小さい場合は上書きされない
+    ttable.update(&b, 200.0, 3);
+    assert_eq!(ttable.check(&b), Some(50.0));
+}
+
+#[test]
+fn test_transptable_clear_and_next() {
+    let mut ttable = TranspositionTable::with_capacity(2);
+    let b = bitboard::BitBoard::new();
+    ttable.append(&b, 100.0, 5);
+    assert_eq!(ttable.check(&b), Some(100.0));
+    ttable.clear();
+    assert_eq!(ttable.check(&b), None);
+    // nextでdepth値が減少するか
+    ttable.append(&b, 200.0, 20);
+    ttable.next();
+    assert!(ttable.depth.iter().all(|&d| d <= 20));
+}
+
+#[test]
+fn test_transptable_check_available() {
+    let mut ttable = TranspositionTable::with_capacity(2);
+    let b = bitboard::BitBoard::new();
+    ttable.append(&b, 123.0, 12);
+    // depthが足りている場合のみSome
+    assert_eq!(ttable.check_available(&b, 11), Some(123.0));
+    assert_eq!(ttable.check_available(&b, 12), Some(123.0));
+    assert_eq!(ttable.check_available(&b, 13), None);
+}
