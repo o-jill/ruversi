@@ -6,11 +6,16 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
 <script type="text/javascript">
+/**
+ * @param av1 mean data in of group A
+ * @param sd1 unbiased standard deviation data in of group A
+ * @param N1  number of data in group A
+ * @param av2 mean of data in group B
+ * @param sd2 unbiased standard deviation of data in group B
+ * @param N2  number of data in group B
+ */
 function ttest(av1, sd1, N1, av2, sd2, N2) {
-    let v1 = sd1 * sd1 * N1 / (N1 -1);  // unbiased estimate of variance
-    let v2 = sd2 * sd2 * N2 / (N2 -1);  // unbiased estimate of variance
-    let s2 = (v1 * N1 + v2 * N2) / (N1 + N2 - 2);
-    let t = (av1 - av2) / (Math.sqrt(s2 * (1.0 / N1 + 1.0 / N2)));
+    let t = (av1 - av2) / (Math.sqrt(s2 * (sd1 / (N1 - 1) + sd2 / (N2 - 1));
     let sn1 = sd1 * sd1 / N1;
     let sn2 = sd2 * sd2 / N2;
     let dof_welch = (sn1 + sn2) * (sn1 + sn2)
@@ -81,13 +86,19 @@ function calcavgsd(arr) {
     let sum = 0;
     let sqsum = 0;
     let n = arr.length;
+    let dof = n - 1;
 
     for (const e of arr) {
         sum += e;
-        sqsum += e * e;
     }
     let avg = sum / n;
-    return [avg, Math.sqrt(sqsum / n - avg * avg)];
+
+    for (const e of arr) {
+        sqsum += (e - avg) * (e - avg);
+    }
+    let variance_unbiased = sqsum / dof;
+
+    return [avg, Math.sqrt(variance_unbiased)];
 }
 
 function calc3() {
@@ -127,7 +138,7 @@ input {
 <body>
 
 <h1>unpaired t test</h1>
-S.D. can be sample standard deviation.(let's forget degree of freedom(= N-1)!)
+S.D. should be unbiased standard deviation!
 <h2>a:</h2>
 <input id="res1" value="960.8 ± 18.43" size="10"> or <input id="avg1" value="960.8" size="6"> ±<input id="sd1" value="18.43" size="5"><br>
 (N=<input id="N1" value="30" size="5">)<br>
