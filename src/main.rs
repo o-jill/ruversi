@@ -688,7 +688,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
             _ => {}
         }
 
-        DuelResult::duel_summary(&win, &draw, &lose, &total);
+        DuelResult::duel_summary(&lose, &draw, &win, &total);
     }
 }
 
