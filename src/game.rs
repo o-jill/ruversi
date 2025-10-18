@@ -554,13 +554,21 @@ impl GameBB {
                     if self.is_verbose() {println!("auto pass.");}
                     xy = bitboard::PASS;
                 } else if movable.len() == 1 {
-                    xy =movable[0];
+                    xy = if movable[0] == bitboard::PASS {
+                        if self.is_verbose() {println!("auto pass.");}
+                        bitboard::PASS
+                    } else {
+                        movable[0]
+                    };
                 } else {
                     // launch another Ruversi
                     match rr.run(&self.ban.to_str()) {
                         Ok((pos, _)) => {
-                            let xx = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
-                            let yy = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                            let xx = "0abcdefgh".find(
+                                    pos.chars().nth(0).unwrap()
+                                ).unwrap_or(10) as u8;
+                            let yy = pos.chars().nth(1).unwrap()
+                                    .to_digit(10).unwrap() as u8;
                             xy = bitboard::cell(xx, yy);
                         },
                         Err(msg) => panic!("error running ruversi... [{msg}]"),
