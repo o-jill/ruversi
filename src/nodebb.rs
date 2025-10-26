@@ -117,16 +117,17 @@ impl NodeBB {
     }
 
     fn evalwtt(ban : &bitboard::BitBoard, wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
+        // if false {
         if cfg!(feature="withtt") {
             if let Some(val) = tt.check(ban) {
                 val
             } else {
-                let val = Self::evaluate(ban, wei);
+                let val = Self::evaluate(ban, wei) * ban.teban as f32;
                 tt.append(ban, val, 0);
                 val
             }
         } else {
-            Self::evaluate(ban, wei)
+            Self::evaluate(ban, wei) * ban.teban as f32
         }
     }
 
@@ -277,6 +278,7 @@ impl NodeBB {
         loop {
             let beta = if f == lower {f + EPS} else {f};
             f = Self::think_internal_ab_failsoft(node, ban, beta - EPS, beta, wei, tt);
+            // println!("{f} {beta} {lower} {upper} ");
             if f < beta {
                 upper = f;
             } else {
@@ -308,7 +310,7 @@ impl NodeBB {
                 if depth < D {  // depth:1
                     let newban = ban.r#move(mv).unwrap();
                     let val = NodeBB::evalwtt(&newban, wei, tt);
-                    (i, val * fteban)
+                    (i, -val)
                 } else {  // depth:2
                     let newban = ban.r#move(mv).unwrap();
                     let value = match newban.genmove() {
@@ -319,7 +321,7 @@ impl NodeBB {
                             mvs.iter().map(|&mv| {
                                     let newban2 = newban.r#move(mv).unwrap();
                                     let val = NodeBB::evalwtt(&newban2, wei, tt);
-                                    val * fteban
+                                    -val
                                 }
                             ).collect::<Vec<_>>().into_iter().reduce(f32::min).unwrap()
                         },
@@ -340,7 +342,7 @@ impl NodeBB {
             let val =
                 if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
                     let val = NodeBB::evalwtt(&newban, wei, tt);
-                    val * fteban
+                    val
                 } else {
                     -NodeBB::think_internal_ab_tt(ch, &newban, -beta, -newalpha, wei, tt)
                 };
@@ -365,14 +367,11 @@ impl NodeBB {
     #[allow(dead_code)]
     pub fn think_internal_ab_failsoft(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
             wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
-        let fteban = ban.teban as f32;
         if let Some(tt_val) = tt.check_available(ban, node.depth) {
-            return tt_val * fteban;
-            // return tt_val;
+            return tt_val;
         } else if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
             let val = NodeBB::evalwtt(&ban, wei, tt);
-            return val * fteban;
-            // return val;
+            return val;
         }
 
         let mut newalpha = alpha;
@@ -393,8 +392,8 @@ impl NodeBB {
                 const D : u8 = 6;
                 if depth < D {  // depth:1
                     let newban = ban.r#move(mv).unwrap();
-                    let val = NodeBB::evalwtt(&newban, wei, tt);
-                    (i, val * fteban)
+                    let val = -NodeBB::evalwtt(&newban, wei, tt);
+                    (i, val)
                 } else {  // depth:2
                     let newban = ban.r#move(mv).unwrap();
                     let value = match newban.genmove() {
@@ -402,12 +401,12 @@ impl NodeBB {
                             newban.countf32() * fteban
                         },
                         Some(mvs) => {
-                            mvs.iter().map(|&mv| {
+                            -mvs.iter().map(|&mv| {
                                     let newban2 = newban.r#move(mv).unwrap();
-                                    let val = NodeBB::evalwtt(&newban2, wei, tt);
-                                    val * fteban
+                                    let val = -NodeBB::evalwtt(&newban2, wei, tt);
+                                    val
                                 }
-                            ).collect::<Vec<_>>().into_iter().reduce(f32::min).unwrap()
+                            ).collect::<Vec<_>>().into_iter().reduce(f32::max).unwrap()
                         },
                     };
                     (i, value)
@@ -416,8 +415,9 @@ impl NodeBB {
             aval.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
             moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
         }
-// println!("moves:{:?}", moves);
+        // println!("moves:{:?}", moves);
         node.child.reserve(moves.len());
+        // let mut maxval = newalpha;
         let mut maxval = -9999.0;
         for mv in moves {
             let newban = ban.r#move(mv).unwrap();
@@ -429,26 +429,16 @@ impl NodeBB {
                 node.child.push(NodeBB::new(mv, depth - 1, teban));
                 node.child.last_mut().unwrap()
             };
-            let val =
-                // if let Some(tt_val) = tt.check_available(&newban, depth - 1) {
-                //     tt_val
-                // } else if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
-                //     let val = NodeBB::evalwtt(&newban, wei, tt);
-                //     val * fteban
-                // } else {
-                    -NodeBB::think_internal_ab_failsoft(ch, &newban, -beta, -newalpha, wei, tt)
-                    ;
-                // };
+            let val = -NodeBB::think_internal_ab_failsoft(
+                        ch, &newban, -beta, -newalpha, wei, tt);
             ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
+            tt.set(&newban, -val, depth - 1);
             if newalpha < val {
                 newalpha = val;
                 node.best = Some(Best::new(val, mv));
-                tt.update(ban, val, depth);
             } else if node.best.is_none() {
                 node.best = Some(Best::new(val, mv));
-                tt.set(ban, val, depth);
-                // tt.update(ban, val, depth);
             } else {
                 // ch.release();
             }
@@ -466,6 +456,17 @@ impl NodeBB {
 
     pub fn think_internal_pvs_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
             wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
+        if let Some(tt_val) = tt.check_available(ban, node.depth) {
+            return tt_val;
+        } else if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
+            let val = NodeBB::evalwtt(&ban, wei, tt);
+            return val;
+        }
+        // if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
+        //     let val = NodeBB::evalwtt(&ban, wei, tt);
+        //     return val;
+        // }
+
         let mut newalpha = alpha;
         let depth = node.depth;
         let teban = ban.teban;
@@ -485,7 +486,7 @@ impl NodeBB {
                 if depth < D {  // depth:1
                     let newban = ban.r#move(mv).unwrap();
                     let val = NodeBB::evalwtt(&newban, wei, tt);
-                    (i, val * fteban)
+                    (i, -val)
                 } else {  // depth:2
                     let newban = ban.r#move(mv).unwrap();
                     let value = match newban.genmove() {
@@ -493,12 +494,12 @@ impl NodeBB {
                             newban.countf32() * fteban
                         },
                         Some(mvs) => {
-                            mvs.iter().map(|&mv| {
+                            -mvs.iter().map(|&mv| {
                                     let newban2 = newban.r#move(mv).unwrap();
-                                    let val = NodeBB::evalwtt(&newban2, wei, tt);
-                                    val * fteban
+                                    let val = -NodeBB::evalwtt(&newban2, wei, tt);
+                                    val
                                 }
-                            ).collect::<Vec<_>>().into_iter().reduce(f32::min).unwrap()
+                            ).collect::<Vec<_>>().into_iter().reduce(f32::max).unwrap()
                         },
                     };
                     (i, value)
@@ -508,7 +509,6 @@ impl NodeBB {
             moves = aval.iter().map(|(i, _val)| moves[*i]).collect::<Vec<_>>();
         }
 
-        let fteban = teban as f32;
         node.child.reserve(moves.len());
         let mv = moves[0];
         let newban = ban.r#move(mv).unwrap();
@@ -520,17 +520,15 @@ impl NodeBB {
             node.child.last_mut().unwrap()
         };
         let val =
-            if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
-                let val = NodeBB::evalwtt(&newban, wei, tt);
-                val * fteban
-            } else {
-                -NodeBB::think_internal_pvs_tt(
-                    ch, &newban, -beta, -newalpha, wei, tt)
-            };
+            -NodeBB::think_internal_pvs_tt(
+                ch, &newban, -beta, -newalpha, wei, tt);
         ch.hyoka = Some(val);
         node.kyokumen += ch.kyokumen;
         node.best = Some(Best::new(val, mv));
-        if beta <= val {return val;}
+        // tt.set(&newban, -val, depth - 1);
+        if beta <= val {
+            return val;
+        }
         if newalpha < val {newalpha = val;}
 
         let mut maxval = val;
@@ -544,30 +542,26 @@ impl NodeBB {
                 node.child.last_mut().unwrap()
             };
             let val =
-                if newban.nblank() == 0 || newban.is_passpass() || depth <= 1 {
-                    let val = NodeBB::evalwtt(&newban, wei, tt);
-                    val * fteban
+            {
+                let val = -NodeBB::think_internal_pvs_tt(
+                    ch, &newban, -newalpha - 0.1, -newalpha, wei, tt);
+                if beta <= val {
+                    val
+                } else if newalpha >= val {
+                    val
                 } else {
-                    let val = -NodeBB::think_internal_pvs_tt(
-                        ch, &newban, -newalpha - 0.001, -newalpha, wei, tt);
-                    if beta <= val {
-                        val
-                    } else {
-                        if newalpha >= val {
-                            val
-                        } else {
-                            -NodeBB::think_internal_pvs_tt(
-                                ch, &newban, -beta, -val, wei, tt)
-                        }
-                    }
-                };
+                    -NodeBB::think_internal_pvs_tt(
+                        ch, &newban, -beta, -val, wei, tt)
+                }
+            };
             ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
+            // tt.set(&newban, -val, depth - 1);
             if newalpha < val {
                 newalpha = val;
                 node.best = Some(Best::new(val, mv));
             } else {
-                ch.release();
+                // ch.release();
             }
             if beta <= val {
                 // cut
