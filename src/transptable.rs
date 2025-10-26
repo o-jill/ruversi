@@ -12,7 +12,7 @@ const MAXSIZE : usize = if cfg!(feature="withtt") {1024 * 1024 * 1} else {1};
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-struct TTEntry {
+pub struct TTEntry {
     pub hash : u64,
     pub black : u64,
     pub white : u64,
@@ -68,6 +68,7 @@ impl TTEntry {
 
     #[allow(dead_code)]
     pub fn set(&mut self, hash : u64, b : &bitboard::BitBoard, hyoka : f32, hyoka_search : f32, depth : u8) {
+        // println!("{hyoka:.2}@{depth}");
         self.hash = hash;
         self.black = b.black;
         self.white = b.white;
@@ -211,6 +212,7 @@ impl TranspositionTable {
         let h = b.hash();
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
+        // if self.list[idx].is_hit(b) && self.depth[idx] == depth {
         if self.list[idx].is_hit(b) && self.depth[idx] >= depth {
         // if self.list[idx].is_available(b, depth) {
         // if self.list[idx].is_hit(b) {
@@ -225,18 +227,21 @@ impl TranspositionTable {
         let h = b.hash();
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
-        self.list[idx] = TTEntry::from(h, b, hy, depth);
+        let d = self.depth[idx];
+        if depth < d {return;}
+
         self.depth[idx] =  depth;
+        self.list[idx] = TTEntry::from(h, b, hy, depth);
     }
 
     pub fn set(&mut self, b : &bitboard::BitBoard, hy : f32, depth : u8) {
         let h = b.hash();
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
+        let d = self.depth[idx];
+        if depth < d {return;}
 
-        if self.depth[idx] > depth {return;}
         self.depth[idx] =  depth;
-
         self.list[idx].set(h, b, hy, hy, depth);
     }
 
@@ -244,8 +249,8 @@ impl TranspositionTable {
         let h = b.hash();
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
-
-        if self.depth[idx] > depth {return;}
+        let d = self.depth[idx];
+        if depth < d {return;}
 
         self.depth[idx] = depth;
 
@@ -263,6 +268,16 @@ impl TranspositionTable {
         //     print!("{},", i.hit);
         // }
         println!();
+    }
+
+    pub fn probe(&self, ban: &bitboard::BitBoard) -> Option<(&TTEntry, u8)> {
+        let h = ban.hash();
+        let sz = self.list.len();
+        let idx = (h & (sz - 1) as u64) as usize;
+        // if self.list[idx].is_hit(ban) {
+            return Some((&self.list[idx], self.depth[idx]));
+        // }
+        // None
     }
 }
 
