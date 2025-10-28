@@ -237,8 +237,8 @@ impl NodeBB {
         let alpha : f32 = -123456.7;
         let beta : f32 = 123456.7;
         let val = if cfg!(feature="withtt") {
-            NodeBB::think_internal_pvs_tt(node, ban, alpha, beta, wei, tt)
-            // NodeBB::think_internal_ab_failsoft(node, ban, alpha, beta, wei, tt)
+            // NodeBB::think_internal_pvs_tt(node, ban, alpha, beta, wei, tt)
+            NodeBB::think_internal_ab_failsoft(node, ban, alpha, beta, wei, tt)
             // NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt)
         } else {
             NodeBB::think_internal_ab_tt(node, ban, alpha, beta, wei, tt)
