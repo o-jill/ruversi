@@ -19,19 +19,18 @@ pub struct TTEntry {
     pub hyoka : f32,
     pub hyoka_search : Option<f32>,
     pub hit : u16,
-    // pub depth : u8,  // この数字が大きいほうがより確からしい評価値
     pub teban : i8,
 }
 
 impl Default for TTEntry {
     fn default() -> Self {
-        TTEntry::new(0, 0, 0, bitboard::NONE, 9999f32, None, 0)
+        TTEntry::new(0, 0, 0, bitboard::NONE, 9999f32, None)
     }
 }
 
 impl TTEntry {
     pub fn new(hash : u64, black : u64, white : u64, teban : i8,
-               hyoka : f32, hyoka_search : Option<f32>, depth : u8) -> Self {
+               hyoka : f32, hyoka_search : Option<f32>) -> Self {
         Self {
             hash,
             black,
@@ -39,25 +38,21 @@ impl TTEntry {
             hyoka,
             hyoka_search,
             hit : 0,
-            // depth,
             teban,
         }
     }
 
-    pub fn from(hash : u64, b : &bitboard::BitBoard,
-            hyoka : f32, depth : u8) -> Self {
-        Self::new(hash, b.black, b.white, b.teban, hyoka, None, depth)
+    pub fn from(hash : u64, b : &bitboard::BitBoard, hyoka : f32) -> Self {
+        Self::new(hash, b.black, b.white, b.teban, hyoka, None)
     }
 
     #[allow(dead_code)]
     pub fn from_search(hash : u64, b : &bitboard::BitBoard,
-            hyoka_search : f32, depth : u8) -> Self {
-        Self::new(hash, b.black, b.white, b.teban, 9999f32, Some(hyoka_search), depth)
+            hyoka_search : f32) -> Self {
+        Self::new(hash, b.black, b.white, b.teban, 9999f32, Some(hyoka_search))
     }
 
-    pub fn update(&mut self, hash : u64, b : &bitboard::BitBoard, hyoka_search : f32, depth : u8) {
-        // if self.depth > depth {return;}
-
+    pub fn update(&mut self, _hash : u64, _b : &bitboard::BitBoard, hyoka_search : f32) {
         // self.hash = hash;
         // self.black = b.black;
         // self.white = b.white;
@@ -67,7 +62,7 @@ impl TTEntry {
     }
 
     #[allow(dead_code)]
-    pub fn set(&mut self, hash : u64, b : &bitboard::BitBoard, hyoka : f32, hyoka_search : f32, depth : u8) {
+    pub fn set(&mut self, hash : u64, b : &bitboard::BitBoard, hyoka : f32, hyoka_search : f32) {
         // println!("{hyoka:.2}@{depth}");
         self.hash = hash;
         self.black = b.black;
@@ -87,12 +82,13 @@ impl TTEntry {
         // }
         ret
     }
+
     /**
      * hit 且つ 引数のdepth以上なら使って良い
      * true:hyokaを使って良い, false:hyokaの値はあっても信用ならないので使わない
      */
-    pub fn is_available(&self, b : &bitboard::BitBoard, depth : u8) -> bool {
-        self.is_hit(b) // && depth <= self.depth
+    pub fn is_available(&self, b : &bitboard::BitBoard) -> bool {
+        self.is_hit(b)
     }
 
     /**
@@ -106,14 +102,6 @@ impl TTEntry {
             self.hyoka
         }
     }
-
-    /**
-     * 保存されているデータのdepthを更新する
-     * ちょっと前の局面から探索した結果なので価値を下げる。
-     */
-    // pub fn update_depth(&mut self, diff : u8) {
-    //     self.depth = self.depth.saturating_sub(diff)
-    // }
 
     #[allow(dead_code)]
     pub fn is_hash(&self, hash : u64, teban : i8) -> bool {
@@ -212,11 +200,7 @@ impl TranspositionTable {
         let h = b.hash();
         let sz = self.list.len();
         let idx = (h & (sz - 1) as u64) as usize;
-        // if self.list[idx].is_hit(b) && self.depth[idx] == depth {
         if self.list[idx].is_hit(b) && self.depth[idx] >= depth {
-        // if self.list[idx].is_available(b, depth) {
-        // if self.list[idx].is_hit(b) {
-        // if self.list[idx].is_hash(h, b.teban) {
             Some(self.list[idx].better_hyoka())
         } else {
             None
@@ -231,7 +215,7 @@ impl TranspositionTable {
         if depth < d {return;}
 
         self.depth[idx] =  depth;
-        self.list[idx] = TTEntry::from(h, b, hy, depth);
+        self.list[idx] = TTEntry::from(h, b, hy);
     }
 
     pub fn set(&mut self, b : &bitboard::BitBoard, hy : f32, depth : u8) {
@@ -242,7 +226,7 @@ impl TranspositionTable {
         if depth < d {return;}
 
         self.depth[idx] =  depth;
-        self.list[idx].set(h, b, hy, hy, depth);
+        self.list[idx].set(h, b, hy, hy);
     }
 
     pub fn update(&mut self, b : &bitboard::BitBoard, hy : f32, depth : u8) {
@@ -255,9 +239,9 @@ impl TranspositionTable {
         self.depth[idx] = depth;
 
         if self.list[idx].is_hit(b) {
-            self.list[idx].update(h, b, hy, depth);
+            self.list[idx].update(h, b, hy);
         } else {
-            self.list[idx].set(h, b, hy, hy, depth);
+            self.list[idx].set(h, b, hy, hy);
         }
     }
 
@@ -270,6 +254,7 @@ impl TranspositionTable {
         println!();
     }
 
+    #[allow(dead_code)]
     pub fn probe(&self, ban: &bitboard::BitBoard) -> Option<(&TTEntry, u8)> {
         let h = ban.hash();
         let sz = self.list.len();
@@ -285,7 +270,7 @@ impl TranspositionTable {
 #[test]
 fn test_ttentry_new_and_is_hit() {
     let b = bitboard::BitBoard::new();
-    let entry = TTEntry::from(42, &b, 100.0, 10);
+    let entry = TTEntry::from(42, &b, 100.0);
     assert!(entry.is_hit(&b));
     let b2 = bitboard::BitBoard::from("8/8/8/H/H/8/8/8 w").unwrap();
     assert!(!entry.is_hit(&b2));
@@ -294,9 +279,9 @@ fn test_ttentry_new_and_is_hit() {
 #[test]
 fn test_ttentry_update_and_better_hyoka() {
     let b = bitboard::BitBoard::new();
-    let mut entry = TTEntry::from(42, &b, 100.0, 10);
+    let mut entry = TTEntry::from(42, &b, 100.0);
     assert_eq!(entry.better_hyoka(), 100.0);
-    entry.update(42, &b, 50.0, 10);
+    entry.update(42, &b, 50.0);
     assert_eq!(entry.better_hyoka(), 50.0);
     // TTEntryにdepthがないので entry.update(42, &b, 10.0, 5);
     // 10が代入されてしまうのでコメントアウト assert_eq!(entry.better_hyoka(), 50.0);
@@ -306,7 +291,7 @@ fn test_ttentry_update_and_better_hyoka() {
 fn test_ttentry_set_and_is_hash() {
     let b = bitboard::BitBoard::new();
     let mut entry = TTEntry::default();
-    entry.set(99, &b, 123.0, 55.0, 5);
+    entry.set(99, &b, 123.0, 55.0);
     assert!(entry.is_hash(99, 1));
     assert_eq!(entry.hyoka, 123.0);
     assert_eq!(entry.hyoka_search, Some(55.0));

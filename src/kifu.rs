@@ -35,7 +35,7 @@ impl Te {
             bitboard::STONE_GOTE => bitboard::GOTE,
             _ => return None
         };
-        let xy = if elem[2].to_ascii_uppercase() == "PS" {
+        let xy = if elem[2].eq_ignore_ascii_case("PS") {
             bitboard::PASS
         } else {
             let c = elem[2].chars().nth(0).unwrap();

@@ -293,8 +293,7 @@ impl NodeBB {
             }
         }
         if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
-            let val = NodeBB::evalwtt(&ban, wei, tt);
-            return val;
+            return NodeBB::evalwtt(ban, wei, tt);
         }
 
         let mut newalpha = alpha;
@@ -326,8 +325,7 @@ impl NodeBB {
                         Some(mvs) => {
                             -mvs.iter().map(|&mv| {
                                     let newban2 = newban.r#move(mv).unwrap();
-                                    let val = -NodeBB::evalwtt(&newban2, wei, tt);
-                                    val
+                                    -NodeBB::evalwtt(&newban2, wei, tt)
                                 }
                             ).collect::<Vec<_>>().into_iter().reduce(f32::max).unwrap()
                         },
@@ -387,8 +385,7 @@ impl NodeBB {
             }
         }
         if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
-            let val = NodeBB::evalwtt(&ban, wei, tt);
-            return val;
+            return NodeBB::evalwtt(ban, wei, tt);
         }
 
         let mut newalpha = alpha;
@@ -420,8 +417,7 @@ impl NodeBB {
                         Some(mvs) => {
                             -mvs.iter().map(|&mv| {
                                     let newban2 = newban.r#move(mv).unwrap();
-                                    let val = -NodeBB::evalwtt(&newban2, wei, tt);
-                                    val
+                                    -NodeBB::evalwtt(&newban2, wei, tt)
                                 }
                             ).collect::<Vec<_>>().into_iter().reduce(f32::max).unwrap()
                         },
