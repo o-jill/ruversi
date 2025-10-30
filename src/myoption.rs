@@ -36,14 +36,14 @@ pub enum TrainingMode {
 pub enum Verbose {
     Silent,
     Normal,
-    Verbose,
+    Full,
 }
 
 impl Verbose {
     pub fn is_silent(&self) -> bool {self.eq(&Verbose::Silent)}
     #[allow(dead_code)]
     pub fn is_normal(&self) -> bool {self.eq(&Verbose::Normal)}
-    pub fn is_verbose(&self) -> bool {self.eq(&Verbose::Verbose)}
+    pub fn is_verbose(&self) -> bool {self.eq(&Verbose::Full)}
 }
 
 /// Options specified in command line args.
@@ -210,7 +210,7 @@ impl MyOption {
                 } else if e == "--silent" {
                     opt.verbose = Verbose::Silent;
                 } else if e == "--verbose" {
-                    opt.verbose = Verbose::Verbose;
+                    opt.verbose = Verbose::Full;
                 } else if e == "--gtp" {
                     opt.mode = Mode::Gtp;
                 } else if e == "--oep" {
@@ -491,7 +491,7 @@ mod tests {
         let args = vec!["prog".to_string(), "--verbose".to_string()];
         let opt = MyOption::new(args).unwrap();
         // verbose が Verbose::Verbose かどうか確認
-        assert_eq!(opt.verbose, Verbose::Verbose);
+        assert_eq!(opt.verbose, Verbose::Full);
         // .is_verbose() メソッドでも確認
         assert!(opt.verbose.is_verbose());
     }

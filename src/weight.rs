@@ -413,6 +413,7 @@ impl Weight {
     }
 
     /// fill zero.
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         self.weight.iter_mut().for_each(|m| *m = 0.0);
     }
@@ -432,11 +433,13 @@ impl Weight {
         &self.weight[offset + N_WEIGHT_FIXST_B..offset + N_WEIGHT_INPUTBIAS]
     }
 
+    #[allow(dead_code)]
     pub fn wfixedstone_b(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_FIXST_B..offset + N_WEIGHT_FIXST_W]
     }
 
+    #[allow(dead_code)]
     pub fn wfixedstone_w(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_FIXST_W..offset + N_WEIGHT_INPUTBIAS]

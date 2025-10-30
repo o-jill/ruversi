@@ -244,6 +244,7 @@ impl NodeBB {
         Some(val)
     }
 
+    #[allow(dead_code)]
     pub fn think_mtdf(ban : &bitboard::BitBoard, depth : u8, node : &mut NodeBB,
             wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> Option<f32> {
         if depth == 0 {
@@ -377,6 +378,7 @@ impl NodeBB {
         // newalpha  // fail-hard
     }
 
+    #[allow(dead_code)]
     pub fn think_internal_pvs_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
             wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
         if cfg!(feature="withtt") {

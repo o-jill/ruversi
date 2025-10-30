@@ -75,20 +75,7 @@ impl TTEntry {
     }
 
     pub fn is_hit(&self, b : &bitboard::BitBoard) -> bool {
-        // self.black == b.black && self.white == b.white && self.teban == b.teban
-        let ret = self.black == b.black && self.white == b.white && self.teban == b.teban;
-        // if self.hash != 0 && !ret {
-        //     println!("crashed!!{:16x}", self.hash);
-        // }
-        ret
-    }
-
-    /**
-     * hit 且つ 引数のdepth以上なら使って良い
-     * true:hyokaを使って良い, false:hyokaの値はあっても信用ならないので使わない
-     */
-    pub fn is_available(&self, b : &bitboard::BitBoard) -> bool {
-        self.is_hit(b)
+        self.black == b.black && self.white == b.white && self.teban == b.teban
     }
 
     /**

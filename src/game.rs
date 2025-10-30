@@ -1,7 +1,7 @@
 use super::*;
 
 use std::io::{self, Write};
-use std::sync::{Arc, RwLock};
+// use std::sync::{Arc, RwLock};
 
 type SearchFn = fn(&bitboard::BitBoard, u8, &mut nodebb::NodeBB, &weight::Weight, &mut transptable::TranspositionTable) -> Option<f32>;
 
@@ -93,6 +93,7 @@ impl GameBB {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn starto(&mut self, f : SearchFn, depth : u8) -> Result<(), String> {
         let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
@@ -870,6 +871,7 @@ impl GameBB {
     /// # Arguments
     /// - et1 : SENTE
     /// - et2 : GOTE
+    #[allow(dead_code)]
     pub fn starto_with_2et_mt(&mut self,
         f : SearchFn, depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {

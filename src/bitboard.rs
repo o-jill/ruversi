@@ -173,16 +173,20 @@ macro_rules! bit_rightdown {
     };
 }
 
-pub fn index2x(xy : u8) -> usize {
-    xy as usize % NUMCELL
+#[inline]
+pub fn index2x(xy : u8) -> u8 {
+    xy % NUMCELL as u8
 }
 
-pub fn index2y(xy : u8) -> usize {
-    xy as usize / NUMCELL
+#[inline]
+pub fn index2y(xy : u8) -> u8 {
+    xy / NUMCELL as u8
 }
 
+/// # Returns  
+/// (0~7, 0~7)
 pub fn index2xy(xy : u8) -> (u8, u8) {
-    (xy % NUMCELL as u8, xy / NUMCELL as u8)
+    (index2x(xy), index2y(xy))
 }
 
 /// # Returns  
@@ -190,8 +194,9 @@ pub fn index2xy(xy : u8) -> (u8, u8) {
 /// # Arguments
 /// - `xy` cell index(0~63).
 ///   DO NOT pass xy PASS!
+#[allow(dead_code)]
 pub fn cell2xy(xy : u8) -> (u8, u8) {
-    (xy % NUMCELL as u8 + 1, xy / NUMCELL as u8 + 1)
+    (index2x(xy) + 1, index2y(xy) + 1)
 }
 
 /// # Returns  

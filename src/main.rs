@@ -1,10 +1,8 @@
 use std::fs::File;
 use std::io::Write;
-use std::time::{Duration, Instant};
+use std::time::{Instant};
 use std::thread;
-use std::sync::mpsc;
 use rand::Rng;
-use rand::distributions::{Distribution, Uniform};
 use std::sync::{Arc, Mutex};
 
 mod cassio;
