@@ -173,16 +173,20 @@ macro_rules! bit_rightdown {
     };
 }
 
-pub fn index2x(xy : u8) -> usize {
-    xy as usize % NUMCELL
+#[inline]
+pub fn index2x(xy : u8) -> u8 {
+    xy % NUMCELL as u8
 }
 
-pub fn index2y(xy : u8) -> usize {
-    xy as usize / NUMCELL
+#[inline]
+pub fn index2y(xy : u8) -> u8 {
+    xy / NUMCELL as u8
 }
 
+/// # Returns  
+/// (0~7, 0~7)
 pub fn index2xy(xy : u8) -> (u8, u8) {
-    (xy % NUMCELL as u8, xy / NUMCELL as u8)
+    (index2x(xy), index2y(xy))
 }
 
 /// # Returns  
@@ -190,8 +194,9 @@ pub fn index2xy(xy : u8) -> (u8, u8) {
 /// # Arguments
 /// - `xy` cell index(0~63).
 ///   DO NOT pass xy PASS!
+#[allow(dead_code)]
 pub fn cell2xy(xy : u8) -> (u8, u8) {
-    (xy % NUMCELL as u8 + 1, xy / NUMCELL as u8 + 1)
+    (index2x(xy) + 1, index2y(xy) + 1)
 }
 
 /// # Returns  
@@ -1839,6 +1844,24 @@ fn testbitbrd() {
     assert_eq!(count_stones("H/aG/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 39);
     assert_eq!(count_emptycells("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 25);
     assert_eq!(count_stones("H/AaF/C5/D4/C1A3/C2A2/C3A1/C4A b").unwrap(), 39);
+
+    let ban = BitBoard::from("8/8/8/3Aa3/2AaA3/2a5/8/8 b").unwrap();
+    ban.put();
+    assert!(ban.r#move(20).is_ok());
+    assert!(ban.r#move(29).is_ok());
+    assert!(ban.r#move(43).is_ok());
+    assert!(ban.r#move(50).is_ok());
+    assert_eq!(ban.genmove().unwrap(), vec![20, 29, 43, 50]);
+
+    let ban = BitBoard::from("1aF/1aDaA/bAcB/bDaA/bAaAaB/AaF/H/H w").unwrap();
+    ban.put();
+    let mv = ban.genmove();
+    assert_eq!(mv, Some(vec![PASS]));
+
+    let ban = BitBoard::from("1aF/1aDaA/bAcB/bDaA/bAaAaB/AaF/H/H b").unwrap();
+    ban.put();
+    let mv = ban.genmove();
+    assert_eq!(mv, Some(vec![cell(1, 1), cell(1, 2)]));
 }
 
 #[test]

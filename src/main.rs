@@ -1,10 +1,8 @@
 use std::fs::File;
 use std::io::Write;
-use std::time::{Duration, Instant};
+use std::time::{Instant};
 use std::thread;
-use std::sync::mpsc;
 use rand::Rng;
-use rand::distributions::{Distribution, Uniform};
 use std::sync::{Arc, Mutex};
 
 mod cassio;
@@ -29,14 +27,14 @@ static MYOPT: once_cell::sync::OnceCell<myoption::MyOption> = once_cell::sync::O
 #[cfg(target_arch="x86_64")]
 fn trial() {
     let mut kifu = kifu::Kifu::new();
-    kifu.append(0, 0, 1, String::new());
-    kifu.append(1, 1, 1, String::new());
-    kifu.append(2, 2, -1, String::new());
-    kifu.append(3, 3, 1, String::new());
-    kifu.append(4, 4, -1, String::new());
-    kifu.append(5, 5, 1, String::new());
-    kifu.append(6, 6, -1, String::new());
-    kifu.append(7, 7, 0, String::new());
+    kifu.append(0,1, String::new());
+    kifu.append(1,1, String::new());
+    kifu.append(2,-1, String::new());
+    kifu.append(3,1, String::new());
+    kifu.append(4,-1, String::new());
+    kifu.append(5,1, String::new());
+    kifu.append(6,-1, String::new());
+    kifu.append(7,0, String::new());
     print!("{}", kifu.to_str());
 }
 
@@ -60,6 +58,7 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>, cachesz : usize)
         let st = Instant::now();
         let mut node = nodebb::NodeBB::root(depth);
         let val =
+            // nodebb::NodeBB::think_mtdf(&ban, depth, &mut node, wei, &mut tt).unwrap();
             nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, &mut tt).unwrap();
             // nodebb::NodeBB::think_ab(&ban, depth).unwrap();
             // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap();
@@ -77,23 +76,24 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>, cachesz : usize)
 }
 
 fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str, cachesz: usize) {
+    let think = MYOPT.get().unwrap().think.as_str();
+    let f = match think {
+        "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab_simple
+        },
+        "all" => {
+            nodebb::NodeBB::think_simple_gk_tt
+        },
+        _ => { panic!("unknown thinking method.") }
+    };
     for (idx, rfen) in rfentbl.iter().enumerate() {
-        let think = MYOPT.get().unwrap().think.as_str();
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
         // play
-        match think {
-            "" | "ab" => {
-                g.startgk(nodebb::NodeBB::think_ab_simple_gk_tt, depth).unwrap();
-                // g.starto(nodebb::NodeBB::think_ab_simple, depth).unwrap();
-            },
-            "all" => {
-                // g.start(nodebb::NodeBB::think, depth).unwrap()
-                g.starto(nodebb::NodeBB::think_simple_gk_tt, depth).unwrap();
-            },
-            _ => { panic!("unknown thinking method.") }
-        }
+        g.startgk(f, depth).unwrap();
         let kifutxt = g.kifu.to_str();
 
         // store kifu
@@ -247,6 +247,17 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     let rfen1 = rfentbl.drain(n..).collect::<Vec<String>>();
     let think = MYOPT.get().unwrap().think.as_str();
 
+    let f = match think {
+        "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab_simple
+        },
+        "all" => {
+            nodebb::NodeBB::think_simple_gk_tt
+        },
+        _ => { panic!("unknown thinking method.") }
+    };
     let thrd = thread::spawn(move || {
         let verbose = !silent;
         for rfen in rfen1.iter() {
@@ -257,12 +268,10 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
             // play
             match think {
                 "" | "ab" => {
-                    // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w3, &w4).unwrap()
-                    g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w3, &w4).unwrap()
-                    // g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w3, &w4).unwrap()
+                    g.starto_with_2et_mt_tt(f, depth, &w3, &w4).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::think_simple_gk_tt, depth, &w3, &w4).unwrap()
+                    g.starto_with_2et(f, depth, &w3, &w4).unwrap()
                 },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -280,11 +289,10 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
                 "" | "ab" => {
-                    g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w4, &w3).unwrap()
-                    // g.starto_with_2et_mt(nodebb::NodeBB::think_ab_simple_gk, depth, &w4, &w3).unwrap()
+                    g.starto_with_2et_mt_tt(f, depth, &w4, &w3).unwrap()
                 },
                 "all" => {
-                    g.starto_with_2et(nodebb::NodeBB::think_simple_gk_tt, depth, &w4, &w3).unwrap()
+                    g.starto_with_2et(f, depth, &w4, &w3).unwrap()
                 },
                 _ => { panic!("unknown thinking method.") }
             }
@@ -305,11 +313,10 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         let think = MYOPT.get().unwrap().think.as_str();
         match think {
             "" | "ab" => {
-                g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
-                // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w1, &w2).unwrap()
+                g.starto_with_2et_mt_tt(f, depth, &w2, &w1).unwrap()
             },
             "all" => {
-                g.starto_with_2et(nodebb::NodeBB::think_simple_gk_tt, depth, &w1, &w2).unwrap()
+                g.starto_with_2et(f, depth, &w1, &w2).unwrap()
             },
             _ => { panic!("unknown thinking method.") }
         }
@@ -327,11 +334,10 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         let think = MYOPT.get().unwrap().think.as_str();
         match think {
             "" | "ab" => {
-                g.starto_with_2et_mt_tt(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
-                // g.starto_with_2et(nodebb::NodeBB::think_ab_simple, depth, &w2, &w1).unwrap()
+                g.starto_with_2et_mt_tt(f, depth, &w2, &w1).unwrap()
             },
             "all" => {
-                g.starto_with_2et(nodebb::NodeBB::think_simple_gk_tt, depth, &w2, &w1).unwrap()
+                g.starto_with_2et(f, depth, &w2, &w1).unwrap()
             },
             _ => { panic!("unknown thinking method.") }
         }
@@ -378,28 +384,25 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
     let rfentbl = &ip.rfens_all();
+    let think = MYOPT.get().unwrap().think.as_str();
+    let f = match think {
+        "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab_simple
+        },
+        "all" => {
+            nodebb::NodeBB::think_simple_gk_tt
+        },
+        _ => { panic!("unknown thinking method.") }
+    };
     for rfen in rfentbl.iter() {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
-        let think = MYOPT.get().unwrap().think.as_str();
-        match think {
-            "" | "ab" => {
-                // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
-                g.starto_with_2et(
-                    nodebb::NodeBB::think_ab_simple_gk_tt,
-                    depth, &w1, &w2).unwrap()
-                // g.starto_with_2et(nodebb::NodeBB::think_ab, depth, &w1, &w2).unwrap()
-            },
-            "all" => {
-                g.starto_with_2et(
-                    nodebb::NodeBB::think_simple_gk_tt, depth, &w1, &w2).unwrap()
-                // g.start_with_2et(nodebb::NodeBB::think, depth, &w1, &w2).unwrap()
-            },
-            _ => { panic!("unknown thinking method.") }
-        }
+        g.starto_with_2et(f, depth, &w1, &w2).unwrap();
         let dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -414,18 +417,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
-        let think = MYOPT.get().unwrap().think.as_str();
-        match think {
-            "" | "ab" => {
-                // g.start_with_2et(nodebb::NodeBB::think_ab, depth, &w2, &w1).unwrap()
-                g.starto_with_2et(nodebb::NodeBB::think_ab_simple_gk_tt, depth, &w2, &w1).unwrap()
-            },
-            "all" => {
-                g.starto_with_2et(nodebb::NodeBB::think_simple_gk_tt, depth, &w2, &w1).unwrap()
-                // g.start_with_2et(nodebb::NodeBB::think, depth, &w2, &w1).unwrap()
-            },
-            _ => { panic!("unknown thinking method.") }
-        }
+        g.starto_with_2et(f, depth, &w2, &w1).unwrap();
         let dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -464,6 +456,17 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
+    let f = match think {
+        "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab_simple
+        },
+        "all" => {
+            nodebb::NodeBB::think_simple_gk_tt
+        },
+        _ => { panic!("unknown thinking method.") }
+    };
     let rfentbl = &ip.rfens_all();
     for rfen in rfentbl.iter() {
         let turn = bitboard::SENTE;
@@ -472,16 +475,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
-        g.starto_against_edax(
-            match think {
-                "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
-                },
-                "all" => {
-                    nodebb::NodeBB::think_simple_gk_tt
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turn, econf).unwrap();
+        g.starto_against_edax(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -496,16 +490,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
-        g.starto_against_edax(
-            match think {
-                "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
-                },
-                "all" => {
-                    nodebb::NodeBB::think_simple_gk_tt
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turn, econf).unwrap();
+        g.starto_against_edax(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -543,6 +528,17 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
+    let f = match think {
+        "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab_simple
+        },
+        "all" => {
+            nodebb::NodeBB::think_simple_gk_tt
+        },
+        _ => { panic!("unknown thinking method.") }
+    };
     let rfentbl = &ip.rfens_all();
     for rfen in rfentbl.iter() {
         let turn = bitboard::SENTE;
@@ -551,16 +547,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
-        g.start_against_via_cassio(
-            match think {
-                "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
-                },
-                "all" => {
-                    nodebb::NodeBB::think_simple_gk_tt
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turn, econf).unwrap();
+        g.start_against_via_cassio(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -576,16 +563,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
-        g.start_against_via_cassio(
-            match think {
-                "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
-                },
-                "all" => {
-                    nodebb::NodeBB::think_simple_gk_tt
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turn, econf).unwrap();
+        g.start_against_via_cassio(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -623,22 +601,23 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
     let rfentbl = &ip.rfens_all();
+    let f = match think {
+        "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf
+            nodebb::NodeBB::think_ab_simple_gk_tt
+        },
+        "all" => {
+            nodebb::NodeBB::think_simple_gk_tt
+        },
+        _ => { panic!("unknown thinking method.") }
+        };
     for rfen in rfentbl.iter() {
         let turn = bitboard::SENTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
-        g.starto_against_ruversi(
-            match think {
-                "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
-                },
-                "all" => {
-                    nodebb::NodeBB::think_simple_gk_tt
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turn, econf).unwrap();
+        g.starto_against_ruversi(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -654,16 +633,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
-        g.starto_against_ruversi(
-            match think {
-                "" | "ab" => {
-                    nodebb::NodeBB::think_ab_simple_gk_tt
-                },
-                "all" => {
-                    nodebb::NodeBB::think_simple_gk_tt
-                },
-                _ => { panic!("unknown thinking method.") }
-            }, depth, turn, econf).unwrap();
+        g.starto_against_ruversi(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -674,7 +644,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
             _ => {}
         }
 
-        DuelResult::duel_summary(&win, &draw, &lose, &total);
+        DuelResult::duel_summary(&lose, &draw, &win, &total);
     }
 }
 
@@ -701,26 +671,18 @@ fn play(depth : u8, turnh: i8, cachesz : usize) {
     g.set_cachesize(cachesz);
     // play
     let think = MYOPT.get().unwrap().think.as_str();
-    // g.start_against_stdin(
-    //     match think {
-    //         "" | "ab" => {
-    //             nodebb::NodeBB::think_ab
-    //         },
-    //         "all" => {
-    //             nodebb::NodeBB::think
-    //         },
-    //         _ => { panic!("unknown thinking method.") }
-    //     }, depth, turnh).unwrap();
-    g.starto_against_stdin(
-        match think {
-            "" | "ab" => {
-                nodebb::NodeBB::think_ab_simple_gk_tt
-            },
-            "all" => {
-                nodebb::NodeBB::think_simple_gk_tt
-            },
-            _ => { panic!("unknown thinking method.") }
-        }, depth, turnh).unwrap();
+    let f = match think {
+        "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab_simple
+        },
+        "all" => {
+            nodebb::NodeBB::think_simple_gk_tt
+        },
+        _ => { panic!("unknown thinking method.") }
+    };
+    g.starto_against_stdin(f, depth, turnh).unwrap();
 }
 
 /// play a game ruversi vs Edax.
@@ -734,26 +696,18 @@ fn edax(depth : u8, turnh: i8, cachesz : usize) {
     // play
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();
-    // g.start_against_edax(
-    //     match think {
-    //         "" | "ab" => {
-    //             nodebb::NodeBB::think_ab
-    //         },
-    //         "all" => {
-    //             nodebb::NodeBB::think
-    //         },
-    //         _ => { panic!("unknown thinking method.") }
-    //     }, depth, turnh).unwrap();
-    g.starto_against_edax(
-        match think {
-            "" | "ab" => {
-                nodebb::NodeBB::think_ab_simple_gk_tt
-            },
-            "all" => {
-                nodebb::NodeBB::think_simple_gk_tt
-            },
-            _ => { panic!("unknown thinking method.") }
-        }, depth, turnh, econf).unwrap();
+    let f = match think {
+        "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab_simple
+        },
+        "all" => {
+            nodebb::NodeBB::think_simple_gk_tt
+        },
+        _ => { panic!("unknown thinking method.") }
+    };
+    g.starto_against_edax(f, depth, turnh, econf).unwrap();
 }
 
 /// play a game ruversi vs another ruversi.
@@ -769,16 +723,18 @@ fn vs_ruversi(depth : u8, turnh: i8, cachesz : usize) {
     // play
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();
-    g.starto_against_ruversi(
-        match think {
-            "" | "ab" => {
-                nodebb::NodeBB::think_ab_simple_gk_tt
-            },
-            "all" => {
-                nodebb::NodeBB::think_simple_gk_tt
-            },
-            _ => { panic!("unknown thinking method.") }
-        }, depth, turnh, econf).unwrap();
+    let f = match think {
+        "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab_simple
+        },
+        "all" => {
+            nodebb::NodeBB::think_simple_gk_tt
+        },
+        _ => { panic!("unknown thinking method.") }
+    };
+    g.starto_against_ruversi(f, depth, turnh, econf).unwrap();
 }
 
 /// show command options and exit(1).

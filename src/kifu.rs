@@ -7,17 +7,15 @@ pub const STR_POSX : &str = "0abcdefgh";
 pub const HEADER : &str = "# reversi kifu revision 1.0\n";
 
 pub struct Te {
-    x : usize,
-    y : usize,
+    xy : u8,
     pub teban : i8,
     pub rfen : String,
 }
 
 impl Te {
-    pub fn new(x : usize, y : usize, teban : i8, rfen : String) -> Te {
+    pub fn new(xy : u8, teban : i8, rfen : String) -> Te {
         Te {
-            x,
-            y,
+            xy,
             teban,
             rfen,
         }
@@ -37,25 +35,26 @@ impl Te {
             bitboard::STONE_GOTE => bitboard::GOTE,
             _ => return None
         };
-        let x : usize;
-        let y : usize;
-        if elem[2] == "PS" {
-            x = 0;
-            y = 0;
+        let xy = if elem[2].eq_ignore_ascii_case("PS") {
+            bitboard::PASS
         } else {
             let c = elem[2].chars().nth(0).unwrap();
-            x = STR_POSX.find(c)?;
-            y = elem[2].chars().nth(1).unwrap().to_digit(10).unwrap() as usize;
-        }
+            let x = STR_POSX.find(c)?;
+            let y = elem[2].chars().nth(1).unwrap().to_digit(10).unwrap() as usize;
+            (x - 1 + y * 8 - 8) as u8
+        };
         let rfen = format!("{} {}", elem[3], elem[4]);
-        Some(Te {x, y, teban, rfen})
+        Some(Te {xy, teban, rfen})
     }
 
     pub fn pos(&self) -> String {
-        if self.x == 0 || self.y == 0 {
+        if self.xy == bitboard::PASS {
             return String::from("PS")
         }
-        format!("{}{}", STR_POSX.chars().nth(self.x).unwrap(), self.y)
+
+        let x = self.xy % 8 + 1;
+        let y = self.xy / 8 + 1;
+        format!("{}{}", STR_POSX.chars().nth(x as usize).unwrap(), y)
     }
 
     pub fn to_str(&self, i : usize) -> String {
@@ -72,17 +71,15 @@ impl Te {
 
 #[test]
 fn testte() {
-    let te = Te::new(0, 0, bitboard::SENTE, "abcdefgh".to_string());
-    assert_eq!(0, te.x);
-    assert_eq!(0, te.y);
+    let te = Te::new(bitboard::PASS, bitboard::SENTE, "abcdefgh".to_string());
+    assert_eq!(255, te.xy);
     assert_eq!(bitboard::SENTE, te.teban);
     assert_eq!("abcdefgh", te.rfen);
     assert_eq!("PS", te.pos());
     assert_eq!("99 @@ PS abcdefgh\n", te.to_str(99));
 
-    let te = Te::new(3, 4, bitboard::GOTE, "ABCDEFGH".to_string());
-    assert_eq!(3, te.x);
-    assert_eq!(4, te.y);
+    let te = Te::new(2 + 8 * 3, bitboard::GOTE, "ABCDEFGH".to_string());
+    assert_eq!(26, te.xy);
     assert_eq!(bitboard::GOTE, te.teban);
     assert_eq!("ABCDEFGH", te.rfen);
     assert_eq!("c4", te.pos());
@@ -100,8 +97,7 @@ fn testte() {
     let te = Te::from("1 @@ a1 rfen b");
     assert!(te.is_some());
     let te = te.unwrap();
-    assert_eq!(1, te.x);
-    assert_eq!(1, te.y);
+    assert_eq!(0, te.xy);
     assert_eq!(bitboard::SENTE, te.teban);
     assert_eq!("rfen b", te.rfen);
     assert_eq!("a1", te.pos());
@@ -110,8 +106,7 @@ fn testte() {
     let te = Te::from("2 [] h8 rfen w");
     assert!(te.is_some());
     let te = te.unwrap();
-    assert_eq!(8, te.x);
-    assert_eq!(8, te.y);
+    assert_eq!(63, te.xy);
     assert_eq!(bitboard::GOTE, te.teban);
     assert_eq!("rfen w", te.rfen);
     assert_eq!("h8", te.pos());
@@ -174,12 +169,12 @@ impl Kifu {
         let mut ret = Kifu::new();
         ret.score = self.score;
         for te in self.list.iter() {
-            ret.append(te.x, te.y, te.teban, te.rfen.clone());
+            ret.append(te.xy, te.teban, te.rfen.clone());
         }
         ret
     }
-    pub fn append(&mut self, x : usize, y : usize, t : i8, rfen : String) {
-        self.list.push(Te::new(x, y, t, rfen));
+    pub fn append(&mut self, xy : u8, t : i8, rfen : String) {
+        self.list.push(Te::new(xy, t, rfen));
     }
 
     pub fn to_str(&self) -> String {
@@ -256,20 +251,17 @@ fn testkifu() {
     let kifu = Kifu::from(&lines.split("\n").collect::<Vec<&str>>());
     let te = kifu.nth(0);
     assert_eq!(te.pos(), "h5");
-    assert_eq!(te.x, 8);
-    assert_eq!(te.y, 5);
+    assert_eq!(te.xy, 39);
     assert_eq!(te.teban, bitboard::SENTE);
     assert_eq!(te.rfen, "dD/AdC/BcC/BaAbAa/Af1/AaAaA1a1/BcC/G1 b");
     let te = kifu.nth(1);
     assert_eq!(te.pos(), "f6");
-    assert_eq!(te.x, 6);
-    assert_eq!(te.y, 6);
+    assert_eq!(te.xy, 45);
     assert_eq!(te.teban, bitboard::GOTE);
     assert_eq!(te.rfen, "dD/AdC/BcC/BaAbB/H/AaAaA1A1/BcC/G1 w");
     let te = kifu.nth(2);
     assert_eq!(te.pos(), "PS");
-    assert_eq!(te.x, 0);
-    assert_eq!(te.y, 0);
+    assert_eq!(te.xy, bitboard::PASS);
     assert_eq!(te.teban, bitboard::SENTE);
     assert_eq!(te.rfen, "dD/AdC/BcC/BdB/DbB/AaAcA1/BcC/G1 b");
     assert_eq!(kifu.score, Some(4));

@@ -133,6 +133,9 @@ impl EdaxRunner {
         // println!("{txt}");
         let lines : Vec<_> = txt.split("\n").collect();
         // println!("{}", lines[2]);
+        if lines.len() < 3 {
+            panic!("invalid input {lines:?}");
+        }
         let pos = lines[2].chars().position(|c| c.is_alphabetic());
         if pos.is_none() {return Err(format!("EDAX:\"{txt}\""));}
         let i = pos.unwrap();

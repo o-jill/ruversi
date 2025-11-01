@@ -81,8 +81,10 @@ end
 # nodes: # of nodes
 # elapsed: array of elapsed time in msec
 def searchresult(nodes, elapsed)
-  avg = elapsed.sum.fdiv(elapsed.length)
-  vari = elapsed.map {|elem| elem * elem}.sum.fdiv(elapsed.length) - avg * avg
+  sz = elapsed.length;
+  avg = elapsed.sum.fdiv(sz);
+  dof = sz - 1;
+  vari = elapsed.map {|elem| (elem - avg) * (elem - avg)}.sum.fdiv(dof);
   sd = Math.sqrt(vari)
   min, max = elapsed.minmax
 
@@ -182,10 +184,10 @@ end
 def gamestatistics(elapsed)
   return if elapsed.length() <= 1
 
-  n = elapsed.length()
+  n = elapsed.length();
+  dof = n - 1;
   avg = elapsed.sum().fdiv(n)
-  sqsum = elapsed.sum() {|a| a * a}
-  vari = sqsum.fdiv(n) - avg * avg
+  vari = elapsed.map {|elem| (elem - avg) * (elem - avg)}.sum.fdiv(dof);
   sd = Math.sqrt(vari)
   min, max = elapsed.minmax
 

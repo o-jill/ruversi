@@ -1,7 +1,7 @@
 use super::*;
 
 use std::io::{self, Write};
-use std::sync::{Arc, RwLock};
+// use std::sync::{Arc, RwLock};
 
 type SearchFn = fn(&bitboard::BitBoard, u8, &mut nodebb::NodeBB, &weight::Weight, &mut transptable::TranspositionTable) -> Option<f32>;
 
@@ -62,7 +62,6 @@ impl GameBB {
                     node.dump(), ft.as_millis());
             }
             let best = node.best.unwrap();
-            let (x, y) = best.to_xy();
             let xy = best.xypos();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
@@ -71,7 +70,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -80,9 +79,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -92,6 +93,7 @@ impl GameBB {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn starto(&mut self, f : SearchFn, depth : u8) -> Result<(), String> {
         let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
@@ -111,7 +113,6 @@ impl GameBB {
             }
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -119,7 +120,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -128,9 +129,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -144,7 +147,6 @@ impl GameBB {
         let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
-            // tt.clear();
             let mut node = nodebb::NodeBB::root(depth);
             // show
             // self.ban.put();
@@ -157,7 +159,6 @@ impl GameBB {
             // println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -165,7 +166,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -174,9 +175,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -261,12 +264,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -275,9 +273,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -355,12 +355,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -369,9 +364,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -431,12 +428,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -445,9 +437,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -513,12 +507,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -527,9 +516,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -564,13 +555,21 @@ impl GameBB {
                     if self.is_verbose() {println!("auto pass.");}
                     xy = bitboard::PASS;
                 } else if movable.len() == 1 {
-                    xy =movable[0];
+                    xy = if movable[0] == bitboard::PASS {
+                        if self.is_verbose() {println!("auto pass.");}
+                        bitboard::PASS
+                    } else {
+                        movable[0]
+                    };
                 } else {
                     // launch another Ruversi
                     match rr.run(&self.ban.to_str()) {
                         Ok((pos, _)) => {
-                            let xx = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
-                            let yy = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                            let xx = "0abcdefgh".find(
+                                    pos.chars().nth(0).unwrap()
+                                ).unwrap_or(10) as u8;
+                            let yy = pos.chars().nth(1).unwrap()
+                                    .to_digit(10).unwrap() as u8;
                             xy = bitboard::cell(xx, yy);
                         },
                         Err(msg) => panic!("error running ruversi... [{msg}]"),
@@ -596,12 +595,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            let (x, y) = if xy == bitboard::PASS {
-                (0, 0)  // pass
-            } else {
-                bitboard::index2xy(xy)
-            };
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -610,9 +604,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -713,12 +709,7 @@ impl GameBB {
                 self.ban = ban;
 
                 // save to kifu
-                let (x, y) = if xy == bitboard::PASS {
-                    (0, 0)  // pass
-                } else {
-                    bitboard::index2xy(xy)
-                };
-                self.kifu.append(x as usize, y as usize, teban, rfen);
+                self.kifu.append(xy, teban, rfen);
             }
 
             // check finished
@@ -728,9 +719,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         cassio.quit().unwrap();
 
@@ -746,18 +739,22 @@ impl GameBB {
     pub fn start_with_2et(&mut self,
         f : SearchFn, depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
+        let mut tt1 = transptable::TranspositionTable::with_capacity(self.cachesize);
+        let mut tt2 = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             // show
             // self.ban.put();
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
+            let tt;
             if self.ban.teban == bitboard::SENTE {
+                tt = &mut tt1;
                 unsafe {
                     nodebb::WEIGHT.as_mut().unwrap().copy(et1);
                 }
             } else {
+                tt = &mut tt2;
                 unsafe {
                     nodebb::WEIGHT.as_mut().unwrap().copy(et2);
                 }
@@ -765,7 +762,7 @@ impl GameBB {
             // think
             let st = Instant::now();
             let mut node = nodebb::NodeBB::root(depth);
-            let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
+            let val = f(&self.ban, depth, &mut node, wei, tt).unwrap();
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
@@ -775,7 +772,6 @@ impl GameBB {
             }
             let best = node.best.unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -783,7 +779,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -792,9 +788,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -810,18 +808,22 @@ impl GameBB {
     pub fn starto_with_2et(&mut self,
         f : SearchFn, depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
+        let mut tt1 = transptable::TranspositionTable::with_capacity(self.cachesize);
+        let mut tt2 = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
         loop {
             // show
             // self.ban.put();
             if self.is_verbose() {println!("{}", self.ban.to_str());}
-            // switch weight
+            // switch weight and tt
+            let tt;
             if self.ban.teban == bitboard::SENTE {
+                tt = &mut tt1;
                 unsafe {
                     nodebb::WEIGHT.as_mut().unwrap().copy(et1);
                 }
             } else {
+                tt = &mut tt2;
                 unsafe {
                     nodebb::WEIGHT.as_mut().unwrap().copy(et2);
                 }
@@ -829,14 +831,13 @@ impl GameBB {
             // think
             let st = Instant::now();
             let mut node = nodebb::NodeBB::root(depth);
-            let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
+            let val = f(&self.ban, depth, &mut node, wei, tt).unwrap();
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -844,7 +845,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -853,9 +854,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -868,25 +871,33 @@ impl GameBB {
     /// # Arguments
     /// - et1 : SENTE
     /// - et2 : GOTE
+    #[allow(dead_code)]
     pub fn starto_with_2et_mt(&mut self,
         f : SearchFn, depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
+        let mut tt1 = transptable::TranspositionTable::with_capacity(self.cachesize);
+        let mut tt2 = transptable::TranspositionTable::with_capacity(self.cachesize);
         loop {
             // show
             // self.ban.put();
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
             let mut node = nodebb::NodeBB::root(depth);
-            let wei = if self.ban.teban == bitboard::SENTE {et1} else {et2};
+            let tt;
+            let wei = if self.ban.teban == bitboard::SENTE {
+                    tt = &mut tt1;
+                    et1
+                } else {
+                    tt = &mut tt2;
+                    et2
+                };
             // think
             let st = Instant::now();
-            let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
+            let val = f(&self.ban, depth, &mut node, wei, tt).unwrap();
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -894,7 +905,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -903,9 +914,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
@@ -921,23 +934,29 @@ impl GameBB {
     pub fn starto_with_2et_mt_tt(&mut self,
         f : SearchFn, depth : u8, et1 : &weight::Weight, et2 : &weight::Weight)
             -> Result<(), String> {
-        let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
+        let mut tt1 = transptable::TranspositionTable::with_capacity(self.cachesize);
+        let mut tt2 = transptable::TranspositionTable::with_capacity(self.cachesize);
         loop {
-            // tt.clear();
             // show
             // self.ban.put();
             if self.is_verbose() {println!("{}", self.ban.to_str());}
             // switch weight
             let mut node = nodebb::NodeBB::root(depth);
-            let wei = if self.ban.teban == bitboard::SENTE {et1} else {et2};
+            let tt;
+            let wei = if self.ban.teban == bitboard::SENTE {
+                    tt = &mut tt1;
+                    et1
+                } else {
+                    tt = &mut tt2;
+                    et2
+                };
             // think
             let st = Instant::now();
-            let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
+            let val = f(&self.ban, depth, &mut node, wei, tt).unwrap();
             let ft = st.elapsed();
             if self.is_verbose() {println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());}
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
-            let (x, y) = best.to_xy();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
             let rfen = self.ban.to_str();
@@ -945,7 +964,7 @@ impl GameBB {
             self.ban = ban;
 
             // save to kifu
-            self.kifu.append(x as usize, y as usize, teban, rfen);
+            self.kifu.append(xy, teban, rfen);
 
             // check finished
             if self.ban.is_passpass() {
@@ -954,9 +973,11 @@ impl GameBB {
             if self.ban.is_full() {
                 let rfen = self.ban.to_str();
                 let teban = self.ban.teban;
-                self.kifu.append(0, 0, teban, rfen);
+                self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
             }
+
+            tt.next();
         }
         // check who won
         self.kifu.winneris(self.ban.count());
