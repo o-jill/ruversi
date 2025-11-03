@@ -4,7 +4,7 @@ use std::io::{BufReader, BufRead, Write};
 use std::fmt::{Display, Formatter};
 use std::process::{Child, Command, Stdio};
 
-const OBF : &str = "/tmp/test.obf";
+const OBF : &str = "test.obf";
 const CD : &str = "../../edax-reversi/";
 const EDAXPATH : &str = "./bin/lEdax-x64-modern";
 const EVFILE : &str = "data/eval.dat";
@@ -26,7 +26,10 @@ impl std::fmt::Display for EdaxRunner {
 impl EdaxRunner {
     pub fn new() -> EdaxRunner {
         EdaxRunner {
-            obfpath: String::from(OBF),
+            obfpath: {
+                let tmp = std::env::temp_dir().join(OBF);
+                tmp.to_str().unwrap().to_string()
+            },
             curdir: String::from(CD),
             path: String::from(EDAXPATH),
             evfile: String::from(EVFILE)
@@ -98,10 +101,16 @@ impl EdaxRunner {
 
     pub fn obf2file(&self, obf : &str) {
         // println!("put board to a file...");
-        let mut f = File::create(&self.obfpath).unwrap();
-        f.write_all(obf.as_bytes()).unwrap();
-        f.write_all("\n".as_bytes()).unwrap();
-        f.flush().unwrap();
+        match File::create(&self.obfpath) {
+            Ok(mut f) => {
+                f.write_all(obf.as_bytes()).unwrap();
+                f.write_all("\n".as_bytes()).unwrap();
+                f.flush().unwrap();
+            },
+            Err(e) => {
+                panic!("{e:?}, {}", &self.obfpath);
+            }
+        }
     }
 
     fn spawn(&self, obf : &str) -> std::io::Result<std::process::Child> {
@@ -388,7 +397,8 @@ mod tests {
     fn test_edaxrunner_default_values() {
         // EdaxRunner::new() で各フィールドがデフォルト値になっていることを確認
         let er = EdaxRunner::new();
-        assert_eq!(er.obfpath, "/tmp/test.obf");
+        let tmp = std::env::temp_dir().join("test.obf");
+        assert_eq!(er.obfpath, tmp.to_str().unwrap());
         assert_eq!(er.curdir, "../../edax-reversi/");
         assert_eq!(er.path, "./bin/lEdax-x64-modern");
         assert_eq!(er.evfile, "data/eval.dat");
@@ -412,7 +422,8 @@ mod tests {
         let mut er = EdaxRunner::new();
         let result = er.config("", "updated_dir", "", "");
         assert!(result.is_ok());
-        assert_eq!(er.obfpath, "/tmp/test.obf");
+        let tmp = std::env::temp_dir().join("test.obf");
+        assert_eq!(er.obfpath, tmp.to_str().unwrap());
         assert_eq!(er.curdir, "updated_dir");
         assert_eq!(er.path, "./bin/lEdax-x64-modern");
         assert_eq!(er.evfile, "data/eval.dat");
@@ -423,7 +434,8 @@ mod tests {
         // to_str の内容がフィールドに基づくことを確認
         let er = EdaxRunner::new();
         let s = er.to_str();
-        assert!(s.contains("obf:/tmp/test.obf"));
+        let tmp = std::env::temp_dir().join("test.obf");
+        assert!(s.contains(&format!("obf:{}", tmp.to_str().unwrap())));
         assert!(s.contains("curdir:../../edax-reversi/"));
         assert!(s.contains("edax:./bin/lEdax-x64-modern"));
         assert!(s.contains("evfile:data/eval.dat"));
