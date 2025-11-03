@@ -33,12 +33,8 @@ impl EdaxRunner {
         }
     }
 
-    pub fn from_config(path : &str) -> Result<EdaxRunner, String> {
+    pub fn from_config(path : &std::path::PathBuf) -> Result<EdaxRunner, String> {
         let mut er = EdaxRunner::new();
-        if path.is_empty() {
-            return Ok(er);
-        }
-
         match er.read(path) {
             Ok(_) => Ok(er),
             Err(msg) => Err(msg),
@@ -70,7 +66,7 @@ impl EdaxRunner {
     /// curdir: ~/edax/
     /// edax: ./bin/edax
     /// evfile: ./data/eval.dat
-    pub fn read(&mut self, path : &str) -> Result<(), String> {
+    pub fn read(&mut self, path : &std::path::PathBuf) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
 
@@ -436,7 +432,9 @@ mod tests {
     #[test]
     fn test_edaxrunner_read_config_file() {
         // 一時ファイルに設定を書き込み、read で値が読み込まれることを確認
-        let config_path = "/tmp/test_edaxrunner_config.txt";
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner_config.txt");
         let contents = "\
 obf:/tmp/myobf.obf
 curdir:/tmp/myedax
@@ -444,11 +442,12 @@ edax:/tmp/ledax
 evfile::/tmp/myevfile.dat
 ";
         {
-            let mut file = File::create(config_path).unwrap();
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
         let mut er = EdaxRunner::new();
-        let result = er.read(config_path);
+        let result = er.read(&config_path);
         assert!(result.is_ok());
         assert_eq!(er.obfpath, "/tmp/myobf.obf");
         assert_eq!(er.curdir, "/tmp/myedax");
@@ -461,27 +460,33 @@ evfile::/tmp/myevfile.dat
     fn test_edaxrunner_read_config_file_not_found() {
         // 存在しないファイルを指定した場合、Errが返ることを確認
         let mut er = EdaxRunner::new();
-        let result = er.read("/tmp/no_such_edaxrunner_config.txt");
+        let path = std::path::PathBuf::from(
+                "/tmp/no_such_edaxrunner_config.txt");
+        let result = er.read(&path);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_edaxrunner_from_config_empty() {
-        // from_config("") でデフォルト値
-        let er = EdaxRunner::from_config("").unwrap();
-        assert_eq!(er.obfpath, "/tmp/test.obf");
+        // from_config("") でErrが返ることを確認
+        let er = EdaxRunner::from_config(&std::path::PathBuf::new());
+        // assert_eq!(er.obfpath, "/tmp/test.obf");
+        assert!(er.is_err());
     }
 
     #[test]
     fn test_edaxrunner_from_config_file() {
         // from_config で設定ファイルを読み取る
-        let config_path = "/tmp/test_edaxrunner2_config.txt";
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner2_config.txt");
         let contents = "obf:/tmp/zzz.obf\n";
         {
-            let mut file = File::create(config_path).unwrap();
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
-        let er = EdaxRunner::from_config(config_path).unwrap();
+        let er = EdaxRunner::from_config(&config_path).unwrap();
         assert_eq!(er.obfpath, "/tmp/zzz.obf");
         fs::remove_file(config_path).unwrap();
     }
@@ -532,18 +537,21 @@ evfile::/tmp/myevfile.dat
     #[test]
     fn test_ruversirunner_read_config_file() {
         // 設定ファイルを作成し、read で値が読み込まれることを確認
-        let config_path = "/tmp/test_ruversirunner_config.txt";
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner_config.txt");
         let contents = "\
 curdir:/tmp/myruversi
 path:/tmp/myruversi_bin
 evfile::/tmp/myruversi_evfile.txt
 ";
         {
-            let mut file = File::create(config_path).unwrap();
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
         let mut rr = RuversiRunner::new();
-        let result = rr.read(config_path);
+        let result = rr.read(config_path.to_str().unwrap());
         assert!(result.is_ok());
         assert_eq!(rr.curdir, "/tmp/myruversi");
         assert_eq!(rr.path, "/tmp/myruversi_bin");
@@ -569,13 +577,17 @@ evfile::/tmp/myruversi_evfile.txt
     #[test]
     fn test_ruversirunner_from_config_file() {
         // from_config で設定ファイルを読み取る
-        let config_path = "/tmp/test_ruversirunner2_config.txt";
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner2_config.txt");
         let contents = "curdir:/tmp/abc\n";
         {
-            let mut file = File::create(config_path).unwrap();
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
-        let rr = RuversiRunner::from_config(config_path).unwrap();
+        let rr = RuversiRunner::from_config(
+                config_path.to_str().unwrap()).unwrap();
         assert_eq!(rr.curdir, "/tmp/abc");
         fs::remove_file(config_path).unwrap();
     }
@@ -604,7 +616,9 @@ evfile::/tmp/myruversi_evfile.txt
     #[test]
     fn test_cassiorunner_read_config_file() {
         // 設定ファイルを作成し、read で値が読み込まれることを確認
-        let config_path = "/tmp/test_cassiorunner_config.txt";
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner_config.txt");
         let contents = "\
 curdir:/tmp/mycassio
 path:/tmp/mycassio_path
@@ -612,11 +626,12 @@ evfile:/tmp/mycassio_evfile.txt
 cas:--cassioX
 ";
         {
-            let mut file = File::create(config_path).unwrap();
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
         let mut cr = CassioRunner::new();
-        let result = cr.read(config_path);
+        let result = cr.read(config_path.to_str().unwrap());
         assert!(result.is_ok());
         assert_eq!(cr.curdir, "/tmp/mycassio");
         assert_eq!(cr.path, "/tmp/mycassio_path");
@@ -643,13 +658,17 @@ cas:--cassioX
     #[test]
     fn test_cassiorunner_from_config_file() {
         // from_config で設定ファイルを読み取る
-        let config_path = "/tmp/test_cassiorunner2_config.txt";
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner2_config.txt");
         let contents = "cas:--abc\n";
         {
-            let mut file = File::create(config_path).unwrap();
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
-        let cr = CassioRunner::from_config(config_path).unwrap();
+        let cr = CassioRunner::from_config(
+                config_path.to_str().unwrap()).unwrap();
         assert_eq!(cr.cas, "--abc");
         fs::remove_file(config_path).unwrap();
     }

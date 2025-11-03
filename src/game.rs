@@ -459,7 +459,7 @@ impl GameBB {
     /// # Returns  
     /// () or Error message.
     pub fn starto_against_edax(&mut self,
-            f : SearchFn, depth : u8, turnin : i8, econf : &str)
+            f : SearchFn, depth : u8, turnin : i8, econf : &std::path::PathBuf)
                 -> Result<(), String> {
         let er = edaxrunner::EdaxRunner::from_config(econf)?;
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
