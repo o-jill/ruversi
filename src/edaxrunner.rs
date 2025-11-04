@@ -235,9 +235,9 @@ impl RuversiRunner {
     }
 
     fn spawn(&self, rfen : &str) -> std::io::Result<std::process::Child> {
+        std::env::set_current_dir(&self.curdir).unwrap();
         let mut cmd = std::process::Command::new(&self.path);
-            cmd.arg("--rfen").arg(rfen).current_dir(&self.curdir)
-            .arg("--ev1").arg(&self.evfile)
+        cmd.arg("--rfen").arg(rfen).arg("--ev1").arg(&self.evfile)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::null());
         // println!("cmd:{cmd:?}");
@@ -245,9 +245,11 @@ impl RuversiRunner {
     }
 
     pub fn run(&self, rfen : &str) -> Result<(String, String), String> {
-        // launch edax
+        // launch another
+        let curdir = std::env::current_dir().unwrap();
         let cmd = match self.spawn(rfen) {
             Err(msg) => {
+                std::env::set_current_dir(curdir).unwrap();
                 return Err(format!(
                     "error running ruversi... [{msg}], config:[{}]",
                     self.to_str()))
@@ -256,6 +258,7 @@ impl RuversiRunner {
         };
         // read stdout and get moves
         let w = cmd.wait_with_output().unwrap();
+        std::env::set_current_dir(curdir).unwrap();
         let txt = String::from_utf8(w.stdout).unwrap();
         // println!("txt:{txt}");
         let lines : Vec<_> = txt.split("\n").collect();
@@ -369,9 +372,9 @@ impl CassioRunner {
     }
 
     fn spawn(&self) -> std::io::Result<Child> {
+        std::env::set_current_dir(&self.curdir).unwrap();
         let mut cmd = Command::new(&self.path);
-            cmd.current_dir(&self.curdir)
-            .arg(&self.cas)
+        cmd.arg(&self.cas)
             .arg("-eval-file").arg(&self.evfile)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -381,12 +384,17 @@ impl CassioRunner {
     }
 
     pub fn run(&self) -> Result<Child, String> {
-        // launch edax
+        // launch cassio
+        let curdir = std::env::current_dir().unwrap();
         match self.spawn() {
             Err(msg) => {
+                std::env::set_current_dir(curdir).unwrap();
                 Err(format!("error running cassio... [{msg}], {self}"))
             },
-            Ok(prcs) => Ok(prcs),
+            Ok(prcs) => {
+                std::env::set_current_dir(curdir).unwrap();
+                Ok(prcs)
+            },
         }
     }
 }
