@@ -44,9 +44,9 @@ impl OthelloEngineProtocol {
         if cmd.is_empty() {
             let running = self.running.load(Ordering::Relaxed);
             if running {
-                println!("ok.");
+                Self::send_ok();
             } else {
-                println!("ready.");
+                Self::send_ready();
             }
             return Ok(false);
         }
@@ -111,7 +111,7 @@ impl OthelloEngineProtocol {
 
                 println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {moves}, node {nodes}, time {sec:3}");
                 running.store(false, Ordering::Relaxed);
-                println!("ready.");
+                Self::send_ready();
             });
 
             return Ok(false);
@@ -170,7 +170,7 @@ impl OthelloEngineProtocol {
 
                 println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {hash}, node {nodes}, time {sec:3}");
                 running.store(false, Ordering::Relaxed);
-                println!("ready.");
+                Self::send_ready();
             });
 
             return Ok(false);
@@ -178,7 +178,7 @@ impl OthelloEngineProtocol {
 
         if body.starts_with("stop") {
             // stop thinking.
-            println!("ready.");
+            Self::send_ready();
             self.log(body).unwrap();
             return Ok(false);
         }
@@ -186,29 +186,29 @@ impl OthelloEngineProtocol {
         if body.starts_with("get-search-infos") {
             let running = self.running.load(Ordering::Relaxed);
             if running {
-                println!("ok.");
+                Self::send_ok();
             } else {
-                println!("ready.");
+                Self::send_ready();
             }
             self.log(body).unwrap();
             return Ok(false);
         }
 
         if body.starts_with("new-position") {
-            println!("ready.");
+            Self::send_ready();
             self.log(body).unwrap();
             return Ok(false);
         }
 
         if body.starts_with("init") {
-            println!("ready.");
+            Self::send_ready();
             self.log(body).unwrap();
             return Ok(false);
         }
 
         if body.starts_with("get-version") {
             println!("version: ruversi {VERSION}");
-            println!("ready.");
+            Self::send_ready();
             self.log(body).unwrap();
             return Ok(false);
         }
@@ -216,7 +216,7 @@ impl OthelloEngineProtocol {
         if body.starts_with("empty-hash") {
             let tt = unsafe {TRTABLE.as_mut().unwrap()};
             tt.clear();
-            println!("ready.");
+            Self::send_ready();
             self.log(body).unwrap();
             return Ok(false);
         }
@@ -254,6 +254,16 @@ impl OthelloEngineProtocol {
             }
         }
         Ok(String::from("Done."))
+    }
+
+    #[inline]
+    fn send_ready() {
+        println!("ready.");
+    }
+
+    #[inline]
+    fn send_ok() {
+        println!("ok.");
     }
 }
 
