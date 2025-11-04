@@ -115,8 +115,9 @@ impl EdaxRunner {
 
     fn spawn(&self, obf : &str) -> std::io::Result<std::process::Child> {
         self.obf2file(obf);
+        std::env::set_current_dir(&self.curdir).unwrap();
         std::process::Command::new(&self.path)
-            .arg("--solve").arg(&self.obfpath).current_dir(&self.curdir)
+            .arg("--solve").arg(&self.obfpath)
             .arg("--eval-file").arg(&self.evfile)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::null()).spawn()
@@ -124,8 +125,10 @@ impl EdaxRunner {
 
     pub fn run(&self, obf : &str) -> Result<(String, String), String> {
         // launch edax
+        let curdir = std::env::current_dir().unwrap();
         let cmd = match self.spawn(obf) {
             Err(msg) => {
+                std::env::set_current_dir(curdir).unwrap();
                 return Err(
                     format!("error running edax... [{msg}], config:[{}]",
                         self.to_str()))
@@ -134,6 +137,8 @@ impl EdaxRunner {
         };
         // read stdout and get moves
         let w = cmd.wait_with_output().unwrap();
+
+        std::env::set_current_dir(curdir).unwrap();
         let txt = String::from_utf8(w.stdout).unwrap();
         // println!("{txt}");
         let lines : Vec<_> = txt.split("\n").collect();
