@@ -9,6 +9,8 @@ use std::time::Duration;
 
 const HEADER : &str = "ENGINE-PROTOCOL ";
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const READY : &str = "ready.\n";
+
 
 static mut TRTABLE : Option<transptable::TranspositionTable> = None;
 
@@ -318,9 +320,15 @@ impl OthelloEngineProtocolServer {
 
         let mut bufreader = BufReader::new(fromeng);
         let mut buf = String::default();
-        bufreader.read_line(&mut buf).unwrap();
-        if buf == "ready.\n" {
-            return Ok(())
+        for i in 0..100 {
+            bufreader.read_line(&mut buf).unwrap();
+            if buf.replace("\r\n", "\n") == READY {
+                return Ok(())
+            }
+            if !buf.is_empty() {
+                break;
+            }
+            println!("i:{i}");
         }
         Err(format!("unknown response ii: \"{buf}\""))
     }
@@ -341,7 +349,7 @@ impl OthelloEngineProtocolServer {
         let ret = buf.trim().to_string();
         buf.clear();
         bufreader.read_line(&mut buf).unwrap();
-        if buf == "ready.\n" {
+        if buf.replace("\r\n", "\n") == READY {
             return Ok(ret)
         }
         Err(format!("unknown response gv: \"{buf}\" \"{ret}\""))
@@ -360,7 +368,7 @@ impl OthelloEngineProtocolServer {
         let mut bufreader = BufReader::new(fromeng);
         let mut buf = String::default();
         bufreader.read_line(&mut buf).unwrap();
-        if buf == "ready.\n" {
+        if buf.replace("\r\n", "\n") == READY {
             return Ok(())
         }
         Err(format!("unknown response np: \"{buf}\""))
@@ -386,7 +394,7 @@ impl OthelloEngineProtocolServer {
         let ret = buf.trim().to_string();
         buf.clear();
         bufreader.read_line(&mut buf).unwrap();
-        if buf == "ready.\n" {
+        if buf.replace("\r\n", "\n") == READY {
             return Ok(ret)
         }
         Err(format!("unknown response ms: \"{buf}\" \"{ret}\""))
@@ -468,7 +476,7 @@ impl OthelloEngineProtocolServer {
         let mut bufreader = BufReader::new(fromeng);
         let mut buf = String::default();
         bufreader.read_line(&mut buf).unwrap();
-        if buf == "ready.\n" {
+        if buf.replace("\r\n", "\n") == READY {
             return Ok(())
         }
         Err(format!("unknown response sp: \"{buf}\""))
@@ -487,7 +495,7 @@ impl OthelloEngineProtocolServer {
         let mut bufreader = BufReader::new(fromeng);
         let mut buf = String::default();
         bufreader.read_line(&mut buf).unwrap();
-        if buf == "ready.\n" {
+        if buf.replace("\r\n", "\n") == READY {
             return Ok(())
         }
         Err(format!("unknown response eh: \"{buf}\""))
