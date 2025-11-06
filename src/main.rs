@@ -450,7 +450,8 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
     let mut dresult;
     let mut result;
 
-    let econf = MYOPT.get().unwrap().edaxconfig.as_str();
+    let econf = std::path::PathBuf::from(
+            MYOPT.get().unwrap().edaxconfig.as_str());
     let think = MYOPT.get().unwrap().think.as_str();
     let verbose = !MYOPT.get().unwrap().verbose.is_silent();
     let eqfile = initialpos::equalfile(duellv);
@@ -475,7 +476,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
         // play
-        g.starto_against_edax(f, depth, turn, econf).unwrap();
+        g.starto_against_edax(f, depth, turn, &econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -490,7 +491,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
         g.set_verbose(verbose);
-        g.starto_against_edax(f, depth, turn, econf).unwrap();
+        g.starto_against_edax(f, depth, turn, &econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
         total += 1;
@@ -694,7 +695,8 @@ fn edax(depth : u8, turnh: i8, cachesz : usize) {
     let mut g = game::GameBB::new();
     g.set_cachesize(cachesz);
     // play
-    let econf = MYOPT.get().unwrap().edaxconfig.as_str();
+    let econf = std::path::PathBuf::from(
+            MYOPT.get().unwrap().edaxconfig.as_str());
     let think = MYOPT.get().unwrap().think.as_str();
     let f = match think {
         "" | "ab" => {
@@ -707,7 +709,7 @@ fn edax(depth : u8, turnh: i8, cachesz : usize) {
         },
         _ => { panic!("unknown thinking method.") }
     };
-    g.starto_against_edax(f, depth, turnh, econf).unwrap();
+    g.starto_against_edax(f, depth, turnh, &econf).unwrap();
 }
 
 /// play a game ruversi vs another ruversi.
