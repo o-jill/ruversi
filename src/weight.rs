@@ -386,18 +386,37 @@ const TBL8_BIT2F32 : Bit2F32 = Bit2F32 {
 #[repr(align(32))]
 pub struct Weight {
     pub weight : [f32 ; N_WEIGHT_PAD * N_PROGRESS_DIV],
+    vweight : Vec<f32>
 }
 
 impl Default for Weight {
     fn default() -> Self {
-        Self::new()
+        let mut w = Self::new();
+        w.exchange();
+        w
     }
 }
 
 impl Weight {
     pub fn new() -> Weight {
         Weight {
-            weight: [0.0 ; N_WEIGHT_PAD * N_PROGRESS_DIV]
+            weight: [0.0 ; N_WEIGHT_PAD * N_PROGRESS_DIV],
+            vweight: Vec::with_capacity(N_WEIGHT_PAD * N_PROGRESS_DIV)
+        }
+    }
+
+    fn exchange(&mut self) {
+        unsafe {self.vweight.set_len(self.weight.len());}
+        for p in 0..N_PROGRESS_DIV {
+            let offset = p * N_WEIGHT_PAD;
+            let wei = &mut self.weight[offset..offset + N_WEIGHT_PAD];
+            let vwei = &mut self.vweight[offset..offset + N_WEIGHT_PAD];
+            for (i, &w) in wei.iter().enumerate().take(bitboard::CELL_2D * N_HIDDEN) {
+                let group = i % bitboard::CELL_2D;
+                let x = i / bitboard::CELL_2D;
+                let idx = x + group * N_HIDDEN;
+                vwei[idx] = w;
+            }
         }
     }
 
@@ -410,6 +429,7 @@ impl Weight {
         for a in self.weight.iter_mut() {
             *a = (rng.gen::<f64>() * 2.0 * range - range) as f32;
         }
+        self.exchange();
     }
 
     /// fill zero.
@@ -421,6 +441,11 @@ impl Weight {
     pub fn wban(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset..]
+    }
+
+    pub fn wbanv(&self, progress : usize) -> &[f32] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.vweight[offset..]
     }
 
     pub fn wteban(&self, progress : usize) -> &[f32] {
@@ -565,6 +590,7 @@ impl Weight {
             let offset = prgs * N_WEIGHT_PAD;
             self.weight[offset..offset + N_WEIGHT].copy_from_slice(&newtable);
         }
+        self.exchange();
         // println!("v8:{:?}", self.weight);
         Ok(())
     }
@@ -580,6 +606,7 @@ impl Weight {
 
         let offset = progress * N_WEIGHT_PAD;
         self.weight[offset..offset + N_WEIGHT].copy_from_slice(&newtable);
+        self.exchange();
         // println!("v9:{:?}", self.weight);
         Ok(())
     }
@@ -599,9 +626,11 @@ impl Weight {
 
     pub fn copy(&mut self, src : &Weight) {
         self.weight.copy_from_slice(&src.weight);
+        self.exchange();
     }
 
-    pub fn evaluatev9bb(&self, ban : &bitboard::BitBoard) -> f32 {
+    #[allow(dead_code)]
+    pub fn evaluatev9bb_old(&self, ban : &bitboard::BitBoard) -> f32 {
         if ban.is_full() || ban.is_passpass() {
             return ban.countf32();
         }
@@ -637,6 +666,60 @@ impl Weight {
             hidsum = wfs[i + N_HIDDEN].mul_add(fs.1 as f32, hidsum + wdc[i]);
             //relu
             *h = if hidsum > 0f32 {hidsum} else {0f32};
+        }
+
+        let mut sum = self.wl2bias(prgs);
+        let wh = self.wlayer1(prgs);
+        let whdc = self.wl1bias(prgs);
+        let wh2 = self.wlayer2(prgs);
+        for i in 0..N_HIDDEN2 {
+            let mut hidsum2 = whdc[i];
+            for (j, h1) in hid.iter().enumerate() {
+                hidsum2 = h1.mul_add(wh[j + i * N_HIDDEN], hidsum2);
+                // hidsum2 += h1 * wh[j + i * N_HIDDEN];
+            }
+            // relu
+            sum += if hidsum2 > 0.0 {wh2[i] * hidsum2} else {0.0};
+        }
+        sum
+    }
+
+    pub fn evaluatev9bb(&self, ban : &bitboard::BitBoard) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.countf32();
+        }
+
+        let prgs = ban.progress();
+        let mut black = ban.black;
+        let mut white = ban.white;
+        let teban = ban.teban as f32;
+
+        let fs = ban.fixedstones();
+
+        let ow = self.wbanv(prgs);
+        let wtbn = self.wteban(prgs);
+        let wfs = self.wfixedstones(prgs);
+        let wdc = self.wibias(prgs);
+        let mut hid = [0f32 ; N_HIDDEN];
+        for y in 0..bitboard::NUMCELL {
+            for x in 0..bitboard::NUMCELL {
+                let bit = bitboard::LSB_CELL;
+                let c = (black & bit) as i32 - (white & bit) as i32;
+                let c = c as f32;
+                black >>= 1;
+                white >>= 1;
+                for (h, w) in hid.iter_mut().zip(
+                    ow.iter().skip((x + y * bitboard::NUMCELL) * N_HIDDEN)) {
+                    *h += c * w;
+                }
+            }
+        }
+        for (i, h) in hid.iter_mut().enumerate() {
+            let mut hidsum = teban.mul_add(wtbn[i], *h);
+            hidsum = wfs[i].mul_add(fs.0 as f32, hidsum);
+            hidsum = wfs[i + N_HIDDEN].mul_add(fs.1 as f32, hidsum + wdc[i]);
+            // relu
+            *h = hidsum.max(0f32);
         }
 
         let mut sum = self.wl2bias(prgs);
@@ -894,65 +977,48 @@ impl Weight {
         }
 
         let prgs = ban.progress();
-        // println!("cnt:{cnt}, prgs:{prgs}");
-        let black = ban.black;
-        let white = ban.white;
+        let mut black = ban.black;
+        let mut white = ban.white;
         let teban = ban.teban as f32;
 
         let (fsb, fsw) = ban.fixedstones();
 
-        let ow = self.wban(prgs);
+        let ow = self.wbanv(prgs);
         let wtbn = self.wteban(prgs);
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
-        let mut cells : Vec<f32> = Vec::with_capacity(bitboard::CELL_2D);
-        let c_ptr  = cells.spare_capacity_mut().as_mut_ptr() as *mut f32;
-        let bit4 = 0xff;
-        unsafe {
-            for idx in (0..bitboard::CELL_2D).step_by(2 * bitboard::NUMCELL) {
-                let bi1 = bit4 & (black >> idx) as usize;
-                let wi1 = bit4 & (white >> idx) as usize;
-                let bi3 = bit4 & (black >> (idx + bitboard::NUMCELL)) as usize;
-                let wi3 = bit4 & (white >> (idx + bitboard::NUMCELL)) as usize;
-                let b12 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi1));
-                let w12 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi1));
-                let b34 = vld1q_f32_x2(TBL8_BIT2F32.addr(bi3));
-                let w34 = vld1q_f32_x2(TBL8_BIT2F32.addr(wi3));
-                let c1 = vsubq_f32(b12.0, w12.0);
-                let c2 = vsubq_f32(b12.1, w12.1);
-                let c3 = vsubq_f32(b34.0, w34.0);
-                let c4 = vsubq_f32(b34.1, w34.1);
-                vst1q_f32(c_ptr.add(idx), c1);
-                vst1q_f32(c_ptr.add(idx + 4), c2);
-                vst1q_f32(c_ptr.add(idx + 8), c3);
-                vst1q_f32(c_ptr.add(idx + 12), c4);
-            }
-            cells.set_len(bitboard::CELL_2D);
-        }
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
-        for i in (0..N_HIDDEN).step_by(N) {
-            let mut sumn = [0f32 ; N];
+        // cells
+        for idx in 0..bitboard::CELL_2D {
+            let bit = bitboard::LSB_CELL;
+            let c = (black & bit) as i32 - (white & bit) as i32;
+            black >>= 1;
+            white >>= 1;
+            if c == 0 {continue;}
 
-            for idx in (0..bitboard::CELL_2D).step_by(2 * bitboard::NUMCELL) {
+            let c4 = unsafe {vdupq_n_f32(c as f32)};
+            let we1 = &ow[idx * N_HIDDEN .. ];
+            for i in (0..N_HIDDEN).step_by(N) {
                 unsafe {
-                    let c = vld1q_f32_x4(cells.as_ptr().add(idx));
-                    for (n, elem) in sumn.iter_mut().enumerate() {
-                        let w1 = &ow[(i + n) * bitboard::CELL_2D .. ];
-                        let w = vld1q_f32_x4(w1.as_ptr().add(idx));
-                        let w1 = vmulq_f32(w.0, c.0);
-                        let w2 = vmulq_f32(w.1, c.1);
-                        let w3 = vmulq_f32(w.2, c.2);
-                        let w4 = vmulq_f32(w.3, c.3);
-                        let sum = vaddq_f32(w1, w2);
-                        let sum2 = vaddq_f32(w3, w4);
-                        let sum3 = vaddq_f32(sum, sum2);
-                        *elem += vaddvq_f32(sum3);
-                    }
+                    let w = vld1q_f32_x4(we1.as_ptr().add(i));
+                    let w1 = vmulq_f32(c4, w.0);
+                    let w2 = vmulq_f32(c4, w.1);
+                    let w3 = vmulq_f32(c4, w.2);
+                    let w4 = vmulq_f32(c4, w.3);
+                    let h = vld1q_f32_x4(hid.as_ptr().add(i));
+                    let w1 = vaddq_f32(w1, h.0);
+                    let w2 = vaddq_f32(w2, h.1);
+                    let w3 = vaddq_f32(w3, h.2);
+                    let w4 = vaddq_f32(w4, h.3);
+                    vst1q_f32_x4(hid.as_mut_ptr().add(i),
+                        float32x4x4_t(w1, w2, w3, w4));
                 }
             }
+        }
+        for i in (0..N_HIDDEN).step_by(N) {
             unsafe {
-                let sum4 = vld1q_f32_x4(sumn.as_ptr());
+                let sum4 = vld1q_f32_x4(hid.as_ptr().add(i));
 
                 let tbn = vmovq_n_f32(teban);
                 let wtb = vld1q_f32_x4(wtbn.as_ptr().add(i));
@@ -980,21 +1046,17 @@ impl Weight {
                 let sum42 = vaddq_f32(sum42, wdc4.1);
                 let sum43 = vaddq_f32(sum43, wdc4.2);
                 let sum44 = vaddq_f32(sum44, wdc4.3);
-                // vst1q_f32_x4(sumn.as_mut_ptr(), float32x4x4_t(sum41, sum42, sum43, sum44));
-                // vst1q_f32(sumn.as_mut_ptr(), sum41);
-                // vst1q_f32(sumn.as_mut_ptr().add(4), sum42);
-                // vst1q_f32(sumn.as_mut_ptr().add(8), sum43);
-                // vst1q_f32(sumn.as_mut_ptr().add(12), sum44);
                 // relu
                 let zero = vmovq_n_f32(0.0);
                 let rl1 = vmaxq_f32(zero, sum41);
                 let rl2 = vmaxq_f32(zero, sum42);
                 let rl3 = vmaxq_f32(zero, sum43);
                 let rl4 = vmaxq_f32(zero, sum44);
-                vst1q_f32(hid.as_mut_ptr().add(i), rl1);
-                vst1q_f32(hid.as_mut_ptr().add(i + 4), rl2);
-                vst1q_f32(hid.as_mut_ptr().add(i + 8), rl3);
-                vst1q_f32(hid.as_mut_ptr().add(i + 12), rl4);
+                vst1q_f32_x4(hid.as_mut_ptr().add(i), float32x4x4_t(rl1, rl2, rl3, rl4));
+                // vst1q_f32(hid.as_mut_ptr().add(i), rl1);
+                // vst1q_f32(hid.as_mut_ptr().add(i + 4), rl2);
+                // vst1q_f32(hid.as_mut_ptr().add(i + 8), rl3);
+                // vst1q_f32(hid.as_mut_ptr().add(i + 12), rl4);
             }
         }
         // 2nd layer to output
@@ -1430,8 +1492,10 @@ fn testweight() {
         let mut w = weight::Weight::new();
         w.init();
         let res_nosimdi = w.evaluatev9bb(&bban);
+        let res_nosimdi_old = w.evaluatev9bb_old(&bban);
         let res_simdmul = w.evaluatev9bb_simd_mul(&bban);
         // let res_simd = w.evaluatev9bb_simd(&bban);
+        assert!(dbg_assert_eq(&res_nosimdi, &res_nosimdi_old));
         assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }
