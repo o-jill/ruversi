@@ -717,9 +717,11 @@ impl Weight {
             for x in 0..bitboard::NUMCELL {
                 let bit = bitboard::LSB_CELL;
                 let c = (black & bit) as i32 - (white & bit) as i32;
-                let c = c as f32;
                 black >>= 1;
                 white >>= 1;
+                if c == 0 {continue;}  // no stone
+
+                let c = c as f32;
                 for (h, w) in hid.iter_mut().zip(
                     ow.iter().skip((x + y * bitboard::NUMCELL) * N_HIDDEN)) {
                     *h += c * w;
@@ -988,15 +990,11 @@ impl Weight {
             for i in (0..N_HIDDEN).step_by(N) {
                 unsafe {
                     let w = vld1q_f32_x4(we1.as_ptr().add(i));
-                    let w1 = vmulq_f32(c4, w.0);
-                    let w2 = vmulq_f32(c4, w.1);
-                    let w3 = vmulq_f32(c4, w.2);
-                    let w4 = vmulq_f32(c4, w.3);
                     let h = vld1q_f32_x4(hid.as_ptr().add(i));
-                    let w1 = vaddq_f32(w1, h.0);
-                    let w2 = vaddq_f32(w2, h.1);
-                    let w3 = vaddq_f32(w3, h.2);
-                    let w4 = vaddq_f32(w4, h.3);
+                    let w1 = vmlaq_f32(c4, w.0, h.0);
+                    let w1 = vmlaq_f32(c4, w.1, h.1);
+                    let w1 = vmlaq_f32(c4, w.2, h.2);
+                    let w1 = vmlaq_f32(c4, w.3, h.3);
                     vst1q_f32_x4(hid.as_mut_ptr().add(i),
                         float32x4x4_t(w1, w2, w3, w4));
                 }
