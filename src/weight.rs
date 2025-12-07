@@ -1,6 +1,7 @@
 use super::*;
 use rand::Rng;
 use std::{fs, io::{BufReader, BufRead}};
+use aligned_vec::AVec;
 
 #[cfg(target_arch="x86_64")]
 use std::arch::x86_64;
@@ -383,10 +384,14 @@ const TBL8_BIT2F32 : Bit2F32 = Bit2F32 {
     ],
 };
 
+const MEM_ALIGN : usize = 64;
+
 #[repr(align(32))]
 pub struct Weight {
-    pub weight : [f32 ; N_WEIGHT_PAD * N_PROGRESS_DIV],
-    vweight : Vec<f32>
+    // 64xH1 + H1 + H1x2 + H1 + H1 x (H2+1) + H2 + 1
+    pub weight : AVec<f32>,
+    // H1x64 + H1 + H1x2 + H1 + H1 x (H2+1) + H2 + 1
+    vweight : AVec<f32>
 }
 
 impl Default for Weight {
@@ -400,8 +405,15 @@ impl Default for Weight {
 impl Weight {
     pub fn new() -> Weight {
         Weight {
-            weight: [0.0 ; N_WEIGHT_PAD * N_PROGRESS_DIV],
-            vweight: Vec::with_capacity(N_WEIGHT_PAD * N_PROGRESS_DIV)
+            weight: {
+                let mut w =
+                    AVec::with_capacity(
+                        MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
+                unsafe {w.set_len(w.capacity());}
+                w
+            },
+            vweight: AVec::with_capacity(
+                MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV)
         }
     }
 
