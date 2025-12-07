@@ -6,7 +6,8 @@ use mylib::bitboard::BitBoard;
 
 #[cfg(target_arch="x86_64")]
 fn criterion_benchmark_weight(c : &mut Criterion) {
-    let w = Weight::new();
+    let mut w = Weight::new();
+    w.init();
     let ban = BitBoard::new();
     c.bench_function("weight_nosimd", |b| b.iter(|| w.evaluatev9bb(black_box(&ban))));
     c.bench_function("weight_simd_sse", |b| b.iter(|| w.evaluatev9bb_simd(black_box(&ban))));
@@ -15,7 +16,8 @@ fn criterion_benchmark_weight(c : &mut Criterion) {
 
 #[cfg(target_arch="aarch64")]
 fn criterion_benchmark_weight(c : &mut Criterion) {
-    let w = Weight::new();
+    let mut w = Weight::new();
+    w.init();
     let ban = BitBoard::new();
     c.bench_function(
         "weight_nosimd",
