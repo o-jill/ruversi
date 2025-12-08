@@ -988,6 +988,10 @@ impl Weight {
         let wdc = self.wibias(prgs);
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
+        // let mut hid = AVec::<f32>::with_capacity(MEM_ALIGN, N_HIDDEN);
+        // unsafe {hid.set_len(N_HIDDEN);}
+        // hid.copy_from_slice(wdc);
+        // hid.fill(0f32);
         // cells
         for idx in 0..bitboard::CELL_2D {
             let bit = bitboard::LSB_CELL;
@@ -1002,10 +1006,10 @@ impl Weight {
                 unsafe {
                     let w = vld1q_f32_x4(we1.as_ptr().add(i));
                     let h = vld1q_f32_x4(hid.as_ptr().add(i));
-                    let w1 = vmlaq_f32(c4, w.0, h.0);
-                    let w1 = vmlaq_f32(c4, w.1, h.1);
-                    let w1 = vmlaq_f32(c4, w.2, h.2);
-                    let w1 = vmlaq_f32(c4, w.3, h.3);
+                    let w1 = vmlaq_f32(h.0, c4, w.0);
+                    let w2 = vmlaq_f32(h.1, c4, w.1);
+                    let w3 = vmlaq_f32(h.2, c4, w.2);
+                    let w4 = vmlaq_f32(h.3, c4, w.3);
                     vst1q_f32_x4(hid.as_mut_ptr().add(i),
                         float32x4x4_t(w1, w2, w3, w4));
                 }
@@ -1060,6 +1064,8 @@ impl Weight {
         let wdc1 = self.wl1bias(prgs);
         let wh2 = self.wlayer2(prgs);
         let mut hid2 = [0f32 ; N_HIDDEN2];
+        // let mut hid2 = AVec::<f32>::with_capacity(MEM_ALIGN, N_HIDDEN2);
+        // unsafe {hid2.set_len(N_HIDDEN2);}
         hid2.copy_from_slice(wdc1);
         for j in (0..N_HIDDEN).step_by(32) {
             unsafe {
