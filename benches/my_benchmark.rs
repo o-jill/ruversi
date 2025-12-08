@@ -8,7 +8,8 @@ use mylib::bitboard::BitBoard;
 fn criterion_benchmark_weight(c : &mut Criterion) {
     let mut w = Weight::new();
     w.init();
-    let ban = BitBoard::new();
+    // let ban = BitBoard::new();
+    let ban = BitBoard::from("h/h/h/h/H/H/H/g1 b").unwrap();
     c.bench_function("weight_nosimd", |b| b.iter(|| w.evaluatev9bb(black_box(&ban))));
     c.bench_function("weight_simd_sse", |b| b.iter(|| w.evaluatev9bb_simd(black_box(&ban))));
     c.bench_function("weight_simd_avx", |b| b.iter(|| w.evaluatev9bb_simdavx(black_box(&ban))));
@@ -18,7 +19,8 @@ fn criterion_benchmark_weight(c : &mut Criterion) {
 fn criterion_benchmark_weight(c : &mut Criterion) {
     let mut w = Weight::new();
     w.init();
-    let ban = BitBoard::new();
+    // let ban = BitBoard::new();
+    let ban = BitBoard::from("h/h/h/h/H/H/H/g1 b").unwrap();
     c.bench_function(
         "weight_nosimd",
         |b| b.iter(|| w.evaluatev9bb(black_box(&ban))));
