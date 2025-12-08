@@ -917,31 +917,57 @@ impl Weight {
                 x86_64::_mm_store_ps(hid2.as_mut_ptr().add(i), s4);
             }
         }
-        unsafe {  // relu
-            let h1 = x86_64::_mm_load_ps(hid2.as_ptr());
-            let h2 = x86_64::_mm_load_ps(hid2.as_ptr().add(4));
-            let h3 = x86_64::_mm_load_ps(hid2.as_ptr().add(8));
-            let h4 = x86_64::_mm_load_ps(hid2.as_ptr().add(12));
-            let zero = x86_64::_mm_setzero_ps();
-            let h1 = x86_64::_mm_max_ps(h1, zero);
-            let h2 = x86_64::_mm_max_ps(h2, zero);
-            let h3 = x86_64::_mm_max_ps(h3, zero);
-            let h4 = x86_64::_mm_max_ps(h4, zero);
-            let wh21 = x86_64::_mm_load_ps(wh2.as_ptr());
-            let wh22 = x86_64::_mm_load_ps(wh2.as_ptr().add(4));
-            let wh23 = x86_64::_mm_load_ps(wh2.as_ptr().add(8));
-            let wh24 = x86_64::_mm_load_ps(wh2.as_ptr().add(12));
+        // unsafe {  // relu
+        //     let h1 = x86_64::_mm_load_ps(hid2.as_ptr());
+        //     let h2 = x86_64::_mm_load_ps(hid2.as_ptr().add(4));
+        //     let h3 = x86_64::_mm_load_ps(hid2.as_ptr().add(8));
+        //     let h4 = x86_64::_mm_load_ps(hid2.as_ptr().add(12));
+        //     let zero = x86_64::_mm_setzero_ps();
+        //     let h1 = x86_64::_mm_max_ps(h1, zero);
+        //     let h2 = x86_64::_mm_max_ps(h2, zero);
+        //     let h3 = x86_64::_mm_max_ps(h3, zero);
+        //     let h4 = x86_64::_mm_max_ps(h4, zero);
+        //     let wh21 = x86_64::_mm_load_ps(wh2.as_ptr());
+        //     let wh22 = x86_64::_mm_load_ps(wh2.as_ptr().add(4));
+        //     let wh23 = x86_64::_mm_load_ps(wh2.as_ptr().add(8));
+        //     let wh24 = x86_64::_mm_load_ps(wh2.as_ptr().add(12));
 
-            let y1 = x86_64::_mm_mul_ps(wh21, h1);
-            let y2 = x86_64::_mm_mul_ps(wh22, h2);
-            let y3 = x86_64::_mm_mul_ps(wh23, h3);
-            let y4 = x86_64::_mm_mul_ps(wh24, h4);
-            let y12 = x86_64::_mm_add_ps(y1, y2);
-            let y34 = x86_64::_mm_add_ps(y3, y4);
-            let y1234 = x86_64::_mm_add_ps(y12, y34);
-            x86_64::_mm_store_ps(hid2.as_mut_ptr(), y1234);
+        //     let y1 = x86_64::_mm_mul_ps(wh21, h1);
+        //     let y2 = x86_64::_mm_mul_ps(wh22, h2);
+        //     let y3 = x86_64::_mm_mul_ps(wh23, h3);
+        //     let y4 = x86_64::_mm_mul_ps(wh24, h4);
+        //     let y12 = x86_64::_mm_add_ps(y1, y2);
+        //     let y34 = x86_64::_mm_add_ps(y3, y4);
+        //     let y1234 = x86_64::_mm_add_ps(y12, y34);
+        //     x86_64::_mm_store_ps(hid2.as_mut_ptr(), y1234);
+        // }
+        for j in 0..N_HIDDEN2/4 {
+            unsafe {  // relu
+                let h1 = x86_64::_mm_load_ps(hid2.as_ptr().add(j * 16));
+                let h2 = x86_64::_mm_load_ps(hid2.as_ptr().add(j * 16 + 4));
+                let h3 = x86_64::_mm_load_ps(hid2.as_ptr().add(j * 16 + 8));
+                let h4 = x86_64::_mm_load_ps(hid2.as_ptr().add(j * 16 + 12));
+                let zero = x86_64::_mm_setzero_ps();
+                let h1 = x86_64::_mm_max_ps(h1, zero);
+                let h2 = x86_64::_mm_max_ps(h2, zero);
+                let h3 = x86_64::_mm_max_ps(h3, zero);
+                let h4 = x86_64::_mm_max_ps(h4, zero);
+                let wh21 = x86_64::_mm_load_ps(wh2.as_ptr().add(j * 16));
+                let wh22 = x86_64::_mm_load_ps(wh2.as_ptr().add(j * 16 + 4));
+                let wh23 = x86_64::_mm_load_ps(wh2.as_ptr().add(j * 16 + 8));
+                let wh24 = x86_64::_mm_load_ps(wh2.as_ptr().add(j * 16 + 12));
+
+                let y1 = x86_64::_mm_mul_ps(wh21, h1);
+                let y2 = x86_64::_mm_mul_ps(wh22, h2);
+                let y3 = x86_64::_mm_mul_ps(wh23, h3);
+                let y4 = x86_64::_mm_mul_ps(wh24, h4);
+                let y12 = x86_64::_mm_add_ps(y1, y2);
+                let y34 = x86_64::_mm_add_ps(y3, y4);
+                let y1234 = x86_64::_mm_add_ps(y12, y34);
+                x86_64::_mm_store_ps(hid2.as_mut_ptr().add(j * 4), y1234);
+            }
         }
-        for h in hid2.iter().take(4) {
+        for h in hid2.iter().take(N_HIDDEN2 / 4) {
             res += h;
         }
         res
@@ -1260,26 +1286,60 @@ impl Weight {
                 }
             }
         }
-        unsafe {  // relu
-            let x1 = x86_64::_mm256_load_ps(hid2.as_ptr());
-            let x2 = x86_64::_mm256_load_ps(hid2.as_ptr().add(8));
-            let zero = x86_64::_mm256_setzero_ps();
-            let h1 = x86_64::_mm256_max_ps(zero, x1);
-            let h2 = x86_64::_mm256_max_ps(zero, x2);
-            let w1 = x86_64::_mm256_load_ps(wh2.as_ptr());
-            let w2 = x86_64::_mm256_load_ps(wh2.as_ptr().add(8));
-            let y1 = x86_64::_mm256_mul_ps(h1, w1);
-            let y2 = x86_64::_mm256_mul_ps(h2, w2);
-            let y3 = x86_64::_mm256_add_ps(y1, y2);
-            let s1 = x86_64::_mm256_castps256_ps128(y3);
-            let s2 = x86_64::_mm256_extractf128_ps(y3, 1);
-            let s4 = x86_64::_mm_add_ps(s1, s2);
-            x86_64::_mm_store_ps(hid2.as_mut_ptr(), s4);
-        }
-        for h in hid2.iter().take(4) {
-            res += h;
-        }
-        res
+        if N_HIDDEN2 >= 32 {
+            for i in (0..N_HIDDEN2).step_by(32) {
+                unsafe {  // relu
+                    let x1 = x86_64::_mm256_load_ps(hid2.as_ptr().add(i));
+                    let x2 = x86_64::_mm256_load_ps(hid2.as_ptr().add(i + 8));
+                    let x3 = x86_64::_mm256_load_ps(hid2.as_ptr().add(i + 16));
+                    let x4 = x86_64::_mm256_load_ps(hid2.as_ptr().add(i + 24));
+                    let zero = x86_64::_mm256_setzero_ps();
+                    let h1 = x86_64::_mm256_max_ps(zero, x1);
+                    let h2 = x86_64::_mm256_max_ps(zero, x2);
+                    let h3 = x86_64::_mm256_max_ps(zero, x3);
+                    let h4 = x86_64::_mm256_max_ps(zero, x4);
+                    let w1 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i));
+                    let w2 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i + 8));
+                    let w3 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i + 16));
+                    let w4 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i + 24));
+                    let y1 = x86_64::_mm256_mul_ps(h1, w1);
+                    let y2 = x86_64::_mm256_mul_ps(h2, w2);
+                    let y3 = x86_64::_mm256_mul_ps(h3, w3);
+                    let y4 = x86_64::_mm256_mul_ps(h4, w4);
+                    let y12 = x86_64::_mm256_add_ps(y1, y2);
+                    let y34 = x86_64::_mm256_add_ps(y3, y4);
+                    let y1234 = x86_64::_mm256_add_ps(y12, y34);
+                    let s1 = x86_64::_mm256_castps256_ps128(y1234);
+                    let s2 = x86_64::_mm256_extractf128_ps(y1234, 1);
+                    let s4 = x86_64::_mm_add_ps(s1, s2);
+                    x86_64::_mm_store_ps(hid2.as_mut_ptr().add(i / 8), s4);
+                }
+            }
+            for h in hid2.iter().take(N_HIDDEN2 / 8) {
+                res += h;
+            }
+        } else {
+            unsafe {  // relu
+                let x1 = x86_64::_mm256_load_ps(hid2.as_ptr());
+                let x2 = x86_64::_mm256_load_ps(hid2.as_ptr().add(8));
+                let zero = x86_64::_mm256_setzero_ps();
+                let h1 = x86_64::_mm256_max_ps(zero, x1);
+                let h2 = x86_64::_mm256_max_ps(zero, x2);
+                let w1 = x86_64::_mm256_load_ps(wh2.as_ptr());
+                let w2 = x86_64::_mm256_load_ps(wh2.as_ptr().add(8));
+                let y1 = x86_64::_mm256_mul_ps(h1, w1);
+                let y2 = x86_64::_mm256_mul_ps(h2, w2);
+                let y3 = x86_64::_mm256_add_ps(y1, y2);
+                let s1 = x86_64::_mm256_castps256_ps128(y3);
+                let s2 = x86_64::_mm256_extractf128_ps(y3, 1);
+                let s4 = x86_64::_mm_add_ps(s1, s2);
+                x86_64::_mm_store_ps(hid2.as_mut_ptr(), s4);
+            }
+            for h in hid2.iter().take(4) {
+                res += h;
+            }
+         }
+         res
     }
 }
 
