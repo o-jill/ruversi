@@ -643,10 +643,6 @@ impl Weight {
 
     #[allow(dead_code)]
     pub fn evaluatev9bb_old(&self, ban : &bitboard::BitBoard) -> f32 {
-        if ban.is_full() || ban.is_passpass() {
-            return ban.countf32();
-        }
-
         let prgs = ban.progress();
         let black = ban.black;
         let white = ban.white;
@@ -697,10 +693,6 @@ impl Weight {
     }
 
     pub fn evaluatev9bb(&self, ban : &bitboard::BitBoard) -> f32 {
-        if ban.is_full() || ban.is_passpass() {
-            return ban.countf32();
-        }
-
         let prgs = ban.progress();
         let mut black = ban.black;
         let mut white = ban.white;
@@ -713,6 +705,7 @@ impl Weight {
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
         let mut hid = [0f32 ; N_HIDDEN];
+        hid.copy_from_slice(wdc);
         for y in 0..bitboard::NUMCELL {
             for x in 0..bitboard::NUMCELL {
                 let bit = bitboard::LSB_CELL;
@@ -731,7 +724,7 @@ impl Weight {
         for (i, h) in hid.iter_mut().enumerate() {
             let mut hidsum = teban.mul_add(wtbn[i], *h);
             hidsum = wfs[i].mul_add(fs.0 as f32, hidsum);
-            hidsum = wfs[i + N_HIDDEN].mul_add(fs.1 as f32, hidsum + wdc[i]);
+            hidsum = wfs[i + N_HIDDEN].mul_add(fs.1 as f32, hidsum);
             // relu
             *h = hidsum.max(0f32);
         }
@@ -754,10 +747,6 @@ impl Weight {
 
     #[cfg(target_arch="x86_64")]
     pub fn evaluatev9bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
-        if ban.is_full() || ban.is_passpass() {
-            return ban.countf32();
-        }
-
         let prgs = ban.progress();
         let mut black = ban.black;
         let mut white = ban.white;
@@ -960,10 +949,6 @@ impl Weight {
 
     #[cfg(target_arch="aarch64")]
     pub fn evaluatev9bb_simd_mul(&self, ban : &bitboard::BitBoard) -> f32 {
-        if ban.is_full() || ban.is_passpass() {
-            return ban.countf32();
-        }
-
         let prgs = ban.progress();
         let mut black = ban.black;
         let mut white = ban.white;
@@ -1099,195 +1084,111 @@ impl Weight {
 
     #[cfg(target_arch="x86_64")]
     pub fn evaluatev9bb_simdavx(&self, ban : &bitboard::BitBoard) -> f32 {
-        if ban.is_full() || ban.is_passpass() {
-            return ban.countf32();
-        }
-
         let prgs = ban.progress();
-        let black = ban.black;
-        let white = ban.white;
+        let mut black = ban.black;
+        let mut white = ban.white;
         let teban = ban.teban as f32;
 
         let fs = ban.fixedstones();
 
-        let ow = self.wban(prgs);
+        let ow = self.wbanv(prgs);
         let wtbn = self.wteban(prgs);
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
-        const N : usize = 16;
+        const N : usize = 32;
         let mut hid = AVec::<f32>::with_capacity(MEM_ALIGN, N_HIDDEN);
         unsafe {hid.set_len(N_HIDDEN);}
-        hid.fill(0f32);
-        let mut sumn = AVec::<f32>::with_capacity(MEM_ALIGN, N);
-        unsafe {sumn.set_len(N);}
-        sumn.fill(0f32);
-        let mut cells : AVec<f32> = AVec::with_capacity(MEM_ALIGN, bitboard::CELL_2D);
-        unsafe {
-            cells.set_len(bitboard::CELL_2D);
-            let c_ptr = cells.as_mut_ptr();
-            let bit8 = 0xff;
-            for idx in (0..bitboard::CELL_2D).step_by(32) {
-                let bi1 = bit8 & (black >> idx) as usize;
-                let wi1 = bit8 & (white >> idx) as usize;
-                let bi2 = bit8 & (black >> (idx + 8)) as usize;
-                let wi2 = bit8 & (white >> (idx + 8)) as usize;
-                let bi3 = bit8 & (black >> (idx + 16)) as usize;
-                let wi3 = bit8 & (white >> (idx + 16)) as usize;
-                let bi4 = bit8 & (black >> (idx + 24)) as usize;
-                let wi4 = bit8 & (white >> (idx + 24)) as usize;
-                let b81 = x86_64::_mm256_load_ps(TBL8_BIT2F32.addr(bi1));
-                let b82 = x86_64::_mm256_load_ps(TBL8_BIT2F32.addr(bi2));
-                let b83 = x86_64::_mm256_load_ps(TBL8_BIT2F32.addr(bi3));
-                let b84 = x86_64::_mm256_load_ps(TBL8_BIT2F32.addr(bi4));
-                let w81 = x86_64::_mm256_load_ps(TBL8_BIT2F32.addr(wi1));
-                let w82 = x86_64::_mm256_load_ps(TBL8_BIT2F32.addr(wi2));
-                let w83 = x86_64::_mm256_load_ps(TBL8_BIT2F32.addr(wi3));
-                let w84 = x86_64::_mm256_load_ps(TBL8_BIT2F32.addr(wi4));
-                let f81 = x86_64::_mm256_sub_ps(b81, w81);
-                let f82 = x86_64::_mm256_sub_ps(b82, w82);
-                let f83 = x86_64::_mm256_sub_ps(b83, w83);
-                let f84 = x86_64::_mm256_sub_ps(b84, w84);
-                x86_64::_mm256_storeu_ps(c_ptr.add(idx), f81);
-                x86_64::_mm256_storeu_ps(c_ptr.add(idx + 8), f82);
-                x86_64::_mm256_storeu_ps(c_ptr.add(idx + 16), f83);
-                x86_64::_mm256_storeu_ps(c_ptr.add(idx + 24), f84);
+        // hid.fill(0f32);
+        hid.copy_from_slice(wdc);
+        for idx in 0..bitboard::CELL_2D {
+            let bit = bitboard::LSB_CELL;
+            let b = (black & bit) as i32;
+            let w = (white & bit) as i32;
+            black >>= 1;
+            white >>= 1;
+            let c = b - w;
+            if c == 0 {continue;}  // no stone
+
+            let c = c as f32;
+            let c8 = unsafe {x86_64::_mm256_set1_ps(c)};
+            let wei = &ow[idx * N_HIDDEN .. ];
+            for i in (0..N_HIDDEN).step_by(N) {
+                unsafe {
+                    let w1 = x86_64::_mm256_load_ps(wei.as_ptr().add(i));
+                    let w2 = x86_64::_mm256_load_ps(wei.as_ptr().add(i + 8));
+                    let w3 = x86_64::_mm256_load_ps(wei.as_ptr().add(i + 16));
+                    let w4 = x86_64::_mm256_load_ps(wei.as_ptr().add(i + 24));
+                    let h1 = x86_64::_mm256_load_ps(hid.as_ptr().add(i));
+                    let h2 = x86_64::_mm256_load_ps(hid.as_ptr().add(i + 8));
+                    let h3 = x86_64::_mm256_load_ps(hid.as_ptr().add(i + 16));
+                    let h4 = x86_64::_mm256_load_ps(hid.as_ptr().add(i + 24));
+                    let m1 = x86_64::_mm256_fmadd_ps(w1, c8, h1);
+                    let m2 = x86_64::_mm256_fmadd_ps(w2, c8, h2);
+                    let m3 = x86_64::_mm256_fmadd_ps(w3, c8, h3);
+                    let m4 = x86_64::_mm256_fmadd_ps(w4, c8, h4);
+                    x86_64::_mm256_store_ps(hid.as_mut_ptr().add(i), m1);
+                    x86_64::_mm256_store_ps(hid.as_mut_ptr().add(i + 8), m2);
+                    x86_64::_mm256_store_ps(hid.as_mut_ptr().add(i + 16), m3);
+                    x86_64::_mm256_store_ps(hid.as_mut_ptr().add(i + 24), m4);
+                }
             }
         }
-        let mut sum88 = AVec::<f32>::with_capacity(MEM_ALIGN, N * 8 / 2);
-        unsafe {sum88.set_len(N * 8 / 2);}
+
         for hidx in (0..N_HIDDEN).step_by(N) {
-            for m in (0..N).step_by(8) {
-                sum88.fill(0f32);
-                const M : usize = 32;
-                for idx in (0..bitboard::CELL_2D).step_by(M) {
-                    unsafe {
-                        let f81 = x86_64::_mm256_loadu_ps(
-                                cells.as_ptr().add(idx));
-                        let f82 = x86_64::_mm256_loadu_ps(
-                                cells.as_ptr().add(idx + 8));
-                        let f83 = x86_64::_mm256_loadu_ps(
-                                cells.as_ptr().add(idx + 16));
-                        let f84 = x86_64::_mm256_loadu_ps(
-                                cells.as_ptr().add(idx + 24));
-
-                        for n in 0..N / 2 {
-                            let index = hidx + m + n;
-                            let w1 = &ow[index * bitboard::CELL_2D .. (index + 1) * bitboard::CELL_2D];
-                            let mut sum8 = x86_64::_mm256_loadu_ps(
-                                    sum88[n * 8..].as_ptr());
-
-                            let x81 = x86_64::_mm256_load_ps(
-                                w1.as_ptr().add(idx));
-                            let x82 = x86_64::_mm256_load_ps(
-                                w1.as_ptr().add(idx + 8));
-                            let x83 = x86_64::_mm256_load_ps(
-                                w1.as_ptr().add(idx + 16));
-                            let x84 = x86_64::_mm256_load_ps(
-                                w1.as_ptr().add(idx + 24));
-
-                            if true {  // fma
-                                sum8 = x86_64::_mm256_fmadd_ps(x81, f81, sum8);
-                                sum8 = x86_64::_mm256_fmadd_ps(x82, f82, sum8);
-                                sum8 = x86_64::_mm256_fmadd_ps(x83, f83, sum8);
-                                sum8 = x86_64::_mm256_fmadd_ps(x84, f84, sum8);
-                            } else {
-                                let mul1 = x86_64::_mm256_mul_ps(x81, f81);
-                                let mul2 = x86_64::_mm256_mul_ps(x82, f82);
-                                let mul3 = x86_64::_mm256_mul_ps(x83, f83);
-                                let mul4 = x86_64::_mm256_mul_ps(x84, f84);
-
-                                let sum12 = x86_64::_mm256_add_ps(mul1, mul2);
-                                let sum34 = x86_64::_mm256_add_ps(mul3, mul4);
-                                let sum1234 = x86_64::_mm256_add_ps(sum12, sum34);
-                                sum8 = x86_64::_mm256_add_ps(sum8, sum1234);
-                            }
-                            x86_64::_mm256_store_ps(
-                                sum88[n * 8..].as_mut_ptr(), sum8);
-                        }
-                    }
-                }
-                // sum88->sumn
-                // transpose
-                unsafe {
-                    let x1 = x86_64::_mm256_load_ps(sum88.as_ptr());
-                    let x2 = x86_64::_mm256_load_ps(sum88.as_ptr().add(8));
-                    let x3 = x86_64::_mm256_load_ps(sum88.as_ptr().add(16));
-                    let x4 = x86_64::_mm256_load_ps(sum88.as_ptr().add(24));
-                    let x5 = x86_64::_mm256_load_ps(sum88.as_ptr().add(32));
-                    let x6 = x86_64::_mm256_load_ps(sum88.as_ptr().add(40));
-                    let x7 = x86_64::_mm256_load_ps(sum88.as_ptr().add(48));
-                    let x8 = x86_64::_mm256_load_ps(sum88.as_ptr().add(56));
-
-                    let xl12 = x86_64::_mm256_unpacklo_ps(x1, x2);
-                    let xh12 = x86_64::_mm256_unpackhi_ps(x1, x2);
-                    let xl34 = x86_64::_mm256_unpacklo_ps(x3, x4);
-                    let xh34 = x86_64::_mm256_unpackhi_ps(x3, x4);
-                    let xl56 = x86_64::_mm256_unpacklo_ps(x5, x6);
-                    let xh56 = x86_64::_mm256_unpackhi_ps(x5, x6);
-                    let xl78 = x86_64::_mm256_unpacklo_ps(x7, x8);
-                    let xh78 = x86_64::_mm256_unpackhi_ps(x7, x8);
-
-                    let x12 = x86_64::_mm256_add_ps(xl12, xh12);
-                    let x34 = x86_64::_mm256_add_ps(xl34, xh34);
-                    let x56 = x86_64::_mm256_add_ps(xl56, xh56);
-                    let x78 = x86_64::_mm256_add_ps(xl78, xh78);
-
-                    let x1234 = x86_64::_mm256_shuffle_ps(x12, x34, 0x44);
-                    let xabcd = x86_64::_mm256_shuffle_ps(x12, x34, 0xee);
-                    let x5678 = x86_64::_mm256_shuffle_ps(x56, x78, 0x44);
-                    let xefgh = x86_64::_mm256_shuffle_ps(x56, x78, 0xee);
-
-                    let xabcd = x86_64::_mm256_add_ps(x1234, xabcd);
-                    let xefgh = x86_64::_mm256_add_ps(x5678, xefgh);
-
-                    let x1234 = x86_64::_mm256_permute2f128_ps(xabcd, xefgh, 0x20);
-                    let x5678 = x86_64::_mm256_permute2f128_ps(xabcd, xefgh, 0x31);
-
-                    let h18 = x86_64::_mm256_add_ps(x1234, x5678);
-                    // sum
-                    x86_64::_mm256_store_ps(sumn.as_mut_ptr().add(m), h18);
-                }
-            }
-
             unsafe {
-                let x1 = x86_64::_mm256_load_ps(sumn.as_ptr());
-                let x2 = x86_64::_mm256_load_ps(sumn.as_ptr().add(8));
+                let x1 = x86_64::_mm256_load_ps(hid.as_ptr().add(hidx));
+                let x2 = x86_64::_mm256_load_ps(hid.as_ptr().add(hidx + 8));
+                let x3 = x86_64::_mm256_load_ps(hid.as_ptr().add(hidx + 16));
+                let x4 = x86_64::_mm256_load_ps(hid.as_ptr().add(hidx + 24));
+
                 // teban
                 let wtbn1 = x86_64::_mm256_load_ps(wtbn.as_ptr().add(hidx));
-                let wtbn2 = x86_64::_mm256_load_ps(wtbn.as_ptr().add(hidx + 8));
+                let wtbn2 = x86_64::_mm256_load_ps(
+                    wtbn.as_ptr().add(hidx + 8));
+                let wtbn3 = x86_64::_mm256_load_ps(
+                    wtbn.as_ptr().add(hidx + 16));
+                let wtbn4 = x86_64::_mm256_load_ps(
+                    wtbn.as_ptr().add(hidx + 24));
                 let tbn = x86_64::_mm256_set1_ps(teban);
-                let tbn1 = x86_64::_mm256_mul_ps(wtbn1, tbn);
-                let tbn2 = x86_64::_mm256_mul_ps(wtbn2, tbn);
-                let h1 = x86_64::_mm256_add_ps(x1, tbn1);
-                let h2 = x86_64::_mm256_add_ps(x2, tbn2);
+                let h1 = x86_64::_mm256_fmadd_ps(wtbn1, tbn, x1);
+                let h2 = x86_64::_mm256_fmadd_ps(wtbn2, tbn, x2);
+                let h3 = x86_64::_mm256_fmadd_ps(wtbn3, tbn, x3);
+                let h4 = x86_64::_mm256_fmadd_ps(wtbn4, tbn, x4);
                 // fixed stones
                 let wfsb1 = x86_64::_mm256_load_ps(wfs.as_ptr().add(hidx));
                 let wfsb2 = x86_64::_mm256_load_ps(wfs.as_ptr().add(hidx + 8));
+                let wfsb3 = x86_64::_mm256_load_ps(
+                    wfs.as_ptr().add(hidx + 16));
+                let wfsb4 = x86_64::_mm256_load_ps(
+                    wfs.as_ptr().add(hidx + 24));
                 let fsb = x86_64::_mm256_set1_ps(fs.0 as f32);
-                let fsb1 = x86_64::_mm256_mul_ps(wfsb1, fsb);
-                let fsb2 = x86_64::_mm256_mul_ps(wfsb2, fsb);
+                let h1 = x86_64::_mm256_fmadd_ps(wfsb1, fsb, h1);
+                let h2 = x86_64::_mm256_fmadd_ps(wfsb2, fsb, h2);
+                let h3 = x86_64::_mm256_fmadd_ps(wfsb3, fsb, h3);
+                let h4 = x86_64::_mm256_fmadd_ps(wfsb4, fsb, h4);
                 let wfsw1 = x86_64::_mm256_load_ps(
                     wfs.as_ptr().add(hidx + N_HIDDEN));
                 let wfsw2 = x86_64::_mm256_load_ps(
                     wfs.as_ptr().add(hidx + N_HIDDEN + 8));
+                let wfsw3 = x86_64::_mm256_load_ps(
+                    wfs.as_ptr().add(hidx + N_HIDDEN + 16));
+                let wfsw4 = x86_64::_mm256_load_ps(
+                    wfs.as_ptr().add(hidx + N_HIDDEN + 24));
                 let fsw = x86_64::_mm256_set1_ps(fs.1 as f32);
-                let fsw1 = x86_64::_mm256_mul_ps(wfsw1, fsw);
-                let fsw2 = x86_64::_mm256_mul_ps(wfsw2, fsw);
-                let fsbw1 = x86_64::_mm256_add_ps(fsb1, fsw1);
-                let fsbw2 = x86_64::_mm256_add_ps(fsb2, fsw2);
-                let h1 = x86_64::_mm256_add_ps(h1, fsbw1);
-                let h2 = x86_64::_mm256_add_ps(h2, fsbw2);
-                // dc
-                let wdc1 = x86_64::_mm256_load_ps(wdc.as_ptr().add(hidx));
-                let wdc2 = x86_64::_mm256_load_ps(wdc.as_ptr().add(hidx + 8));
-                let h1234 = x86_64::_mm256_add_ps(h1, wdc1);
-                let h5678 = x86_64::_mm256_add_ps(h2, wdc2);
+                let h1 = x86_64::_mm256_fmadd_ps(wfsw1, fsw, h1);
+                let h2 = x86_64::_mm256_fmadd_ps(wfsw2, fsw, h2);
+                let h3 = x86_64::_mm256_fmadd_ps(wfsw3, fsw, h3);
+                let h4 = x86_64::_mm256_fmadd_ps(wfsw4, fsw, h4);
                 // relu
                 let zero = x86_64::_mm256_setzero_ps();
-                let y41 = x86_64::_mm256_max_ps(zero, h1234);
-                let y42 = x86_64::_mm256_max_ps(zero, h5678);
-                x86_64::_mm256_store_ps(hid.as_mut_ptr().add(hidx), y41);
-                x86_64::_mm256_store_ps(hid.as_mut_ptr().add(hidx + 8), y42);
+                let y1 = x86_64::_mm256_max_ps(zero, h1);
+                let y2 = x86_64::_mm256_max_ps(zero, h2);
+                let y3 = x86_64::_mm256_max_ps(zero, h3);
+                let y4 = x86_64::_mm256_max_ps(zero, h4);
+                x86_64::_mm256_store_ps(hid.as_mut_ptr().add(hidx), y1);
+                x86_64::_mm256_store_ps(hid.as_mut_ptr().add(hidx + 8), y2);
+                x86_64::_mm256_store_ps(hid.as_mut_ptr().add(hidx + 16), y3);
+                x86_64::_mm256_store_ps(hid.as_mut_ptr().add(hidx + 24), y4);
             }
         }
 
