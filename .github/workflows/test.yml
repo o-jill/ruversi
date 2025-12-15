@@ -34,7 +34,7 @@ jobs:
     - name: Run tests
       continue-on-error: true # とにかく最後まで行きたい
       id: utest
-      run: cargo test --features=avx --verbose --release  # test w/ simd will get error w/o --release.
+      run: cargo test --features=avx,withtt --verbose
     - name: check error run build
       if: ${{ steps.rubuild.outcome == 'failure' }}
       run: |
@@ -94,7 +94,7 @@ jobs:
     - name: Run tests
       continue-on-error: true # とにかく最後まで行きたい
       id: utest
-      run: cargo test --verbose --release
+      run: cargo test --verbose
     - name: check error run build
       if: ${{ steps.rubuild.outcome == 'failure' }}
       run: |
