@@ -1926,10 +1926,8 @@ fn testweight() {
         let mut w = weight::Weight::new();
         w.init();
         let res_nosimdi = w.evaluatev9bb(&bban);
-        let res_nosimdi_old = w.evaluatev9bb_old(&bban);
         let res_simdmul = w.evaluatev9bb_simd_mul(&bban);
         // let res_simd = w.evaluatev9bb_simd(&bban);
-        assert!(dbg_assert_eq(&res_nosimdi, &res_nosimdi_old));
         assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }
