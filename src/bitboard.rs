@@ -915,13 +915,7 @@ impl BitBoard {
     pub fn progress(&self) -> usize {
         let cnt = self.stones() as usize;
         let ret = ((cnt - 4) * weight::N_PROGRESS_DIV) / 60;
-        #[cfg(test)]
-        {
-            if ret >= weight::N_PROGRESS_DIV {
-                return weight::N_PROGRESS_DIV -1;
-            }
-        }
-        ret
+        ret.min(weight::N_PROGRESS_DIV - 1)
     }
 
     #[allow(dead_code)]

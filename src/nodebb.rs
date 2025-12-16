@@ -98,6 +98,10 @@ impl NodeBB {
 
     #[cfg(target_arch="x86_64")]
     fn evaluate(ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.countf32();
+        }
+
         if cfg!(feature="nosimd") {
             wei.evaluatev9bb(ban)
         } else if cfg!(feature="avx") {
@@ -109,6 +113,10 @@ impl NodeBB {
 
     #[cfg(target_arch="aarch64")]
     fn evaluate(ban : &bitboard::BitBoard, wei : &weight::Weight) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.countf32();
+        }
+
         if cfg!(feature="nosimd") {
             wei.evaluatev9bb(ban)
         } else {
