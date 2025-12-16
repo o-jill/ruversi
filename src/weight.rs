@@ -395,29 +395,17 @@ impl Weight {
         hid.copy_from_slice(wdc);
         let mut black = ban.black;
         let mut white = ban.white;
-        for y in 0..bitboard::NUMCELL {
-            for x in 0..bitboard::NUMCELL {
-                let bit = bitboard::LSB_CELL;
-                let b = black & bit;
-                let w = white & bit;
-                black >>= 1;
-                white >>= 1;
-                if b | w == 0 {continue;}  // no stone
+        for idx in 0..bitboard::CELL_2D {
+            let bit = bitboard::LSB_CELL;
+            let b = black & bit;
+            let w = white & bit;
+            black >>= 1;
+            white >>= 1;
+            if b | w == 0 {continue;}  // no stone
 
-                if b != 0 {
-                    for (h, w) in hid.iter_mut().zip(
-                        ow.iter().skip(
-                            (x + y * bitboard::NUMCELL) * N_HIDDEN * 2)) {
-                        *h += w;
-                    }
-                    continue;
-                }
-
-                for (h, w) in hid.iter_mut().zip(
-                    ow.iter().skip(
-                        (x + y * bitboard::NUMCELL) * N_HIDDEN * 2 + N_HIDDEN)) {
-                    *h += w;
-                }
+            let start = idx * N_HIDDEN * 2 + if b != 0 {0} else {N_HIDDEN};
+            for (h, w) in hid.iter_mut().zip(ow.iter().skip(start)) {
+                *h += w;
             }
         }
         for (i, h) in hid.iter_mut().enumerate() {
