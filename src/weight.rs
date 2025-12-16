@@ -650,21 +650,26 @@ impl Weight {
         // cells
         for idx in 0..bitboard::CELL_2D {
             let bit = bitboard::LSB_CELL;
-            let c = (black & bit) as i32 - (white & bit) as i32;
+            let b = black & bit;
+            let w = white & bit;
             black >>= 1;
             white >>= 1;
-            if c == 0 {continue;}
+            if b | w == 0 {continue;}  // no stone
 
-            let c4 = unsafe {vdupq_n_f32(c as f32)};
             let we1 = &ow[idx * N_HIDDEN .. ];
+            let wei = if b != 0 {
+                &ow[idx * N_HIDDEN * 2 .. ]
+            } else {
+                &ow[idx * N_HIDDEN * 2 + N_HIDDEN.. ]
+            };
             for i in (0..N_HIDDEN).step_by(N) {
                 unsafe {
                     let w = vld1q_f32_x4(we1.as_ptr().add(i));
                     let h = vld1q_f32_x4(hid.as_ptr().add(i));
-                    let w1 = vmlaq_f32(h.0, c4, w.0);
-                    let w2 = vmlaq_f32(h.1, c4, w.1);
-                    let w3 = vmlaq_f32(h.2, c4, w.2);
-                    let w4 = vmlaq_f32(h.3, c4, w.3);
+                    let w1 = vaddq_f32(h.0, w.0);
+                    let w2 = vaddq_f32(h.1, w.1);
+                    let w3 = vaddq_f32(h.2, w.2);
+                    let w4 = vaddq_f32(h.3, w.3);
                     vst1q_f32_x4(hid.as_mut_ptr().add(i),
                         float32x4x4_t(w1, w2, w3, w4));
                 }
