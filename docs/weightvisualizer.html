@@ -815,6 +815,348 @@ function runasc4(type) {
   out.innerHTML = result;
 }
 
+/* -- -- --  v0.5.* -- -- -- */
+
+// ex. # 3x 128+1+2-128-16-1
+function readheader5(header) {
+  let layers = header.split(/[ -]/);
+  // console.log(layers);
+  let sets_x = layers[1];  // "3x"
+  let sets = sets_x.substring(0, sets_x.length - 1) - 0;
+
+  let result = [1, 1, 1, 1, 1];
+  let out = Number(layers[5]);
+  result[4] = out;
+  let hid2 = Number(layers[4]);
+  result[3] = hid2;
+  let hid1 = Number(layers[3]);
+  result[2] = hid1;
+  // result[1] = new Array(hid);
+  let elements = layers[2].split('+');
+  // console.log(elements);
+  let input = elements.map(Number);
+  result[1] = input;
+  result[0] = sets;
+  console.log(result);
+  return result;
+}
+
+function parse5(txt, layers) {
+  let result = '';
+  for (let iset = 1; iset <= layers[0]; ++iset) {
+    result += "# part: " + iset + "<br>";
+
+    weights = txt[iset].split(',').map(Number);
+
+    let i = 0;
+    // cells
+    for (let bw = 0; bw < 2; ++bw) {
+      for (let l = 0; l < layers[2]; ++l) {
+        for (let y = 0; y < 8; ++y) {
+          let line = '|';
+          for (let x = 0; x < 8; ++x) {
+            line += weights[x + y * 8 + i].toFixed(2) + '|';
+          }
+          result += line + '<br>';
+        }
+        result += '<br>';
+        i += layers[1][0] / 2;
+      }
+      result += '|';
+    }
+    // turn
+    for (let l = 0; l < layers[2]; ++l) {
+      result += weights[l + i].toFixed(2) + '|';
+      i += layers[1][1];
+    }
+    result += '<br><br>|';
+    // fixed stone
+    for (let l = 0; l < layers[2]; ++l) {
+      result += weights[i].toFixed(2) + '|';
+      ++i;
+    }
+    result += '<br>|';
+    for (let l = 0; l < layers[2]; ++l) {
+      result += weights[i].toFixed(2) + '|';
+      ++i;
+    }
+    result += '<br><br>';
+    // bias
+    for (let l = 0; l < layers[2]; ++l) {
+      result += '|' + weights[i].toFixed(2);
+      ++i;
+    }
+    result += '|<br><br>';
+    // hidden1
+    for (let k = 0; k < layers[3]; ++k) {
+      let line = '|';
+      for (let l = 0; l < layers[2]; ++l) {
+        line += weights[i].toFixed(2) + '|';
+        ++i;
+      }
+      result += line + '<br><br>';
+    }
+    // bias1
+    for (let k = 0; k < layers[3]; ++k) {
+      result += '|' + weights[i].toFixed(2);
+      ++i;
+    }
+    result += '|<br><br>';
+    // hidden2
+    for (let l = 0; l < layers[3]; ++l) {
+      result += '|' + weights[i].toFixed(2);
+      ++i;
+    }
+    // bias2
+    result += '|<br><br>|' + weights[i].toFixed(2) + '|<br><br>';
+  }
+
+  return result;
+}
+
+function parseascii5(txt, layers, converter) {
+  let result = 'cells  \n\n';
+  weights = txt.split(',').map(Number);
+  let i = 0;
+
+  for (let l = 0; l < layers[1]; ++l) {
+    result += "|   |   |   |   |   |   |   |   |\n|---|---|---|---|---|---|---|---|\n";
+    for (let y = 0; y < 8; ++y) {
+      let line = ''
+      for (let x = 0; x < 8; ++x) {
+        line += '|' + converter(weights[x + y * 8 + i])
+            + converter(weights[x + y * 8 + i + 64]);
+      }
+      result += line + '|\n';
+    }
+    result += '\n\n\n';
+    i += layers[0][0];
+  }
+  result += 'turn  \n\n';
+  let tmp = '|\n';
+  let ali = '|\n';
+  for (let l = 0; l < layers[1]; ++l) {
+    result += '|   ';
+    ali += '|---';
+    tmp += '|' + converter(weights[l + i]);
+    i += layers[0][1];
+  }
+  result += ali + tmp + '|\n\n\n';
+  result += 'fixed stones black  \n\n|';
+  let header = '';
+  let row = '\n|';
+  for (let l = 0; l < layers[1]; ++l) {
+    header += '   |';
+    row += '---|';
+  }
+  result += header + row + '\n';
+  for (let l = 0; l < layers[1]; ++l) {
+    result += converter(weights[i]) + '|';
+    ++i;
+  }
+  result += '|\n\nfixed stones white  \n\n|';
+  result += header + row + '\n';
+  for (let l = 0; l < layers[1]; ++l) {
+    result += converter(weights[i + 1]) + '|';
+    ++i;
+  }
+  result += '|\n\nbias  \n\n';
+  tmp = '|\n';
+  ali = '|\n';
+  for (let l = 0; l < layers[1]; ++l) {
+    result += '|   ';
+    ali += '|---';
+    tmp += '|' + converter(weights[i]);
+    ++i;
+  }
+  result += ali + tmp + '|\n\n';
+  result += 'hidden1  \n\n';
+  for (let k = 0; k < layers[2]; ++k) {
+    let tmp = '|\n';
+    let ali = '|\n';
+    for (let l = 0; l < layers[1]; ++l) {
+      result += '|   ';
+      ali += '|---';
+      tmp += '|' + converter(weights[l + i]);
+    }
+    i += layers[1];
+    result += ali + tmp + '|\n\n';
+  }
+  result += 'hidden1-bias  \n\n';
+  tmp = '|\n';
+  ali = '|\n';
+  for (let l = 0; l < layers[2]; ++l) {
+    result += '|   ';
+    ali += '|---';
+    tmp += '|' + converter(weights[i]);
+    ++i;
+  }
+  result += ali + tmp + '|\n\n';
+
+  result += 'hidden2  \n\n';
+  tmp = '|\n';
+  ali = '|\n';
+  for (let l = 0; l < layers[2]; ++l) {
+    result += '|   ';
+    ali += '|---';
+    tmp += '|' + converter(weights[i]);
+    ++i;
+  }
+  result += ali + tmp + '|\n\n';
+
+  result += 'hidden2-bias  \n\n|   |\n|---|\n|';
+  result += converter(weights[i]) + '|\n<br>';
+
+  return result;
+}
+
+function parseasciitbl5(txt, layers, converter) {
+  let result = '';
+  weights = txt.split(',').map(Number);
+  let i = 0;
+
+  result += '<div class="grp">';
+  for (let l = 0; l < layers[1]; ++l) {
+    result += "<table border=1 cellspacing=0><caption>cell-b:" + l + "</caption>";
+    for (let y = 0; y < 8; ++y) {
+      let line = '<tr>'
+      for (let x = 0; x < 8; ++x) {
+        line += '<td>' + converter(weights[x + y * 8 + i]) + '</td>';
+      }
+      result += line + '</tr>';
+    }
+    result += '</table>\n';
+    result += "<table border=1 cellspacing=0><caption>cell-w:" + l + "</caption>";
+    for (let y = 0; y < 8; ++y) {
+      let line = '<tr>'
+      for (let x = 0; x < 8; ++x) {
+        line += '<td>' + converter(weights[x + y * 8 + i + 64]) + '</td>';
+      }
+      result += line + '</tr>';
+    }
+    result += '</table>\n';
+    i += layers[0][0];
+  }
+  result += '</div>';
+  result += '<table border=1 cellspacing=0><caption>turn</caption><tr>';
+  let sz = layers[1]
+  const COLUMNS = 128;
+  for (let l = sz ; l > 0 ; ) {
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
+  }
+  result += '</table>\n';
+  result += '<table border=1 cellspacing=0><caption>fixed stones black</caption>';
+  for (let l = sz ; l > 0 ; ) {
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
+  }
+  result += '</table>\n';
+  result += '<table border=1 cellspacing=0><caption>fixed stones white</caption>';
+  for (let l = sz ; l > 0 ; ) {
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
+  }
+  result += '</table>\n';
+  result += '<table border=1 cellspacing=0><caption>bias</caption>';
+  for (let l = sz ; l > 0 ; ) {
+    let sz2 = l >= COLUMNS ? COLUMNS : l;
+    l -= COLUMNS;
+    result += '<tr>';
+    for (let m = 0 ; m < sz2 ; ++m) {
+      result += '<td>' + converter(weights[i]) + '</td>';
+      ++i;
+    }
+    result += '</tr>';
+  }
+  result += '</table>\n';
+  result += '<div class="grp">';
+  for (let k = 0; k < layers[2]; ++k) {
+    result += "<table border=1 cellspacing=0><caption>hidden1-" + k + "</caption>";
+    for (let l = 0; l < 4; ++l) {
+      result += '<tr>';
+      for (let m = 0; m < layers[1] / 4; ++m) {
+        result += '<td>' + converter(weights[i]) + '</td>';
+        ++i;
+      }
+      result += '</tr>';
+    }
+    result += '</table>\n';
+  }
+  result += '</div>';
+
+  result += '<table border=1 cellspacing=0><caption>hidden1-bias</caption><tr>';
+  for (let l = 0; l < layers[2]; ++l) {
+    result += '<td>' + converter(weights[i]) + '</td>';
+    ++i;
+  }
+  result += '</tr></table>\n';
+  result += '<table border=1 cellspacing=0><caption>hidden2</caption><tr>';
+  for (let l = 0; l < layers[2]; ++l) {
+    result += '<td>' + converter(weights[i]) + '</td>';
+    ++i;
+  }
+  result += '</tr></table>\n';
+  result += '<table border=1 cellspacing=0><caption>hidden2-bias</caption><tr><td>'
+      + converter(weights[i]) + '</td></tr></table>\n';
+  return result;
+}
+
+function runnum5() {
+  let txt = document.getElementById('input5').value.split('\n');
+  // console.log(txt);
+  let out = document.getElementById('output5');
+  let layers = readheader5(txt[0]);
+  out.innerHTML = parse5(txt, layers);
+}
+
+function runasc5(type) {
+  let txt = document.getElementById('input5').value.split('\n');
+  // console.log(txt);
+  let out = document.getElementById('output5');
+  let layers = readheader5(txt[0]);
+  let n2mk;
+  if (type == "linear") {
+    n2mk = num2marklinear;
+  } else if (type == "log10") {
+    n2mk = num2markLog2;
+  } else if (type == "logE") {
+    n2mk = num2markLn;
+  }
+
+  let inner_layers = [...layers];
+  inner_layers.shift();
+
+  let result = "";
+  for (let iset = 1; iset <= layers[0]; ++iset) {
+    result += "<h1>part:" + iset + "</h1>";
+    if (type == "linear") {
+      result += markdown.parse(parseascii5(txt[iset], inner_layers, n2mk));
+    } else {
+      result += parseasciitbl5(txt[iset], inner_layers, n2mk);
+    }
+  }
+  out.innerHTML = result;
+}
+
 /* -- -- --  util for any versions -- -- -- */
 
 function pasteText(txtarea) {
