@@ -15,11 +15,16 @@ use std::arch::aarch64::*;
  * hidden: 8 + 1
  * output: 1
  */
-const N_INPUT : usize = bitboard::CELL_2D * 2 + 1 + 2;
+pub const N_INPUT_BLACK : usize = 0;
+pub const N_INPUT_WHITE : usize = N_INPUT_BLACK + bitboard::CELL_2D;
+pub const N_INPUT_TEBAN : usize = N_INPUT_WHITE + bitboard::CELL_2D;
+pub const N_INPUT_FB : usize = N_INPUT_TEBAN + 1;
+pub const N_INPUT_FW : usize = N_INPUT_FB + 1;
+pub const N_INPUT : usize = N_INPUT_FW + 1;
 const N_HIDDEN : usize = 128;
 pub const N_HIDDEN2 : usize = 16;
 const N_OUTPUT : usize = 1;
-const N_WEIGHT_TEBAN : usize =  bitboard::CELL_2D * N_HIDDEN;
+const N_WEIGHT_TEBAN : usize =  N_INPUT_TEBAN * N_HIDDEN;
 const N_WEIGHT_FIXST_B : usize = N_WEIGHT_TEBAN + N_HIDDEN;
 const N_WEIGHT_FIXST_W : usize = N_WEIGHT_FIXST_B + N_HIDDEN;
 const N_WEIGHT_INPUTBIAS : usize = N_WEIGHT_FIXST_W + N_HIDDEN;
@@ -135,28 +140,30 @@ impl Weight {
     pub fn new() -> Weight {
         Weight {
             weight: {
-                let mut w =
-                    AVec::with_capacity(
+                let mut w = AVec::with_capacity(
                         MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
-                unsafe {w.set_len(w.capacity());}
+                w.resize(w.capacity(), 0f32);
                 w
             },
-            vweight: AVec::with_capacity(
-                MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV)
+            vweight: {
+                let mut w = AVec::with_capacity(
+                    MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
+                w.resize(w.capacity(), 0f32);
+                w
+            }
         }
     }
 
     fn exchange(&mut self) {
-        unsafe {self.vweight.set_len(self.weight.len());}
         for p in 0..N_PROGRESS_DIV {
-            let mut check = [0i8 ; bitboard::CELL_2D * 2 * N_HIDDEN];
+            let mut check = [0i8 ; N_INPUT_TEBAN * N_HIDDEN];
             let offset = p * N_WEIGHT_PAD;
             let wei = &self.weight[offset..offset + N_WEIGHT_PAD];
             let vwei = &mut self.vweight[offset..offset + N_WEIGHT_PAD];
-            for (i, &w) in wei.iter().enumerate().take(bitboard::CELL_2D * 2 * N_HIDDEN) {
-                let hidx = i / (bitboard::CELL_2D * 2);
+            for (i, &w) in wei.iter().enumerate().take(N_INPUT_TEBAN * N_HIDDEN) {
+                let hidx = i / N_INPUT_TEBAN;
 
-                let x = i % (bitboard::CELL_2D * 2);  // b: 0~63, w:64~127
+                let x = i % N_INPUT_TEBAN;  // b: 0~63, w:64~127
                 let bw = x / bitboard::CELL_2D;  // 0:b, 1:w
                 let x = x % bitboard::CELL_2D;
 
@@ -375,9 +382,6 @@ impl Weight {
 
     pub fn copy(&mut self, src : &Weight) {
         self.weight.copy_from_slice(&src.weight);
-        if self.vweight.is_empty() {
-            unsafe {self.vweight.set_len(self.vweight.capacity());}
-        }
         self.vweight.copy_from_slice(&src.vweight);
     }
 
