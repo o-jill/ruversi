@@ -660,7 +660,6 @@ impl Weight {
             white >>= 1;
             if b | w == 0 {continue;}  // no stone
 
-            let we1 = &ow[idx * N_HIDDEN .. ];
             let wei = if b != 0 {
                 &ow[idx * N_HIDDEN * 2 .. ]
             } else {
@@ -668,7 +667,7 @@ impl Weight {
             };
             for i in (0..N_HIDDEN).step_by(N) {
                 unsafe {
-                    let w = vld1q_f32_x4(we1.as_ptr().add(i));
+                    let w = vld1q_f32_x4(wei.as_ptr().add(i));
                     let h = vld1q_f32_x4(hid.as_ptr().add(i));
                     let w1 = vaddq_f32(h.0, w.0);
                     let w2 = vaddq_f32(h.1, w.1);
