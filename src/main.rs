@@ -181,18 +181,18 @@ impl DuelResult {
         }
     }
 
-    pub fn duel_summary(win : &[u32], draw : &[u32], lose : &[u32], total : &u32) {
+    pub fn duel_summary(win : &[u32], draw : &[u32], lose : &[u32], total : u32) {
         let twin = win[0] + win[1];
         let tdraw = draw[0] + draw[1];
         let tlose = lose[0] + lose[1];
         let tsen = win[0] + lose[1] + tdraw;
         let tgo = win[1] + lose[0] + tdraw;
-        let winrate = twin as f64 / (total - tdraw) as f64;
+        let winrate = (twin as f64 - tdraw as f64 * 0.5) / total as f64;
         let winrate100 = 100.0 * winrate;
         let r = 400.0 * (twin as f64 / tlose as f64).log10();
 
-        let err_margin = if *total > tdraw {
-            let se = (winrate * (1.0 - winrate) / *total as f64).sqrt();
+        let err_margin = if total != 0 {
+            let se = (winrate * (1.0 - winrate) / total as f64).sqrt();
             400.0 / std::f64::consts::LN_10 * se
         } else {
             0.0
@@ -212,7 +212,7 @@ impl DuelResult {
     }
 
     pub fn dump(&self) {
-        Self::duel_summary(&self.win, &self.draw, &self.lose, &self.total);
+        Self::duel_summary(&self.win, &self.draw, &self.lose, self.total);
     }
 }
 
@@ -428,7 +428,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
             _ => {}
         }
 
-        DuelResult::duel_summary(&win, &draw, &lose, &total);
+        DuelResult::duel_summary(&win, &draw, &lose, total);
     }
     println!("ev1:{}", MYOPT.get().unwrap().evaltable1);
     println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
@@ -502,7 +502,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
             _ => {}
         }
 
-        DuelResult::duel_summary(&win, &draw, &lose, &total);
+        DuelResult::duel_summary(&win, &draw, &lose, total);
     }
 }
 
@@ -575,7 +575,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
             _ => {}
         }
 
-        DuelResult::duel_summary(&win, &draw, &lose, &total);
+        DuelResult::duel_summary(&win, &draw, &lose, total);
     }
 }
 
@@ -645,7 +645,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
             _ => {}
         }
 
-        DuelResult::duel_summary(&lose, &draw, &win, &total);
+        DuelResult::duel_summary(&lose, &draw, &win, total);
     }
 }
 
