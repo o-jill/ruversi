@@ -113,14 +113,16 @@ impl EdaxRunner {
         }
     }
 
-    fn spawn(&self, obf : &str) -> std::io::Result<std::process::Child> {
-        self.obf2file(obf);
-        std::env::set_current_dir(&self.curdir).unwrap();
-        std::process::Command::new(&self.path)
-            .arg("--solve").arg(&self.obfpath)
+    fn spawn(&self, obf : &str) -> std::io::Result<Child> {
+         self.obf2file(obf);
+         std::env::set_current_dir(&self.curdir).unwrap();
+        let mut cmd = Command::new(&self.path);
+        cmd.arg("--solve").arg(&self.obfpath)
             .arg("--eval-file").arg(&self.evfile)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::null()).spawn()
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null());
+        // eprintln!("cmd:{cmd:?}");
+        cmd.spawn()
     }
 
     pub fn run(&self, obf : &str) -> Result<(String, String), String> {
@@ -234,13 +236,13 @@ impl RuversiRunner {
         Ok(())
     }
 
-    fn spawn(&self, rfen : &str) -> std::io::Result<std::process::Child> {
+    fn spawn(&self, rfen : &str) -> std::io::Result<Child> {
         std::env::set_current_dir(&self.curdir).unwrap();
-        let mut cmd = std::process::Command::new(&self.path);
+        let mut cmd = Command::new(&self.path);
         cmd.arg("--rfen").arg(rfen).arg("--ev1").arg(&self.evfile)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::null());
-        // println!("cmd:{cmd:?}");
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null());
+        if self.verbose {eprintln!("cmd:{cmd:?}");}
         cmd.spawn()
     }
 
@@ -262,6 +264,10 @@ impl RuversiRunner {
         let txt = String::from_utf8(w.stdout).unwrap();
         // println!("txt:{txt}");
         let lines : Vec<_> = txt.split("\n").collect();
+        if lines.len() < 13 {
+            return Err(format!("invalid input {lines:?}"));
+        }
+
         let res = lines[12].to_ascii_lowercase();
         if self.verbose {println!("opp:{}", &res);}
         let posptn = regex::Regex::new("nodes\\. ([A-Ha-h][1-8])").unwrap();
