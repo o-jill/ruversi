@@ -4,6 +4,7 @@ const SENTE :usize = 0;
 const GOTE :usize = 1;
 const SENGO : usize = 2;
 
+#[derive(Debug)]
 pub struct DuelResult {
     pub win : [u32 ; SENGO],
     pub draw : [u32 ; SENGO],
@@ -19,7 +20,7 @@ impl Default for DuelResult {
 
 impl std::fmt::Display for DuelResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &self.dump())
+        write!(f, "{}", &self.to_string())
     }
 }
 
@@ -52,36 +53,51 @@ impl DuelResult {
         }
     }
 
-    pub fn summary(win : &[u32], draw : &[u32], lose : &[u32], total : u32) -> String {
-        let twin = win[SENTE] + win[GOTE];
-        let tdraw = draw[SENTE] + draw[GOTE];
-        let tlose = lose[SENTE] + lose[GOTE];
-        let tsen = win[SENTE] + lose[GOTE] + tdraw;
-        let tgo = win[GOTE] + lose[SENTE] + tdraw;
-        let winrate = (twin as f64 - tdraw as f64 * 0.5) / total as f64;
-        let winrate100 = 100.0 * winrate;
-        const ELO : f64 = 400f64;
-        let r = ELO * (twin as f64 / tlose as f64).log10();
+    pub fn winrate(&self) -> f64 {
+        let twin = (self.win[SENTE] + self.win[GOTE]) as f64;
+        let tdraw = (self.draw[SENTE] + self.draw[GOTE]) as f64;
+        let winrate = (twin + tdraw * 0.5) / self.total as f64;
+        winrate
+    }
 
-        let err_margin = if total != 0 {
-            let se = (winrate * (1.0 - winrate) / total as f64).sqrt();
+    /// calculate elo rating and 95% confidence interval
+    /// 
+    pub fn elo(&self) -> (f64, f64) {
+        const ELO : f64 = 400f64;
+        let winrate = self.winrate();
+
+        let r = ELO * (winrate / (1.0 - winrate)).log10();
+
+        let err_margin = if self.total != 0 {
+            let se = (winrate * (1.0 - winrate) / self.total as f64).sqrt();
             ELO / std::f64::consts::LN_10 * se
         } else {
             0.0
         };
-        let confidence_interval = err_margin * 1.96;  // 95%信頼区間
+
+        (r, err_margin * 1.96)
+    }
+
+    fn to_string(&self) -> String {
+        let twin = self.win[SENTE] + self.win[GOTE];
+        let tdraw = self.draw[SENTE] + self.draw[GOTE];
+        let tlose = self.lose[SENTE] + self.lose[GOTE];
+        let tsen = self.win[SENTE] + self.lose[GOTE] + tdraw;
+        let tgo = self.win[GOTE] + self.lose[SENTE] + tdraw;
+
+        let winrate = self.winrate();
+        let winrate100 = 100.0 * winrate;
+
+        let (r, confidence_interval) = self.elo();
 
         format!(
             r"total,win,draw,lose,balance-s,balance-g,winrate,R,95%
-{total},{twin},{tdraw},{tlose},{tsen},{tgo},{winrate100:.2}%,{r:+.1},{confidence_interval:.1}
+{},{twin},{tdraw},{tlose},{tsen},{tgo},{winrate100:.2}%,{r:+.1},{confidence_interval:.1}
 ev1   ,win,draw,lose
 ev1 @@,{},{},{}
 ev1 [],{},{},{}",
-            win[SENTE], draw[SENTE], lose[SENTE],
-            win[GOTE], draw[GOTE], lose[GOTE])
-    }
-
-    pub fn dump(&self) -> String {
-        Self::summary(&self.win, &self.draw, &self.lose, self.total)
+            self.total,
+            self.win[SENTE], self.draw[SENTE], self.lose[SENTE],
+            self.win[GOTE], self.draw[GOTE], self.lose[GOTE])
     }
 }
