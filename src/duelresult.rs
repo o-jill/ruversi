@@ -34,6 +34,20 @@ impl DuelResult {
         }
     }
 
+    /// # Returns
+    ///   new instance whose sen-go result was switched.
+    #[allow(dead_code)]
+    pub fn exchanged(&self) -> DuelResult {
+        let mut ret = Self::new();
+        ret.win[SENTE] = self.win[GOTE];
+        ret.win[SENTE] = self.win[GOTE];
+        ret.lose[SENTE] = self.win[GOTE];
+        ret.lose[GOTE] = self.win[SENTE];
+        ret.draw[GOTE] = self.win[SENTE];
+        ret.draw[GOTE] = self.win[SENTE];
+        ret
+    }
+
     pub fn sresult(&mut self, winner : i8) {
         self.total += 1;
         match winner {
@@ -43,6 +57,7 @@ impl DuelResult {
             _ => {}
         }
     }
+
     pub fn gresult(&mut self, winner : i8) {
         self.total += 1;
         match winner {
@@ -100,4 +115,94 @@ ev1 [],{},{},{}",
             self.win[SENTE], self.draw[SENTE], self.lose[SENTE],
             self.win[GOTE], self.draw[GOTE], self.lose[GOTE])
     }
+}
+
+
+#[test]
+fn test_duel_result() {
+    let dr = DuelResult::new();
+    assert_eq!(dr.win, [0 ; SENGO]);
+    assert_eq!(dr.lose, [0 ; SENGO]);
+    assert_eq!(dr.draw, [0 ; SENGO]);
+    assert_eq!(dr.total, 0);
+
+    let mut dr = DuelResult::new();
+    dr.sresult(kifu::SENTEWIN);
+    assert_eq!(dr.win[SENTE], 1);
+    assert_eq!(dr.win[GOTE], 0);
+    assert_eq!(dr.lose[SENTE], 0);
+    assert_eq!(dr.lose[GOTE], 0);
+    assert_eq!(dr.draw[SENTE], 0);
+    assert_eq!(dr.draw[GOTE], 0);
+    assert_eq!(dr.total, 1);
+
+    let mut dr = DuelResult::new();
+    dr.sresult(kifu::GOTEWIN);
+    assert_eq!(dr.win[SENTE], 0);
+    assert_eq!(dr.win[GOTE], 0);
+    assert_eq!(dr.lose[SENTE], 1);
+    assert_eq!(dr.lose[GOTE], 0);
+    assert_eq!(dr.draw[SENTE], 0);
+    assert_eq!(dr.draw[GOTE], 0);
+    assert_eq!(dr.total, 1);
+
+    let mut dr = DuelResult::new();
+    dr.sresult(kifu::DRAW);
+    assert_eq!(dr.win[SENTE], 0);
+    assert_eq!(dr.win[GOTE], 0);
+    assert_eq!(dr.lose[SENTE], 0);
+    assert_eq!(dr.lose[GOTE], 0);
+    assert_eq!(dr.draw[SENTE], 1);
+    assert_eq!(dr.draw[GOTE], 0);
+    assert_eq!(dr.total, 1);
+
+    let mut dr = DuelResult::new();
+    dr.gresult(kifu::SENTEWIN);
+    assert_eq!(dr.win[SENTE], 0);
+    assert_eq!(dr.win[GOTE], 0);
+    assert_eq!(dr.lose[SENTE], 0);
+    assert_eq!(dr.lose[GOTE], 1);
+    assert_eq!(dr.draw[SENTE], 0);
+    assert_eq!(dr.draw[GOTE], 0);
+    assert_eq!(dr.total, 1);
+
+    let mut dr = DuelResult::new();
+    dr.gresult(kifu::GOTEWIN);
+    assert_eq!(dr.win[SENTE], 0);
+    assert_eq!(dr.win[GOTE], 1);
+    assert_eq!(dr.lose[SENTE], 0);
+    assert_eq!(dr.lose[GOTE], 0);
+    assert_eq!(dr.draw[SENTE], 0);
+    assert_eq!(dr.draw[GOTE], 0);
+    assert_eq!(dr.total, 1);
+
+    let mut dr = DuelResult::new();
+    dr.gresult(kifu::DRAW);
+    assert_eq!(dr.win[SENTE], 0);
+    assert_eq!(dr.win[GOTE], 0);
+    assert_eq!(dr.lose[SENTE], 0);
+    assert_eq!(dr.lose[GOTE], 0);
+    assert_eq!(dr.draw[SENTE], 0);
+    assert_eq!(dr.draw[GOTE], 1);
+    assert_eq!(dr.total, 1);
+
+    let mut dr = DuelResult::new();
+    dr.win[SENTE] = 2;
+    dr.lose[SENTE] = 3;
+    dr.draw[SENTE] = 4;
+    dr.win[GOTE] = 3;
+    dr.lose[GOTE] = 7;
+    dr.draw[GOTE] = 16;
+    dr.total = 35;
+    assert!((dr.winrate() - 0.428571429).abs() < 0.0001);
+    let (elo, margin) = dr.elo();
+    assert!((elo - (-49.9755)).abs() < 0.0001);
+    assert!((margin - 14.5312463 * 1.96).abs() < 0.0001);
+
+    assert_eq!(dr.to_string(),
+               r"total,win,draw,lose,balance-s,balance-g,winrate,R,95%
+35,5,20,10,29,26,42.86%,-50.0,28.5
+ev1   ,win,draw,lose
+ev1 @@,2,4,3
+ev1 [],3,16,7");
 }
