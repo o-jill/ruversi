@@ -20,7 +20,7 @@ impl Default for DuelResult {
 
 impl std::fmt::Display for DuelResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &self.to_string())
+        write!(f, "{}", &self.to_string_txt())
     }
 }
 
@@ -71,8 +71,7 @@ impl DuelResult {
     pub fn winrate(&self) -> f64 {
         let twin = (self.win[SENTE] + self.win[GOTE]) as f64;
         let tdraw = (self.draw[SENTE] + self.draw[GOTE]) as f64;
-        let winrate = (twin + tdraw * 0.5) / self.total as f64;
-        winrate
+        (twin + tdraw * 0.5) / self.total as f64
     }
 
     /// calculate elo rating and 95% confidence interval
@@ -93,7 +92,7 @@ impl DuelResult {
         (r, err_margin * 1.96)
     }
 
-    fn to_string(&self) -> String {
+    fn to_string_txt(&self) -> String {
         let twin = self.win[SENTE] + self.win[GOTE];
         let tdraw = self.draw[SENTE] + self.draw[GOTE];
         let tlose = self.lose[SENTE] + self.lose[GOTE];
