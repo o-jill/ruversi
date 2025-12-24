@@ -684,7 +684,7 @@ fn geninitpos(tag : &str) -> Result<(), String>{
                 let mvy2 = mv2 / bitboard::NUMCELL as u8;
                 let mvstr2 = postxt(mvx2, mvy2);
                 let ban3 = ban2.r#move(*mv2).unwrap();
-                println!("{},  // ****** {mvstr} {mvstr2}", ban3.to_str());
+                println!("{ban3},  // ****** {mvstr} {mvstr2}");
             }
         }
     }

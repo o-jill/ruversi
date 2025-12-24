@@ -49,7 +49,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            if self.is_verbose() {println!("{}", self.ban.to_str());}
+            if self.is_verbose() {println!("{}", self.ban);}
             // think
             let st = Instant::now();
             let mut node = nodebb::NodeBB::root(depth);
@@ -65,7 +65,7 @@ impl GameBB {
             let xy = best.xypos();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -77,7 +77,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -100,7 +100,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            if self.is_verbose() {println!("{}", self.ban.to_str());}
+            if self.is_verbose() {println!("{}", self.ban);}
             // think
             let st = Instant::now();
             let mut node = nodebb::NodeBB::root(depth);
@@ -115,7 +115,7 @@ impl GameBB {
             let xy = best.xypos();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -127,7 +127,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -150,7 +150,7 @@ impl GameBB {
             let mut node = nodebb::NodeBB::root(depth);
             // show
             // self.ban.put();
-            // println!("{}", self.ban.to_str());
+            // println!("{}", self.ban);
             // think
             // let st = Instant::now();
             let _val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
@@ -161,7 +161,7 @@ impl GameBB {
             let xy = best.xypos();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -173,7 +173,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -243,7 +243,7 @@ impl GameBB {
                     }
                 }
             } else {
-                if self.is_verbose() {println!("{}", self.ban.to_str());}
+                if self.is_verbose() {println!("{}", self.ban);}
                 // think
                 let st = Instant::now();
                 let mut node = nodebb::NodeBB::root(depth);
@@ -259,7 +259,7 @@ impl GameBB {
             }
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -271,7 +271,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -333,7 +333,7 @@ impl GameBB {
                     }
                 }
             } else {
-                if self.is_verbose() {println!("{}", self.ban.to_str());}
+                if self.is_verbose() {println!("{}", self.ban);}
                 // think
                 let st = Instant::now();
                 let mut node = nodebb::NodeBB::root(depth);
@@ -350,7 +350,7 @@ impl GameBB {
             }
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -362,7 +362,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -388,7 +388,7 @@ impl GameBB {
             let xy;
             if self.ban.teban == turnin {
                 // show
-                if self.is_verbose() {println!("{}", self.ban.to_str());}
+                if self.is_verbose() {println!("{}", self.ban);}
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
@@ -408,7 +408,7 @@ impl GameBB {
                     }
                 }
            } else {
-                println!("{}", self.ban.to_str());
+                println!("{}", self.ban);
                 // think
                 let st = Instant::now();
                 let mut node = nodebb::NodeBB::root(depth);
@@ -423,7 +423,7 @@ impl GameBB {
             }
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -435,7 +435,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -466,7 +466,7 @@ impl GameBB {
         let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         loop {
             // show
-            if self.is_verbose() {println!("{}", self.ban.to_str());}
+            if self.is_verbose() {println!("{}", self.ban);}
             let xy;
             if self.ban.teban == turnin {
                 // self.ban.put();
@@ -502,7 +502,7 @@ impl GameBB {
             }
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -514,7 +514,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -546,7 +546,7 @@ impl GameBB {
         rr.set_verbose(self.verbose);
         loop {
             // show
-            if self.is_verbose() {println!("{}", self.ban.to_str());}
+            if self.is_verbose() {println!("{}", self.ban);}
             let xy;
             if self.ban.teban == turnin {
                 // self.ban.put();
@@ -563,7 +563,7 @@ impl GameBB {
                     };
                 } else {
                     // launch another Ruversi
-                    match rr.run(&self.ban.to_str()) {
+                    match rr.run(&self.ban.to_string()) {
                         Ok((pos, _)) => {
                             let xx = "0abcdefgh".find(
                                     pos.chars().nth(0).unwrap()
@@ -590,7 +590,7 @@ impl GameBB {
             }
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -602,7 +602,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -642,7 +642,7 @@ impl GameBB {
 
         loop {
             // show
-            if self.is_verbose() {println!("{}", self.ban.to_str());}
+            if self.is_verbose() {println!("{}", self.ban);}
             let xy;
             if self.ban.teban == turnin {
                 // self.ban.put();
@@ -704,7 +704,7 @@ impl GameBB {
             if xy != bitboard::NONE as u8 {
                 // apply move
                 let ban = self.ban.r#move(xy).unwrap();
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.ban = ban;
 
@@ -717,7 +717,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -745,7 +745,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            if self.is_verbose() {println!("{}", self.ban.to_str());}
+            if self.is_verbose() {println!("{}", self.ban);}
             // switch weight
             let tt;
             if self.ban.teban == bitboard::SENTE {
@@ -774,7 +774,7 @@ impl GameBB {
             let xy = best.xypos();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -786,7 +786,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -814,7 +814,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            if self.is_verbose() {println!("{}", self.ban.to_str());}
+            if self.is_verbose() {println!("{}", self.ban);}
             // switch weight and tt
             let tt;
             if self.ban.teban == bitboard::SENTE {
@@ -840,7 +840,7 @@ impl GameBB {
             let xy = best.xypos();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -852,7 +852,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -880,7 +880,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            if self.is_verbose() {println!("{}", self.ban.to_str());}
+            if self.is_verbose() {println!("{}", self.ban);}
             // switch weight
             let mut node = nodebb::NodeBB::root(depth);
             let tt;
@@ -900,7 +900,7 @@ impl GameBB {
             let xy = best.xypos();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -912,7 +912,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
@@ -939,7 +939,7 @@ impl GameBB {
         loop {
             // show
             // self.ban.put();
-            if self.is_verbose() {println!("{}", self.ban.to_str());}
+            if self.is_verbose() {println!("{}", self.ban);}
             // switch weight
             let mut node = nodebb::NodeBB::root(depth);
             let tt;
@@ -959,7 +959,7 @@ impl GameBB {
             let xy = best.xypos();
             // apply move
             let ban = self.ban.r#move(xy).unwrap();
-            let rfen = self.ban.to_str();
+            let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;
 
@@ -971,7 +971,7 @@ impl GameBB {
                 break;
             }
             if self.ban.is_full() {
-                let rfen = self.ban.to_str();
+                let rfen = self.ban.to_string();
                 let teban = self.ban.teban;
                 self.kifu.append(bitboard::PASS, teban, rfen);
                 break;
