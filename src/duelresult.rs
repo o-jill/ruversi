@@ -20,7 +20,26 @@ impl Default for DuelResult {
 
 impl std::fmt::Display for DuelResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &self.to_string_txt())
+        let twin = self.win[SENTE] + self.win[GOTE];
+        let tdraw = self.draw[SENTE] + self.draw[GOTE];
+        let tlose = self.lose[SENTE] + self.lose[GOTE];
+        let tsen = self.win[SENTE] + self.lose[GOTE] + tdraw;
+        let tgo = self.win[GOTE] + self.lose[SENTE] + tdraw;
+
+        let winrate = self.winrate();
+        let winrate100 = 100.0 * winrate;
+
+        let (r, confidence_interval) = self.elo();
+
+        write!(f,
+            r"total,win,draw,lose,balance-s,balance-g,winrate,R,95%
+{},{twin},{tdraw},{tlose},{tsen},{tgo},{winrate100:.2}%,{r:+.1},{confidence_interval:.1}
+ev1   ,win,draw,lose
+ev1 @@,{},{},{}
+ev1 [],{},{},{}",
+            self.total,
+            self.win[SENTE], self.draw[SENTE], self.lose[SENTE],
+            self.win[GOTE], self.draw[GOTE], self.lose[GOTE])
     }
 }
 
@@ -90,29 +109,6 @@ impl DuelResult {
         };
 
         (r, err_margin * 1.96)
-    }
-
-    fn to_string_txt(&self) -> String {
-        let twin = self.win[SENTE] + self.win[GOTE];
-        let tdraw = self.draw[SENTE] + self.draw[GOTE];
-        let tlose = self.lose[SENTE] + self.lose[GOTE];
-        let tsen = self.win[SENTE] + self.lose[GOTE] + tdraw;
-        let tgo = self.win[GOTE] + self.lose[SENTE] + tdraw;
-
-        let winrate = self.winrate();
-        let winrate100 = 100.0 * winrate;
-
-        let (r, confidence_interval) = self.elo();
-
-        format!(
-            r"total,win,draw,lose,balance-s,balance-g,winrate,R,95%
-{},{twin},{tdraw},{tlose},{tsen},{tgo},{winrate100:.2}%,{r:+.1},{confidence_interval:.1}
-ev1   ,win,draw,lose
-ev1 @@,{},{},{}
-ev1 [],{},{},{}",
-            self.total,
-            self.win[SENTE], self.draw[SENTE], self.lose[SENTE],
-            self.win[GOTE], self.draw[GOTE], self.lose[GOTE])
     }
 }
 

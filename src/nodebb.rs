@@ -16,6 +16,12 @@ pub struct Best {
     xy : u8,
 }
 
+impl std::fmt::Display for Best {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "h:{} {}", self.hyoka, self.pos())
+    }
+}
+
 impl Best {
     pub fn new(hyoka : f32, xy : u8) -> Best {
         Best { hyoka, xy }
@@ -30,11 +36,6 @@ impl Best {
             //     bitboard::STONE_GOTE
             // },
             bitboard::STR_SENTE.chars().nth(x as usize).unwrap(), y)
-    }
-
-    #[allow(dead_code)]
-    pub fn to_str(&self) -> String {
-        format!("h:{} {}", self.hyoka, self.pos())
     }
 
     /**
