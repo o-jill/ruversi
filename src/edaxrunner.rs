@@ -94,11 +94,6 @@ impl EdaxRunner {
         Ok(())
     }
 
-    #[allow(dead_code)]
-    pub fn to_str(&self) -> String {
-        format!("{self}")
-    }
-
     pub fn obf2file(&self, obf : &str) {
         // println!("put board to a file...");
         match File::create(&self.obfpath) {
@@ -132,8 +127,7 @@ impl EdaxRunner {
             Err(msg) => {
                 std::env::set_current_dir(curdir).unwrap();
                 return Err(
-                    format!("error running edax... [{msg}], config:[{}]",
-                        self.to_str()))
+                    format!("error running edax... [{msg}], config:[{self}]"))
             },
             Ok(prcs) => prcs,
         };
@@ -202,11 +196,6 @@ impl RuversiRunner {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn to_str(&self) -> String {
-        format!("{self}")
-    }
-
     /// read config from a file.
     /// 
     /// ex.
@@ -253,8 +242,7 @@ impl RuversiRunner {
             Err(msg) => {
                 std::env::set_current_dir(curdir).unwrap();
                 return Err(format!(
-                    "error running ruversi... [{msg}], config:[{}]",
-                    self.to_str()))
+                    "error running ruversi... [{msg}], config:[{self}]"))
             },
             Ok(prcs) => prcs,
         };
@@ -333,10 +321,6 @@ impl CassioRunner {
             Ok(_) => Ok(rr),
             Err(msg) => Err(msg),
         }
-    }
-
-    pub fn to_str(&self) -> String {
-        format!("{self}")
     }
 
     /// read config from a file.
@@ -452,7 +436,7 @@ mod tests {
     fn test_edaxrunner_to_str() {
         // to_str の内容がフィールドに基づくことを確認
         let er = EdaxRunner::new();
-        let s = er.to_str();
+        let s = er.to_string();
         let tmp = std::env::temp_dir().join("test.obf");
         assert!(s.contains(&format!("obf:{}", tmp.to_str().unwrap())));
         assert!(s.contains("curdir:../../edax-reversi/"));
@@ -559,7 +543,7 @@ evfile::/tmp/myevfile.dat
     fn test_ruversirunner_to_str() {
         // to_str の内容がフィールドに基づくことを確認
         let rr = RuversiRunner::new();
-        let s = rr.to_str();
+        let s = rr.to_string();
         assert!(s.contains("curdir:../ruversi2"));
         assert!(s.contains("ruversi:./target/release/ruversi"));
         assert!(s.contains("evfile:data/evaltable.txt"));
@@ -637,7 +621,7 @@ evfile::/tmp/myruversi_evfile.txt
     fn test_cassiorunner_to_str() {
         // to_str の内容がフィールドに基づくことを確認
         let cr = CassioRunner::new();
-        let s = cr.to_str();
+        let s = cr.to_string();
         assert!(s.contains("curdir:"));
         assert!(s.contains("path:"));
         assert!(s.contains("evfile:"));
