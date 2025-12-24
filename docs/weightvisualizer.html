@@ -1157,10 +1157,80 @@ function runasc5(type) {
   out.innerHTML = result;
 }
 
+function NNVisualize5(title, cells, hidden1sum, hidden1, hidden2sum, hidden2, output) {
+    const precision = 2;
+
+    // let ret = "input:" + array2csv(cells, 0) + "<br>";
+    // ret += "hidden1:" + array2csv(hidden1sum, precision) + "<br>";
+    // ret += "relu1:" + array2csv(hidden1, precision) + "<br>";
+    // ret += "hidden2:" + array2csv(hidden2sum, precision) + "<br>";
+    // ret += "relu2:" + array2csv(hidden2, precision) + "<br>";
+    // ret += "output:" + output.toFixed(precision) + "<br>";
+    // return ret;
+
+    let max = Math.max(cells.length, hidden1.length);
+    max = Math.max(max, hidden2.length);
+
+    let ret = new Array(max);
+
+    let sz = max + 1;
+    for (let i = 0; i < max + 1; ++i) {
+      ret[i] = "<tr>";
+    }
+    ret[0] += "<th>inputs</th>"
+    for (let i = 0; i < cells.length; ++i) {
+      ret[i + 1] += "<td>" + cells[i] + "</td>";
+    }
+    for (let i = cells.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+    ret[0] += "<th>hidden1sum</th>"
+    for (let i = 0; i < hidden1sum.length; ++i) {
+      ret[i + 1] += "<td>" + hidden1sum[i].toFixed(precision) + "</td>";
+    }
+    for (let i = hidden1sum.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+    ret[0] += "<th>hidden1</th>"
+    for (let i = 0; i < hidden1.length; ++i) {
+      ret[i + 1] += "<td>" + hidden1[i].toFixed(precision) + "</td>";
+    }
+    for (let i = hidden1.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+
+    ret[0] += "<th>hidden2sum</th>"
+    for (let i = 0; i < hidden2sum.length; ++i) {
+      ret[i + 1] += "<td>" + hidden2sum[i].toFixed(precision) + "</td>";
+    }
+    for (let i = hidden2sum.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+    ret[0] += "<th>hidden2</th>"
+    for (let i = 0; i < hidden2.length; ++i) {
+      ret[i + 1] += "<td>" + hidden2[i].toFixed(precision) + "</td>";
+    }
+    for (let i = hidden2.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+    ret[0] += "<th>output</th>"
+    ret[1] += "<td>" + output.toFixed(precision) + "</td>";
+    for (let i = 1; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+
+    for (let i = 0; i < max + 1; ++i) {
+      ret[i] += "</tr>";
+    }
+
+    return "<table border=1><caption>" + title + "</caption>"
+      + ret.join("") + "</table>";
+}
+
 function NNCalc5(txt, layers, cells) {
   let ret = "";
   for (let iset = 1; iset <= layers[0]; ++iset) {
-    ret += "# part: " + iset + "<br>";
+    let title = "# part: " + iset;
     let n_hidden1 = layers[2];
     let hidden1sum = new Array(n_hidden1).fill(0.0);
     let hidden1 = new Array(n_hidden1).fill(0.0);
@@ -1206,7 +1276,9 @@ function NNCalc5(txt, layers, cells) {
         hidden2sum[j] += hidden1[i] * weights[offset];
       }
       let offset_dc = (128 + 1 + 2 + 1)* n_hidden1 + n_hidden2 * n_hidden1 + j;
-      hidden2[j] = Math.max(hidden2sum[j] + weights[offset_dc], 0.0);
+      hidden2sum[j] += weights[offset_dc];
+
+      hidden2[j] = Math.max(hidden2sum[j], 0.0);
     }
     for (let j = 0; j < n_hidden2; ++j) {
       let offset = (128 + 1 + 2 + 1)* n_hidden1
@@ -1214,13 +1286,8 @@ function NNCalc5(txt, layers, cells) {
       output += hidden2[j] * weights[offset];
     }
 
-    const precision = 2;
-    ret += "input:" + array2csv(cells, 0) + "<br>";
-    ret += "hidden1:" + array2csv(hidden1sum, precision) + "<br>";
-    ret += "relu1:" + array2csv(hidden1, precision) + "<br>";
-    ret += "hidden2:" + array2csv(hidden2sum, precision) + "<br>";
-    ret += "relu2:" + array2csv(hidden2, precision) + "<br>";
-    ret += "output:" + output.toFixed(precision) + "<br>";
+    ret += NNVisualize5(
+      title, cells, hidden1sum, hidden1, hidden2sum, hidden2, output);
   }
   return ret;
 }
