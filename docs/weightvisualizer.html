@@ -1171,10 +1171,10 @@ function NNCalc5(txt, layers, cells) {
     let output = weights.slice(-1) - 0;
 
     for (let c = 0; c < 64; ++c) {
-      if (cells[c] == 0 || cells[c + 64] == 0) continue;
+      if (cells[c] == 0 && cells[c + 64] == 0) continue;
 
       if (cells[c] != 0) {  // sente
-        for (let i = 0; i < hidden1; ++i) {
+        for (let i = 0; i < n_hidden1; ++i) {
           let idx = c + i * 128;
           hidden1sum[c] += weights[idx];
         }
@@ -1182,10 +1182,10 @@ function NNCalc5(txt, layers, cells) {
       }
 
       // gote
-        for (let i = 0; i < hidden1; ++i) {
-          let idx = c + i * 128 + 64;
-          hidden1sum[c] += weights[idx];
-        }
+      for (let i = 0; i < n_hidden1; ++i) {
+        let idx = c + i * 128 + 64;
+        hidden1sum[c] += weights[idx];
+      }
     }
 
     for (let i = 0; i < n_hidden1; ++i) {
