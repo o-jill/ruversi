@@ -197,6 +197,7 @@ impl Weight {
         self.weight.iter_mut().for_each(|m| *m = 0.0);
     }
 
+    #[allow(dead_code)]
     pub fn wban(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset..]
