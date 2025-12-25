@@ -1157,7 +1157,204 @@ function runasc5(type) {
   out.innerHTML = result;
 }
 
+function NNVisualize5(title, cells, hidden1sum, hidden1, hidden2sum, hidden2, output) {
+    const precision = 2;
+
+    // let ret = "input:" + array2csv(cells, 0) + "<br>";
+    // ret += "hidden1:" + array2csv(hidden1sum, precision) + "<br>";
+    // ret += "relu1:" + array2csv(hidden1, precision) + "<br>";
+    // ret += "hidden2:" + array2csv(hidden2sum, precision) + "<br>";
+    // ret += "relu2:" + array2csv(hidden2, precision) + "<br>";
+    // ret += "output:" + output.toFixed(precision) + "<br>";
+    // return ret;
+
+    let max = Math.max(cells.length, hidden1.length);
+    max = Math.max(max, hidden2.length);
+
+    let ret = new Array(max);
+
+    let sz = max + 1;
+    for (let i = 0; i < max + 1; ++i) {
+      ret[i] = "<tr>";
+    }
+    ret[0] += "<th>inputs</th>"
+    for (let i = 0; i < cells.length; ++i) {
+      ret[i + 1] += "<td>" + cells[i] + "</td>";
+    }
+    for (let i = cells.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+    ret[0] += "<th>hidden1sum</th>"
+    for (let i = 0; i < hidden1sum.length; ++i) {
+      ret[i + 1] += "<td>" + hidden1sum[i].toFixed(precision) + "</td>";
+    }
+    for (let i = hidden1sum.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+    ret[0] += "<th>hidden1</th>"
+    for (let i = 0; i < hidden1.length; ++i) {
+      ret[i + 1] += "<td>" + hidden1[i].toFixed(precision) + "</td>";
+    }
+    for (let i = hidden1.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+
+    ret[0] += "<th>hidden2sum</th>"
+    for (let i = 0; i < hidden2sum.length; ++i) {
+      ret[i + 1] += "<td>" + hidden2sum[i].toFixed(precision) + "</td>";
+    }
+    for (let i = hidden2sum.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+    ret[0] += "<th>hidden2</th>"
+    for (let i = 0; i < hidden2.length; ++i) {
+      ret[i + 1] += "<td>" + hidden2[i].toFixed(precision) + "</td>";
+    }
+    for (let i = hidden2.length; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+    ret[0] += "<th>output</th>"
+    ret[1] += "<td>" + output.toFixed(precision) + "</td>";
+    for (let i = 1; i < max; ++i) {
+      ret[i + 1] += "<td></td>";
+    }
+
+    for (let i = 0; i < max + 1; ++i) {
+      ret[i] += "</tr>";
+    }
+
+    return "<table border=1><caption>" + title + "</caption>"
+      + ret.join("") + "</table>";
+}
+
+function NNCalc5(txt, layers, cells) {
+  let ret = "";
+  for (let iset = 1; iset <= layers[0]; ++iset) {
+    let title = "# part: " + iset;
+    let n_hidden1 = layers[2];
+    let hidden1sum = new Array(n_hidden1).fill(0.0);
+    let hidden1 = new Array(n_hidden1).fill(0.0);
+    let n_hidden2 = layers[3];
+    let hidden2sum = new Array(n_hidden2).fill(0.0);
+    let hidden2 = new Array(n_hidden2).fill(0.0);
+    weights = txt[iset].split(',').map(Number);
+    let output = weights.slice(-1) - 0;
+
+    for (let c = 0; c < 64; ++c) {
+      if (cells[c] == 0 && cells[c + 64] == 0) continue;
+
+      if (cells[c] != 0) {  // sente
+        for (let i = 0; i < n_hidden1; ++i) {
+          let idx = c + i * 128;
+          hidden1sum[c] += weights[idx];
+        }
+        continue;
+      }
+
+      // gote
+      for (let i = 0; i < n_hidden1; ++i) {
+        let idx = c + i * 128 + 64;
+        hidden1sum[c] += weights[idx];
+      }
+    }
+
+    for (let i = 0; i < n_hidden1; ++i) {
+      // teban
+      let offset_teban = 128 * n_hidden1 + i;
+      hidden1sum[i] += weights[offset_teban] * cells[128];
+      // fs b
+      // fs w
+      let offset_dc = (128 + 1 + 2)* n_hidden1 + i;
+      hidden1sum[i] += weights[offset_dc] * cells[128];
+      // relu
+      hidden1[i] = Math.max(hidden1sum[i], 0.0);
+    }
+
+    for (let j = 0; j < n_hidden2; ++j) {
+      for (let i = 0; i < n_hidden1; ++i) {
+        let offset = (128 + 1 + 2 + 1)* n_hidden1 + i + j * n_hidden1;
+        hidden2sum[j] += hidden1[i] * weights[offset];
+      }
+      let offset_dc = (128 + 1 + 2 + 1)* n_hidden1 + n_hidden2 * n_hidden1 + j;
+      hidden2sum[j] += weights[offset_dc];
+
+      hidden2[j] = Math.max(hidden2sum[j], 0.0);
+    }
+    for (let j = 0; j < n_hidden2; ++j) {
+      let offset = (128 + 1 + 2 + 1)* n_hidden1
+              + n_hidden2 * (n_hidden1 + 1) + j;
+      output += hidden2[j] * weights[offset];
+    }
+
+    ret += NNVisualize5(
+      title, cells, hidden1sum, hidden1, hidden2sum, hidden2, output);
+  }
+  return ret;
+}
+
+function evaluate5() {
+  let rfen = document.getElementById("rfen5");
+  let res = rfen.value;
+
+  let cells = readrfen(rfen.value);
+
+  let txt = document.getElementById('input5').value.split('\n');
+  // console.log(txt);
+  let layers = readheader5(txt[0]);
+
+  let predict = document.getElementById("predicted5");
+  predict.innerHTML = NNCalc5(txt, layers, cells);
+}
+
 /* -- -- --  util for any versions -- -- -- */
+
+function array2csv(arr, n) {
+  return arr.map(num => num.toFixed(n)).join(',');
+}
+function readrfen(rfen) {
+  let res = [];
+  let index = 0;
+  let cells = new Array(129).fill(0);
+  const tblsente = "/ABCDEFGH";
+  const tblgote = "/abcdefgh";
+  const tblblank = "/12345678";
+  for (let ch of rfen.split('')) {
+    if (ch == ' ') break;
+
+    let idxb = tblblank.indexOf(ch);
+    if (idxb >= 0) {
+      index += idxb;
+      continue;
+    }
+
+    let idxs = tblsente.indexOf(ch);
+    if (idxs >= 0) {
+      for (let i = 0; i < idxs; ++i) {
+        cells[index + i] = 1.0;
+      }
+      index += idxs;
+      continue;
+    }
+
+    let idxg = tblgote.indexOf(ch);
+    if (idxg < 0) {
+      continue;
+    }
+
+    for (let i = 0; i < idxg; ++i) {
+      cells[index + i + 64] = 1.0;
+    }
+    index += idxg;
+  }
+
+  if (rfen.slice(-1) == "w") {
+    cells[128] = -1;
+  } else {
+    cells[128] = 1;
+  }
+
+  return cells;
+}
 
 function pasteText(txtarea) {
   let ta = document.getElementById(txtarea);
@@ -1195,8 +1392,19 @@ td, tr {padding:0;}
 </textarea>
 <button onclick='pasteText("input5");'>paste</button><br>
 <br>
-<span id='output5'>result will bel here.</span>
+<span id='output5'>result will be here.</span>
 <!-- pre id='output5'>result will bel here.</pre-->
+<br>
+<input type="search" id="rfen5" list="rfenlist" value="8/8/8/3Aa3/3aA3/8/8/8 b"><button onclick="evaluate5();">evaluate</button>
+<datalist id="rfenlist">
+  <option value="8/8/8/3Aa3/3aA3/8/8/8 b"></option>
+  <option value="8/8/8/3aA3/3Aa3/8/8/8 b"></option>
+  <option value="h/h/h/h/h/h/h/h b"></option>
+  <option value="H/H/H/H/H/H/H/H w"></option>
+  <option value="1F1/H/H/H/H/H/H/1F1 b"></option>
+</datalist>
+</datalist><br>
+<span id='predicted5'>evaluation will be here.</span>
 <hr>
 <div>v0.4~</div>
 <button onclick='runnum4();'>numbers</button>
@@ -1211,7 +1419,7 @@ td, tr {padding:0;}
 </textarea>
 <button onclick='pasteText("input4");'>paste</button><br>
 <br>
-<span id='output4'>result will bel here.</span>
+<span id='output4'>result will be here.</span>
 <!-- pre id='output4'>result will bel here.</pre-->
 <hr>
 <div>v0.2~</div>
@@ -1225,7 +1433,7 @@ td, tr {padding:0;}
 </textarea>
 <button onclick='pasteText("input2");'>paste</button><br>
 <br>
-<span id='output2'>result will bel here.</span>
+<span id='output2'>result will be here.</span>
 <!-- pre id='output2'>result will bel here.</pre-->
 <hr>
 <div>v0.1~</div>
@@ -1238,7 +1446,7 @@ td, tr {padding:0;}
 -94.691536,-32.704567,-51.359272,-50.317547,-15.77681,-4.545904,18.61958,24.885098,-27.644453,52.21062,35.793453,13.330787,21.24812,7.567879,-6.8989844,-148.95197,-111.46515,-3.0007274,-1.5651331,1.4800336,5.448462,13.201861,3.937927,-73.98717,-83.37132,-9.002923,16.253387,-28.897202,-3.1997883,9.440624,-3.66433,-98.14493,-76.541115,0.22822252,20.214344,15.605899,-19.888638,15.004532,-0.7406879,-95.54023,-99.83114,-6.5590787,2.404816,15.161072,-5.05097,-3.3460436,-4.26826,-108.0504,-168.34264,31.72446,14.184278,37.96636,35.432358,46.43954,94.24164,-8.475468,77.76023,-1.9512609,-38.618843,-21.101042,-77.707825,-67.564095,-25.269732,-73.14112,-185.53291,0.31759942,21.201984,-6.02836,3.9815202,-42.04523,56.751614,-140.78703,52.45375,132.38797,-3.033106,18.829155,20.377499,24.523075,116.16148,53.33757,-32.99974,45.215576,6.6099067,29.111628,6.6287313,33.04752,56.74078,-71.124405,-3.045701,14.988093,13.184958,6.141709,-0.9285595,12.109726,16.88051,5.501188,-10.317776,25.302845,14.798741,-4.580831,2.2492907,15.786794,8.805036,10.243185,-61.481712,62.123585,21.772469,5.7521257,32.96945,5.1419187,34.118824,-25.548025,76.76503,95.54534,18.163937,20.298334,23.827747,10.731154,114.74437,69.53794,-100.851234,51.31722,-43.965797,16.330809,-24.75206,21.029028,-7.9497952,-177.39859,172.4421,-256.58624,-0.10036213,11.079285,-4.457802,-15.252508,-254.07886,208.10214,-51.346684,-26.438604,-3.2092698,-1.6921204,-0.272714,9.407445,-99.267914,-25.899147,3.2924268,-1.2657146,1.342235,-0.033938874,-3.215607,-2.296706,2.1301777,9.985186,20.75489,-1.2176745,-0.97537315,2.5581431,6.105072,-2.8031688,4.2006383,-3.1549425,-3.1135883,4.0202084,-2.8973527,6.008849,2.4503546,-1.1295753,-1.4920012,20.88903,9.237031,2.009187,-2.0643592,-3.324655,-0.096382774,1.2546126,-1.4336776,3.2019632,-26.248953,-99.52838,9.413002,-0.5421613,-1.5275095,-3.0387554,-26.536724,-51.517685,208.11879,-255.11241,-14.602793,-5.1903515,11.562386,-0.1845003,-256.41522,172.67885,12.302251,56.81503,11.939048,28.518526,3.18988,23.668184,44.146263,24.642023,2.3892932,-45.598614,13.183061,-8.421196,-6.010819,-23.342497,-74.519485,71.703125,0.16624402,-12.723599,13.936495,-8.97432,-5.1205664,57.84515,-51.139935,-72.34399,-74.71373,5.5162435,-16.396215,-2.725718,-3.6003108,0.67396605,15.0602865,81.62569,52.204933,-25.41546,34.30195,15.440098,0.33103248,-31.397842,-20.74394,-52.78263,-0.02448807,3.4987812,-26.272755,-22.765194,-5.60364,3.4403346,-0.11663693,37.1962,70.93746,-61.35158,-23.90106,8.305824,14.676087,-37.983,-100.43102,23.889824,-38.920677,0.13319802,-51.887314,29.12835,-35.363926,29.501915,-47.161728,-20.084885,-11.186926,-23.651436,19.538616,12.745419,-8.255859,62.930286,-50.86646,-56.783295,-46.269234,-223.84637,6.0820084,-11.059449,-6.9904304,7.0298853,-72.87729,-8.764524,8.570037,2.8506255,-4.7912846,0.38635495,-6.08953,8.762362,-24.380846,65.81108,81.76878,-9.230734,-1.0139539,1.0286418,5.168958,-13.005656,-11.77931,-24.130093,-25.372807,-11.648771,-10.470495,3.1231532,-0.7931447,2.9865055,-7.1610484,86.33692,61.666534,-28.286503,13.184813,-6.06201,3.1115417,-5.577388,-3.98971,14.898136,-15.282984,-68.544846,6.47899,-8.043161,-13.741683,-0.22591066,-223.94247,-43.267876,-64.17858,-47.29922,73.44559,-12.783563,7.4909463,21.091536,-7.125634,-5.125915,210.62653,-201.33528,-7.9691944,-5.5904055,-121.71117,4.925858,-67.09975,-40.272686,-47.06501,17.564484,2.673703,11.849298,1.5239166,25.907799,10.280711,-65.219315,-42.724457,12.028029,16.722126,1.2464148,-12.552089,-4.354442,33.569527,-20.715792,-16.781977,0.802168,-2.0168893,-4.353784,17.778513,-3.1288188,-24.409903,-26.58813,-40.05807,-10.421988,-0.05310309,14.463383,-0.45142245,4.844467,-3.9430652,-18.147167,-41.372482,29.482403,0.86401945,-8.627702,-1.2071205,18.359121,14.156161,-53.345177,-57.207527,13.2642975,19.077,-0.032733478,0.16294512,23.100153,18.202475,-52.0512,-13.675845,-71.8324,9.246034,-125.02983,-3.0580204,2.0789962,-220.26064,226.71616,1.8206409,-5.741699,49.57687,29.01207,-28.029993,3.710583,-16.629381,8.834506,-0.97480226,-13.462544,-3.519364,-9.273609,-4.3803453,-3.9274642,23.278242,4.218198,21.944143,-13.877565,3.2455876,1.1915673,-4.898935,0.98036444,9.11316,-16.992435,2.6201205,10.1912775,3.8290591,-7.7450705,-15.735824,1.7847129,15.210891,22.985004,-3.5432448,-1.6666431,-9.934542,8.001477,0.2626441,13.129368,12.364527,-7.1285477,-29.322199,10.767857,-2.1451418,-5.7688346,9.086606,-1.0754701,-22.901363,2.4375327,-13.784583,1.5309709,-1.3338081,5.45895,4.7483134,-12.498543,-2.2210507,29.28801,18.981441,-14.63751,45.872597,-29.824886,26.630175,2.947553,50.524967,25.170288,18.694637,-95.48336,-13.805705,-44.37016,-1.1429162,22.096706,8.399597,-4.483739,137.5597,43.64525,1.8397896,20.381536,11.418475,-2.6092942,5.490646,-19.546198,-13.0313635,4.960023,1.0442033,5.9236517,8.143642,1.7226225,11.308179,-42.074013,-5.0028715,10.199835,0.8697853,7.1708813,-5.251914,-11.298075,19.355415,32.69403,15.362275,1.8427049,-14.425399,13.839868,-2.1017442,-3.6239302,4.2265177,8.795817,-35.531326,15.848709,-13.368022,9.101814,8.508375,-25.091558,11.515071,-7.904226,-38.15061,47.613216,6.9191732,9.892723,-0.55046016,-5.159821,75.67359,76.503426,3.5509355,-19.062464,14.677439,-49.952126,-27.247831,15.278073,-149.40329,6.7900004,8.035579,29.05431,-1.878864,-10.637934,-3.4445348,10.81204,-1.3064612,11.054751,144.57771,-285.513,223.9091,-154.33658,-359.1215,139.61758,17.456093,111.86348,-56.843956,422.6765,-23.988468,-135.5797,-189.39223,-64.62381,22.040794,86.92153,813.9104,359.09442,-79.03576,-213.35408,-77.29236,184.99075,185.89514,312.6634,17.046783,-44.65294,14.255393,21.87867,16.655306,13.61334,-46.565784,-41.979702,75.59361
 </textarea>
 <button onclick='pasteText("input");'>paste</button><br>
-<span id='output'>result will bel here.</span>
+<span id='output'>result will be here.</span>
 <!-- pre id='output'>result will bel here.</pre-->
 </body>
 </html>

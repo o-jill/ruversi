@@ -227,7 +227,7 @@ impl Gtp {
                             Err(msg) => {
                                 self.status = Status::Error;
                                 self.emsg =
-                                    String::from(msg) + &self.ban.to_str();
+                                    String::from(msg) + &self.ban.to_string();
                             },
                             Ok(b) => {self.ban = b;}
                         }

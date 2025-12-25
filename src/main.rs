@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 
 mod cassio;
 mod bitboard;
+mod duelresult;
 mod edaxrunner;
 // mod extractrfen;
 mod game;
@@ -145,77 +146,6 @@ fn gen_kifu(n : Option<usize>, depth : u8, cachesz : usize) {
     // genkifu_single(rfentbl, depth, &format!("{grp:02}"), cachesz);
 }
 
-struct DuelResult {
-    pub win : [u32 ; 2],
-    pub draw : [u32 ; 2],
-    pub lose : [u32 ; 2],
-    pub total : u32,
-}
-
-impl DuelResult {
-    pub fn new() -> DuelResult {
-        DuelResult {
-            win : [0 ; 2],
-            draw : [0 ; 2],
-            lose : [0 ; 2],
-            total : 0,
-        }
-    }
-
-    pub fn sresult(&mut self, winner : i8) {
-        self.total += 1;
-        match winner {
-            kifu::SENTEWIN => {self.win[0] += 1;},
-            kifu::DRAW => {self.draw[0] += 1;},
-            kifu::GOTEWIN => {self.lose[0] += 1;},
-            _ => {}
-        }
-    }
-    pub fn gresult(&mut self, winner : i8) {
-        self.total += 1;
-        match winner {
-            kifu::SENTEWIN => {self.lose[1] += 1;},
-            kifu::DRAW => {self.draw[1] += 1;},
-            kifu::GOTEWIN => {self.win[1] += 1;},
-            _ => {}
-        }
-    }
-
-    pub fn duel_summary(win : &[u32], draw : &[u32], lose : &[u32], total : &u32) {
-        let twin = win[0] + win[1];
-        let tdraw = draw[0] + draw[1];
-        let tlose = lose[0] + lose[1];
-        let tsen = win[0] + lose[1] + tdraw;
-        let tgo = win[1] + lose[0] + tdraw;
-        let winrate = twin as f64 / (total - tdraw) as f64;
-        let winrate100 = 100.0 * winrate;
-        let r = 400.0 * (twin as f64 / tlose as f64).log10();
-
-        let err_margin = if *total > tdraw {
-            let se = (winrate * (1.0 - winrate) / *total as f64).sqrt();
-            400.0 / std::f64::consts::LN_10 * se
-        } else {
-            0.0
-        };
-        let confidence_interval = err_margin * 1.96;  // 95%信頼区間
-
-        println!("total,win,draw,lose,balance-s,balance-g,winrate,R,95%");
-        println!(
-            "{total},{twin},{tdraw},{tlose},{tsen},{tgo},{winrate100:.2}%,{r:+.1},{confidence_interval:.1}");
-        println!("ev1   ,win,draw,lose");
-        println!("ev1 @@,{},{},{}", win[0], draw[0], lose[0]);
-        println!("ev1 [],{},{},{}", win[1], draw[1], lose[1]);
-        // println!(
-        //     "total,{total},win,{twin},draw,{tdraw},lose,{tlose},balance,{tsen},{tgo},{winrate100:.2}%,R,{r:+.1},{confidence_interval:+.1}");
-        // println!("ev1 @@,win,{},draw,{},lose,{}", win[0], draw[0], lose[0]);
-        // println!("ev1 [],win,{},draw,{},lose,{}", win[1], draw[1], lose[1]);
-    }
-
-    pub fn dump(&self) {
-        Self::duel_summary(&self.win, &self.draw, &self.lose, &self.total);
-    }
-}
-
 /// duel between 2 eval tables.
 /// # Arguments
 /// - ev1 : eval table 1.
@@ -233,7 +163,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     w3.copy(&w1);
     let mut w4 = Box::new(weight::Weight::new());
     w4.copy(&w2);
-    let dresult = Arc::new(Mutex::new(DuelResult::new()));
+    let dresult = Arc::new(Mutex::new(duelresult::DuelResult::new()));
     let dresult2 = dresult.clone();
 
     let verbose = &MYOPT.get().unwrap().verbose;
@@ -300,7 +230,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
             {
                 let mut dr = dresult2.lock().unwrap();
                 dr.gresult(result);
-                dr.dump();
+                println!("{dr}");
             }
         }});
 
@@ -345,7 +275,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         {
             let mut dr = dresult.lock().unwrap();
             dr.gresult(result);
-            dr.dump();
+            println!("{dr}");
         }
     }
 
@@ -353,7 +283,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
 
     {
         let dr = dresult.lock().unwrap();
-        dr.dump();
+        println!("{dr}");
     }
     println!("ev1:{}", MYOPT.get().unwrap().evaltable1);
     println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
@@ -373,10 +303,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     w1.read(ev1).unwrap();
     let mut w2 = weight::Weight::new();
     w2.read(ev2).unwrap();
-    let mut win = [0, 0];
-    let mut draw = [0, 0];
-    let mut lose = [0, 0];
-    let mut total = 0;
+    let mut dr = duelresult::DuelResult::default();
     let mut result;
 
     let verbose = !MYOPT.get().unwrap().verbose.is_silent();
@@ -405,13 +332,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         g.starto_with_2et(f, depth, &w1, &w2).unwrap();
         let dresult = g.kifu.winner();
         result = dresult.unwrap();
-        total += 1;
-        match result {
-            kifu::SENTEWIN => {win[0] += 1;},
-            kifu::DRAW => {draw[0] += 1;},
-            kifu::GOTEWIN => {lose[0] += 1;},
-            _ => {}
-        }
+        dr.sresult(result);
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
@@ -420,15 +341,9 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         g.starto_with_2et(f, depth, &w2, &w1).unwrap();
         let dresult = g.kifu.winner();
         result = dresult.unwrap();
-        total += 1;
-        match result {
-            kifu::SENTEWIN => {lose[1] += 1;},
-            kifu::DRAW => {draw[1] += 1;},
-            kifu::GOTEWIN => {win[1] += 1;},
-            _ => {}
-        }
+        dr.gresult(result);
 
-        DuelResult::duel_summary(&win, &draw, &lose, &total);
+        println!("{dr}");
     }
     println!("ev1:{}", MYOPT.get().unwrap().evaltable1);
     println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
@@ -443,10 +358,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         panic!("duel level:{duellv} is not supported...");
     }
 
-    let mut win = [0, 0];
-    let mut draw = [0, 0];
-    let mut lose = [0, 0];
-    let mut total = 0;
+    let mut dr = duelresult::DuelResult::default();
     let mut dresult;
     let mut result;
 
@@ -479,13 +391,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         g.starto_against_edax(f, depth, turn, &econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
-        total += 1;
-        match result {
-            kifu::SENTEWIN => {win[0] += 1;},
-            kifu::DRAW => {draw[0] += 1;},
-            kifu::GOTEWIN => {lose[0] += 1;},
-            _ => {}
-        }
+        dr.sresult(result);
         let turn = bitboard::GOTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
@@ -494,15 +400,9 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         g.starto_against_edax(f, depth, turn, &econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
-        total += 1;
-        match result {
-            kifu::SENTEWIN => {lose[1] += 1;},
-            kifu::DRAW => {draw[1] += 1;},
-            kifu::GOTEWIN => {win[1] += 1;},
-            _ => {}
-        }
+        dr.gresult(result);
 
-        DuelResult::duel_summary(&win, &draw, &lose, &total);
+        println!("{dr}");
     }
 }
 
@@ -515,10 +415,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         panic!("duel level:{duellv} is not supported...");
     }
 
-    let mut win = [0, 0];
-    let mut draw = [0, 0];
-    let mut lose = [0, 0];
-    let mut total = 0;
+    let mut dr = duelresult::DuelResult::default();
     let mut dresult;
     let mut result;
 
@@ -551,13 +448,8 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         g.start_against_via_cassio(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
-        total += 1;
-        match result {
-            kifu::SENTEWIN => {win[0] += 1;},
-            kifu::DRAW => {draw[0] += 1;},
-            kifu::GOTEWIN => {lose[0] += 1;},
-            _ => {}
-        }
+        dr.sresult(result);
+
         let turn = bitboard::GOTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
@@ -567,15 +459,9 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         g.start_against_via_cassio(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
-        total += 1;
-        match result {
-            kifu::SENTEWIN => {lose[1] += 1;},
-            kifu::DRAW => {draw[1] += 1;},
-            kifu::GOTEWIN => {win[1] += 1;},
-            _ => {}
-        }
+        dr.gresult(result);
 
-        DuelResult::duel_summary(&win, &draw, &lose, &total);
+        println!("{dr}");
     }
 }
 
@@ -588,10 +474,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         panic!("duel level:{duellv} is not supported...");
     }
 
-    let mut win = [0, 0];
-    let mut draw = [0, 0];
-    let mut lose = [0, 0];
-    let mut total = 0;
+    let mut dr = duelresult::DuelResult::default();
     let mut dresult;
     let mut result;
 
@@ -621,13 +504,8 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         g.starto_against_ruversi(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
-        total += 1;
-        match result {
-            kifu::SENTEWIN => {win[0] += 1;},
-            kifu::DRAW => {draw[0] += 1;},
-            kifu::GOTEWIN => {lose[0] += 1;},
-            _ => {}
-        }
+        dr.sresult(result);
+
         let turn = bitboard::GOTE;
         // prepare game
         let mut g = game::GameBB::from(rfen);
@@ -637,15 +515,9 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         g.starto_against_ruversi(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
-        total += 1;
-        match result {
-            kifu::SENTEWIN => {lose[1] += 1;},
-            kifu::DRAW => {draw[1] += 1;},
-            kifu::GOTEWIN => {win[1] += 1;},
-            _ => {}
-        }
+        dr.gresult(result);
 
-        DuelResult::duel_summary(&lose, &draw, &win, &total);
+        println!("{dr}");
     }
 }
 
@@ -812,7 +684,7 @@ fn geninitpos(tag : &str) -> Result<(), String>{
                 let mvy2 = mv2 / bitboard::NUMCELL as u8;
                 let mvstr2 = postxt(mvx2, mvy2);
                 let ban3 = ban2.r#move(*mv2).unwrap();
-                println!("{},  // ****** {mvstr} {mvstr2}", ban3.to_str());
+                println!("{ban3},  // ****** {mvstr} {mvstr2}");
             }
         }
     }

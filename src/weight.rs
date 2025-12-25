@@ -82,10 +82,10 @@ enum EvalFile{
     V10,
 }
 
-impl EvalFile {
-    #[allow(dead_code)]
-    pub fn to_str(&self) -> &str {
-        match self {
+impl std::fmt::Display for EvalFile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}",
+            match self {
             EvalFile::Unknown => {"unknown eval file format."},
             EvalFile::V1 => {"# 65-4-1"},
             EvalFile::V2 => {"# 64+1-4-1"},
@@ -97,9 +97,12 @@ impl EvalFile {
             EvalFile::V8 => {"# 64+1+2-128-16-1"},
             EvalFile::V9 => {"# 3x 64+1+2-128-16-1"},
             EvalFile::V10 => {"# 3x 128+1+2-128-16-1"},
-        }
+            }
+        )
     }
+}
 
+impl EvalFile {
     pub fn from(txt : &str) -> Option<EvalFile> {
         match txt {
             "# 65-4-1" => Some(EvalFile::V1),
@@ -197,6 +200,7 @@ impl Weight {
         self.weight.iter_mut().for_each(|m| *m = 0.0);
     }
 
+    #[allow(dead_code)]
     pub fn wban(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset..]
@@ -371,7 +375,7 @@ impl Weight {
     pub fn writev10(&self, path : &str) {
         let mut f = fs::File::create(path).unwrap();
         f.write_all(
-            format!("{}\n", EvalFile::V10.to_str()).as_bytes()).unwrap();
+            format!("{}\n", EvalFile::V10).as_bytes()).unwrap();
         for prgs in 0..N_PROGRESS_DIV {
             let offset = prgs * N_WEIGHT_PAD;
             let w = &self.weight[offset..offset + N_WEIGHT];
