@@ -9,10 +9,18 @@ $owner = "o-jill"
 $repo = "ruversi"
 $logfile = "ikkatsu.log"
 $archive = "archive/"
-$narchive = 105  # 99999999
+$narchive = 200  # 99999999
+$downloads = 0
+$unzipped = 0
+$expected = 0
 
 def download(url, fn)
   return unless fn.start_with?('kifu')
+
+  $downloads = $downloads + 1
+
+  archive_path = $archive + fn
+  return puts "already downloaded #{fn}, skipping." if File.exist?(archive_path)
 
   FileUtils.mkpath($archive + File.dirname(fn))
   puts "download #{fn} to #{$archive} ..."
@@ -26,6 +34,8 @@ end
 
 def unzip(fn)
   return unless fn.start_with?('kifu')
+
+  $unzipped = $unzipped + 1
 
   dest = "kifu/"
   puts "unzip #{fn} to #{dest} ..."
@@ -76,10 +86,12 @@ File.open($logfile, mode = "rt"){|f|
 
     next if fname == ""
     # puts m[1]
-    download(m[1], fname)
-    unzip(fname)
+    unzip(fname) if download(m[1], fname)
 
     $narchive -= 1
     break if $narchive.zero?
   }
 }
+
+puts "downloaded: #{$downloads}/#{$expected}"
+puts "unzipped: #{$unzipped}"
