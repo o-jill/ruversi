@@ -54,6 +54,25 @@ impl DuelResult {
     }
 
     /// # Returns
+    ///   stats from opponent's point of view.
+    pub fn opponent(&self) -> DuelResult {
+        let mut ret = DuelResult {
+            win : [0 ; SENGO],
+            draw : [0 ; SENGO],
+            lose : [0 ; SENGO],
+            total : self.total,
+        };
+        ret.win[SENTE] = self.lose[GOTE];
+        ret.win[GOTE] = self.lose[SENTE];
+        ret.lose[SENTE] = self.win[GOTE];
+        ret.lose[GOTE] = self.win[SENTE];
+        ret.draw[SENTE] = self.draw[GOTE];
+        ret.draw[GOTE] = self.draw[SENTE];
+
+        ret
+    }
+
+    /// # Returns
     ///   new instance whose sen-go result was switched.
     #[allow(dead_code)]
     pub fn exchanged(&self) -> DuelResult {
@@ -120,6 +139,17 @@ fn test_duel_result() {
     assert_eq!(dr.lose, [0 ; SENGO]);
     assert_eq!(dr.draw, [0 ; SENGO]);
     assert_eq!(dr.total, 0);
+
+    let mut dr = DuelResult::new();
+    dr.win = [1, 2];
+    dr.lose = [3, 4];
+    dr.draw = [5, 6];
+    dr.total = 21;
+    let op = dr.opponent();
+    assert_eq!(op.win, [4, 3]);
+    assert_eq!(op.lose, [2, 1]);
+    assert_eq!(op.draw, [6, 5]);
+    assert_eq!(op.total, 21);
 
     let mut dr = DuelResult::new();
     dr.sresult(kifu::SENTEWIN);
