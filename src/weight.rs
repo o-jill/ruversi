@@ -655,12 +655,11 @@ impl Weight {
         let prgs = ban.progress();
         let mut black = ban.black;
         let mut white = ban.white;
-        let teban = ban.teban as f32;
 
         let (fsb, fsw) = ban.fixedstones();
 
         let ow = self.wbanv(prgs);
-        let wtbn = self.wteban(prgs);
+        let wtbn = self.wteban(prgs, ban.teban);
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
         const N : usize = 16;
@@ -696,12 +695,11 @@ impl Weight {
             unsafe {
                 let sum4 = vld1q_f32_x4(hid.as_ptr().add(i));
 
-                let tbn = vmovq_n_f32(teban);
                 let wtb = vld1q_f32_x4(wtbn.as_ptr().add(i));
-                let sum41 = vmlaq_f32(sum4.0, tbn, wtb.0);
-                let sum42 = vmlaq_f32(sum4.1, tbn, wtb.1);
-                let sum43 = vmlaq_f32(sum4.2, tbn, wtb.2);
-                let sum44 = vmlaq_f32(sum4.3, tbn, wtb.3);
+                let sum41 = vaddq_f32(sum4.0, wtb.0);
+                let sum42 = vaddq_f32(sum4.1, wtb.1);
+                let sum43 = vaddq_f32(sum4.2, wtb.2);
+                let sum44 = vaddq_f32(sum4.3, wtb.3);
 
                 let fsb4 = vmovq_n_f32(fsb as f32);
                 let wfsb = vld1q_f32_x4(wfs.as_ptr().add(i));
