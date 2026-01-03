@@ -127,6 +127,7 @@ const MEM_ALIGN : usize = 64;
 pub struct Weight {
     // 128xH1 + H1 + H1x2 + H1 + H1 x (H2+1) + H2 + 1
     pub weight : AVec<f32>,
+    mteban : AVec<f32>,
     // H1x128 + H1 + H1x2 + H1 + H1 x (H2+1) + H2 + 1
     vweight : AVec<f32>
 }
@@ -148,6 +149,12 @@ impl Weight {
                 w.resize(w.capacity(), 0f32);
                 w
             },
+            mteban: {
+                let mut w = AVec::with_capacity(
+                        MEM_ALIGN, N_HIDDEN * 2 * N_PROGRESS_DIV);
+                w.resize(w.capacity(), 0f32);
+                w
+            },
             vweight: {
                 let mut w = AVec::with_capacity(
                     MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
@@ -162,6 +169,8 @@ impl Weight {
             let mut check = [0i8 ; N_INPUT_TEBAN * N_HIDDEN];
             let offset = p * N_WEIGHT_PAD;
             let wei = &self.weight[offset..offset + N_WEIGHT_PAD];
+            self.mteban[p * N_HIDDEN..(p + 1) * N_HIDDEN].copy_from_slice(
+                &self.weight[offset + N_WEIGHT_TEBAN..offset + N_WEIGHT_TEBAN + N_HIDDEN]);
             let vwei = &mut self.vweight[offset..offset + N_WEIGHT_PAD];
             for (i, &w) in wei.iter().enumerate().take(N_INPUT_TEBAN * N_HIDDEN) {
                 let hidx = i / N_INPUT_TEBAN;
@@ -179,6 +188,9 @@ impl Weight {
                     panic!("check error @ {i}!");
                 }
             }
+        }
+        for i in 0..self.mteban.len()/2 {
+            self.mteban[i + N_PROGRESS_DIV * N_HIDDEN] = -self.mteban[i];
         }
     }
 
@@ -211,9 +223,10 @@ impl Weight {
         &self.vweight[offset..]
     }
 
-    pub fn wteban(&self, progress : usize) -> &[f32] {
-        let offset = progress * N_WEIGHT_PAD;
-        &self.weight[offset + N_WEIGHT_TEBAN..offset + N_WEIGHT_FIXST_W]
+    pub fn wteban(&self, progress : usize, teban : i8) -> &[f32] {
+        let offset = progress * N_HIDDEN
+            + if teban > 0 {0} else {N_HIDDEN * N_PROGRESS_DIV};
+        &self.mteban[offset..offset + N_HIDDEN]
     }
 
     pub fn wfixedstones(&self, progress : usize) -> &[f32] {
@@ -391,12 +404,11 @@ impl Weight {
 
     pub fn evaluatev9bb(&self, ban : &bitboard::BitBoard) -> f32 {
         let prgs = ban.progress();
-        let teban = ban.teban as f32;
 
         let fs = ban.fixedstones();
 
         let ow = self.wbanv(prgs);
-        let wtbn = self.wteban(prgs);
+        let wtbn = self.wteban(prgs, ban.teban);
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
         let mut hid = [0f32 ; N_HIDDEN];
@@ -417,7 +429,7 @@ impl Weight {
             }
         }
         for (i, h) in hid.iter_mut().enumerate() {
-            let mut hidsum = teban.mul_add(wtbn[i], *h);
+            let mut hidsum = wtbn[i] + *h;
             hidsum = wfs[i].mul_add(fs.0 as f32, hidsum);
             hidsum = wfs[i + N_HIDDEN].mul_add(fs.1 as f32, hidsum);
             // relu
@@ -445,12 +457,11 @@ impl Weight {
         let prgs = ban.progress();
         let mut black = ban.black;
         let mut white = ban.white;
-        let teban = ban.teban as f32;
 
         let fs = ban.fixedstones();
 
         let ow = self.wbanv(prgs);
-        let wtbn = self.wteban(prgs);
+        let wtbn = self.wteban(prgs, ban.teban);
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
 
@@ -503,11 +514,10 @@ impl Weight {
                 let wtbn2 = x86_64::_mm_load_ps(wtbn.as_ptr().add(i + 4));
                 let wtbn3 = x86_64::_mm_load_ps(wtbn.as_ptr().add(i + 8));
                 let wtbn4 = x86_64::_mm_load_ps(wtbn.as_ptr().add(i + 12));
-                let tbn = x86_64::_mm_set1_ps(teban);
-                let h1 = x86_64::_mm_fmadd_ps(wtbn1, tbn, h1);
-                let h2 = x86_64::_mm_fmadd_ps(wtbn2, tbn, h2);
-                let h3 = x86_64::_mm_fmadd_ps(wtbn3, tbn, h3);
-                let h4 = x86_64::_mm_fmadd_ps(wtbn4, tbn, h4);
+                let h1 = x86_64::_mm_add_ps(wtbn1, h1);
+                let h2 = x86_64::_mm_add_ps(wtbn2, h2);
+                let h3 = x86_64::_mm_add_ps(wtbn3, h3);
+                let h4 = x86_64::_mm_add_ps(wtbn4, h4);
                 // fixed stones
                 let wfsb1 = x86_64::_mm_load_ps(wfs.as_ptr().add(i));
                 let wfsb2 = x86_64::_mm_load_ps(wfs.as_ptr().add(i + 4));
@@ -784,12 +794,11 @@ impl Weight {
         let prgs = ban.progress();
         let mut black = ban.black;
         let mut white = ban.white;
-        let teban = ban.teban as f32;
 
         let fs = ban.fixedstones();
 
         let ow = self.wbanv(prgs);
-        let wtbn = self.wteban(prgs);
+        let wtbn = self.wteban(prgs, ban.teban);
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
         const N : usize = 32;
@@ -845,11 +854,10 @@ impl Weight {
                     wtbn.as_ptr().add(hidx + 16));
                 let wtbn4 = x86_64::_mm256_load_ps(
                     wtbn.as_ptr().add(hidx + 24));
-                let tbn = x86_64::_mm256_set1_ps(teban);
-                let h1 = x86_64::_mm256_fmadd_ps(wtbn1, tbn, x1);
-                let h2 = x86_64::_mm256_fmadd_ps(wtbn2, tbn, x2);
-                let h3 = x86_64::_mm256_fmadd_ps(wtbn3, tbn, x3);
-                let h4 = x86_64::_mm256_fmadd_ps(wtbn4, tbn, x4);
+                let h1 = x86_64::_mm256_add_ps(wtbn1,  x1);
+                let h2 = x86_64::_mm256_add_ps(wtbn2,  x2);
+                let h3 = x86_64::_mm256_add_ps(wtbn3,  x3);
+                let h4 = x86_64::_mm256_add_ps(wtbn4,  x4);
                 // fixed stones
                 let wfsb1 = x86_64::_mm256_load_ps(wfs.as_ptr().add(hidx));
                 let wfsb2 = x86_64::_mm256_load_ps(wfs.as_ptr().add(hidx + 8));
