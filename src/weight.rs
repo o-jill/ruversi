@@ -410,7 +410,12 @@ impl Weight {
         }
 
         let offset = progress * N_WEIGHT_PAD;
-        self.weight[offset..offset + N_WEIGHT].copy_from_slice(&newtable);
+        // stones + teban
+        self.weight[offset..offset + N_WEIGHT_INPUTBIAS].copy_from_slice(
+            &newtable[..N_WEIGHT_INPUTBIAS]);
+        // input bias + the others
+        self.weight[offset + N_WEIGHT_INPUTBIAS..offset + N_WEIGHT].copy_from_slice(
+            &newtable[(bitboard::CELL_2D * 2 + 3) * N_HIDDEN..]);
         self.exchange();
         // println!("v9:{:?}", self.weight);
         Ok(())
