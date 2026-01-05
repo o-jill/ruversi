@@ -18,15 +18,23 @@ use std::arch::aarch64::*;
 pub const N_INPUT_BLACK : usize = 0;
 pub const N_INPUT_WHITE : usize = N_INPUT_BLACK + bitboard::CELL_2D;
 pub const N_INPUT_TEBAN : usize = N_INPUT_WHITE + bitboard::CELL_2D;
+#[cfg(feature = "fixed_stones")]
 pub const N_INPUT_FB : usize = N_INPUT_TEBAN + 1;
+#[cfg(feature = "fixed_stones")]
 pub const N_INPUT_FW : usize = N_INPUT_FB + 1;
+#[cfg(not(feature = "fixed_stones"))]
+pub const N_INPUT_FW : usize = N_INPUT_TEBAN;
 pub const N_INPUT : usize = N_INPUT_FW + 1;
 const N_HIDDEN : usize = 128;
 pub const N_HIDDEN2 : usize = 16;
 const N_OUTPUT : usize = 1;
 const N_WEIGHT_TEBAN : usize =  N_INPUT_TEBAN * N_HIDDEN;
+#[cfg(feature = "fixed_stones")]
 const N_WEIGHT_FIXST_B : usize = N_WEIGHT_TEBAN + N_HIDDEN;
+#[cfg(feature = "fixed_stones")]
 const N_WEIGHT_FIXST_W : usize = N_WEIGHT_FIXST_B + N_HIDDEN;
+#[cfg(not(feature = "fixed_stones"))]
+const N_WEIGHT_FIXST_W : usize = N_WEIGHT_TEBAN;
 const N_WEIGHT_INPUTBIAS : usize = N_WEIGHT_FIXST_W + N_HIDDEN;
 const N_WEIGHT_LAYER1 : usize = N_WEIGHT_INPUTBIAS + N_HIDDEN;
 const N_WEIGHT_LAYER1BIAS : usize = N_WEIGHT_LAYER1 + N_HIDDEN * N_HIDDEN2;
@@ -58,7 +66,10 @@ const WSZV8 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN
         + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
 #[allow(dead_code)]
 const WSZV9 : usize = WSZV8;
+#[allow(dead_code)]
 const WSZV10 : usize = (bitboard::CELL_2D * 2 + 1 + 2 + 1) * N_HIDDEN
+        + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
+const WSZV11 : usize = (bitboard::CELL_2D * 2 + 1 + 1) * N_HIDDEN
         + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
 
 // v2
@@ -80,6 +91,7 @@ enum EvalFile{
     V8,
     V9,
     V10,
+    V11,
 }
 
 impl std::fmt::Display for EvalFile {
@@ -97,6 +109,7 @@ impl std::fmt::Display for EvalFile {
             EvalFile::V8 => {"# 64+1+2-128-16-1"},
             EvalFile::V9 => {"# 3x 64+1+2-128-16-1"},
             EvalFile::V10 => {"# 3x 128+1+2-128-16-1"},
+            EvalFile::V11 => {"# 3x 128+1-128-16-1"},
             }
         )
     }
@@ -115,6 +128,7 @@ impl EvalFile {
             "# 64+1+2-128-16-1" => Some(EvalFile::V8),
             "# 3x 64+1+2-128-16-1" => Some(EvalFile::V9),
             "# 3x 128+1+2-128-16-1" => Some(EvalFile::V10),
+            "# 3x 128+1-128-16-1" => Some(EvalFile::V11),
             _ => {
                 None
             }
@@ -129,7 +143,7 @@ pub struct Weight {
     pub weight : AVec<f32>,
     mteban : AVec<f32>,
     // H1x128 + H1 + H1x2 + H1 + H1 x (H2+1) + H2 + 1
-    vweight : AVec<f32>
+    vweight : AVec<f32>,
 }
 
 impl Default for Weight {
@@ -151,7 +165,7 @@ impl Weight {
             },
             mteban: {
                 let mut w = AVec::with_capacity(
-                        MEM_ALIGN, N_HIDDEN * 2 * N_PROGRESS_DIV);
+                    MEM_ALIGN, N_HIDDEN * 2 * N_PROGRESS_DIV);
                 w.resize(w.capacity(), 0f32);
                 w
             },
@@ -160,7 +174,7 @@ impl Weight {
                     MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
                 w.resize(w.capacity(), 0f32);
                 w
-            }
+            },
         }
     }
 
@@ -169,9 +183,12 @@ impl Weight {
             let mut check = [0i8 ; N_INPUT_TEBAN * N_HIDDEN];
             let offset = p * N_WEIGHT_PAD;
             let wei = &self.weight[offset..offset + N_WEIGHT_PAD];
+
             self.mteban[p * N_HIDDEN..(p + 1) * N_HIDDEN].copy_from_slice(
                 &self.weight[offset + N_WEIGHT_TEBAN..offset + N_WEIGHT_TEBAN + N_HIDDEN]);
+
             let vwei = &mut self.vweight[offset..offset + N_WEIGHT_PAD];
+            vwei.copy_from_slice(wei);
             for (i, &w) in wei.iter().enumerate().take(N_INPUT_TEBAN * N_HIDDEN) {
                 let hidx = i / N_INPUT_TEBAN;
 
@@ -189,6 +206,7 @@ impl Weight {
                 }
             }
         }
+
         for i in 0..self.mteban.len()/2 {
             self.mteban[i + N_PROGRESS_DIV * N_HIDDEN] = -self.mteban[i];
         }
@@ -229,18 +247,21 @@ impl Weight {
         &self.mteban[offset..offset + N_HIDDEN]
     }
 
+    #[cfg(feature = "fixed_stones")]
     pub fn wfixedstones(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_FIXST_B..offset + N_WEIGHT_INPUTBIAS]
     }
 
     #[allow(dead_code)]
+    #[cfg(feature = "fixed_stones")]
     pub fn wfixedstone_b(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_FIXST_B..offset + N_WEIGHT_FIXST_W]
     }
 
     #[allow(dead_code)]
+    #[cfg(feature = "fixed_stones")]
     pub fn wfixedstone_w(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_FIXST_W..offset + N_WEIGHT_INPUTBIAS]
@@ -295,10 +316,14 @@ impl Weight {
             match line {
                 Ok(l) => {
                     if l.starts_with("#") {
-                        if format != EvalFile::Unknown {continue;}
+                        if format != EvalFile::Unknown {
+                            // panic!("EvalFile::Unknown: {l}");
+                            continue;
+                        }
 
                         if let Some(fmt) = EvalFile::from(&l) {
-                            format = fmt
+                            format = fmt;
+                            // eprintln!("format:{format}");
                         }
                         continue;
                     }
@@ -322,7 +347,14 @@ impl Weight {
                             idx += 1;
                             if idx >= N_PROGRESS_DIV {return Ok(());}
                         },
-                        _ => {}
+                        EvalFile::V11 => {
+                            self.readv11(&l, idx)?;
+                            idx += 1;
+                            if idx >= N_PROGRESS_DIV {return Ok(());}
+                        },
+                        _ => {
+                            panic!("EvalFile::Unknown...");
+                        }
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -384,11 +416,27 @@ impl Weight {
         Ok(())
     }
 
+    fn readv11(&mut self, line : &str, progress : usize) -> Result<(), String> {
+        let csv = line.split(",").collect::<Vec<_>>();
+        let newtable : Vec<f32> =
+                csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+        let nsz = newtable.len();
+        if WSZV11 != nsz {
+            return Err(format!("size mismatch v10:{WSZV10} != {nsz}"));
+        }
+
+        let offset = progress * N_WEIGHT_PAD;
+        self.weight[offset..offset + N_WEIGHT].copy_from_slice(&newtable);
+        self.exchange();
+        // println!("v9:{:?}", self.weight);
+        Ok(())
+    }
+
     #[allow(dead_code)]
-    pub fn writev10(&self, path : &str) {
+    pub fn writev11(&self, path : &str) {
         let mut f = fs::File::create(path).unwrap();
         f.write_all(
-            format!("{}\n", EvalFile::V10).as_bytes()).unwrap();
+            format!("{}\n", EvalFile::V11).as_bytes()).unwrap();
         for prgs in 0..N_PROGRESS_DIV {
             let offset = prgs * N_WEIGHT_PAD;
             let w = &self.weight[offset..offset + N_WEIGHT];
@@ -400,16 +448,19 @@ impl Weight {
     pub fn copy(&mut self, src : &Weight) {
         self.weight.copy_from_slice(&src.weight);
         self.vweight.copy_from_slice(&src.vweight);
+        self.mteban.copy_from_slice(&src.mteban);
     }
 
     pub fn evaluatev9bb(&self, ban : &bitboard::BitBoard) -> f32 {
         let prgs = ban.progress();
 
+        #[cfg(feature = "fixed_stones")]
         let fs = ban.fixedstones();
-
         let ow = self.wbanv(prgs);
         let wtbn = self.wteban(prgs, ban.teban);
+        #[cfg(feature = "fixed_stones")]
         let wfs = self.wfixedstones(prgs);
+
         let wdc = self.wibias(prgs);
         let mut hid = [0f32 ; N_HIDDEN];
         hid.copy_from_slice(wdc);
@@ -429,11 +480,19 @@ impl Weight {
             }
         }
         for (i, h) in hid.iter_mut().enumerate() {
-            let mut hidsum = wtbn[i] + *h;
-            hidsum = wfs[i].mul_add(fs.0 as f32, hidsum);
-            hidsum = wfs[i + N_HIDDEN].mul_add(fs.1 as f32, hidsum);
-            // relu
-            *h = hidsum.max(0f32);
+            #[cfg(not(feature = "fixed_stones"))] {
+                // let mut hidsum = teban.mul_add(wtbn[i], *h);
+                let hidsum = wtbn[i] + *h;
+                // relu
+                *h = hidsum.max(0f32);
+            }
+            #[cfg(feature = "fixed_stones")] {
+                let mut hidsum = wtbn[i] + *h;
+                hidsum = wfs[i].mul_add(fs.0 as f32, hidsum);
+                hidsum = wfs[i + N_HIDDEN].mul_add(fs.1 as f32, hidsum);
+                // relu
+                *h = hidsum.max(0f32);
+            }
         }
 
         let mut sum = self.wl2bias(prgs);
@@ -458,11 +517,14 @@ impl Weight {
         let mut black = ban.black;
         let mut white = ban.white;
 
+        #[cfg(feature = "fixed_stones")]
         let fs = ban.fixedstones();
 
         let ow = self.wbanv(prgs);
         let wtbn = self.wteban(prgs, ban.teban);
+        #[cfg(feature = "fixed_stones")]
         let wfs = self.wfixedstones(prgs);
+
         let wdc = self.wibias(prgs);
 
         let mut hid = [0f32 ; N_HIDDEN];
@@ -519,23 +581,41 @@ impl Weight {
                 let h3 = x86_64::_mm_add_ps(wtbn3, h3);
                 let h4 = x86_64::_mm_add_ps(wtbn4, h4);
                 // fixed stones
+            #[cfg(feature = "fixed_stones")]
                 let wfsb1 = x86_64::_mm_load_ps(wfs.as_ptr().add(i));
+            #[cfg(feature = "fixed_stones")]
                 let wfsb2 = x86_64::_mm_load_ps(wfs.as_ptr().add(i + 4));
+            #[cfg(feature = "fixed_stones")]
                 let wfsb3 = x86_64::_mm_load_ps(wfs.as_ptr().add(i + 8));
+            #[cfg(feature = "fixed_stones")]
                 let wfsb4 = x86_64::_mm_load_ps(wfs.as_ptr().add(i + 12));
+            #[cfg(feature = "fixed_stones")]
                 let fsb = x86_64::_mm_set1_ps(fs.0 as f32);
+            #[cfg(feature = "fixed_stones")]
                 let h1 = x86_64::_mm_fmadd_ps(wfsb1, fsb, h1);
+            #[cfg(feature = "fixed_stones")]
                 let h2 = x86_64::_mm_fmadd_ps(wfsb2, fsb, h2);
+            #[cfg(feature = "fixed_stones")]
                 let h3 = x86_64::_mm_fmadd_ps(wfsb3, fsb, h3);
+            #[cfg(feature = "fixed_stones")]
                 let h4 = x86_64::_mm_fmadd_ps(wfsb4, fsb, h4);
+            #[cfg(feature = "fixed_stones")]
                 let wfsw1 = x86_64::_mm_load_ps(wfs.as_ptr().add(i + N_HIDDEN));
+            #[cfg(feature = "fixed_stones")]
                 let wfsw2 = x86_64::_mm_load_ps(wfs.as_ptr().add(i + 4 + N_HIDDEN));
+            #[cfg(feature = "fixed_stones")]
                 let wfsw3 = x86_64::_mm_load_ps(wfs.as_ptr().add(i + 8 + N_HIDDEN));
+            #[cfg(feature = "fixed_stones")]
                 let wfsw4 = x86_64::_mm_load_ps(wfs.as_ptr().add(i + 12 + N_HIDDEN));
+            #[cfg(feature = "fixed_stones")]
                 let fsw = x86_64::_mm_set1_ps(fs.1 as f32);
+            #[cfg(feature = "fixed_stones")]
                 let h1 = x86_64::_mm_fmadd_ps(wfsw1, fsw, h1);
+            #[cfg(feature = "fixed_stones")]
                 let h2 = x86_64::_mm_fmadd_ps(wfsw2, fsw, h2);
+            #[cfg(feature = "fixed_stones")]
                 let h3 = x86_64::_mm_fmadd_ps(wfsw3, fsw, h3);
+            #[cfg(feature = "fixed_stones")]
                 let h4 = x86_64::_mm_fmadd_ps(wfsw4, fsw, h4);
                 // dc
                 // let wdc1 = x86_64::_mm_load_ps(wdc.as_ptr().add(i));
@@ -615,7 +695,7 @@ impl Weight {
                 let dc = x86_64::_mm_load_ps(wdc1.as_ptr().add(i));
                 let s4 = x86_64::_mm_add_ps(s3, dc);
                 // x86_64::_mm_store_ps(hid2.add(i), s4);
-                x86_64::_mm_store_ps(hid2.as_mut_ptr().add(i), s4);
+                x86_64::_mm_storeu_ps(hid2.as_mut_ptr().add(i), s4);
             }
         }
         for j in 0..N_HIDDEN2 / 16 {
@@ -656,10 +736,12 @@ impl Weight {
         let mut black = ban.black;
         let mut white = ban.white;
 
+        #[cfg(feature = "fixed_stones")]
         let (fsb, fsw) = ban.fixedstones();
 
         let ow = self.wbanv(prgs);
         let wtbn = self.wteban(prgs, ban.teban);
+        #[cfg(feature = "fixed_stones")]
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
         const N : usize = 16;
@@ -701,18 +783,30 @@ impl Weight {
                 let sum43 = vaddq_f32(sum4.2, wtb.2);
                 let sum44 = vaddq_f32(sum4.3, wtb.3);
 
+            #[cfg(feature = "fixed_stones")]
                 let fsb4 = vmovq_n_f32(fsb as f32);
+            #[cfg(feature = "fixed_stones")]
                 let wfsb = vld1q_f32_x4(wfs.as_ptr().add(i));
+            #[cfg(feature = "fixed_stones")]
                 let sum41 = vmlaq_f32(sum41, fsb4, wfsb.0);
+            #[cfg(feature = "fixed_stones")]
                 let sum42 = vmlaq_f32(sum42, fsb4, wfsb.1);
+            #[cfg(feature = "fixed_stones")]
                 let sum43 = vmlaq_f32(sum43, fsb4, wfsb.2);
+            #[cfg(feature = "fixed_stones")]
                 let sum44 = vmlaq_f32(sum44, fsb4, wfsb.3);
 
+            #[cfg(feature = "fixed_stones")]
                 let fsw4 = vmovq_n_f32(fsw as f32);
+            #[cfg(feature = "fixed_stones")]
                 let wfsw = vld1q_f32_x4(wfs.as_ptr().add(i + N_HIDDEN));
+            #[cfg(feature = "fixed_stones")]
                 let sum41 = vmlaq_f32(sum41, fsw4, wfsw.0);
+            #[cfg(feature = "fixed_stones")]
                 let sum42 = vmlaq_f32(sum42, fsw4, wfsw.1);
+            #[cfg(feature = "fixed_stones")]
                 let sum43 = vmlaq_f32(sum43, fsw4, wfsw.2);
+            #[cfg(feature = "fixed_stones")]
                 let sum44 = vmlaq_f32(sum44, fsw4, wfsw.3);
 
                 let wdc4 = vld1q_f32_x4(wdc.as_ptr().add(i));
@@ -793,10 +887,12 @@ impl Weight {
         let mut black = ban.black;
         let mut white = ban.white;
 
+        #[cfg(feature = "fixed_stones")]
         let fs = ban.fixedstones();
 
         let ow = self.wbanv(prgs);
         let wtbn = self.wteban(prgs, ban.teban);
+        #[cfg(feature = "fixed_stones")]
         let wfs = self.wfixedstones(prgs);
         let wdc = self.wibias(prgs);
         const N : usize = 32;
@@ -852,34 +948,52 @@ impl Weight {
                     wtbn.as_ptr().add(hidx + 16));
                 let wtbn4 = x86_64::_mm256_load_ps(
                     wtbn.as_ptr().add(hidx + 24));
-                let h1 = x86_64::_mm256_add_ps(wtbn1,  x1);
-                let h2 = x86_64::_mm256_add_ps(wtbn2,  x2);
-                let h3 = x86_64::_mm256_add_ps(wtbn3,  x3);
-                let h4 = x86_64::_mm256_add_ps(wtbn4,  x4);
+                let h1 = x86_64::_mm256_add_ps(wtbn1, x1);
+                let h2 = x86_64::_mm256_add_ps(wtbn2, x2);
+                let h3 = x86_64::_mm256_add_ps(wtbn3, x3);
+                let h4 = x86_64::_mm256_add_ps(wtbn4, x4);
                 // fixed stones
+        #[cfg(feature = "fixed_stones")]
                 let wfsb1 = x86_64::_mm256_load_ps(wfs.as_ptr().add(hidx));
+        #[cfg(feature = "fixed_stones")]
                 let wfsb2 = x86_64::_mm256_load_ps(wfs.as_ptr().add(hidx + 8));
+        #[cfg(feature = "fixed_stones")]
                 let wfsb3 = x86_64::_mm256_load_ps(
                     wfs.as_ptr().add(hidx + 16));
+        #[cfg(feature = "fixed_stones")]
                 let wfsb4 = x86_64::_mm256_load_ps(
                     wfs.as_ptr().add(hidx + 24));
+        #[cfg(feature = "fixed_stones")]
                 let fsb = x86_64::_mm256_set1_ps(fs.0 as f32);
+        #[cfg(feature = "fixed_stones")]
                 let h1 = x86_64::_mm256_fmadd_ps(wfsb1, fsb, h1);
+        #[cfg(feature = "fixed_stones")]
                 let h2 = x86_64::_mm256_fmadd_ps(wfsb2, fsb, h2);
+        #[cfg(feature = "fixed_stones")]
                 let h3 = x86_64::_mm256_fmadd_ps(wfsb3, fsb, h3);
+        #[cfg(feature = "fixed_stones")]
                 let h4 = x86_64::_mm256_fmadd_ps(wfsb4, fsb, h4);
+        #[cfg(feature = "fixed_stones")]
                 let wfsw1 = x86_64::_mm256_load_ps(
                     wfs.as_ptr().add(hidx + N_HIDDEN));
+        #[cfg(feature = "fixed_stones")]
                 let wfsw2 = x86_64::_mm256_load_ps(
                     wfs.as_ptr().add(hidx + N_HIDDEN + 8));
+        #[cfg(feature = "fixed_stones")]
                 let wfsw3 = x86_64::_mm256_load_ps(
                     wfs.as_ptr().add(hidx + N_HIDDEN + 16));
+        #[cfg(feature = "fixed_stones")]
                 let wfsw4 = x86_64::_mm256_load_ps(
                     wfs.as_ptr().add(hidx + N_HIDDEN + 24));
+        #[cfg(feature = "fixed_stones")]
                 let fsw = x86_64::_mm256_set1_ps(fs.1 as f32);
+        #[cfg(feature = "fixed_stones")]
                 let h1 = x86_64::_mm256_fmadd_ps(wfsw1, fsw, h1);
+        #[cfg(feature = "fixed_stones")]
                 let h2 = x86_64::_mm256_fmadd_ps(wfsw2, fsw, h2);
+        #[cfg(feature = "fixed_stones")]
                 let h3 = x86_64::_mm256_fmadd_ps(wfsw3, fsw, h3);
+        #[cfg(feature = "fixed_stones")]
                 let h4 = x86_64::_mm256_fmadd_ps(wfsw4, fsw, h4);
                 // relu
                 let zero = x86_64::_mm256_setzero_ps();
@@ -1040,6 +1154,16 @@ fn dbg_assert_eq(a : &f32, b : &f32) -> bool {
     true
 }
 
+#[allow(dead_code)]
+fn dbg_assert_eqi(a : &f32, b : &f32) -> bool {
+    let eps = 0.1;
+    if (a - b).abs() >= eps {
+        println!("| {a} - {b} | >= {eps}...");
+        return false;
+    }
+    true
+}
+
 #[test]
 fn test_exchange_weight() {
         let mut w = weight::Weight::new();
@@ -1097,9 +1221,13 @@ fn testweight() {
         let bban = bitboard::BitBoard::from(rfen).unwrap();
         let ban = bitboard::BitBoard::from(rfen).unwrap();
         ban.put();
+        eprintln!("- - -");
         let mut w = weight::Weight::new();
+        eprintln!("--------");
         w.init();
+        eprintln!("--------~~~~~~~~~~~~~");
         let res_nosimde = w.evaluatev9bb(&bban);
+        eprintln!("--------~~~~~~~~~~~~~***********");
         let res_simd = w.evaluatev9bb_simd(&bban);
         let res_simdavx = w.evaluatev9bb_simdavx(&bban);
         assert!(dbg_assert_eq(&res_nosimde, &res_simd));

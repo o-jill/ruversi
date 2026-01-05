@@ -23,6 +23,7 @@ withtt = []  # use transposition table
 # bitboard = []
 # deprecated  byteboard = []
 avx = [] ## including AVX and BMI2
+fixed_stones = []
 
 [lib]
 name="mylib"
