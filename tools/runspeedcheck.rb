@@ -106,11 +106,17 @@ def search()
   result_nodes = Array.new(rfens.length(), -1)
   result_elapsed = Array.new(rfens.length()) {[]}
 
+  if RUBY_PLATFORM =~ /mswin|mingw/
+    devnull = 'NUL'
+  else
+    devnull = '/dev/null'
+  end
+
   rfens.each_with_index do |rfen, i|
     echo("Begin RFEN:#{rfen}", RESULT)
     for j in 1..REPEAT do
       # runcmd = "cargo run --release #{features} -- --rfen \"#{rfen}\" #{sdepth} --ev1 #{EVFILE} >> #{RESULT} 2>/dev/null"
-      runcmd = "cargo run --release #{features} -- --rfen \"#{rfen}\" #{sdepth} --ev1 #{EVFILE} 2>/dev/null"
+      runcmd = "cargo run --release #{features} -- --rfen \"#{rfen}\" #{sdepth} --ev1 #{EVFILE} 2>#{devnull}"
       res = exec_command(runcmd)
       (nodes, elapsed) = readresult(res.split("\n").last())
       result_nodes[i] = nodes
