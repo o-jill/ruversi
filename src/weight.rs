@@ -699,7 +699,6 @@ impl Weight {
 
                 let dc = x86_64::_mm_load_ps(wdc1.as_ptr().add(i));
                 let s4 = x86_64::_mm_add_ps(s3, dc);
-                // x86_64::_mm_store_ps(hid2.add(i), s4);
                 x86_64::_mm_storeu_ps(hid2.as_mut_ptr().add(i), s4);
             }
         }
@@ -1006,10 +1005,6 @@ impl Weight {
                 let y2 = x86_64::_mm256_max_ps(zero, h2);
                 let y3 = x86_64::_mm256_max_ps(zero, h3);
                 let y4 = x86_64::_mm256_max_ps(zero, h4);
-                // x86_64::_mm256_store_ps(hid.add(hidx), y1);
-                // x86_64::_mm256_store_ps(hid.add(hidx + 8), y2);
-                // x86_64::_mm256_store_ps(hid.add(hidx + 16), y3);
-                // x86_64::_mm256_store_ps(hid.add(hidx + 24), y4);
                 x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx), y1);
                 x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx + 8), y2);
                 x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx + 16), y3);
@@ -1108,7 +1103,7 @@ impl Weight {
                     let s1 = x86_64::_mm256_castps256_ps128(y1234);
                     let s2 = x86_64::_mm256_extractf128_ps(y1234, 1);
                     let s4 = x86_64::_mm_add_ps(s1, s2);
-                    x86_64::_mm_store_ps(hid2.as_mut_ptr().add(i / 8), s4);
+                    x86_64::_mm_storeu_ps(hid2.as_mut_ptr().add(i / 8), s4);
                 }
             }
             for h in hid2.iter().take(N_HIDDEN2 / 8) {
