@@ -243,7 +243,7 @@ impl Weight {
 
     pub fn wteban(&self, progress : usize, teban : i8) -> &[f32] {
         let offset = progress * N_HIDDEN
-            + if teban > 0 {0} else {N_HIDDEN * N_PROGRESS_DIV};
+            + (1 - teban) as usize * N_HIDDEN * N_PROGRESS_DIV / 2;
         &self.mteban[offset..offset + N_HIDDEN]
     }
 
@@ -786,7 +786,6 @@ impl Weight {
                 let sum42 = vaddq_f32(sum4.1, wtb.1);
                 let sum43 = vaddq_f32(sum4.2, wtb.2);
                 let sum44 = vaddq_f32(sum4.3, wtb.3);
-
             #[cfg(feature = "fixed_stones")]
                 let fsb4 = vmovq_n_f32(fsb as f32);
             #[cfg(feature = "fixed_stones")]
