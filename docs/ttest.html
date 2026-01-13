@@ -15,27 +15,63 @@
  * @param N2  number of data in group B
  */
 function ttest(av1, sd1, N1, av2, sd2, N2) {
-    let t = (av1 - av2) / (Math.sqrt(s2 * (sd1 / (N1 - 1) + sd2 / (N2 - 1));
-    let sn1 = sd1 * sd1 / N1;
-    let sn2 = sd2 * sd2 / N2;
+    let sn1 = sd1 * sd1 / N1;  // variance1/n1
+    let sn2 = sd2 * sd2 / N2;  // variance2/n2
+
+    let t = (av1 - av2) / Math.sqrt(sn1 + sn2);
+
     let dof_welch = (sn1 + sn2) * (sn1 + sn2)
             / (sn1 * sn1 / (N1 - 1) + sn2 * sn2 / (N2 - 1));
-    let dof_studentt = N1 + N2 - 2;
     let p = jStat.studentt.pdf(t, dof_welch);
-    /* let p = jStat.studentt.pdf(t, dof_studentt); */
+    // let dof_studentt = N1 + N2 - 2;
+    // let p = jStat.studentt.pdf(t, dof_studentt);
     return [t, p];
 }
 
+const invalid_data = "<span style='color:red;font-size:3em;'>invalid data...</span>";
+
 function calc1() {
-    let res1 = document.getElementById("res1").value.split('±');
+    let txt1 = document.getElementById("res1").value.trim();
+    if (txt1.length == 0) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
+
+    let res1 = txt1.split('±');
     let a1 = res1[0].trim() - 0;
     let sd1 = res1[1].trim() - 0;
-    let N1 = document.getElementById("N1").value - 0;
+    if (a1 == undefined || isNaN(a1)
+        || sd1 == undefined || isNaN(sd1) || sd1 < 0) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
 
-    let res2 = document.getElementById("res2").value.split('±');
+    let N1 = document.getElementById("N1").value - 0;
+    if (N1 == undefined || isNaN(N1) || N1 <= 1) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
+
+    let txt2 = document.getElementById("res2").value.trim();
+    if (txt2.length == 0) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
+
+    let res2 = txt2.split('±');
     let a2 = res2[0].trim() - 0;
     let sd2 = res2[1].trim() - 0;
+    if (a2 == undefined || isNaN(a2)
+        || sd2 == undefined || isNaN(sd2) || sd2 < 0) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
+
     let N2 = document.getElementById("N2").value - 0;
+    if (N2 == undefined || isNaN(N2) || N2 <= 1) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
 
     let [t, p] = ttest(a1, sd1, N1, a2, sd2, N2);
 
@@ -50,10 +86,22 @@ function calc2() {
     let a1 = document.getElementById("avg1").value - 0;
     let sd1 = document.getElementById("sd1").value - 0;
     let N1 = document.getElementById("N1").value - 0;
+    if (a1 == undefined || isNaN(a1)
+        || sd1 == undefined || isNaN(sd1) || sd1 < 0
+        || N1 == undefined || isNaN(N1) || N1 <= 1) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
 
     let a2 = document.getElementById("avg2").value - 0;
     let sd2 = document.getElementById("sd2").value - 0;
     let N2 = document.getElementById("N2").value - 0;
+    if (a2 == undefined || isNaN(a2)
+        || sd2 == undefined || isNaN(sd2) || sd2 < 0
+        || N2 == undefined || isNaN(N2) || N2 <= 1) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
 
     let [t, p] = ttest(a1, sd1, N1, a2, sd2, N2);
 
