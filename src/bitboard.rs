@@ -2022,6 +2022,10 @@ fn testbitbrd_reverse() {
             // assert!(b.checkreverse4(x, y));
         }
     }
+}
+
+#[test]
+fn testbitbrd_reverse2() {
     let revchktbl = [
         ("---------------------------------------------------------------- X", 2, 2),
         ("XXXXXXXXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX X", 2, 2),
@@ -2081,7 +2085,10 @@ fn testbitbrd_reverse() {
             // assert!(!b.checkreverse4(x, y));
         }
     }
+}
 
+#[test]
+fn testbitbrd_reverse3() {
     let revchktbl = [
         "8/8/8/8/8/8/H/h w", "8/8/8/8/8/H/H/h w", "8/8/8/8/H/H/H/h w",
         "8/8/8/H/H/H/H/h w", "8/8/H/H/H/H/H/h w", "8/H/H/H/H/H/H/h w",
@@ -2124,6 +2131,10 @@ fn testbitbrd_reverse() {
             }
         }
     }
+}
+
+#[test]
+fn testbitbrd_reverse4() {
     let revchktbl = [
         "8/8/8/8/8/8/h/H b", "8/8/8/8/8/h/h/H b", "8/8/8/8/h/h/h/H b",
         "8/8/8/h/h/h/h/H b", "8/8/h/h/h/h/h/H b", "8/h/h/h/h/h/h/H b",
@@ -2170,6 +2181,10 @@ fn testbitbrd_reverse() {
             }
         }
     }
+}
+
+#[test]
+fn testbitbrd_reverse5() {
     let revchktbl = [
         "8/8/8/8/8/8/8/6aA b", "8/8/8/8/8/8/8/5bA b", "8/8/8/8/8/8/8/4cA b",
         "8/8/8/8/8/8/8/3dA b", "8/8/8/8/8/8/8/2eA b", "8/8/8/8/8/8/8/1fA b",
@@ -2219,11 +2234,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse6() {
     let revchktbl = [
         "8/8/8/8/8/8/6aA/8 b", "8/8/8/8/8/8/5bA/8 b", "8/8/8/8/8/8/4cA/8 b",
         "8/8/8/8/8/8/3dA/8 b", "8/8/8/8/8/8/2eA/8 b", "8/8/8/8/8/8/1fA/8 b",
     ];
-    let x = x - 1;
+    let x = 6;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2268,11 +2287,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse7() {
     let revchktbl = [
         "8/8/8/8/8/6aA/8/8 b", "8/8/8/8/8/5bA/8/8 b", "8/8/8/8/8/4cA/8/8 b",
         "8/8/8/8/8/3dA/8/8 b", "8/8/8/8/8/2eA/8/8 b", "8/8/8/8/8/1fA/8/8 b",
     ];
-    let x = x - 1;
+    let x = 5;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2317,11 +2340,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse8() {
     let revchktbl = [
         "8/8/8/8/6aA/8/8/8 b", "8/8/8/8/5bA/8/8/8 b", "8/8/8/8/4cA/8/8/8 b",
         "8/8/8/8/3dA/8/8/8 b", "8/8/8/8/2eA/8/8/8 b", "8/8/8/8/1fA/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 4;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2366,11 +2393,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse9() {
     let revchktbl = [
         "8/8/8/6aA/8/8/8/8 b", "8/8/8/5bA/8/8/8/8 b", "8/8/8/4cA/8/8/8/8 b",
         "8/8/8/3dA/8/8/8/8 b", "8/8/8/2eA/8/8/8/8 b", "8/8/8/1fA/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 3;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2415,11 +2446,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse10() {
     let revchktbl = [
         "8/8/6aA/8/8/8/8/8 b", "8/8/5bA/8/8/8/8/8 b", "8/8/4cA/8/8/8/8/8 b",
         "8/8/3dA/8/8/8/8/8 b", "8/8/2eA/8/8/8/8/8 b", "8/8/1fA/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 2;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2464,11 +2499,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse11() {
     let revchktbl = [
         "8/6aA/8/8/8/8/8/8 b", "8/5bA/8/8/8/8/8/8 b", "8/4cA/8/8/8/8/8/8 b",
         "8/3dA/8/8/8/8/8/8 b", "8/2eA/8/8/8/8/8/8 b", "8/1fA/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 1;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2513,11 +2552,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse12() {
     let revchktbl = [
         "6aA/8/8/8/8/8/8/8 b", "5bA/8/8/8/8/8/8/8 b", "4cA/8/8/8/8/8/8/8 b",
         "3dA/8/8/8/8/8/8/8 b", "2eA/8/8/8/8/8/8/8 b", "1fA/8/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 0;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2562,6 +2605,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse13() {
     let revchktbl = [
         "7A/6a1/8/8/8/8/8/8 b",
         "7A/6a1/5a2/8/8/8/8/8 b",
@@ -2616,6 +2663,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse14() {
     let revchktbl = [
         "8/8/8/8/8/5A2/6a1/8 b",
         "8/8/8/8/4A3/5a2/6a1/8 b",
@@ -2669,6 +2720,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse15() {
     let revchktbl = [
         "8/8/8/8/8/8/6aA/6aA b", "8/8/8/8/8/8/5bA/5bA b",
         "8/8/8/8/8/8/4cA/4cA b", "8/8/8/8/8/8/3dA/3dA b",
@@ -2719,12 +2774,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse16() {
     let revchktbl = [
         "8/8/8/8/8/6aA/6aA/8 b", "8/8/8/8/8/5bA/5bA/8 b",
         "8/8/8/8/8/4cA/4cA/8 b", "8/8/8/8/8/3dA/3dA/8 b",
         "8/8/8/8/8/2eA/2eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
-    let x = x - 1;
+    let x = 6;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2769,12 +2828,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse17() {
     let revchktbl = [
         "8/8/8/8/6aA/6aA/8/8 b", "8/8/8/8/5bA/5bA/8/8 b",
         "8/8/8/8/4cA/4cA/8/8 b", "8/8/8/8/3dA/3dA/8/8 b",
         "8/8/8/8/2eA/2eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
-    let x = x - 1;
+    let x = 5;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2819,12 +2882,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse18() {
     let revchktbl = [
         "8/8/8/6aA/6aA/8/8/8 b", "8/8/8/5bA/5bA/8/8/8 b",
         "8/8/8/4cA/4cA/8/8/8 b", "8/8/8/3dA/3dA/8/8/8 b",
         "8/8/8/2eA/2eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 4;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2869,12 +2936,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse19() {
     let revchktbl = [
         "8/8/6aA/6aA/8/8/8/8 b", "8/8/5bA/5bA/8/8/8/8 b",
         "8/8/4cA/4cA/8/8/8/8 b", "8/8/3dA/3dA/8/8/8/8 b",
         "8/8/2eA/2eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 3;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2919,12 +2990,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse20() {
     let revchktbl = [
         "8/6aA/6aA/8/8/8/8/8 b", "8/5bA/5bA/8/8/8/8/8 b",
         "8/4cA/4cA/8/8/8/8/8 b", "8/3dA/3dA/8/8/8/8/8 b",
         "8/2eA/2eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 2;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -2969,12 +3044,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse21() {
     let revchktbl = [
         "6aA/6aA/8/8/8/8/8/8 b", "5bA/5bA/8/8/8/8/8/8 b",
         "4cA/4cA/8/8/8/8/8/8 b", "3dA/3dA/8/8/8/8/8/8 b",
         "2eA/2eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 1;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3019,12 +3098,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse22() {
     let revchktbl = [
         "6aA/8/8/8/8/8/8/6aA b", "5bA/8/8/8/8/8/8/5bA b",
         "4cA/8/8/8/8/8/8/4cA b", "3dA/8/8/8/8/8/8/3dA b",
         "2eA/8/8/8/8/8/8/2eA b", "1fA/8/8/8/8/8/8/1fA b",
     ];
-    let x = x - 1;
+    let x = 0;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3069,6 +3152,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse23() {
     let revchktbl = [
         "6aA/8/8/8/8/8/8/6aA b", "5bA/8/8/8/8/8/8/5bA b",
         "4cA/8/8/8/8/8/8/4cA b", "3dA/8/8/8/8/8/8/3dA b",
@@ -3119,12 +3206,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse24() {
     let revchktbl = [
         "8/8/8/8/8/8/6aA/6aA b", "8/8/8/8/8/8/5bA/5bA b",
         "8/8/8/8/8/8/4cA/4cA b", "8/8/8/8/8/8/3dA/3dA b",
         "8/8/8/8/8/8/2eA/2eA b", "8/8/8/8/8/8/1fA/1fA b",
     ];
-    let x = x - 1;
+    let x = 6;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3169,12 +3260,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse25() {
     let revchktbl = [
         "8/8/8/8/8/6aA/6aA/8 b", "8/8/8/8/8/5bA/5bA/8 b",
         "8/8/8/8/8/4cA/4cA/8 b", "8/8/8/8/8/3dA/3dA/8 b",
         "8/8/8/8/8/2eA/2eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
-    let x = x - 1;
+    let x = 5;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3219,12 +3314,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse26() {
     let revchktbl = [
         "8/8/8/8/6aA/6aA/8/8 b", "8/8/8/8/5bA/5bA/8/8 b",
         "8/8/8/8/4cA/4cA/8/8 b", "8/8/8/8/3dA/3dA/8/8 b",
         "8/8/8/8/2eA/2eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
-    let x = x - 1;
+    let x = 4;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3269,12 +3368,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse27() {
     let revchktbl = [
         "8/8/8/6aA/6aA/8/8/8 b", "8/8/8/5bA/5bA/8/8/8 b",
         "8/8/8/4cA/4cA/8/8/8 b", "8/8/8/3dA/3dA/8/8/8 b",
         "8/8/8/2eA/2eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 3;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3319,12 +3422,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse28() {
     let revchktbl = [
         "8/8/6aA/6aA/8/8/8/8 b", "8/8/5bA/5bA/8/8/8/8 b",
         "8/8/4cA/4cA/8/8/8/8 b", "8/8/3dA/3dA/8/8/8/8 b",
         "8/8/2eA/2eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 2;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3369,12 +3476,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse29() {
     let revchktbl = [
         "8/6aA/6aA/8/8/8/8/8 b", "8/5bA/5bA/8/8/8/8/8 b",
         "8/4cA/4cA/8/8/8/8/8 b", "8/3dA/3dA/8/8/8/8/8 b",
         "8/2eA/2eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 1;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3419,12 +3530,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse30() {
     let revchktbl = [
         "6aA/6aA/8/8/8/8/8/8 b", "5bA/5bA/8/8/8/8/8/8 b",
         "4cA/4cA/8/8/8/8/8/8 b", "3dA/3dA/8/8/8/8/8/8 b",
         "2eA/2eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 0;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3469,7 +3584,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
-//------------------------------------
+}
+
+#[test]
+fn testbitbrd_reverse31() {
     let revchktbl = [
         "8/8/8/8/8/8/8/E1aA b", "8/8/8/8/8/8/8/D1bA b", "8/8/8/8/8/8/8/C1cA b",
         "8/8/8/8/8/8/8/B1dA b", "8/8/8/8/8/8/8/A1eA b", "8/8/8/8/8/8/8/1fA b",
@@ -3519,11 +3637,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse32() {
     let revchktbl = [
         "8/8/8/8/8/8/E1aA/8 b", "8/8/8/8/8/8/D1bA/8 b", "8/8/8/8/8/8/C1cA/8 b",
         "8/8/8/8/8/8/B1dA/8 b", "8/8/8/8/8/8/A1eA/8 b", "8/8/8/8/8/8/1fA/8 b",
     ];
-    let x = x - 1;
+    let x = 6;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3568,11 +3690,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse33() {
     let revchktbl = [
         "8/8/8/8/8/E1aA/8/8 b", "8/8/8/8/8/D1bA/8/8 b", "8/8/8/8/8/C1cA/8/8 b",
         "8/8/8/8/8/B1dA/8/8 b", "8/8/8/8/8/A1eA/8/8 b", "8/8/8/8/8/1fA/8/8 b",
     ];
-    let x = x - 1;
+    let x = 5;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3617,11 +3743,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse34() {
     let revchktbl = [
         "8/8/8/8/E1aA/8/8/8 b", "8/8/8/8/D1bA/8/8/8 b", "8/8/8/8/C1cA/8/8/8 b",
         "8/8/8/8/B1dA/8/8/8 b", "8/8/8/8/A1eA/8/8/8 b", "8/8/8/8/1fA/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 4;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3666,11 +3796,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse35() {
     let revchktbl = [
         "8/8/8/E1aA/8/8/8/8 b", "8/8/8/D1bA/8/8/8/8 b", "8/8/8/C1cA/8/8/8/8 b",
         "8/8/8/B1dA/8/8/8/8 b", "8/8/8/A1eA/8/8/8/8 b", "8/8/8/1fA/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 3;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3715,11 +3849,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse36() {
     let revchktbl = [
         "8/8/E1aA/8/8/8/8/8 b", "8/8/D1bA/8/8/8/8/8 b", "8/8/C1cA/8/8/8/8/8 b",
         "8/8/B1dA/8/8/8/8/8 b", "8/8/A1eA/8/8/8/8/8 b", "8/8/1fA/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 2;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3764,11 +3902,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse37() {
     let revchktbl = [
         "8/E1aA/8/8/8/8/8/8 b", "8/D1bA/8/8/8/8/8/8 b", "8/C1cA/8/8/8/8/8/8 b",
         "8/B1dA/8/8/8/8/8/8 b", "8/A1eA/8/8/8/8/8/8 b", "8/1fA/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 1;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3813,11 +3955,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse38() {
     let revchktbl = [
         "E1aA/8/8/8/8/8/8/8 b", "D1bA/8/8/8/8/8/8/8 b", "C1cA/8/8/8/8/8/8/8 b",
         "B1dA/8/8/8/8/8/8/8 b", "A1eA/8/8/8/8/8/8/8 b", "1fA/8/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 0;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -3862,6 +4008,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse39() {
     let revchktbl = [
         "7A/6a1/8/4A3/3A4/2A5/1A6/A7 b",
         "7A/6a1/5a2/8/3A4/2A5/1A6/A7 b",
@@ -3916,6 +4066,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse40() {
     let revchktbl = [
         "A7/1A6/2A5/3A4/4A3/5A2/6a1/8 b",
         "A7/1A6/2A5/3A4/4A3/5a2/6a1/8 b",
@@ -3969,6 +4123,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), 8);
         assert_eq!(ban.white.count_ones(), 0);
     }
+}
+
+#[test]
+fn testbitbrd_reverse41() {
     let revchktbl = [
         "8/8/8/8/8/8/E1aA/E1aA b", "8/8/8/8/8/8/D1bA/D1bA b",
         "8/8/8/8/8/8/C1cA/C1cA b", "8/8/8/8/8/8/B1dA/B1dA b",
@@ -4019,12 +4177,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse42() {
     let revchktbl = [
         "8/8/8/8/8/E1aA/E1aA/8 b", "8/8/8/8/8/D1bA/D1bA/8 b",
         "8/8/8/8/8/C1cA/C1cA/8 b", "8/8/8/8/8/B1dA/B1dA/8 b",
         "8/8/8/8/8/A1eA/A1eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
-    let x = x - 1;
+    let x = 6;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4069,12 +4231,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse43() {
     let revchktbl = [
         "8/8/8/8/E1aA/E1aA/8/8 b", "8/8/8/8/D1bA/D1bA/8/8 b",
         "8/8/8/8/C1cA/C1cA/8/8 b", "8/8/8/8/B1dA/B1dA/8/8 b",
         "8/8/8/8/A1eA/A1eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
-    let x = x - 1;
+    let x = 5;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4119,12 +4285,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse44() {
     let revchktbl = [
         "8/8/8/E1aA/E1aA/8/8/8 b", "8/8/8/D1bA/D1bA/8/8/8 b",
         "8/8/8/C1cA/C1cA/8/8/8 b", "8/8/8/B1dA/B1dA/8/8/8 b",
         "8/8/8/A1eA/A1eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 4;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4169,12 +4339,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse45() {
     let revchktbl = [
         "8/8/E1aA/E1aA/8/8/8/8 b", "8/8/D1bA/D1bA/8/8/8/8 b",
         "8/8/C1cA/C1cA/8/8/8/8 b", "8/8/B1dA/B1dA/8/8/8/8 b",
         "8/8/A1eA/A1eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 3;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4219,12 +4393,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse46() {
     let revchktbl = [
         "8/E1aA/E1aA/8/8/8/8/8 b", "8/D1bA/D1bA/8/8/8/8/8 b",
         "8/C1cA/C1cA/8/8/8/8/8 b", "8/B1dA/B1dA/8/8/8/8/8 b",
         "8/A1eA/A1eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 2;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4269,12 +4447,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse47() {
     let revchktbl = [
         "E1aA/E1aA/8/8/8/8/8/8 b", "D1bA/D1bA/8/8/8/8/8/8 b",
         "C1cA/C1cA/8/8/8/8/8/8 b", "B1dA/B1dA/8/8/8/8/8/8 b",
         "A1eA/A1eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 1;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4319,12 +4501,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse48() {
     let revchktbl = [
         "E1aA/8/8/8/8/8/8/E1aA b", "D1bA/8/8/8/8/8/8/D1bA b",
         "C1cA/8/8/8/8/8/8/C1cA b", "B1dA/8/8/8/8/8/8/B1dA b",
         "A1eA/8/8/8/8/8/8/A1eA b", "1fA/8/8/8/8/8/8/1fA b",
     ];
-    let x = x - 1;
+    let x = 0;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4369,6 +4555,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse49() {
     let revchktbl = [
         "E1aA/8/8/8/8/8/8/E1aA b", "D1bA/8/8/8/8/8/8/D1bA b",
         "C1cA/8/8/8/8/8/8/C1cA b", "B1dA/8/8/8/8/8/8/B1dA b",
@@ -4419,12 +4609,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse50() {
     let revchktbl = [
         "8/8/8/8/8/8/E1aA/E1aA b", "8/8/8/8/8/8/D1bA/D1bA b",
         "8/8/8/8/8/8/C1cA/C1cA b", "8/8/8/8/8/8/B1dA/B1dA b",
         "8/8/8/8/8/8/A1eA/A1eA b", "8/8/8/8/8/8/1fA/1fA b",
     ];
-    let x = x - 1;
+    let x = 6;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4469,12 +4663,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse51() {
     let revchktbl = [
         "8/8/8/8/8/E1aA/E1aA/8 b", "8/8/8/8/8/D1bA/D1bA/8 b",
         "8/8/8/8/8/C1cA/C1cA/8 b", "8/8/8/8/8/B1dA/B1dA/8 b",
         "8/8/8/8/8/A1eA/A1eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
-    let x = x - 1;
+    let x = 5;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4519,12 +4717,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse52() {
     let revchktbl = [
         "8/8/8/8/E1aA/E1aA/8/8 b", "8/8/8/8/D1bA/D1bA/8/8 b",
         "8/8/8/8/C1cA/C1cA/8/8 b", "8/8/8/8/B1dA/B1dA/8/8 b",
         "8/8/8/8/A1eA/A1eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
-    let x = x - 1;
+    let x = 4;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4569,12 +4771,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse53() {
     let revchktbl = [
         "8/8/8/E1aA/E1aA/8/8/8 b", "8/8/8/D1bA/D1bA/8/8/8 b",
         "8/8/8/C1cA/C1cA/8/8/8 b", "8/8/8/B1dA/B1dA/8/8/8 b",
         "8/8/8/A1eA/A1eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 3;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4619,12 +4825,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse54() {
     let revchktbl = [
         "8/8/E1aA/E1aA/8/8/8/8 b", "8/8/D1bA/D1bA/8/8/8/8 b",
         "8/8/C1cA/C1cA/8/8/8/8 b", "8/8/B1dA/B1dA/8/8/8/8 b",
         "8/8/A1eA/A1eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 2;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4669,12 +4879,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse55() {
     let revchktbl = [
         "8/E1aA/E1aA/8/8/8/8/8 b", "8/D1bA/D1bA/8/8/8/8/8 b",
         "8/C1cA/C1cA/8/8/8/8/8 b", "8/B1dA/B1dA/8/8/8/8/8 b",
         "8/A1eA/A1eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 1;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4719,12 +4933,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse56() {
     let revchktbl = [
         "E1aA/E1aA/8/8/8/8/8/8 b", "D1bA/D1bA/8/8/8/8/8/8 b",
         "C1cA/C1cA/8/8/8/8/8/8 b", "B1dA/B1dA/8/8/8/8/8/8 b",
         "A1eA/A1eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 0;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4769,7 +4987,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (NUMCELL * 2 - 2 - y) as u32);
         assert_eq!(ban.white.count_ones(), (y + 1) as u32);
     }
-//------------------------------------
+}
+
+#[test]
+fn testbitbrd_reverse57() {
     let revchktbl = [
         "8/8/8/8/8/8/8/e1aA b", "8/8/8/8/8/8/8/d1bA b", "8/8/8/8/8/8/8/c1cA b",
         "8/8/8/8/8/8/8/b1dA b", "8/8/8/8/8/8/8/a1eA b", "8/8/8/8/8/8/8/1fA b",
@@ -4819,11 +5040,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse58() {
     let revchktbl = [
         "8/8/8/8/8/8/e1aA/8 b", "8/8/8/8/8/8/d1bA/8 b", "8/8/8/8/8/8/c1cA/8 b",
         "8/8/8/8/8/8/b1dA/8 b", "8/8/8/8/8/8/a1eA/8 b", "8/8/8/8/8/8/1fA/8 b",
     ];
-    let x = x - 1;
+    let x = 6;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4868,11 +5093,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse59() {
     let revchktbl = [
         "8/8/8/8/8/e1aA/8/8 b", "8/8/8/8/8/d1bA/8/8 b", "8/8/8/8/8/c1cA/8/8 b",
         "8/8/8/8/8/b1dA/8/8 b", "8/8/8/8/8/a1eA/8/8 b", "8/8/8/8/8/1fA/8/8 b",
     ];
-    let x = x - 1;
+    let x = 5;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4917,11 +5146,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse60() {
     let revchktbl = [
         "8/8/8/8/e1aA/8/8/8 b", "8/8/8/8/d1bA/8/8/8 b", "8/8/8/8/c1cA/8/8/8 b",
         "8/8/8/8/b1dA/8/8/8 b", "8/8/8/8/a1eA/8/8/8 b", "8/8/8/8/1fA/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 4;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -4966,11 +5199,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse61() {
     let revchktbl = [
         "8/8/8/e1aA/8/8/8/8 b", "8/8/8/d1bA/8/8/8/8 b", "8/8/8/c1cA/8/8/8/8 b",
         "8/8/8/b1dA/8/8/8/8 b", "8/8/8/a1eA/8/8/8/8 b", "8/8/8/1fA/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 3;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -5015,11 +5252,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse62() {
     let revchktbl = [
         "8/8/e1aA/8/8/8/8/8 b", "8/8/d1bA/8/8/8/8/8 b", "8/8/c1cA/8/8/8/8/8 b",
         "8/8/b1dA/8/8/8/8/8 b", "8/8/a1eA/8/8/8/8/8 b", "8/8/1fA/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 2;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -5064,11 +5305,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse63() {
     let revchktbl = [
         "8/e1aA/8/8/8/8/8/8 b", "8/d1bA/8/8/8/8/8/8 b", "8/c1cA/8/8/8/8/8/8 b",
         "8/b1dA/8/8/8/8/8/8 b", "8/a1eA/8/8/8/8/8/8 b", "8/1fA/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 1;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -5113,11 +5358,15 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse64() {
     let revchktbl = [
         "e1aA/8/8/8/8/8/8/8 b", "d1bA/8/8/8/8/8/8/8 b", "c1cA/8/8/8/8/8/8/8 b",
         "b1dA/8/8/8/8/8/8/8 b", "a1eA/8/8/8/8/8/8/8 b", "1fA/8/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 0;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -5162,6 +5411,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse65() {
     let revchktbl = [
         "7A/6a1/8/4a3/3a4/2a5/1a6/a7 b", "7A/6a1/5a2/8/3a4/2a5/1a6/a7 b",
         "7A/6a1/5a2/4a3/8/2a5/1a6/a7 b", "7A/6a1/5a2/4a3/3a4/8/1a6/a7 b",
@@ -5213,6 +5466,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse66() {
     let revchktbl = [
         "a7/1a6/2a5/3a4/4a3/5A2/6a1/8 b", "a7/1a6/2a5/3a4/4A3/5a2/6a1/8 b",
         "a7/1a6/2a5/3A4/4a3/5a2/6a1/8 b", "a7/1a6/2A5/3a4/4a3/5a2/6a1/8 b",
@@ -5263,6 +5520,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 3) as u32);
         assert_eq!(ban.white.count_ones(), (NUMCELL - 3 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse67() {
     let revchktbl = [
         "8/8/8/8/8/8/e1aA/e1aA b", "8/8/8/8/8/8/d1bA/d1bA b",
         "8/8/8/8/8/8/c1cA/c1cA b", "8/8/8/8/8/8/b1dA/b1dA b",
@@ -5272,8 +5533,10 @@ fn testbitbrd_reverse() {
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
+        ban.put();
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
         let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
+        print!("move:{}, {}", NUMCELL - 2 - y, x + 1);
         ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - yy) as u8, x as u8), SENTE);
@@ -5282,7 +5545,7 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
         let ban = BitBoard::from(revchktbl[y]).unwrap();
         let ban90 = ban.rotate90();
-        print!("({}{})", x + 1, y + 3);
+        print!("+90:({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
         let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
@@ -5293,7 +5556,8 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
         let ban = BitBoard::from(revchktbl[y]).unwrap();
         let ban180 = ban.rotate180();
-        print!("({}{})", y + 3, NUMCELL - x);
+        print!("180:({}{})", y + 3, NUMCELL - x);
+        ban180.put();
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
         let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
@@ -5303,25 +5567,30 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
         let banm90 = ban180.rotate90();
-        print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
+        print!("-90({}{})", NUMCELL - x, NUMCELL - 2 - y);
+        banm90.put();
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
         let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
-        ban.put();
         for yy in 0..(y + 2) {
             assert_eq!(ban.at((NUMCELL - 1 - x) as u8, (NUMCELL - 1 - yy) as u8), SENTE);
         }
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse68() {
     let revchktbl = [
         "8/8/8/8/8/e1aA/e1aA/8 b", "8/8/8/8/8/d1bA/d1bA/8 b",
         "8/8/8/8/8/c1cA/c1cA/8 b", "8/8/8/8/8/b1dA/b1dA/8 b",
         "8/8/8/8/8/a1eA/a1eA/8 b", "8/8/8/8/8/1fA/1fA/8 b",
     ];
-    let x = x - 1;
+    let x = 6;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
-        print!("({}{})", NUMCELL - 2 - y, x + 1);
+        print!(" 0 ({}{})", NUMCELL - 2 - y, x + 1);
+        ban.put();
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
         let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
@@ -5332,7 +5601,7 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
         let ban = BitBoard::from(revchktbl[y]).unwrap();
         let ban90 = ban.rotate90();
-        print!("({}{})", x + 1, y + 3);
+        print!("+90({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
         let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
@@ -5343,7 +5612,8 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
         let ban = BitBoard::from(revchktbl[y]).unwrap();
         let ban180 = ban.rotate180();
-        print!("({}{})", y + 3, NUMCELL - x);
+        print!("180({}{})", y + 3, NUMCELL - x);
+        ban180.put();
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
         let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
@@ -5353,7 +5623,8 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
         let banm90 = ban180.rotate90();
-        print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
+        print!("-90({}{})", NUMCELL - x, NUMCELL - 2 - y);
+        banm90.put();
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
         let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
@@ -5363,15 +5634,20 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse69() {
     let revchktbl = [
         "8/8/8/8/e1aA/e1aA/8/8 b", "8/8/8/8/d1bA/d1bA/8/8 b",
         "8/8/8/8/c1cA/c1cA/8/8 b", "8/8/8/8/b1dA/b1dA/8/8 b",
         "8/8/8/8/a1eA/a1eA/8/8 b", "8/8/8/8/1fA/1fA/8/8 b",
     ];
-    let x = x - 1;
+    let x = 5;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
-        print!("({}{})", NUMCELL - 2 - y, x + 1);
+        print!(" 0 ({}{})", NUMCELL - 2 - y, x + 1);
+        ban.put();
         assert!(ban.checkreverse(BitBoard::index(NUMCELL - 2 - 1 - y, x)));
         let ban = ban.r#move(cell((NUMCELL - 2 - y) as u8, (x + 1) as u8)).unwrap();
         ban.put();
@@ -5382,7 +5658,7 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
         let ban = BitBoard::from(revchktbl[y]).unwrap();
         let ban90 = ban.rotate90();
-        print!("({}{})", x + 1, y + 3);
+        print!("+90({}{})", x + 1, y + 3);
         ban90.put();
         assert!(ban90.checkreverse(BitBoard::index(x, y + 2)));
         let ban = ban90.r#move(cell((x + 1) as u8, (y + 3) as u8)).unwrap();
@@ -5393,7 +5669,8 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
         let ban = BitBoard::from(revchktbl[y]).unwrap();
         let ban180 = ban.rotate180();
-        print!("({}{})", y + 3, NUMCELL - x);
+        print!("180({}{})", y + 3, NUMCELL - x);
+        ban180.put();
         assert!(ban180.checkreverse(BitBoard::index(y + 2, NUMCELL - 1 - x)));
         let ban = ban180.r#move(cell((y + 3) as u8, (NUMCELL - x) as u8)).unwrap();
         ban.put();
@@ -5403,7 +5680,8 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
         let banm90 = ban180.rotate90();
-        print!("({}{})", NUMCELL - x, NUMCELL - 2 - y);
+        print!("-90({}{})", NUMCELL - x, NUMCELL - 2 - y);
+        banm90.put();
         assert!(banm90.checkreverse(BitBoard::index(NUMCELL - 1 - x, NUMCELL - 2 - 1 - y)));
         let ban = banm90.r#move(cell((NUMCELL - x) as u8, (NUMCELL - 2 - y) as u8)).unwrap();
         ban.put();
@@ -5413,12 +5691,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse70() {
     let revchktbl = [
         "8/8/8/e1aA/e1aA/8/8/8 b", "8/8/8/d1bA/d1bA/8/8/8 b",
         "8/8/8/c1cA/c1cA/8/8/8 b", "8/8/8/b1dA/b1dA/8/8/8 b",
         "8/8/8/a1eA/a1eA/8/8/8 b", "8/8/8/1fA/1fA/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 4;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -5463,12 +5745,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse71() {
     let revchktbl = [
         "8/8/e1aA/e1aA/8/8/8/8 b", "8/8/d1bA/d1bA/8/8/8/8 b",
         "8/8/c1cA/c1cA/8/8/8/8 b", "8/8/b1dA/b1dA/8/8/8/8 b",
         "8/8/a1eA/a1eA/8/8/8/8 b", "8/8/1fA/1fA/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 3;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -5513,12 +5799,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse72() {
     let revchktbl = [
         "8/e1aA/e1aA/8/8/8/8/8 b", "8/d1bA/d1bA/8/8/8/8/8 b",
         "8/c1cA/c1cA/8/8/8/8/8 b", "8/b1dA/b1dA/8/8/8/8/8 b",
         "8/a1eA/a1eA/8/8/8/8/8 b", "8/1fA/1fA/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 2;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -5563,12 +5853,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse73() {
     let revchktbl = [
         "e1aA/e1aA/8/8/8/8/8/8 b", "d1bA/d1bA/8/8/8/8/8/8 b",
         "c1cA/c1cA/8/8/8/8/8/8 b", "b1dA/b1dA/8/8/8/8/8/8 b",
         "a1eA/a1eA/8/8/8/8/8/8 b", "1fA/1fA/8/8/8/8/8/8 b",
     ];
-    let x = x - 1;
+    let x = 1;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -5613,12 +5907,16 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse74() {
     let revchktbl = [
         "e1aA/8/8/8/8/8/8/e1aA b", "d1bA/8/8/8/8/8/8/d1bA b",
         "c1cA/8/8/8/8/8/8/c1cA b", "b1dA/8/8/8/8/8/8/b1dA b",
         "a1eA/8/8/8/8/8/8/a1eA b", "1fA/8/8/8/8/8/8/1fA b",
     ];
-    let x = x - 1;
+    let x = 0;
     for (y, revchk) in revchktbl.iter().enumerate().take(NUMCELL - 2) {
         let ban = BitBoard::from(revchk).unwrap();
         print!("({}{})", NUMCELL - 2 - y, x + 1);
@@ -5663,6 +5961,10 @@ fn testbitbrd_reverse() {
         assert_eq!(ban.black.count_ones(), (y + 4) as u32);
         assert_eq!(ban.white.count_ones(), (2 * NUMCELL - 5 - y) as u32);
     }
+}
+
+#[test]
+fn testbitbrd_reverse75() {
     let revchktbl = [
         "e1aA/8/8/8/8/8/8/e1aA b", "d1bA/8/8/8/8/8/8/d1bA b",
         "c1cA/8/8/8/8/8/8/c1cA b", "b1dA/8/8/8/8/8/8/b1dA b",
