@@ -18,8 +18,8 @@ const RT_CELL : u64 = 0x0000000000000080;
 const LB_CELL : u64 = 0x0100000000000000;
 const RB_CELL : u64 = 0x8000000000000000;
 const CORNER_CELL : u64 = 0x8100000000000081;
-const GUARD_RIGHT : u64 = 0x0101010101010101;
-const GUARD_LEFT : u64 = 0x8080808080808080;
+const GUARD_RIGHT : u64 = 0xfefefefefefefefe;
+const GUARD_LEFT : u64 = 0x7f7f7f7f7f7f7f7f;
 const BITPTN : [u64 ; 9] = [
     0, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff,
 ];
@@ -553,9 +553,9 @@ impl BitBoard {
         let mut revall = 0;
 
         // 右
-        let usetzcnt = false;
-        // let usetzcnt = true;
-        if usetzcnt {
+        const USETZCNT : bool = false;
+        // const USETZCNT : bool = true;
+        if USETZCNT {
             let shift = BitBoard::index(x, y) + 1;
             let mask = (1u64 << (NUMCELL - 1 - x)) - 1;
             let obits = (oppo >> shift) ^ mask;
@@ -570,23 +570,24 @@ impl BitBoard {
                 revall |= rev << shift;
             }
         } else {
-            let mut bit : u64 = pos;
-            let mut rev : u64 = 0;
-            for _i in x..(NUMCELL - 1) {
-                bit_right!(bit);
-                if (oppo & bit) == 0 {break;}
-
+            let mut bit = pos << 1;
+            let mut rev = 0;
+            let mut b = bit & oppo & GUARD_RIGHT;
+            while b != 0 {
                 rev |= bit;
+
+                bit_right!(bit);
+                b = bit & oppo & GUARD_RIGHT;
             }
-            if (mine & bit) != 0 {
+            if (mine & bit & GUARD_RIGHT) != 0 {
                 revall |= rev;
             }
         }
 
         // 左
-        let uselzcnt = false;
-        // let uselzcnt = true;
-        if uselzcnt {
+        const USELZCNT : bool = false;
+        // const USELZCNT : bool = true;
+        if USELZCNT {
             let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
             let mask = 0xff00000000000000u64 << (NUMCELL - x);
             let obits = (oppo << shift) ^ mask;  // 石のあるところがゼロになる
@@ -602,56 +603,59 @@ impl BitBoard {
                 revall |= rev;
             }
         } else {
-            let mut bit : u64 = pos;
-            let mut rev : u64 = 0;
-            for _i in 0..x {
-                bit_left!(bit);
-                if (oppo & bit) == 0 {break;}
-
+            let mut bit = pos >> 1;
+            let mut rev = 0;
+            let mut b = bit & oppo & GUARD_LEFT;
+            while b != 0 {
                 rev |= bit;
+
+                bit_left!(bit);
+                b = bit & oppo & GUARD_LEFT;
             }
-            if (mine & bit) != 0 {
+            if (mine & bit & GUARD_LEFT) != 0 {
                 revall |= rev;
             }
         }
 
         // 下
-        let mut bit : u64 = pos;
-        let mut rev : u64 = 0;
-        for _i in y..(NUMCELL - 1) {
-            bit_down!(bit);
-            if (oppo & bit) == 0 {break;}
-
+        let mut bit = pos << NUMCELL;
+        let mut rev = 0;
+        let mut b = bit & oppo;
+        while b != 0 {
             rev |= bit;
+
+            bit_down!(bit);
+            b = bit & oppo;
         }
         if (mine & bit) != 0 {
             revall |= rev;
         }
 
         // 上
-        let mut bit : u64 = pos;
-        let mut rev : u64 = 0;
-        for _i in 0..y {
-            bit_up!(bit);
-            if (oppo & bit) == 0 {break;}
-
+        let mut bit = pos >> NUMCELL;
+        let mut rev = 0;
+        let mut b = bit & oppo;
+        while b != 0 {
             rev |= bit;
+
+            bit_up!(bit);
+            b = bit & oppo;
         }
         if (mine & bit) != 0 {
             revall |= rev;
         }
 
         // 右下
-        let mut bit : u64 = pos;
-        let mut rev : u64 = 0;
-        let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
-        for _i in 0..sz {
-            bit_rightdown!(bit);
-            if (oppo & bit) == 0 {break;}
-
+        let mut bit = pos << (NUMCELL + 1);
+        let mut rev = 0;
+        let mut b = bit & oppo;
+        while b != 0 {
             rev |= bit;
+
+            bit_rightdown!(bit);
+            b = bit & oppo & GUARD_RIGHT;
         }
-        if (mine & bit) != 0 {
+        if (mine & bit & GUARD_RIGHT) != 0 {
             revall |= rev;
         }
 
@@ -667,7 +671,7 @@ impl BitBoard {
 
             rev |= bit;
         }
-        if (mine & bit) != 0 {
+        if (mine & bit & GUARD_RIGHT) != 0 {
             revall |= rev;
         }
 
@@ -681,7 +685,7 @@ impl BitBoard {
 
             rev |= bit;
         }
-        if (mine & bit) != 0 {
+        if (mine & bit & GUARD_LEFT) != 0 {
             revall |= rev;
         }
 
@@ -697,7 +701,7 @@ impl BitBoard {
 
             rev |= bit;
         }
-        if (mine & bit) != 0 {
+        if (mine & bit & GUARD_LEFT) != 0 {
             revall |= rev;
         }
 
@@ -763,9 +767,9 @@ impl BitBoard {
             if TBLCHKREV[idx] != 0 {return true;}
         } else {
             // 右
-            let mut bit : u64 = pos << 1;
-            let mut rev : u64 = 0;
-            let mut b = bit & oppo;
+            let mut bit = pos << 1;
+            let mut rev = 0;
+            let mut b = bit & oppo & GUARD_RIGHT;
             while b != 0 {
                 rev |= bit;
 
@@ -777,9 +781,9 @@ impl BitBoard {
             }
 
             // 左
-            let mut bit : u64 = pos >> 1;
-            let mut rev : u64 = 0;
-            let mut b = bit & oppo;
+            let mut bit = pos >> 1;
+            let mut rev = 0;
+            let mut b = bit & oppo & GUARD_LEFT;
             while b != 0 {
                 rev |= bit;
 
@@ -792,8 +796,8 @@ impl BitBoard {
         }
 
         // 下
-        let mut bit : u64 = pos >> NUMCELL;
-        let mut rev : u64 = 0;
+        let mut bit = pos << NUMCELL;
+        let mut rev = 0;
         let mut b = bit & oppo;
         while b != 0 {
             rev |= bit;
@@ -806,8 +810,8 @@ impl BitBoard {
         }
 
         // 上
-        let mut bit : u64 = pos << NUMCELL;
-        let mut rev : u64 = 0;
+        let mut bit = pos >> NUMCELL;
+        let mut rev = 0;
         let mut b = bit & oppo;
         while b != 0 {
             rev |= bit;
@@ -820,58 +824,58 @@ impl BitBoard {
         }
 
         // 右下
-        let mut bit : u64 = pos << (NUMCELL + 1);
-        let mut rev : u64 = 0;
-        let mut b = bit & oppo;
+        let mut bit = pos << (NUMCELL + 1);
+        let mut rev = 0;
+        let mut b = bit & oppo & GUARD_RIGHT;
         while b != 0 {
             rev |= bit;
 
             bit_rightdown!(bit);
-            b = bit & oppo;
+            b = bit & oppo & GUARD_RIGHT;
         }
-        if (mine & bit) != 0 && rev != 0 {
+        if (mine & bit & GUARD_RIGHT) != 0 && rev != 0 {
             return true;
         }
 
         // 右上
-        let mut bit : u64 = pos >> (NUMCELL - 1);
-        let mut rev : u64 = 0;
-        let mut b = bit & oppo;
+        let mut bit = pos >> (NUMCELL - 1);
+        let mut rev = 0;
+        let mut b = bit & oppo & GUARD_RIGHT;
         while b != 0 {
             rev |= bit;
 
             bit_rightup!(bit);
-            b = bit & oppo;
+            b = bit & oppo & GUARD_RIGHT;
         }
-        if (mine & bit) != 0 && rev != 0 {
+        if (mine & bit & GUARD_RIGHT) != 0 && rev != 0 {
             return true;
         }
 
         // 左上
-        let mut bit : u64 = pos >> (NUMCELL + 1);
-        let mut rev : u64 = 0;
-        let mut b = bit & oppo;
+        let mut bit = pos >> (NUMCELL + 1);
+        let mut rev = 0;
+        let mut b = bit & oppo & GUARD_LEFT;
         while b != 0 {
             rev |= bit;
 
             bit_leftup!(bit);
-            b = bit & oppo;
+            b = bit & oppo & GUARD_LEFT;
         }
-        if (mine & bit) != 0 && rev != 0 {
+        if (mine & bit & GUARD_LEFT) != 0 && rev != 0 {
             return true;
         }
 
         // 左下
-        let mut bit : u64 = pos << (NUMCELL - 1);
-        let mut rev : u64 = 0;
-        let mut b = bit & oppo;
+        let mut bit = pos << (NUMCELL - 1);
+        let mut rev  = 0;
+        let mut b = bit & oppo & GUARD_LEFT;
         while b != 0 {
             rev |= bit;
 
             bit_leftdown!(bit);
-            b = bit & oppo;
+            b = bit & oppo & GUARD_LEFT;
         }
-        if (mine & bit) != 0 && rev != 0 {
+        if (mine & bit & GUARD_LEFT) != 0 && rev != 0 {
             return true;
         }
 
