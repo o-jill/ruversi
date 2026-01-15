@@ -18,6 +18,8 @@ const RT_CELL : u64 = 0x0000000000000080;
 const LB_CELL : u64 = 0x0100000000000000;
 const RB_CELL : u64 = 0x8000000000000000;
 const CORNER_CELL : u64 = 0x8100000000000081;
+const GUARD_RIGHT : u64 = 0x0101010101010101;
+const GUARD_LEFT : u64 = 0x8080808080808080;
 const BITPTN : [u64 ; 9] = [
     0, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff,
 ];
@@ -187,6 +189,24 @@ pub fn index2y(xy : u8) -> u8 {
 /// (0~7, 0~7)
 pub fn index2xy(xy : u8) -> (u8, u8) {
     (index2x(xy), index2y(xy))
+}
+
+/// # Arguments  
+/// - cells  
+///   bit:1 represents that the cell is available.
+///
+/// # Returns  
+///   vector of cell index.
+pub fn cells2vec(cells : u64) -> Vec<u8> {
+    let mut remain = cells;
+    let sz = cells.count_ones() as usize;
+    let mut ret = Vec::with_capacity(sz);
+    while remain != 0 {
+        let idx = remain.trailing_zeros() as u8;
+        ret.push(idx);
+        remain ^= 1 << idx;
+    }
+    ret
 }
 
 /// # Returns  
@@ -519,9 +539,11 @@ impl BitBoard {
             panic!("{xy} is out of range.");
         }
 
-        let color = self.teban;
-        let mine = if color == SENTE {self.black} else {self.white};
-        let oppo = if color == SENTE {self.white} else {self.black};
+        let (mine, oppo) = if self.teban == SENTE {
+            (self.black, self.white)
+        } else {
+            (self.white, self.black)
+        };
 
         let pos = LSB_CELL << xy;
         let (x, y) = index2xy(xy);
@@ -679,7 +701,7 @@ impl BitBoard {
             revall |= rev;
         }
 
-        if color == SENTE {
+        if self.teban == SENTE {
             self.black = mine | revall | pos;
             self.white = oppo ^ revall;
         } else {
@@ -689,9 +711,11 @@ impl BitBoard {
     }
 
     pub fn checkreverse(&self, xy : usize) -> bool {
-        let color = self.teban;
-        let mine = if color == SENTE {self.black} else {self.white};
-        let oppo = if color == SENTE {self.white} else {self.black};
+        let (mine, oppo) = if self.teban == SENTE {
+            (self.black, self.white)
+        } else {
+            (self.white, self.black)
+        };
         let pos = LSB_CELL << xy;
 
         // check surrounding stones.
@@ -701,11 +725,11 @@ impl BitBoard {
         let x = x as usize;
         let y = y as usize;
 
-        let usetzcnt = false;
-        // let usetzcnt = true;
-        let usetablelr = false;
-        // let usetablelr = true;
-        if usetzcnt {
+        const USETZCNT : bool = false;
+        // const USETZCNT : bool = true;
+        const USETABLELR : bool = false;
+        // const USETABLELR : bool = true;
+        if USETZCNT {
             let shift = xy + 1;
             let mask = (1u64 << (NUMCELL - 1 - x)) - 1;
             let obits = (oppo >> shift) ^ mask;
@@ -723,7 +747,7 @@ impl BitBoard {
             let m = mbits << o;  // その先の自分の石
             // 相手の石が並んでいて、そのすぐ先に自分の石がある
             if o > 0 && (m & (0x1 << 63)) != 0 {return true;}
-        } else if usetablelr {
+        } else if USETABLELR {
             // 右
             let y8 = y * NUMCELL;
             let mn = ((mine >> y8) & 0xff) as u8;
@@ -739,101 +763,117 @@ impl BitBoard {
             if TBLCHKREV[idx] != 0 {return true;}
         } else {
             // 右
-            let mut bit = pos;
-            let mut rev = false;
-            for _i in x..(NUMCELL - 1) {
-                bit_right!(bit);
-                if (oppo & bit) == 0 {break;}
+            let mut bit : u64 = pos << 1;
+            let mut rev : u64 = 0;
+            let mut b = bit & oppo;
+            while b != 0 {
+                rev |= bit;
 
-                rev = true;
+                bit_right!(bit);
+                b = bit & oppo & GUARD_RIGHT;
             }
-            if rev && (mine & bit) != 0 {return true;}
+            if (mine & bit & GUARD_RIGHT) != 0 && rev != 0 {
+                return true;
+            }
 
             // 左
-            let mut bit = pos;
-            let mut rev = false;
-            for _i in 0..x {
-                bit_left!(bit);
-                if (oppo & bit) == 0 {break;}
+            let mut bit : u64 = pos >> 1;
+            let mut rev : u64 = 0;
+            let mut b = bit & oppo;
+            while b != 0 {
+                rev |= bit;
 
-                rev = true;
+                bit_left!(bit);
+                b = bit & oppo & GUARD_LEFT;
             }
-            if rev && (mine & bit) != 0 {return true;}
+            if (mine & bit & GUARD_LEFT) != 0 && rev != 0 {
+                return true;
+            }
         }
 
         // 下
-        let mut bit = pos;
-        let mut rev = false;
-        for _i in y..(NUMCELL - 1) {
-            bit_down!(bit);
-            if (oppo & bit) == 0 {break;}
+        let mut bit : u64 = pos >> NUMCELL;
+        let mut rev : u64 = 0;
+        let mut b = bit & oppo;
+        while b != 0 {
+            rev |= bit;
 
-            rev = true;
+            bit_down!(bit);
+            b = bit & oppo;
         }
-        if rev && (mine & bit) != 0 {return true;}
+        if (mine & bit) != 0 && rev != 0 {
+            return true;
+        }
 
         // 上
-        let mut bit = pos;
-        let mut rev = false;
-        for _i in 0..y {
-            bit_up!(bit);
-            if (oppo & bit) == 0 {break;}
+        let mut bit : u64 = pos << NUMCELL;
+        let mut rev : u64 = 0;
+        let mut b = bit & oppo;
+        while b != 0 {
+            rev |= bit;
 
-            rev = true;
+            bit_up!(bit);
+            b = bit & oppo;
         }
-        if rev && (mine & bit) != 0 {return true;}
+        if (mine & bit) != 0 && rev != 0 {
+            return true;
+        }
 
         // 右下
-        let mut bit = pos;
-        let mut rev = false;
-        let sz = if x > y {NUMCELL - 1 - x} else {NUMCELL - 1 - y};
-        for _i in 0..sz {
-            bit_rightdown!(bit);
-            if (oppo & bit) == 0 {break;}
+        let mut bit : u64 = pos << (NUMCELL + 1);
+        let mut rev : u64 = 0;
+        let mut b = bit & oppo;
+        while b != 0 {
+            rev |= bit;
 
-            rev = true;
+            bit_rightdown!(bit);
+            b = bit & oppo;
         }
-        if rev && (mine & bit) != 0 {return true;}
+        if (mine & bit) != 0 && rev != 0 {
+            return true;
+        }
 
         // 右上
-        let mut bit = pos;
-        let mut rev = false;
-        let xx = NUMCELL - 1 - x;
-        let yy = y;
-        let sz = if xx < yy {xx} else {yy};
-        for _i in 0..sz {
-            bit_rightup!(bit);
-            if (oppo & bit) == 0 {break;}
+        let mut bit : u64 = pos >> (NUMCELL - 1);
+        let mut rev : u64 = 0;
+        let mut b = bit & oppo;
+        while b != 0 {
+            rev |= bit;
 
-            rev = true;
+            bit_rightup!(bit);
+            b = bit & oppo;
         }
-        if rev && (mine & bit) != 0 {return true;}
+        if (mine & bit) != 0 && rev != 0 {
+            return true;
+        }
 
         // 左上
-        let mut bit = pos;
-        let mut rev = false;
-        let sz = if x < y {x} else {y};
-        for _i in 0..sz {
-            bit_leftup!(bit);
-            if (oppo & bit) == 0 {break;}
+        let mut bit : u64 = pos >> (NUMCELL + 1);
+        let mut rev : u64 = 0;
+        let mut b = bit & oppo;
+        while b != 0 {
+            rev |= bit;
 
-            rev = true;
+            bit_leftup!(bit);
+            b = bit & oppo;
         }
-        if rev && (mine & bit) != 0 {return true;}
+        if (mine & bit) != 0 && rev != 0 {
+            return true;
+        }
 
         // 左下
-        let mut bit = pos;
-        let mut rev = false;
-        let xx = x;
-        let yy = NUMCELL - 1 - y;
-        let sz = if xx < yy {xx} else {yy};
-        for _i in 0..sz {
-            bit_leftdown!(bit);
-            if (oppo & bit) == 0 {break;}
+        let mut bit : u64 = pos << (NUMCELL - 1);
+        let mut rev : u64 = 0;
+        let mut b = bit & oppo;
+        while b != 0 {
+            rev |= bit;
 
-            rev = true;
+            bit_leftdown!(bit);
+            b = bit & oppo;
         }
-        if rev && (mine & bit) != 0 {return true;}
+        if (mine & bit) != 0 && rev != 0 {
+            return true;
+        }
 
         false
     }
@@ -863,7 +903,7 @@ impl BitBoard {
 
     /// # Returns
     /// - None : no empty cells.
-    /// - Some(vec![])  : no available cells. pass.
+    /// - Some(vec![PASS])  : no available cells. pass.
     /// - Some(Vec![n]) : available cells.
     pub fn genmove(&self) -> Option<Vec<u8>> {
         let stones = self.black | self.white;
@@ -892,15 +932,7 @@ impl BitBoard {
             return Some(vec![PASS]);
         }
 
-        let mut remain = bits;
-        let mut ret = Vec::with_capacity(sz);
-        while remain != 0 {
-            let idx = remain.trailing_zeros() as u8;
-            ret.push(idx);
-            remain ^= 1 << idx;
-            // remain &= !(1 << idx);
-        }
-        Some(ret)
+        Some(cells2vec(bits))
     }
 
     pub fn count(&self) -> i8 {
@@ -912,7 +944,7 @@ impl BitBoard {
     }
 
     pub fn is_full(&self) -> bool {
-        (self.black | self.white) == 0xffffffffffffffff
+        (self.black | self.white) == u64::MAX
     }
 
     #[allow(dead_code)]
@@ -969,6 +1001,7 @@ impl BitBoard {
         b
     }
 
+    #[allow(dead_code)]
     fn fixstones_right(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
         let mut fcells = 0u64;
         let mut bit = startbit;
@@ -982,6 +1015,7 @@ impl BitBoard {
         fcells
     }
 
+    #[allow(dead_code)]
     fn fixstones_left(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
         let mut fcells = 0u64;
         let mut bit = startbit;
@@ -995,6 +1029,7 @@ impl BitBoard {
         fcells
     }
 
+    #[allow(dead_code)]
     fn fixstones_up(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
         let mut fcells = 0u64;
         let mut bit = startbit;
@@ -1008,6 +1043,7 @@ impl BitBoard {
         fcells
     }
 
+    #[allow(dead_code)]
     fn fixstones_down(startbit : u64, tgt : u64, count : &mut i32) -> u64 {
         let mut fcells = 0u64;
         let mut bit = startbit;
@@ -1021,6 +1057,7 @@ impl BitBoard {
         fcells
     }
 
+    #[allow(dead_code)]
     pub fn fixedstones(&self) -> (i8, i8) {
         // return (0, 0);  // この関数が遅いのかを見極める用
         let mut count = 0;
