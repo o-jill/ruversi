@@ -107,7 +107,8 @@ const TBLCHKREV : [i8 ; 16130] = [
 0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 ];
 
-const TBL_SURROUND : [u64 ; 64] = [
+// ビットが立っているところに相手の石があったら着手可能かもしれない
+const TBL_SURROUND : [u64 ; CELL_2D] = [
     // y0
     0x0302u64, 0x0604u64, 0x0705u64 << 1, 0x0705u64 << 2, 0x0705u64 << 3, 0x0705u64 << 4, 0x6020u64, 0xC040u64,
     // y1
@@ -382,7 +383,7 @@ impl BitBoard {
             pass : 0,
         };
         for (i, ch)  in obf.chars().enumerate() {
-            if i < 64 {
+            if i < CELL_2D {
                 let bit = LSB_CELL << i;
                 match ch {
                 'X' => {ret.black |= bit;},
@@ -648,7 +649,7 @@ impl BitBoard {
         // 右下
         let mut bit = pos << (NUMCELL + 1);
         let mut rev = 0;
-        let mut b = bit & oppo;
+        let mut b = bit & oppo & GUARD_RIGHT;
         while b != 0 {
             rev |= bit;
 
@@ -660,46 +661,42 @@ impl BitBoard {
         }
 
         // 右上
-        let mut bit : u64 = pos;
-        let mut rev : u64 = 0;
-        let xx = NUMCELL - 1 - x;
-        let yy = y;
-        let sz = if xx < yy {xx} else {yy};
-        for _i in 0..sz {
-            bit_rightup!(bit);
-            if (oppo & bit) == 0 {break;}
-
+        let mut bit = pos >> (NUMCELL - 1);
+        let mut rev = 0;
+        let mut b = bit & oppo & GUARD_RIGHT;
+        while b != 0 {
             rev |= bit;
+
+            bit_rightup!(bit);
+            b = bit & oppo & GUARD_RIGHT;
         }
         if (mine & bit & GUARD_RIGHT) != 0 {
             revall |= rev;
         }
 
         // 左上
-        let mut bit : u64 = pos;
-        let mut rev : u64 = 0;
-        let sz = if x < y {x} else {y};
-        for _i in 0..sz {
-            bit_leftup!(bit);
-            if (oppo & bit) == 0 {break;}
-
+        let mut bit = pos >> (NUMCELL + 1);
+        let mut rev = 0;
+        let mut b = bit & oppo & GUARD_LEFT;
+        while b != 0 {
             rev |= bit;
+
+            bit_leftup!(bit);
+            b = bit & oppo & GUARD_LEFT;
         }
         if (mine & bit & GUARD_LEFT) != 0 {
             revall |= rev;
         }
 
         // 左下
-        let mut bit : u64 = pos;
-        let mut rev : u64 = 0;
-        let xx = x;
-        let yy = NUMCELL - 1 - y;
-        let sz = if xx < yy {xx} else {yy};
-        for _i in 0..sz {
-            bit_leftdown!(bit);
-            if (oppo & bit) == 0 {break;}
-
+        let mut bit = pos << (NUMCELL - 1);
+        let mut rev = 0;
+        let mut b = bit & oppo & GUARD_LEFT;
+        while b != 0 {
             rev |= bit;
+
+            bit_leftdown!(bit);
+            b = bit & oppo & GUARD_LEFT;
         }
         if (mine & bit & GUARD_LEFT) != 0 {
             revall |= rev;
