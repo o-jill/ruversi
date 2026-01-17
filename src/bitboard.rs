@@ -1,5 +1,11 @@
 use super::*;
 
+#[cfg(target_arch = "x86_64")]
+use core::arch::x86_64;
+
+#[cfg(target_arch = "aarch64")]
+use core::arch::aarch64::*;
+
 pub const SENTE : i8 = 1;
 pub const BLANK : i8 = 0;
 pub const GOTE : i8 = -1;
@@ -589,7 +595,7 @@ impl BitBoard {
                 bit_right!(bit);
                 b = bit & oppo & GUARD_RIGHT;
             }
-            if (mine & bit & GUARD_RIGHT) != 0 {revall |= rev;}
+            revall |= rev * ((mine & bit & GUARD_RIGHT) != 0) as u64;
         }
 
         // 左
@@ -641,7 +647,7 @@ impl BitBoard {
             bit_down!(bit);
             b = bit & oppo;
         }
-        if (mine & bit) != 0 {revall |= rev;}
+        revall |= rev * ((mine & bit) != 0) as u64;
 
         // 上
         let mut bit = pos >> NUMCELL;
@@ -653,7 +659,7 @@ impl BitBoard {
             bit_up!(bit);
             b = bit & oppo;
         }
-        if (mine & bit) != 0 {revall |= rev;}
+        revall |= rev * ((mine & bit) != 0) as u64;
 
         // 右下
         let mut bit = pos << (NUMCELL + 1);
@@ -665,7 +671,7 @@ impl BitBoard {
             bit_rightdown!(bit);
             b = bit & oppo & GUARD_RIGHT;
         }
-        if (mine & bit & GUARD_RIGHT) != 0 {revall |= rev;}
+        revall |= rev * ((mine & bit & GUARD_RIGHT) != 0) as u64;
 
         // 右上
         let mut bit = pos >> (NUMCELL - 1);
@@ -677,7 +683,7 @@ impl BitBoard {
             bit_rightup!(bit);
             b = bit & oppo & GUARD_RIGHT;
         }
-        if (mine & bit & GUARD_RIGHT) != 0 {revall |= rev;}
+        revall |= rev * ((mine & bit & GUARD_RIGHT) != 0) as u64;
 
         // 左上
         let mut bit = pos >> (NUMCELL + 1);
@@ -689,7 +695,7 @@ impl BitBoard {
             bit_leftup!(bit);
             b = bit & oppo & GUARD_LEFT;
         }
-        if (mine & bit & GUARD_LEFT) != 0 {revall |= rev;}
+        revall |= rev * ((mine & bit & GUARD_LEFT) != 0) as u64;
 
         // 左下
         let mut bit = pos << (NUMCELL - 1);
@@ -701,7 +707,7 @@ impl BitBoard {
             bit_leftdown!(bit);
             b = bit & oppo & GUARD_LEFT;
         }
-        if (mine & bit & GUARD_LEFT) != 0 {revall |= rev;}
+        revall |= rev * ((mine & bit & GUARD_LEFT) != 0) as u64;
 
         if self.teban == SENTE {
             self.black = mine | revall | pos;
@@ -733,6 +739,8 @@ impl BitBoard {
         // const USETABLELR : bool = true;
         // const USE_BIT_CARRY : bool = false;
         const USE_BIT_CARRY : bool = true;
+        // const SIMULHORZ : bool = false;
+        const SIMULHORZ : bool = true;
         if USETZCNT {
             let shift = xy + 1;
             let mask = (1u64 << (NUMCELL - 1 - x)) - 1;
@@ -777,6 +785,63 @@ impl BitBoard {
             let op = op + neighbor;
             let rev = op & mine.reverse_bits() & !neighbor;
             if rev != 0 {return true;}
+        } else if SIMULHORZ {
+            // 右
+            // 左
+            #[cfg(target_arch="x86_64")]
+            unsafe {
+                let opmn = x86_64::_mm_set_epi64x(oppo as i64, mine as i64);
+                let pos = x86_64::_mm_set_epi64x(pos as i64, pos as i64);
+                let fmask = x86_64::_mm_set1_epi16(0x0f0f);
+                let opmn85 = x86_64::_mm_srli_epi16(opmn, 4);
+                let pos85 = x86_64::_mm_srli_epi16(pos, 4);
+                let opmn41 = x86_64::_mm_and_si128(opmn, fmask);
+                let opmn85 = x86_64::_mm_and_si128(opmn85, fmask);
+                let pos41 = x86_64::_mm_and_si128(pos, fmask);
+                let pos85 = x86_64::_mm_and_si128(pos85, fmask);
+                let rbit4 = x86_64::_mm_set_epi8(
+                    0xf, 0x7, 0xb, 0x3, 0xd, 0x5, 0x9, 0x1,
+                     0xe, 0x6, 0xa, 0x2, 0xc, 0x4, 0x8, 0);
+                let ropmn41 = x86_64::_mm_shuffle_epi8(rbit4, opmn41);
+                let ropmn85 = x86_64::_mm_shuffle_epi8(rbit4, opmn85);
+                let rpos41 = x86_64::_mm_shuffle_epi8(rbit4, pos41);
+                let rpos85 = x86_64::_mm_shuffle_epi8(rbit4, pos85);
+                let ropmn41 = x86_64::_mm_slli_epi16(ropmn41, 4);
+                let rpos41 = x86_64::_mm_slli_epi16(rpos41, 4);
+                let ropmn = x86_64::_mm_or_si128(ropmn41, ropmn85);
+                let rpos = x86_64::_mm_or_si128(rpos41, rpos85);
+                let oppo = x86_64::_mm_unpackhi_epi64(opmn, ropmn);
+                let mine = x86_64::_mm_unpacklo_epi64(opmn, ropmn);
+                let pos = x86_64::_mm_unpackhi_epi64(pos, rpos);
+
+                let mask = x86_64::_mm_set1_epi32(0x7e7e7e7e);
+                let op = x86_64::_mm_and_si128(oppo, mask);
+                let neighbor = x86_64::_mm_slli_epi64(pos, 1);
+                let carry = x86_64::_mm_add_epi64(op, neighbor);
+                let rev = x86_64::_mm_and_si128(carry, mine);
+                let rev = x86_64::_mm_andnot_si128(neighbor, rev);
+                let rev = x86_64::_mm_testz_si128(rev, rev);
+                if rev == 0 {return true;}
+            }
+
+            #[cfg(target_arch = "aarch64")]
+            unsafe {
+                let opmn = vcombine_u64(
+                                vcreate_u64(oppo), vcreate_u64(mine));
+                let ropmn = vrbitq_u8(vreinterpretq_u8_u64(opmn));
+                let pos = vcreate_u64(pos);
+                let rpos = vrbit_u8(vreinterpret_u8_u64(pos));
+                let oppo = vzip1q_u64(opmn, vreinterpretq_u64_u8(ropmn));
+                let mine = vzip2q_u64(opmn, vreinterpretq_u64_u8(ropmn));
+                let pos = vcombine_u64(pos, vreinterpret_u64_u8(rpos));
+                let neighbor = vshlq_n_u64(pos, 1);
+                let mask = vdupq_n_u32(0x7e7e7e7e);
+                let moppo = vandq_u64(oppo, vreinterpretq_u64_u32(mask));
+                let carry = vaddq_u64(moppo, neighbor);
+                let rev = vandq_u64(carry, mine);
+                let rev = vbicq_u64(rev, neighbor);
+                if vmaxvq_u32(vreinterpretq_u32_u64(rev)) != 0 {return true;}
+            }
         } else {
             // 右
             let mut bit = pos << 1;
