@@ -20,6 +20,7 @@ const RB_CELL : u64 = 0x8000000000000000;
 const CORNER_CELL : u64 = 0x8100000000000081;
 const GUARD_RIGHT : u64 = 0xfefefefefefefefe;
 const GUARD_LEFT : u64 = 0x7f7f7f7f7f7f7f7f;
+const GUARD_VERTICAL : u64 = 0x7e7e7e7e7e7e7e7e;
 const BITPTN : [u64 ; 9] = [
     0, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff,
 ];
@@ -556,6 +557,8 @@ impl BitBoard {
         // 右
         const USETZCNT : bool = false;
         // const USETZCNT : bool = true;
+        // const USE_BIT_CARRY_RIGHT : bool = false;
+        const USE_BIT_CARRY_RIGHT : bool = true;
         if USETZCNT {
             let shift = BitBoard::index(x, y) + 1;
             let mask = (1u64 << (NUMCELL - 1 - x)) - 1;
@@ -570,6 +573,12 @@ impl BitBoard {
                 let rev = (1u64 << o) - 1;
                 revall |= rev << shift;
             }
+        } else if USE_BIT_CARRY_RIGHT {
+            let op = oppo & GUARD_VERTICAL;
+            let neighbor = pos << 1;
+            let op = op + neighbor;
+            let rev = op & mine & !neighbor;
+            if rev != 0 {revall |= rev - neighbor;}
         } else {
             let mut bit = pos << 1;
             let mut rev = 0;
@@ -580,14 +589,14 @@ impl BitBoard {
                 bit_right!(bit);
                 b = bit & oppo & GUARD_RIGHT;
             }
-            if (mine & bit & GUARD_RIGHT) != 0 {
-                revall |= rev;
-            }
+            if (mine & bit & GUARD_RIGHT) != 0 {revall |= rev;}
         }
 
         // 左
         const USELZCNT : bool = false;
         // const USELZCNT : bool = true;
+        // const USE_BIT_CARRY_LEFT : bool = false;
+        const USE_BIT_CARRY_LEFT : bool = true;
         if USELZCNT {
             let shift = BitBoard::index(NUMCELL - 1 - x, NUMCELL - 1 - y) + 1;
             let mask = 0xff00000000000000u64 << (NUMCELL - x);
@@ -603,6 +612,12 @@ impl BitBoard {
                 let rev = rev << BitBoard::index(x - o as usize, y);
                 revall |= rev;
             }
+        } else if USE_BIT_CARRY_LEFT {
+            let op = oppo.reverse_bits() & GUARD_VERTICAL;
+            let neighbor = pos.reverse_bits() << 1;
+            let op = op + neighbor;
+            let rev = op & mine.reverse_bits() & !neighbor;
+            if rev != 0 {revall |= (rev - neighbor).reverse_bits();}
         } else {
             let mut bit = pos >> 1;
             let mut rev = 0;
@@ -613,9 +628,7 @@ impl BitBoard {
                 bit_left!(bit);
                 b = bit & oppo & GUARD_LEFT;
             }
-            if (mine & bit & GUARD_LEFT) != 0 {
-                revall |= rev;
-            }
+            if (mine & bit & GUARD_LEFT) != 0 {revall |= rev;}
         }
 
         // 下
@@ -628,9 +641,7 @@ impl BitBoard {
             bit_down!(bit);
             b = bit & oppo;
         }
-        if (mine & bit) != 0 {
-            revall |= rev;
-        }
+        if (mine & bit) != 0 {revall |= rev;}
 
         // 上
         let mut bit = pos >> NUMCELL;
@@ -642,9 +653,7 @@ impl BitBoard {
             bit_up!(bit);
             b = bit & oppo;
         }
-        if (mine & bit) != 0 {
-            revall |= rev;
-        }
+        if (mine & bit) != 0 {revall |= rev;}
 
         // 右下
         let mut bit = pos << (NUMCELL + 1);
@@ -656,9 +665,7 @@ impl BitBoard {
             bit_rightdown!(bit);
             b = bit & oppo & GUARD_RIGHT;
         }
-        if (mine & bit & GUARD_RIGHT) != 0 {
-            revall |= rev;
-        }
+        if (mine & bit & GUARD_RIGHT) != 0 {revall |= rev;}
 
         // 右上
         let mut bit = pos >> (NUMCELL - 1);
@@ -670,9 +677,7 @@ impl BitBoard {
             bit_rightup!(bit);
             b = bit & oppo & GUARD_RIGHT;
         }
-        if (mine & bit & GUARD_RIGHT) != 0 {
-            revall |= rev;
-        }
+        if (mine & bit & GUARD_RIGHT) != 0 {revall |= rev;}
 
         // 左上
         let mut bit = pos >> (NUMCELL + 1);
@@ -684,9 +689,7 @@ impl BitBoard {
             bit_leftup!(bit);
             b = bit & oppo & GUARD_LEFT;
         }
-        if (mine & bit & GUARD_LEFT) != 0 {
-            revall |= rev;
-        }
+        if (mine & bit & GUARD_LEFT) != 0 {revall |= rev;}
 
         // 左下
         let mut bit = pos << (NUMCELL - 1);
@@ -698,9 +701,7 @@ impl BitBoard {
             bit_leftdown!(bit);
             b = bit & oppo & GUARD_LEFT;
         }
-        if (mine & bit & GUARD_LEFT) != 0 {
-            revall |= rev;
-        }
+        if (mine & bit & GUARD_LEFT) != 0 {revall |= rev;}
 
         if self.teban == SENTE {
             self.black = mine | revall | pos;
@@ -730,6 +731,8 @@ impl BitBoard {
         // const USETZCNT : bool = true;
         const USETABLELR : bool = false;
         // const USETABLELR : bool = true;
+        // const USE_BIT_CARRY : bool = false;
+        const USE_BIT_CARRY : bool = true;
         if USETZCNT {
             let shift = xy + 1;
             let mask = (1u64 << (NUMCELL - 1 - x)) - 1;
@@ -762,6 +765,18 @@ impl BitBoard {
             let o = op.reverse_bits() as usize >> (NUMCELL - x);
             let idx = p * 127 + o;
             if TBLCHKREV[idx] != 0 {return true;}
+        } else if USE_BIT_CARRY {
+            // 右
+            let op = oppo & GUARD_VERTICAL;
+            let op = op + (pos << 1);
+            let rev = op & mine & !(pos << 1);
+            if rev != 0 {return true;}
+            // 左
+            let op = oppo.reverse_bits() & GUARD_VERTICAL;
+            let neighbor = pos.reverse_bits() << 1;
+            let op = op + neighbor;
+            let rev = op & mine.reverse_bits() & !neighbor;
+            if rev != 0 {return true;}
         } else {
             // 右
             let mut bit = pos << 1;
@@ -773,9 +788,7 @@ impl BitBoard {
                 bit_right!(bit);
                 b = bit & oppo & GUARD_RIGHT;
             }
-            if (mine & bit & GUARD_RIGHT) != 0 && rev != 0 {
-                return true;
-            }
+            if (mine & bit & GUARD_RIGHT) != 0 && rev != 0 {return true;}
 
             // 左
             let mut bit = pos >> 1;
@@ -787,9 +800,7 @@ impl BitBoard {
                 bit_left!(bit);
                 b = bit & oppo & GUARD_LEFT;
             }
-            if (mine & bit & GUARD_LEFT) != 0 && rev != 0 {
-                return true;
-            }
+            if (mine & bit & GUARD_LEFT) != 0 && rev != 0 {return true;}
         }
 
         // 下
@@ -802,9 +813,7 @@ impl BitBoard {
             bit_down!(bit);
             b = bit & oppo;
         }
-        if (mine & bit) != 0 && rev != 0 {
-            return true;
-        }
+        if (mine & bit) != 0 && rev != 0 {return true;}
 
         // 上
         let mut bit = pos >> NUMCELL;
@@ -816,9 +825,7 @@ impl BitBoard {
             bit_up!(bit);
             b = bit & oppo;
         }
-        if (mine & bit) != 0 && rev != 0 {
-            return true;
-        }
+        if (mine & bit) != 0 && rev != 0 {return true;}
 
         // 右下
         let mut bit = pos << (NUMCELL + 1);
@@ -830,9 +837,7 @@ impl BitBoard {
             bit_rightdown!(bit);
             b = bit & oppo & GUARD_RIGHT;
         }
-        if (mine & bit & GUARD_RIGHT) != 0 && rev != 0 {
-            return true;
-        }
+        if (mine & bit & GUARD_RIGHT) != 0 && rev != 0 {return true;}
 
         // 右上
         let mut bit = pos >> (NUMCELL - 1);
@@ -844,9 +849,7 @@ impl BitBoard {
             bit_rightup!(bit);
             b = bit & oppo & GUARD_RIGHT;
         }
-        if (mine & bit & GUARD_RIGHT) != 0 && rev != 0 {
-            return true;
-        }
+        if (mine & bit & GUARD_RIGHT) != 0 && rev != 0 {return true;}
 
         // 左上
         let mut bit = pos >> (NUMCELL + 1);
@@ -858,9 +861,7 @@ impl BitBoard {
             bit_leftup!(bit);
             b = bit & oppo & GUARD_LEFT;
         }
-        if (mine & bit & GUARD_LEFT) != 0 && rev != 0 {
-            return true;
-        }
+        if (mine & bit & GUARD_LEFT) != 0 && rev != 0 {return true;}
 
         // 左下
         let mut bit = pos << (NUMCELL - 1);
@@ -872,11 +873,7 @@ impl BitBoard {
             bit_leftdown!(bit);
             b = bit & oppo & GUARD_LEFT;
         }
-        if (mine & bit & GUARD_LEFT) != 0 && rev != 0 {
-            return true;
-        }
-
-        false
+        (mine & bit & GUARD_LEFT) != 0 && rev != 0
     }
 
     /**
