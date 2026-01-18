@@ -1000,8 +1000,7 @@ impl BitBoard {
             }
         }
 
-        let sz = bits.count_ones() as usize;
-        if sz == 0 {  // pass
+        if bits == 0 {  // pass
             // return Some(vec![]);
             return Some(vec![PASS]);
         }
