@@ -199,7 +199,7 @@ def gamestatistics(elapsed)
   min, max = elapsed.minmax
   median = elapsed[n / 2];
 
-  puts "#{'%.3f' % avg} ± #{'%.3f' % sd} sec (#{'%.3f' % min} -- #{median} -- #{'%.3f' % max}) N:#{n}"
+  puts "#{'%.3f' % avg} ± #{'%.3f' % sd} sec (#{'%.3f' % min} -- #{'%.3f' % median} -- #{'%.3f' % max}) N:#{n}"
 end
 
 def game()
