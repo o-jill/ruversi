@@ -718,16 +718,18 @@ impl BitBoard {
         }
     }
 
+    #[allow(dead_code)]
     pub fn checkreverse(&self, xy : usize) -> bool {
         let (mine, oppo) = if self.teban == SENTE {
             (self.black, self.white)
         } else {
             (self.white, self.black)
         };
-        let pos = LSB_CELL << xy;
+        self.checkreverse_ex(xy, oppo, mine)
+    }
 
-        // check surrounding stones.
-        if (TBL_SURROUND[xy] & oppo) == 0 {return false;}
+    pub fn checkreverse_ex(&self, xy : usize, oppo : u64, mine : u64) -> bool {
+        let pos = LSB_CELL << xy;
 
         let (x, y) = index2xy(xy as u8);
         let x = x as usize;
@@ -972,6 +974,12 @@ impl BitBoard {
         let stones = self.black | self.white;
         if stones == u64::MAX {return None;}
 
+        let (mine, oppo) = if self.teban == SENTE {
+            (self.black, self.white)
+        } else {
+            (self.white, self.black)
+        };
+
         let mut bits = 0;
         let mut bit = LSB_CELL;
         for y in 0..NUMCELL {
@@ -982,8 +990,11 @@ impl BitBoard {
                 if exist != 0 {
                     continue;
                 }
+                let xy = BitBoard::index(x, y);
+                // check surrounding stones.
+                if (TBL_SURROUND[xy] & oppo) == 0 {continue;}
 
-                if self.checkreverse(BitBoard::index(x, y)) {
+                if self.checkreverse_ex(xy, oppo, mine) {
                     bits |= b;
                 }
             }
