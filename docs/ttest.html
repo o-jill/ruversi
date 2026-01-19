@@ -32,12 +32,16 @@ const invalid_data = "<span style='color:red;font-size:3em;'>invalid data...</sp
 
 function calc1() {
     let txt1 = document.getElementById("res1").value.trim();
-    if (txt1.length == 0) {
+    if (txt1.length < 3) {
         document.getElementById("result").innerHTML = invalid_data;
         return;
     }
 
     let res1 = txt1.split('±');
+    if (res1.length < 2) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
     let a1 = res1[0].trim() - 0;
     let sd1 = res1[1].trim() - 0;
     if (a1 == undefined || isNaN(a1)
@@ -53,12 +57,16 @@ function calc1() {
     }
 
     let txt2 = document.getElementById("res2").value.trim();
-    if (txt2.length == 0) {
+    if (txt2.length < 3) {
         document.getElementById("result").innerHTML = invalid_data;
         return;
     }
 
     let res2 = txt2.split('±');
+    if (res2.length < 2) {
+        document.getElementById("result").innerHTML = invalid_data;
+        return;
+    }
     let a2 = res2[0].trim() - 0;
     let sd2 = res2[1].trim() - 0;
     if (a2 == undefined || isNaN(a2)
