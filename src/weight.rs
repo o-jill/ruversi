@@ -427,7 +427,7 @@ impl Weight {
                 csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
         let nsz = newtable.len();
         if WSZV11 != nsz {
-            return Err(format!("size mismatch v10:{WSZV10} != {nsz}"));
+            return Err(format!("size mismatch v11:{WSZV11} != {nsz}"));
         }
 
         let offset = progress * N_WEIGHT_PAD;
