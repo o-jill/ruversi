@@ -118,6 +118,11 @@ File.open($logfile, mode = "rt"){|f|
       # puts "#{n[1]}, num:#{num[1]}"
       # puts "dl_table:#{dl_table}"
       idx = num[1].to_i
+      if idx >= $target_downloads  # invalid number!
+        print "ERROR: idx:#{idx} >= #{$target_downloads}"
+        fname = ''
+        next
+      end
       # puts "idx:#{idx} dl_table[idx]:#{dl_table[idx]}"
       if dl_table[idx]
         fname = ''
