@@ -176,12 +176,13 @@ impl NodeBB {
     pub fn think_internal_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight,
         tt : &mut transptable::TranspositionTable) -> Option<f32> {
         let depth = node.depth;
+        if ban.is_full() || ban.is_passpass() {
+            return Some(ban.countf32());
+        }
         if depth == 0 {
             return Some(NodeBB::evalwtt(ban, wei, tt));
         }
-        if ban.is_passpass() {
-            return Some(ban.countf32());
-        }
+
         let teban = ban.teban;
         // let sum = 0;
         let moves = ban.genmove();
@@ -297,12 +298,15 @@ impl NodeBB {
     #[allow(dead_code)]
     pub fn think_internal_ab_failsoft(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
             wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.countf32() * ban.teban as f32;
+        }
         if cfg!(feature="withtt") {
             if let Some(tt_val) = tt.check_available(ban, node.depth) {
                 return tt_val;
             }
         }
-        if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
+        if node.depth == 0 {
             return NodeBB::evalwtt(ban, wei, tt);
         }
 
@@ -390,12 +394,15 @@ impl NodeBB {
     #[allow(dead_code)]
     pub fn think_internal_pvs_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, alpha : f32, beta : f32,
             wei : &weight::Weight, tt : &mut transptable::TranspositionTable) -> f32 {
+        if ban.is_full() || ban.is_passpass() {
+            return ban.countf32() * ban.teban as f32;
+        }
         if cfg!(feature="withtt") {
             if let Some(tt_val) = tt.check_available(ban, node.depth) {
                 return tt_val;
             }
         }
-        if ban.nblank() == 0 || ban.is_passpass() || node.depth == 0 {
+        if node.depth == 0 {
             return NodeBB::evalwtt(ban, wei, tt);
         }
 
