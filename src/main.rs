@@ -517,7 +517,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         result = dresult.unwrap();
         dr.gresult(result);
 
-        println!("{dr}");
+        println!("{}", dr.opponent());
     }
 }
 
