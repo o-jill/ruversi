@@ -87,9 +87,10 @@ def searchresult(nodes, elapsed)
   vari = elapsed.map {|elem| (elem - avg) * (elem - avg)}.sum.fdiv(dof);
   sd = Math.sqrt(vari)
   min, max = elapsed.minmax
+  median = elapsed.sort()[sz / 2]
 
   puts "speed: #{'%.2f' % (nodes / avg)} nodes/msec"
-  puts "#{nodes} nodes / #{'%.2f' % avg} ± #{'%.2f' % sd} msec (#{min} -- #{max})"
+  puts "#{nodes} nodes / #{'%.2f' % avg} ± #{'%.2f' % sd} msec (#{min} -- #{median} -- #{max})"
 end
 
 def search()
@@ -106,11 +107,17 @@ def search()
   result_nodes = Array.new(rfens.length(), -1)
   result_elapsed = Array.new(rfens.length()) {[]}
 
+  if RUBY_PLATFORM =~ /mswin|mingw/
+    devnull = 'NUL'
+  else
+    devnull = '/dev/null'
+  end
+
   rfens.each_with_index do |rfen, i|
     echo("Begin RFEN:#{rfen}", RESULT)
     for j in 1..REPEAT do
       # runcmd = "cargo run --release #{features} -- --rfen \"#{rfen}\" #{sdepth} --ev1 #{EVFILE} >> #{RESULT} 2>/dev/null"
-      runcmd = "cargo run --release #{features} -- --rfen \"#{rfen}\" #{sdepth} --ev1 #{EVFILE} 2>/dev/null"
+      runcmd = "cargo run --release #{features} -- --rfen \"#{rfen}\" #{sdepth} --ev1 #{EVFILE} 2>#{devnull}"
       res = exec_command(runcmd)
       (nodes, elapsed) = readresult(res.split("\n").last())
       result_nodes[i] = nodes
@@ -190,8 +197,9 @@ def gamestatistics(elapsed)
   vari = elapsed.map {|elem| (elem - avg) * (elem - avg)}.sum.fdiv(dof);
   sd = Math.sqrt(vari)
   min, max = elapsed.minmax
+  median = elapsed.sort()[n / 2];
 
-  puts "#{'%.3f' % avg} ± #{'%.3f' % sd} sec (#{'%.3f' % min} -- #{'%.3f' % max}) N:#{n}"
+  puts "#{'%.3f' % avg} ± #{'%.3f' % sd} sec (#{'%.3f' % min} -- #{'%.3f' % median} -- #{'%.3f' % max}) N:#{n}"
 end
 
 def game()
@@ -210,13 +218,19 @@ def game()
   buildcmd = "cargo build --release #{features}"
   exec_command(buildcmd)
 
+  if RUBY_PLATFORM =~ /mswin|mingw/
+    devnull = 'NUL'
+  else
+    devnull = '/dev/null'
+  end
+
   listelapsed = []
   txtout = nil
   for j in 1..REPEAT do
     print("#{j} ")
     elapsed, _res = elapsed_time_of() do
       # runcmd = "cargo run --release --silent #{features} -- --duel #{duellv} #{sdepth}  --ev1 #{evfile} --ev2 #{evfile} >> #{RESULT} 2>/dev/null"
-      runcmd = "cargo run --release #{features} -- --silent --duel #{duellv} #{sdepth}  --ev1 #{EVFILE} --ev2 #{EVFILE} 2>/dev/null"
+      runcmd = "cargo run --release #{features} -- --silent --duel #{duellv} #{sdepth}  --ev1 #{EVFILE} --ev2 #{EVFILE} 2>#{devnull}"
       txtout = exec_command(runcmd)
       # echo(txtout, RESULT)
     end

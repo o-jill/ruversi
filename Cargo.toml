@@ -1,6 +1,6 @@
 [package]
 name = "ruversi"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -23,6 +23,7 @@ withtt = []  # use transposition table
 # bitboard = []
 # deprecated  byteboard = []
 avx = [] ## including AVX and BMI2
+fixed_stones = []
 
 [lib]
 name="mylib"

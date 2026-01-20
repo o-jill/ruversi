@@ -402,7 +402,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         result = dresult.unwrap();
         dr.gresult(result);
 
-        println!("{dr}");
+        println!("{}", dr.opponent());
     }
 }
 
@@ -461,7 +461,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         result = dresult.unwrap();
         dr.gresult(result);
 
-        println!("{dr}");
+        println!("{}", dr.opponent());
     }
 }
 
@@ -517,7 +517,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         result = dresult.unwrap();
         dr.gresult(result);
 
-        println!("{dr}");
+        println!("{}", dr.opponent());
     }
 }
 
