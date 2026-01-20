@@ -87,7 +87,7 @@ def searchresult(nodes, elapsed)
   vari = elapsed.map {|elem| (elem - avg) * (elem - avg)}.sum.fdiv(dof);
   sd = Math.sqrt(vari)
   min, max = elapsed.minmax
-  median = elapsed[sz / 2]
+  median = elapsed.sort()[sz / 2]
 
   puts "speed: #{'%.2f' % (nodes / avg)} nodes/msec"
   puts "#{nodes} nodes / #{'%.2f' % avg} ± #{'%.2f' % sd} msec (#{min} -- #{median} -- #{max})"
@@ -197,7 +197,7 @@ def gamestatistics(elapsed)
   vari = elapsed.map {|elem| (elem - avg) * (elem - avg)}.sum.fdiv(dof);
   sd = Math.sqrt(vari)
   min, max = elapsed.minmax
-  median = elapsed[n / 2];
+  median = elapsed.sort()[n / 2];
 
   puts "#{'%.3f' % avg} ± #{'%.3f' % sd} sec (#{'%.3f' % min} -- #{'%.3f' % median} -- #{'%.3f' % max}) N:#{n}"
 end
