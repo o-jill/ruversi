@@ -183,6 +183,70 @@ function calc3() {
       + "<br>d2:" + a2 + " ± " + Math.sqrt(sd2) + " N=" + d2.length
       + "<br>t:" + t + " p:" + p;
 }
+
+function getMedian(arr) {
+    let sorted = [...arr].sort((a, b) => a - b);
+    let n = arr.length;
+    idx = Math.floor(n / 2);
+    return sorted[idx];
+}
+
+function calc3U() {
+    let d1 = readdataarray(document.getElementById("data1").value);
+    let d2 = readdataarray(document.getElementById("data2").value);
+    // console.log(d1); console.log(d2);
+    let n1 = d1.length;
+    let n2 = d2.length;
+    if (n1 <= 1 || n2 <= 1) {
+        document.getElementById("result3").innerHTML =
+            "<span style='color:red;font-size:3em;'>invalid data...</span>";
+        return;
+    }
+
+    let [a1, sd1] = calcavgsd(d1);
+    let [a2, sd2] = calcavgsd(d2);
+    let m1 = getMedian(d1);
+    let m2 = getMedian(d2);
+    let [z, p] = mannWhitneyU(d1, d2);
+
+    let thr = document.getElementById("thr3").value - 0;
+    document.getElementById("result3").innerHTML =
+        (p < thr) ? "<span style='color:red;font-size:3em;'>different</span>"
+                  : "<span style='color:green;font-size:3em;'>not different</span>";
+    document.getElementById("stats3").innerHTML =
+        "d1:" + a1 + " ± " + Math.sqrt(sd1) + " Median:" + m1 + " N=" + d1.length
+      + "<br>d2:" + a2 + " ± " + Math.sqrt(sd2) + " Median:" + m2 + " N=" + d2.length
+      + "<br>z:" + z + " p:" + p;
+}
+
+// Mann-Whitney のU検定
+// 正規近似を使用
+function mannWhitneyU(groupA, groupB) {
+    // 全データのランクを計算
+    const combined = groupA.concat(groupB);
+    const ranks = jStat.rank(combined);
+    const n1 = groupA.length;
+    const n2 = groupB.length;
+
+    // ランク和を計算
+    const sum1 = ranks.slice(0, n1).reduce((a, b) => a + b, 0);
+    const sum2 = ranks.slice(n1).reduce((a, b) => a + b, 0);
+
+    const U1 = sum1 - (n1 * (n1 + 1)) / 2;
+    const U2 = sum2 - (n2 * (n2 + 1)) / 2;
+    const U = Math.min(U1, U2);
+
+    const meanU = n1 * n2 / 2;
+    const sdU = Math.sqrt((n1 * n2 * (n1 + n2 + 1)) / 12);
+
+    // 連続性補正の適用
+    const continuityCorrection = 0.5;
+    const Z = (U - meanU + continuityCorrection) / sdU;
+
+    // 両側検定のp値
+    return [Z, 2 * (1 - jStat.normal.cdf(Math.abs(Z), 0, 1))];
+}
+
 </script>
 <style type="text/css">
 input {
@@ -193,7 +257,7 @@ input {
 </head>
 <body>
 
-<h1>unpaired t test</h1>
+<h1>unpaired t test or Mann-Whitney U test</h1>
 S.D. should be unbiased standard deviation!
 <h2>a:</h2>
 <input id="res1" value="960.8 ± 18.43" size="10"> or <input id="avg1" value="960.8" size="6"> ±<input id="sd1" value="18.43" size="5"><br>
@@ -210,7 +274,10 @@ S.D. should be unbiased standard deviation!
 
 <textarea id="data1" rows="10" cols="20" placeholder="0,1,2,3,..."></textarea>
 <textarea id="data2" rows="10" cols="20" placeholder="a separator can be one of TAB(\t), LF(\n), comma(,) or SPACE( )."></textarea><br>
-<label>threshold:<input id="thr3" value="0.05" size="5"></label>&nbsp;<input type="button" onclick="calc3();" value="- - calculate - -"><span id="result3"></span><br>
+<label>threshold:<input id="thr3" value="0.05" size="5"></label><br>
+<input type="button" onclick="calc3();" value="- calculate t -">
+<input type="button" onclick="calc3U();" value="- calculate U -">
+<span id="result3"></span><br>
 <div id="stats3">stats will be here.</div>
 </body>
 </html>
