@@ -167,8 +167,6 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     let dresult2 = dresult.clone();
 
     let verbose = &MYOPT.get().unwrap().verbose;
-    let silent = verbose.is_silent();
-    let verbose = verbose.is_verbose();
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -189,12 +187,11 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         _ => { panic!("unknown thinking method.") }
     };
     let thrd = thread::spawn(move || {
-        let verbose = !silent;
         for rfen in rfen1.iter() {
             // prepare game
             let mut g = game::GameBB::from(rfen);
             g.set_cachesize(cachesz);
-            g.set_verbose(verbose);
+            g.set_verbose(&verbose);
             // play
             match think {
                 "" | "ab" => {
@@ -214,7 +211,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
             // prepare game
             let mut g = game::GameBB::from(rfen);
             g.set_cachesize(cachesz);
-            g.set_verbose(verbose);
+            g.set_verbose(&verbose);
             // play
             let think = MYOPT.get().unwrap().think.as_str();
             match think {
@@ -238,7 +235,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         // play
         let think = MYOPT.get().unwrap().think.as_str();
         match think {
@@ -259,7 +256,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         // play
         let think = MYOPT.get().unwrap().think.as_str();
         match think {
@@ -306,7 +303,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     let mut dr = duelresult::DuelResult::default();
     let mut result;
 
-    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
+    let verbose = MYOPT.get().unwrap().verbose;
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -327,7 +324,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         // play
         g.starto_with_2et(f, depth, &w1, &w2).unwrap();
         let dresult = g.kifu.winner();
@@ -336,7 +333,7 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         // play
         g.starto_with_2et(f, depth, &w2, &w1).unwrap();
         let dresult = g.kifu.winner();
@@ -365,7 +362,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
     let econf = std::path::PathBuf::from(
             MYOPT.get().unwrap().edaxconfig.as_str());
     let think = MYOPT.get().unwrap().think.as_str();
-    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
+    let verbose = MYOPT.get().unwrap().verbose;
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -386,7 +383,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         // play
         g.starto_against_edax(f, depth, turn, &econf).unwrap();
         dresult = g.kifu.winner();
@@ -396,7 +393,7 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         g.starto_against_edax(f, depth, turn, &econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
@@ -422,7 +419,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     // println!("econf:{econf}");
     let think = MYOPT.get().unwrap().think.as_str();
-    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
+    let verbose = MYOPT.get().unwrap().verbose;
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -443,7 +440,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         // play
         g.start_against_via_cassio(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
@@ -454,7 +451,7 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         // play
         g.start_against_via_cassio(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
@@ -480,7 +477,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
 
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();
-    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
+    let verbose = MYOPT.get().unwrap().verbose;
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
@@ -500,7 +497,7 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         g.starto_against_ruversi(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
@@ -510,15 +507,16 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
-        g.set_verbose(verbose);
+        g.set_verbose(&verbose);
         // play
         g.starto_against_ruversi(f, depth, turn, econf).unwrap();
         dresult = g.kifu.winner();
         result = dresult.unwrap();
         dr.gresult(result);
 
-        println!("{}", dr.opponent());
+        if !verbose.is_silent() {println!("{}", dr.opponent());}
     }
+    if verbose.is_silent() {println!("{}", dr.opponent());}
 }
 
 /// read eval file.
@@ -589,11 +587,11 @@ fn edax(depth : u8, turnh: i8, cachesz : usize) {
 /// - depth : depth to think.
 /// - turnh : another ruversi's turn.
 fn vs_ruversi(depth : u8, turnh: i8, cachesz : usize) {
-    let verbose = !MYOPT.get().unwrap().verbose.is_silent();
+    let verbose = MYOPT.get().unwrap().verbose;
     // prepare game
     let mut g = game::GameBB::new();
     g.set_cachesize(cachesz);
-    g.set_verbose(verbose);
+    g.set_verbose(&verbose);
     // play
     let econf = MYOPT.get().unwrap().edaxconfig.as_str();
     let think = MYOPT.get().unwrap().think.as_str();

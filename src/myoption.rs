@@ -32,7 +32,7 @@ pub enum TrainingMode {
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Verbose {
     Silent,
     Normal,
@@ -43,6 +43,7 @@ impl Verbose {
     pub fn is_silent(&self) -> bool {self.eq(&Verbose::Silent)}
     #[allow(dead_code)]
     pub fn is_normal(&self) -> bool {self.eq(&Verbose::Normal)}
+    #[allow(dead_code)]
     pub fn is_verbose(&self) -> bool {self.eq(&Verbose::Full)}
 }
 
