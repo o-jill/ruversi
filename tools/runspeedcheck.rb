@@ -7,6 +7,10 @@
 REPEAT=20
 # REPEAT=50
 
+# 測定データを表示するか否か
+SHOW_EACH_DATA=true
+# SHOW_EACH_DATA=false
+
 EVFILE='data/evaltable.txt'
 # EVFILE='../tigerdenversi/weights.txt'
 
@@ -91,6 +95,8 @@ def searchresult(nodes, elapsed)
 
   puts "speed: #{'%.2f' % (nodes / avg)} nodes/msec"
   puts "#{nodes} nodes / #{'%.2f' % avg} ± #{'%.2f' % sd} msec (#{min} -- #{median} -- #{max})"
+
+  puts elapsed.join(',') if SHOW_EACH_DATA
 end
 
 def search()
@@ -200,6 +206,7 @@ def gamestatistics(elapsed)
   median = elapsed.sort()[n / 2];
 
   puts "#{'%.3f' % avg} ± #{'%.3f' % sd} sec (#{'%.3f' % min} -- #{'%.3f' % median} -- #{'%.3f' % max}) N:#{n}"
+  puts elapsed.join(',') if SHOW_EACH_DATA
 end
 
 def game()
