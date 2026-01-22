@@ -58,7 +58,7 @@ impl GameBB {
             // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
-            if self.is_verbose() {
+            if self.not_silent() {
                 println!("val:{val:+5.1} {} {}msec",
                     node.dump(), ft.as_millis());
             }
@@ -108,7 +108,7 @@ impl GameBB {
             let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
 
             let ft = st.elapsed();
-            if self.is_verbose() {
+            if self.not_silent() {
                 println!("val:{val:+5.1} {} {}msec",
                     node.dump(), ft.as_millis());
             }
@@ -252,7 +252,7 @@ impl GameBB {
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
-                if self.is_verbose() {
+                if self.not_silent() {
                     println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
                 }
                 let best = node.best.unwrap();
@@ -342,7 +342,7 @@ impl GameBB {
                 // let (val, node) = node::Node::think(&self.ban, 7).unwrap();
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
-                if self.is_verbose() {
+                if self.not_silent() {
                     println!("val:{val:+5.1} {} {}msec",
                         node.dump(), ft.as_millis());
                 }
@@ -415,7 +415,7 @@ impl GameBB {
                 let mut node = nodebb::NodeBB::root(depth);
                 let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
                 let ft = st.elapsed();
-                if self.is_verbose() {
+                if self.not_silent() {
                     println!("val:{val:+5.1} {} {}msec",
                         node.dump(), ft.as_millis());
                 }
