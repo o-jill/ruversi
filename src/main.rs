@@ -166,7 +166,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     let dresult = Arc::new(Mutex::new(duelresult::DuelResult::new()));
     let dresult2 = dresult.clone();
 
-    let verbose = &MYOPT.get().unwrap().verbose;
+    let verbose = MYOPT.get().unwrap().verbose;
     let eqfile = initialpos::equalfile(duellv);
     println!("equal file: {eqfile}");
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
