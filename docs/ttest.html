@@ -232,12 +232,32 @@ function mannWhitneyU(groupA, groupB) {
     const sum1 = ranks.slice(0, n1).reduce((a, b) => a + b, 0);
     const sum2 = ranks.slice(n1).reduce((a, b) => a + b, 0);
 
+    // タイ補正用に重複した個数を計算
+    const filtered = combined.filter(
+        function(elem, index, self) {
+            return self.indexOf(elem) === index;
+        }
+    );
+    let tieComp = 0;  // タイ補正値
+    if (filtered.length != combined.length) {
+        for (f_item of filtered) {
+            const same = combined.filter(item => item == f_item);
+            let t = same.length;
+            tieComp += t * t * t - t;
+        }
+    }
+
     const U1 = sum1 - (n1 * (n1 + 1)) / 2;
     const U2 = sum2 - (n2 * (n2 + 1)) / 2;
     const U = Math.min(U1, U2);
 
     const meanU = n1 * n2 / 2;
-    const sdU = Math.sqrt((n1 * n2 * (n1 + n2 + 1)) / 12);
+
+    // varianceU = n1·n2·(n1+n2+1)/12 - [n1·n2/(12n(n-1))] x Σ(t_k^3 - t_k)
+    const n1n2 = (n1 * n2 * (n1 + n2 + 1)) / 12;
+    const varU = n1n2 - tieComp / n1n2;
+
+    const sdU = Math.sqrt(varU);
 
     // 連続性補正の適用
     const continuityCorrection = 0.5;
