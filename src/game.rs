@@ -502,7 +502,14 @@ impl GameBB {
                 xy = best.xypos();
             }
             // apply move
-            let ban = self.ban.r#move(xy).unwrap();
+            let ban = match self.ban.r#move(xy) {
+                Err(msg) => {
+                    self.ban.put();
+                    println!("rfen:{}", self.ban);
+                    panic!("{msg} @ {xy}");
+                },
+                Ok(ban) => {ban},
+            };
             let rfen = self.ban.to_string();
             let teban = self.ban.teban;
             self.ban = ban;

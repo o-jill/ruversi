@@ -27,7 +27,9 @@ impl EdaxRunner {
     pub fn new() -> EdaxRunner {
         EdaxRunner {
             obfpath: {
-                let tmp = std::env::temp_dir().join(OBF);
+                let id = std::process::id();
+                let tmp = std::env::temp_dir().join(
+                    &format!("ruversi_{id:x}_{OBF}"));
                 tmp.to_str().unwrap().to_string()
             },
             curdir: String::from(CD),

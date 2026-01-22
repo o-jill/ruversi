@@ -37,6 +37,14 @@ fn trial() {
     kifu.append(6,-1, String::new());
     kifu.append(7,0, String::new());
     print!("{}", kifu.to_str());
+
+    println!();
+    let ban = bitboard::BitBoard::from("4A3/2AaB2/3aAa2/2Ca2/2Ad1/1BaAa2/2aBa2/1f1 b").unwrap();
+    ban.put();
+    let moves = ban.genmove();
+    println!("moves:{moves:?}");
+
+    panic!();
 }
 
 #[allow(dead_code)]
