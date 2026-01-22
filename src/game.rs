@@ -203,7 +203,7 @@ impl GameBB {
                 if self.is_verbose() {self.ban.put();}
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    if self.is_verbose() {println!("auto pass.");}
+                    if self.not_silent() {println!("auto pass.");}
                     xy = bitboard::PASS;
                 } else if movable.len() == 1 {
                     xy = if movable[0] == bitboard::PASS {  // pass
@@ -299,7 +299,7 @@ impl GameBB {
                 if self.is_verbose() {self.ban.put();}
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    if self.is_verbose() {println!("auto pass.");}
+                    if self.not_silent() {println!("auto pass.");}
                     xy = bitboard::PASS;
                 } else if movable.len() == 1 {
                     xy = movable[0];
@@ -393,7 +393,7 @@ impl GameBB {
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    if self.is_verbose() {println!("auto pass.");}
+                    if self.not_silent() {println!("auto pass.");}
                     xy = bitboard::PASS;
                 } else if movable.len() == 1 {
                     xy = movable[0];
@@ -473,7 +473,7 @@ impl GameBB {
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    if self.is_verbose() {println!("auto pass.");}
+                    if self.not_silent() {println!("auto pass.");}
                     xy = bitboard::PASS;
                 } else if movable.len() == 1 {
                     xy = movable[0];
@@ -649,7 +649,7 @@ impl GameBB {
                 // self.ban.put();
                 let movable = self.ban.genmove().unwrap();
                 if movable.is_empty() {
-                    if self.is_verbose() {println!("auto pass.");}
+                    if self.not_silent() {println!("auto pass.");}
                     xy = bitboard::PASS;
                 } else if movable.len() == 1 {
                     xy = movable[0];
