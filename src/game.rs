@@ -88,7 +88,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -138,7 +138,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -184,7 +184,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -282,7 +282,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -373,7 +373,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -446,7 +446,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -525,7 +525,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -730,7 +730,7 @@ impl GameBB {
 
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -797,7 +797,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -865,7 +865,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -927,7 +927,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
@@ -988,7 +988,7 @@ impl GameBB {
         }
         // check who won
         self.kifu.winneris(self.ban.count());
-        if self.is_verbose() {println!("{}", self.kifu.to_str());}
+        if self.not_silent() {println!("{}", self.kifu.to_str());}
         // show
         if self.not_silent() {self.ban.put();}
         Ok(())
