@@ -402,7 +402,9 @@ mod tests {
     fn test_edaxrunner_default_values() {
         // EdaxRunner::new() で各フィールドがデフォルト値になっていることを確認
         let er = EdaxRunner::new();
-        let tmp = std::env::temp_dir().join("test.obf");
+        let id = std::process::id();
+        let file_name = format!("ruversi_{id:x}_{OBF}");
+        let tmp = std::env::temp_dir().join(&file_name);
         assert_eq!(er.obfpath, tmp.to_str().unwrap());
         assert_eq!(er.curdir, "../../edax-reversi/");
         assert_eq!(er.path, "./bin/lEdax-x64-modern");
@@ -427,7 +429,9 @@ mod tests {
         let mut er = EdaxRunner::new();
         let result = er.config("", "updated_dir", "", "");
         assert!(result.is_ok());
-        let tmp = std::env::temp_dir().join("test.obf");
+        let id = std::process::id();
+        let file_name = format!("ruversi_{id:x}_{OBF}");
+        let tmp = std::env::temp_dir().join(&file_name);
         assert_eq!(er.obfpath, tmp.to_str().unwrap());
         assert_eq!(er.curdir, "updated_dir");
         assert_eq!(er.path, "./bin/lEdax-x64-modern");
@@ -439,7 +443,9 @@ mod tests {
         // to_str の内容がフィールドに基づくことを確認
         let er = EdaxRunner::new();
         let s = er.to_string();
-        let tmp = std::env::temp_dir().join("test.obf");
+        let id = std::process::id();
+        let file_name = format!("ruversi_{id:x}_{OBF}");
+        let tmp = std::env::temp_dir().join(&file_name);
         assert!(s.contains(&format!("obf:{}", tmp.to_str().unwrap())));
         assert!(s.contains("curdir:../../edax-reversi/"));
         assert!(s.contains("edax:./bin/lEdax-x64-modern"));
