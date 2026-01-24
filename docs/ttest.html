@@ -240,7 +240,7 @@ function mannWhitneyU(groupA, groupB) {
     );
     let tieComp = 0;  // タイ補正値
     if (filtered.length != combined.length) {
-        for (f_item of filtered) {
+        for (const f_item of filtered) {
             const same = combined.filter(item => item == f_item);
             let t = same.length;
             tieComp += t * t * t - t;
@@ -254,8 +254,9 @@ function mannWhitneyU(groupA, groupB) {
     const meanU = n1 * n2 / 2;
 
     // varianceU = n1·n2·(n1+n2+1)/12 - [n1·n2/(12n(n-1))] x Σ(t_k^3 - t_k)
-    const n1n2 = (n1 * n2 * (n1 + n2 + 1)) / 12;
-    const varU = n1n2 - tieComp / n1n2;
+    const n1n2 = (n1 * n2 * (n1 + n2 + 1.0)) / 12.0;
+    const compDiv = n1 * n2 / ((n1 + n2) * (n1 + n2 + 1.0) * 12.0);
+    const varU = n1n2 - tieComp / compDiv;
 
     const sdU = Math.sqrt(varU);
 
