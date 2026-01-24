@@ -25,6 +25,7 @@ jobs:
         bundler-cache: false
     - name: Build
       continue-on-error: true # とにかく最後まで行きたい
+      id: rubuild
       run: |
         cargo build --verbose
     - name: Run clippy
@@ -33,7 +34,7 @@ jobs:
       run: cargo clippy --all-targets
     - name: Run tests
       continue-on-error: true # とにかく最後まで行きたい
-      id: utest
+      id: rutest
       run: cargo test --features=avx,withtt --verbose
     - name: check error run build
       if: ${{ steps.rubuild.outcome == 'failure' }}
@@ -89,11 +90,12 @@ jobs:
         bundler-cache: false
     - name: Build
       continue-on-error: true # とにかく最後まで行きたい
+      id: rubuild
       run: |
         cargo build --verbose
     - name: Run tests
       continue-on-error: true # とにかく最後まで行きたい
-      id: utest
+      id: rutest
       run: cargo test --verbose
     - name: check error run build
       if: ${{ steps.rubuild.outcome == 'failure' }}

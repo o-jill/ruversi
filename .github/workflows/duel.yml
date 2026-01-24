@@ -50,5 +50,5 @@ jobs:
     - name: check error duel
       if: ${{ steps.duel.outcome == 'failure' }}
       run: |
-        echo ${{ steps.utest.outcome }} == 'failure'
+        echo ${{ steps.duel.outcome }} == 'failure'
         exit 1
