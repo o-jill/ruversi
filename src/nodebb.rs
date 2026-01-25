@@ -301,10 +301,17 @@ impl NodeBB {
         if ban.is_full() || ban.is_passpass() {
             return ban.countf32() * ban.teban as f32;
         }
-        if cfg!(feature="withtt") {
-            if let Some(tt_val) = tt.check_available(ban, node.depth) {
-                return tt_val;
+        #[cfg(feature="mate1")]
+        if ban.is_last1() {
+            let (val, xy) = ban.move_mate1();
+            if node.best.is_none() {
+                node.best = Some(Best::new(val * ban.teban as f32, xy));
             }
+            return val * ban.teban as f32;
+        }
+        #[cfg(feature="withtt")]
+        if let Some(tt_val) = tt.check_available(ban, node.depth) {
+            return tt_val;
         }
         if node.depth == 0 {
             return NodeBB::evalwtt(ban, wei, tt);
@@ -397,10 +404,9 @@ impl NodeBB {
         if ban.is_full() || ban.is_passpass() {
             return ban.countf32() * ban.teban as f32;
         }
-        if cfg!(feature="withtt") {
-            if let Some(tt_val) = tt.check_available(ban, node.depth) {
-                return tt_val;
-            }
+        #[cfg(feature="withtt")]
+        if let Some(tt_val) = tt.check_available(ban, node.depth) {
+            return tt_val;
         }
         if node.depth == 0 {
             return NodeBB::evalwtt(ban, wei, tt);
