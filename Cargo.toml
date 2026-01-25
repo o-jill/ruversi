@@ -24,6 +24,7 @@ withtt = []  # use transposition table
 # deprecated  byteboard = []
 avx = [] ## including AVX and BMI2
 fixed_stones = []
+mate1 = []
 
 [lib]
 name="mylib"
