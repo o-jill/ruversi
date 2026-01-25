@@ -1016,8 +1016,42 @@ impl BitBoard {
         (self.black.count_ones() as i8 - self.white.count_ones() as i8) as f32
     }
 
+    /// 最後のひとマスを埋めて石の差を返す。
+    ///
+    /// #Returns
+    /// (score, move)
+    pub fn move_mate1(&self) -> (f32, u8) {
+        let remain = !(self.black | self.white);
+        let xy = remain.trailing_zeros();
+        let (mine, oppo) = if self.teban == SENTE {
+            (self.black, self.white)
+        } else {
+            (self.white, self.black)
+        };
+        if self.checkreverse_ex(xy as usize, oppo, mine) {
+            (self.r#move(xy as u8).unwrap().countf32(), xy as u8)
+        } else {
+            let newban = self.r#move(PASS).unwrap();
+            let val = if newban.checkreverse_ex(xy as usize, mine, oppo) {
+                newban.r#move(xy as u8).unwrap().countf32()
+            } else {
+                self.countf32()
+            };
+            (val, PASS)
+        }
+    }
+
     pub fn is_full(&self) -> bool {
         (self.black | self.white) == u64::MAX
+    }
+
+    #[allow(dead_code)]
+    pub fn is_last1_or_full(&self) -> bool {
+        (self.black | self.white).count_zeros() <= 1
+    }
+
+    pub fn is_last1(&self) -> bool {
+        (self.black | self.white).count_zeros() == 1
     }
 
     #[allow(dead_code)]
@@ -1974,6 +2008,23 @@ fn testbitbrd() {
     ban.put();
     let mv = ban.genmove();
     assert_eq!(mv, Some(vec![cell(1, 1), cell(1, 2)]));
+}
+
+#[test]
+fn test_bitboard_genmove01() {
+    let ban = bitboard::BitBoard::from("4A3/2AaB2/3aAa2/2Ca2/2Ad1/1BaAa2/2aBa2/1f1 b").unwrap();
+    // |__|__|02|03|@@|__|__|__|
+    // |__|__|@@|[]|@@|@@|14|__|
+    // |__|__|18|[]|@@|[]|22|__|
+    // |__|__|@@|@@|@@|[]|30|31|
+    // |__|__|@@|[]|[]|[]|[]|39|
+    // |__|@@|@@|[]|@@|[]|46|47|
+    // |__|49|[]|@@|@@|[]|54|__|
+    // |__|[]|[]|[]|[]|[]|[]|__|
+    ban.put();
+    let moves = ban.genmove();
+    println!("moves:{moves:?}");
+    assert_eq!(moves, Some(vec![2, 3, 14, 18, 22, 30, 31, 39, 46, 47, 49, 54]));
 }
 
 #[test]
