@@ -741,7 +741,9 @@ impl BitBoard {
         // const USETABLELR : bool = true;
         // const USE_BIT_CARRY : bool = false;
         const USE_BIT_CARRY : bool = true;
-        // const SIMULHORZ : bool = false;
+        #[cfg(feature="nosimd")]
+        const SIMULHORZ : bool = false;
+        #[cfg(not(feature="nosimd"))]
         const SIMULHORZ : bool = true;
         if USETZCNT {
             let shift = xy + 1;
