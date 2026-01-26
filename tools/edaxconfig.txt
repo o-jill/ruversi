@@ -23,7 +23,8 @@ cassio: -cassio
 # cassio: -cassio
 
 # against ruversi w/ cassio protocol
-#curdir: ../ruversi2/
-#edax: ./target/release/ruversi
-#evfile: --ev1 ./data/evaltable.txt
-#cassio: --oep
+# curdir: ../ruversi2/
+# edax: ./target/release/ruversi
+# evfile: ./data/evaltable.txt
+# args: --depth, 7, --oep
+# cassio: --oep

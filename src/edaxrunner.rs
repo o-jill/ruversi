@@ -163,12 +163,13 @@ pub struct RuversiRunner {
     path : String,
     evfile : String,
     verbose : bool,
+    args : Vec<String>,
 }
 
 impl std::fmt::Display for RuversiRunner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "curdir:{}, ruversi:{}, evfile:{}",
-               self.curdir, self.path, self.evfile)
+        write!(f, "curdir:{}, ruversi:{}, evfile:{}, args:{:?}",
+               self.curdir, self.path, self.evfile, self.args)
     }
 }
 
@@ -179,6 +180,7 @@ impl RuversiRunner {
             path : String::from("./target/release/ruversi"),
             evfile : String::from("data/evaltable.txt"),
             verbose : true,
+            args : Vec::new(),
         }
     }
 
@@ -217,8 +219,12 @@ impl RuversiRunner {
                         self.curdir = String::from(cd.trim());
                     } else if let Some(ed) = l.strip_prefix("path:") {
                         self.path = String::from(ed.trim());
-                    } else if let Some(evf) = l.strip_prefix("evfile::") {
+                    } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
+                    } else if let Some(args) = l.strip_prefix("args:") {
+                        self.args =
+                            args.trim().split(",")
+                                .map(|s| s.trim().to_string()).collect::<Vec<_>>();
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -230,7 +236,7 @@ impl RuversiRunner {
     fn spawn(&self, rfen : &str) -> std::io::Result<Child> {
         std::env::set_current_dir(&self.curdir).unwrap();
         let mut cmd = Command::new(&self.path);
-        cmd.arg("--rfen").arg(rfen).arg("--ev1").arg(&self.evfile)
+        cmd.arg("--rfen").arg(rfen).arg("--ev1").arg(&self.evfile).args(&self.args)
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
         if self.verbose {eprintln!("cmd:{cmd:?}");}
