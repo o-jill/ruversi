@@ -73,6 +73,11 @@ impl EdaxRunner {
     /// curdir: ~/edax/
     /// edax: ./bin/edax
     /// evfile: ./data/eval.dat
+    /// arg: --some,arguments,if,needed
+    /// 
+    /// note:
+    /// COMMAs between `"`s are not be ignored yet...
+    /// "a,b" will be `"a` and `b"`...
     pub fn read(&mut self, path : &std::path::PathBuf) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
@@ -215,7 +220,7 @@ impl RuversiRunner {
     /// arg: --depth,7,--silent
     /// 
     /// note:
-    /// COMMAs between `"`s are not be escaped yet...
+    /// COMMAs between `"`s are not be ignored yet...
     /// "a,b" will be `"a` and `b"`...
     pub fn read(&mut self, path : &str) -> Result<(), String> {
         let file = File::open(path);
@@ -351,6 +356,11 @@ impl CassioRunner {
     /// curdir: ~/ruversi/
     /// path: ./bin/ruversi
     /// evfile: ./data/eval.dat
+    /// arg: --some,arguments,if,needed
+    /// 
+    /// note:
+    /// COMMAs between `"`s are not be ignored yet...
+    /// "a,b" will be `"a` and `b"`...
     pub fn read(&mut self, path : &str) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
