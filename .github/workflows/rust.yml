@@ -45,8 +45,8 @@ jobs:
       run: cat /proc/cpuinfo
     - name: Run avx
       continue-on-error: true # とにかくログを保存するとこまで行きたい
-      id: releaseruna
-      run: cargo run --release --features=avx,withtt -- --genkifu ${{ matrix.kifu }} --depth 9
+      id: releaserun
+      run: cargo run --release --features=mate1,avx,withtt -- --genkifu ${{ matrix.kifu }} --depth 9
     - name: Set current datetime as env variable
       env:
         TZ: 'Asia/Tokyo' # タイムゾーン指定

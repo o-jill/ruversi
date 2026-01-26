@@ -35,7 +35,7 @@ jobs:
     - name: Run tests
       continue-on-error: true # とにかく最後まで行きたい
       id: rutest
-      run: cargo test --features=avx,withtt --verbose
+      run: cargo test --features=mate1,avx,withtt --verbose
     - name: check error run build
       if: ${{ steps.rubuild.outcome == 'failure' }}
       run: |
@@ -50,24 +50,28 @@ jobs:
       run: cargo bench
     - name: Speed check search
       run: ruby ./tools/runspeedcheck.rb search
+      env:
+        FEATURES: '--features=mate1'
     - name: Speed check game
       run: ruby ./tools/runspeedcheck.rb game
+      env:
+        FEATURES: '--features=mate1'
     - name: Speed check search avx
       run: ruby ./tools/runspeedcheck.rb search
       env:
-        FEATURES: '--features=avx'
+        FEATURES: '--features=mate1,avx'
     - name: Speed check game avx
       run: ruby ./tools/runspeedcheck.rb game
       env:
-        FEATURES: '--features=avx'
+        FEATURES: '--features=mate1,avx'
     - name: Speed check search avx tt
       run: ruby ./tools/runspeedcheck.rb search
       env:
-        FEATURES: '--features=avx,withtt'
+        FEATURES: '--features=mate1,avx,withtt'
     - name: Speed check game avx tt
       run: ruby ./tools/runspeedcheck.rb game
       env:
-        FEATURES: '--features=avx,withtt'
+        FEATURES: '--features=mate1,avx,withtt'
     - name: check error run clippy
       if: ${{ steps.ruclippy.outcome == 'failure' }}
       run: |
@@ -111,16 +115,20 @@ jobs:
       run: cargo bench
     - name: Speed check search
       run: ruby ./tools/runspeedcheck.rb search
+      env:
+        FEATURES: '--features=mate1'
     - name: Speed check game
       run: ruby ./tools/runspeedcheck.rb game
+      env:
+        FEATURES: '--features=mate1'
     - name: Speed check search tt
       run: ruby ./tools/runspeedcheck.rb search
       env:
-        FEATURES: '--features=withtt'
+        FEATURES: '--features=mate1,withtt'
     - name: Speed check game tt
       run: ruby ./tools/runspeedcheck.rb game
       env:
-        FEATURES: '--features=withtt'
+        FEATURES: '--features=mate1,withtt'
 
   build_mac:
     runs-on: macos-latest
@@ -152,16 +160,20 @@ jobs:
       run: cargo bench
     - name: Speed check search
       run: ruby ./tools/runspeedcheck.rb search
+      env:
+        FEATURES: '--features=mate1'
     - name: Speed check game
       run: ruby ./tools/runspeedcheck.rb game
+      env:
+        FEATURES: '--features=mate1'
     - name: Speed check search tt
       run: ruby ./tools/runspeedcheck.rb search
       env:
-        FEATURES: '--features=withtt'
+        FEATURES: '--features=mate1,withtt'
     - name: Speed check game tt
       run: ruby ./tools/runspeedcheck.rb game
       env:
-        FEATURES: '--features=withtt'
+        FEATURES: '--features=mate1,withtt'
     - name: check error run clippy
       if: ${{ steps.ruclippy.outcome == 'failure' }}
       run: |

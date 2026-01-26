@@ -966,7 +966,7 @@ impl GameBB {
             let st = Instant::now();
             let val = f(&self.ban, depth, &mut node, wei, tt).unwrap();
             let ft = st.elapsed();
-            if self.is_verbose() {
+            if self.not_silent() {
                 println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
             }
             let best = node.best.as_ref().unwrap();

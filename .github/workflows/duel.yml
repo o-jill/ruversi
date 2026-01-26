@@ -26,7 +26,7 @@ jobs:
     - name: Run duel
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel
-      run: cargo run --release --features=avx,withtt -- --duel 7 --ev1 data/evaltable.txt --ev2 data/evaltable.txt.old --depth 7 --verbose | tee > kifu/log.txt
+      run: cargo run --release --features=mate1,avx,withtt -- --duel 7 --ev1 data/evaltable.txt --ev2 data/evaltable.txt.old --depth 7 --verbose | tee > kifu/log.txt
     - name: duel result
       continue-on-error: true # とにかくログを保存するとこまで行きたい
       id: duel-result
