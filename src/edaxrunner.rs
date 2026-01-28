@@ -13,13 +13,14 @@ pub struct EdaxRunner {
     obfpath : String,
     curdir : String,
     path : String,
-    evfile : String
+    evfile : String,
+    args : Vec<String>,
 }
 
 impl std::fmt::Display for EdaxRunner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "obf:{}, curdir:{}, edax:{}, evfile:{}",
-               self.obfpath, self.curdir, self.path, self.evfile)
+        write!(f, "obf:{}, curdir:{}, edax:{}, evfile:{}, args:{:?}",
+               self.obfpath, self.curdir, self.path, self.evfile, self.args)
     }
 }
 
@@ -34,7 +35,8 @@ impl EdaxRunner {
             },
             curdir: String::from(CD),
             path: String::from(EDAXPATH),
-            evfile: String::from(EVFILE)
+            evfile: String::from(EVFILE),
+            args: Vec::new(),
         }
     }
 
@@ -71,6 +73,11 @@ impl EdaxRunner {
     /// curdir: ~/edax/
     /// edax: ./bin/edax
     /// evfile: ./data/eval.dat
+    /// arg: --some,arguments,if,needed
+    /// 
+    /// note:
+    /// COMMAs between `"`s are not be ignored yet...
+    /// "a,b" will be `"a` and `b"`...
     pub fn read(&mut self, path : &std::path::PathBuf) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
@@ -88,6 +95,10 @@ impl EdaxRunner {
                         self.path = String::from(ed.trim());
                     } else if let Some(evf) = l.strip_prefix("evfile::") {
                         self.evfile = String::from(evf.trim());
+                    } else if let Some(args) = l.strip_prefix("args:") {
+                        self.args =
+                            args.trim().split(",")
+                                .map(|s| s.trim().to_string()).collect::<Vec<_>>();
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -115,7 +126,7 @@ impl EdaxRunner {
          std::env::set_current_dir(&self.curdir).unwrap();
         let mut cmd = Command::new(&self.path);
         cmd.arg("--solve").arg(&self.obfpath)
-            .arg("--eval-file").arg(&self.evfile)
+            .arg("--eval-file").arg(&self.evfile).args(&self.args)
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
         // eprintln!("cmd:{cmd:?}");
@@ -163,12 +174,13 @@ pub struct RuversiRunner {
     path : String,
     evfile : String,
     verbose : bool,
+    args : Vec<String>,
 }
 
 impl std::fmt::Display for RuversiRunner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "curdir:{}, ruversi:{}, evfile:{}",
-               self.curdir, self.path, self.evfile)
+        write!(f, "curdir:{}, ruversi:{}, evfile:{}, args:{:?}",
+               self.curdir, self.path, self.evfile, self.args)
     }
 }
 
@@ -179,6 +191,7 @@ impl RuversiRunner {
             path : String::from("./target/release/ruversi"),
             evfile : String::from("data/evaltable.txt"),
             verbose : true,
+            args : Vec::new(),
         }
     }
 
@@ -204,6 +217,11 @@ impl RuversiRunner {
     /// curdir: ~/ruversi/
     /// path: ./bin/ruversi
     /// evfile: ./data/eval.dat
+    /// arg: --depth,7,--silent
+    /// 
+    /// note:
+    /// COMMAs between `"`s are not be ignored yet...
+    /// "a,b" will be `"a` and `b"`...
     pub fn read(&mut self, path : &str) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
@@ -217,8 +235,12 @@ impl RuversiRunner {
                         self.curdir = String::from(cd.trim());
                     } else if let Some(ed) = l.strip_prefix("path:") {
                         self.path = String::from(ed.trim());
-                    } else if let Some(evf) = l.strip_prefix("evfile::") {
+                    } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
+                    } else if let Some(args) = l.strip_prefix("args:") {
+                        self.args =
+                            args.trim().split(",")
+                                .map(|s| s.trim().to_string()).collect::<Vec<_>>();
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -231,6 +253,7 @@ impl RuversiRunner {
         std::env::set_current_dir(&self.curdir).unwrap();
         let mut cmd = Command::new(&self.path);
         cmd.arg("--rfen").arg(rfen).arg("--ev1").arg(&self.evfile)
+            .args(&self.args)
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
         if self.verbose {eprintln!("cmd:{cmd:?}");}
@@ -289,13 +312,14 @@ pub struct CassioRunner {
     path : String,
     evfile : String,
     cas : String,
+    args : Vec<String>,
     // verbose : bool,
 }
 
 impl Display for CassioRunner {
     fn fmt(&self, f : &mut Formatter) -> fmt::Result {
-        write!(f, "curdir:{}, path:{}, evfile:{}, cassio:{}",
-                self.curdir, self.path, self.evfile, self.cas)
+        write!(f, "curdir:{}, path:{}, evfile:{}, cassio:{}, args:{:?}",
+                self.curdir, self.path, self.evfile, self.cas, self.args)
     }
 }
 
@@ -306,6 +330,7 @@ impl CassioRunner {
             path: String::from(EDAXPATH),
             evfile: String::from(EVFILE),
             cas: String::from("-cassio"),
+            args: Vec::new(),
         }
     }
 
@@ -331,6 +356,11 @@ impl CassioRunner {
     /// curdir: ~/ruversi/
     /// path: ./bin/ruversi
     /// evfile: ./data/eval.dat
+    /// arg: --some,arguments,if,needed
+    /// 
+    /// note:
+    /// COMMAs between `"`s are not be ignored yet...
+    /// "a,b" will be `"a` and `b"`...
     pub fn read(&mut self, path : &str) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
@@ -355,6 +385,10 @@ impl CassioRunner {
                     } else if let Some(cas) = l.strip_prefix("cas:") {
                         // println!("{l}");
                         self.cas = String::from(cas.trim());
+                    } else if let Some(args) = l.strip_prefix("args:") {
+                        self.args =
+                            args.trim().split(",")
+                                .map(|s| s.trim().to_string()).collect::<Vec<_>>();
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -367,7 +401,7 @@ impl CassioRunner {
         std::env::set_current_dir(&self.curdir).unwrap();
         let mut cmd = Command::new(&self.path);
         cmd.arg(&self.cas)
-            .arg("-eval-file").arg(&self.evfile)
+            .arg("-eval-file").arg(&self.evfile).args(&self.args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
@@ -566,7 +600,7 @@ evfile::/tmp/myevfile.dat
         let contents = "\
 curdir:/tmp/myruversi
 path:/tmp/myruversi_bin
-evfile::/tmp/myruversi_evfile.txt
+evfile:/tmp/myruversi_evfile.txt
 ";
         {
             let cp = config_path.clone();
