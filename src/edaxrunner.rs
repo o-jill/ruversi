@@ -95,10 +95,15 @@ impl EdaxRunner {
                         self.path = String::from(ed.trim());
                     } else if let Some(evf) = l.strip_prefix("evfile::") {
                         self.evfile = String::from(evf.trim());
-                    } else if let Some(args) = l.strip_prefix("args:") {
-                        self.args =
-                            args.trim().split(",")
-                                .map(|s| s.trim().to_string()).collect::<Vec<_>>();
+                    } else if let Some(args_txt) = l.strip_prefix("args:") {
+                        let args = args_txt.trim().split(",")
+                            .map(|s| s.trim().to_string()).collect::<Vec<_>>();
+                        for a in args.iter() {
+                            if a.is_empty() {
+                                return Err(format!("\"{args_txt}\" contains emty part!"));
+                            }
+                        }
+                        self.args = args;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -237,10 +242,15 @@ impl RuversiRunner {
                         self.path = String::from(ed.trim());
                     } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
-                    } else if let Some(args) = l.strip_prefix("args:") {
-                        self.args =
-                            args.trim().split(",")
-                                .map(|s| s.trim().to_string()).collect::<Vec<_>>();
+                    } else if let Some(args_txt) = l.strip_prefix("args:") {
+                        let args = args_txt.trim().split(",")
+                            .map(|s| s.trim().to_string()).collect::<Vec<_>>();
+                        for a in args.iter() {
+                            if a.is_empty() {
+                                return Err(format!("\"{args_txt}\" contains emty part!"));
+                            }
+                        }
+                        self.args = args;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -385,10 +395,15 @@ impl CassioRunner {
                     } else if let Some(cas) = l.strip_prefix("cas:") {
                         // println!("{l}");
                         self.cas = String::from(cas.trim());
-                    } else if let Some(args) = l.strip_prefix("args:") {
-                        self.args =
-                            args.trim().split(",")
-                                .map(|s| s.trim().to_string()).collect::<Vec<_>>();
+                    } else if let Some(args_txt) = l.strip_prefix("args:") {
+                        let args = args_txt.trim().split(",")
+                            .map(|s| s.trim().to_string()).collect::<Vec<_>>();
+                        for a in args.iter() {
+                            if a.is_empty() {
+                                return Err(format!("\"{args_txt}\" contains emty part!"));
+                            }
+                        }
+                        self.args = args;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
