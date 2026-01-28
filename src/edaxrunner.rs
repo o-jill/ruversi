@@ -209,9 +209,10 @@ impl RuversiRunner {
         self.verbose = verbose;
     }
 
-    pub fn from_config(path : &str) -> Result<RuversiRunner, String> {
+    pub fn from_config(path : &std::path::PathBuf)
+            -> Result<RuversiRunner, String> {
         let mut rr = RuversiRunner::new();
-        if path.is_empty() {
+        if path.as_os_str().is_empty() {
             return Ok(rr);
         }
 
@@ -232,7 +233,7 @@ impl RuversiRunner {
     /// note:
     /// COMMAs between `"`s are not be ignored yet...
     /// "a,b" will be `"a` and `b"`...
-    pub fn read(&mut self, path : &str) -> Result<(), String> {
+    pub fn read(&mut self, path : &std::path::PathBuf) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
 
@@ -250,12 +251,17 @@ impl RuversiRunner {
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
                         let args = args_txt.trim().split(",")
                             .map(|s| s.trim().to_string()).collect::<Vec<_>>();
-                        for a in args.iter() {
-                            if a.is_empty() {
-                                return Err(format!("\"{args_txt}\" contains empty part!"));
-                            }
-                        }
-                        self.args = args;
+                        self.args =
+                            if args.len() > 1 || !args[0].is_empty() {
+                                for (i, a) in args.iter().enumerate() {
+                                    if a.is_empty() {
+                                        return Err(format!("\"{args_txt}\" contains empty part @{i}! {args:?}"));
+                                    }
+                                }
+                                args
+                            } else  {
+                                Vec::new()
+                            };
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -353,9 +359,10 @@ impl CassioRunner {
     //     self.verbose = verbose;
     // }
 
-    pub fn from_config(path : &str) -> Result<CassioRunner, String> {
+    pub fn from_config(path : &std::path::PathBuf)
+            -> Result<CassioRunner, String> {
         let mut rr = CassioRunner::new();
-        if path.is_empty() {
+        if path.as_os_str().is_empty() {
             return Ok(rr);
         }
 
@@ -376,7 +383,7 @@ impl CassioRunner {
     /// note:
     /// COMMAs between `"`s are not be ignored yet...
     /// "a,b" will be `"a` and `b"`...
-    pub fn read(&mut self, path : &str) -> Result<(), String> {
+    pub fn read(&mut self, path : &std::path::PathBuf) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
 
@@ -403,12 +410,17 @@ impl CassioRunner {
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
                         let args = args_txt.trim().split(",")
                             .map(|s| s.trim().to_string()).collect::<Vec<_>>();
-                        for a in args.iter() {
-                            if a.is_empty() {
-                                return Err(format!("\"{args_txt}\" contains empty part!"));
-                            }
-                        }
-                        self.args = args;
+                        self.args =
+                            if args.len() > 1 || !args[0].is_empty() {
+                                for (i, a) in args.iter().enumerate() {
+                                    if a.is_empty() {
+                                        return Err(format!("\"{args_txt}\" contains empty part @{i}! {args:?}"));
+                                    }
+                                }
+                                args
+                            } else  {
+                                Vec::new()
+                            };
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -777,7 +789,7 @@ evfile:/tmp/myruversi_evfile.txt
             file.write_all(contents.as_bytes()).unwrap();
         }
         let mut rr = RuversiRunner::new();
-        let result = rr.read(config_path.to_str().unwrap());
+        let result = rr.read(&config_path);
         assert!(result.is_ok());
         assert_eq!(rr.curdir, "/tmp/myruversi");
         assert_eq!(rr.path, "/tmp/myruversi_bin");
@@ -786,17 +798,155 @@ evfile:/tmp/myruversi_evfile.txt
     }
 
     #[test]
+    fn test_ruversirunner_read_config_file_empty_arg1() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner_config_arg1.txt");
+        let contents = "\
+curdir:/tmp/myruversi
+path:/tmp/myruversi_bin
+evfile:/tmp/myruversi_evfile.txt
+args:a,b,c,
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut rr = RuversiRunner::new();
+        let result = rr.read(&config_path);
+        assert_eq!(result, Err("\"a,b,c,\" contains empty part @3! [\"a\", \"b\", \"c\", \"\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_ruversirunner_read_config_file_empty_arg2() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner_config_arg2.txt");
+        let contents = "\
+curdir:/tmp/myruversi
+path:/tmp/myruversi_bin
+evfile:/tmp/myruversi_evfile.txt
+args:a,b,,c
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = RuversiRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Err("\"a,b,,c\" contains empty part @2! [\"a\", \"b\", \"\", \"c\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_ruversirunner_read_config_file_empty_arg3() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空白だけでもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner_config_arg3.txt");
+        let contents = "\
+curdir:/tmp/myruversi
+path:/tmp/myruversi_bin
+evfile:/tmp/myruversi_evfile.txt
+args:  
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = RuversiRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(er.curdir, "/tmp/myruversi");
+        assert_eq!(er.path, "/tmp/myruversi_bin");
+        assert_eq!(er.evfile, "/tmp/myruversi_evfile.txt");
+        assert!(er.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_ruversirunner_read_config_file_empty_arg4() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空でもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner_config_arg4.txt");
+        let contents = "\
+curdir:/tmp/myruversi
+path:/tmp/myruversi_bin
+evfile:/tmp/myruversi_evfile.txt
+args:
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = RuversiRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(er.curdir, "/tmp/myruversi");
+        assert_eq!(er.path, "/tmp/myruversi_bin");
+        assert_eq!(er.evfile, "/tmp/myruversi_evfile.txt");
+        assert!(er.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
     fn test_ruversirunner_read_config_file_not_found() {
         // 存在しないファイルを指定した場合、Errが返ることを確認
         let mut rr = RuversiRunner::new();
-        let result = rr.read("/tmp/no_such_ruversi_config.txt");
+        let result = rr.read(
+            &std::path::PathBuf::from("/tmp/no_such_ruversi_config.txt"));
         assert!(result.is_err());
     }
 
     #[test]
     fn test_ruversirunner_from_config_empty() {
         // from_config("") でデフォルト値
-        let rr = RuversiRunner::from_config("").unwrap();
+        let rr = RuversiRunner::from_config(
+            &std::path::PathBuf::from("")).unwrap();
         assert_eq!(rr.curdir, "../ruversi2");
     }
 
@@ -812,8 +962,7 @@ evfile:/tmp/myruversi_evfile.txt
             let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
-        let rr = RuversiRunner::from_config(
-                config_path.to_str().unwrap()).unwrap();
+        let rr = RuversiRunner::from_config(&config_path).unwrap();
         assert_eq!(rr.curdir, "/tmp/abc");
         fs::remove_file(config_path).unwrap();
     }
@@ -857,7 +1006,7 @@ cas:--cassioX
             file.write_all(contents.as_bytes()).unwrap();
         }
         let mut cr = CassioRunner::new();
-        let result = cr.read(config_path.to_str().unwrap());
+        let result = cr.read(&config_path);
         assert!(result.is_ok());
         assert_eq!(cr.curdir, "/tmp/mycassio");
         assert_eq!(cr.path, "/tmp/mycassio_path");
@@ -870,14 +1019,16 @@ cas:--cassioX
     fn test_cassiorunner_read_config_file_not_found() {
         // 存在しないファイルを指定した場合、Errが返ることを確認
         let mut cr = CassioRunner::new();
-        let result = cr.read("/tmp/no_such_cassio_config.txt");
+        let result = cr.read(
+            &std::path::PathBuf::from("/tmp/no_such_cassio_config.txt"));
         assert!(result.is_err());
     }
 
     #[test]
     fn test_cassiorunner_from_config_empty() {
         // from_config("") でデフォルト値
-        let cr = CassioRunner::from_config("").unwrap();
+        let cr = CassioRunner::from_config(
+            &std::path::PathBuf::from("")).unwrap();
         assert_eq!(cr.curdir, "../../edax-reversi/");
     }
 
@@ -893,8 +1044,7 @@ cas:--cassioX
             let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
-        let cr = CassioRunner::from_config(
-                config_path.to_str().unwrap()).unwrap();
+        let cr = CassioRunner::from_config(&config_path).unwrap();
         assert_eq!(cr.cas, "--abc");
         fs::remove_file(config_path).unwrap();
     }

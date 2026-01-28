@@ -550,7 +550,8 @@ impl GameBB {
             -> Result<(), String> {
         let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
-        let mut rr = edaxrunner::RuversiRunner::from_config(econf)?;
+        let mut rr = edaxrunner::RuversiRunner::from_config(
+                &std::path::PathBuf::from(econf))?;
         rr.set_verbose(self.is_verbose());
         loop {
             // show
@@ -638,7 +639,8 @@ impl GameBB {
                 -> Result<(), String> {
         let mut tt = transptable::TranspositionTable::with_capacity(self.cachesize);
         let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
-        let er = edaxrunner::CassioRunner::from_config(cconf)?;
+        let er = edaxrunner::CassioRunner::from_config(
+                &std::path::PathBuf::from(cconf))?;
         let mut cassio =
             cassio::OthelloEngineProtocolServer::new1(er.run().unwrap());
         cassio.setturn(bitboard::SENTE);
