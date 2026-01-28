@@ -98,12 +98,17 @@ impl EdaxRunner {
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
                         let args = args_txt.trim().split(",")
                             .map(|s| s.trim().to_string()).collect::<Vec<_>>();
-                        for a in args.iter() {
-                            if a.is_empty() {
-                                return Err(format!("\"{args_txt}\" contains empty part!"));
-                            }
-                        }
-                        self.args = args;
+                        self.args =
+                            if args.len() > 1 || !args[0].is_empty() {
+                                for (i, a) in args.iter().enumerate() {
+                                    if a.is_empty() {
+                                        return Err(format!("\"{args_txt}\" contains empty part @{i}! {args:?}"));
+                                    }
+                                }
+                                args
+                            } else  {
+                                Vec::new()
+                            };
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -564,7 +569,7 @@ args:a,b,c,
         }
         let mut er = EdaxRunner::new();
         let result = er.read(&config_path);
-        assert_eq!(result, Err("\"a,b,c,\" contains empty part!".to_string()));
+        assert_eq!(result, Err("\"a,b,c,\" contains empty part @3! [\"a\", \"b\", \"c\", \"\"]".to_string()));
         fs::remove_file(config_path).unwrap();
     }
 
@@ -597,15 +602,15 @@ args:a,b,,c
         }
         let mut er = EdaxRunner::new();
         let result = er.read(&config_path);
-        assert_eq!(result, Err("\"a,b,,c\" contains empty part!".to_string()));
+        assert_eq!(result, Err("\"a,b,,c\" contains empty part @2! [\"a\", \"b\", \"\", \"c\"]".to_string()));
         fs::remove_file(config_path).unwrap();
     }
 
     #[test]
     fn test_edaxrunner_read_config_file_empty_arg3() {
         // 一時ファイルに設定を書き込み、
-        // read で値が読み込まれ、
-        // 空文字の引数が含まれているErrが返る事を確認
+        // read で値が読み込まれることを確認
+        // args:の後ろが空白だけでもエラーに鳴らないことの確認
         let tmp = std::env::temp_dir();
         let config_path =
                 tmp.join("test_edaxrunner_config_arg3.txt");
@@ -615,6 +620,44 @@ curdir:/tmp/myedax
 edax:/tmp/ledax
 evfile::/tmp/myevfile.dat
 args:  
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = EdaxRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(er.obfpath, "/tmp/myobf.obf");
+        assert_eq!(er.curdir, "/tmp/myedax");
+        assert_eq!(er.path, "/tmp/ledax");
+        assert_eq!(er.evfile, "/tmp/myevfile.dat");
+        assert!(er.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_edaxrunner_read_config_file_empty_arg4() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空でもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner_config_arg4.txt");
+        let contents = "\
+obf:/tmp/myobf.obf
+curdir:/tmp/myedax
+edax:/tmp/ledax
+evfile::/tmp/myevfile.dat
+args:
 ";
 
         // 前のテストのファイルが残ってたら消す
