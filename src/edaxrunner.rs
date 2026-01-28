@@ -73,7 +73,7 @@ impl EdaxRunner {
     /// curdir: ~/edax/
     /// edax: ./bin/edax
     /// evfile: ./data/eval.dat
-    /// arg: --some,arguments,if,needed
+    /// args: --some,arguments,if,needed
     /// 
     /// note:
     /// COMMAs between `"`s are not be ignored yet...
@@ -217,7 +217,7 @@ impl RuversiRunner {
     /// curdir: ~/ruversi/
     /// path: ./bin/ruversi
     /// evfile: ./data/eval.dat
-    /// arg: --depth,7,--silent
+    /// args: --depth,7,--silent
     /// 
     /// note:
     /// COMMAs between `"`s are not be ignored yet...
@@ -356,7 +356,7 @@ impl CassioRunner {
     /// curdir: ~/ruversi/
     /// path: ./bin/ruversi
     /// evfile: ./data/eval.dat
-    /// arg: --some,arguments,if,needed
+    /// args: --some,arguments,if,needed
     /// 
     /// note:
     /// COMMAs between `"`s are not be ignored yet...
