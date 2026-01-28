@@ -86,7 +86,7 @@ impl EdaxRunner {
         let lines = BufReader::new(file);
         for line in lines.lines() {
             match line {
-                Ok(l) =>{
+                Ok(l) => {
                     if let Some(obf) = l.strip_prefix("obf:") {
                         self.obfpath = String::from(obf.trim());
                     } else if let Some(cd) = l.strip_prefix("curdir:") {
@@ -235,7 +235,7 @@ impl RuversiRunner {
         let lines = BufReader::new(file);
         for line in lines.lines() {
             match line {
-                Ok(l) =>{
+                Ok(l) => {
                     if let Some(cd) = l.strip_prefix("curdir:") {
                         self.curdir = String::from(cd.trim());
                     } else if let Some(ed) = l.strip_prefix("path:") {
@@ -379,7 +379,7 @@ impl CassioRunner {
         let lines = BufReader::new(file);
         for line in lines.lines() {
             match line {
-                Ok(l) =>{
+                Ok(l) => {
                     if let Some(cd) = l.strip_prefix("curdir:") {
                         // println!("{l}");
                         self.curdir = String::from(cd.trim());
