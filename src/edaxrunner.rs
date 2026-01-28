@@ -513,6 +513,13 @@ curdir:/tmp/myedax
 edax:/tmp/ledax
 evfile::/tmp/myevfile.dat
 ";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
         {
             let cp = config_path.clone();
             let mut file = File::create(cp).unwrap();
@@ -520,11 +527,115 @@ evfile::/tmp/myevfile.dat
         }
         let mut er = EdaxRunner::new();
         let result = er.read(&config_path);
-        assert!(result.is_ok());
+        assert_eq!(result, Ok(()));
         assert_eq!(er.obfpath, "/tmp/myobf.obf");
         assert_eq!(er.curdir, "/tmp/myedax");
         assert_eq!(er.path, "/tmp/ledax");
         assert_eq!(er.evfile, "/tmp/myevfile.dat");
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_edaxrunner_read_config_file_empty_arg1() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner_config_arg1.txt");
+        let contents = "\
+obf:/tmp/myobf.obf
+curdir:/tmp/myedax
+edax:/tmp/ledax
+evfile::/tmp/myevfile.dat
+args:a,b,c,
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = EdaxRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Err("\"a,b,c,\" contains empty part!".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_edaxrunner_read_config_file_empty_arg2() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner_config_arg2.txt");
+        let contents = "\
+obf:/tmp/myobf.obf
+curdir:/tmp/myedax
+edax:/tmp/ledax
+evfile::/tmp/myevfile.dat
+args:a,b,,c
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = EdaxRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Err("\"a,b,,c\" contains empty part!".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_edaxrunner_read_config_file_empty_arg3() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner_config_arg3.txt");
+        let contents = "\
+obf:/tmp/myobf.obf
+curdir:/tmp/myedax
+edax:/tmp/ledax
+evfile::/tmp/myevfile.dat
+args:  
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = EdaxRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(er.obfpath, "/tmp/myobf.obf");
+        assert_eq!(er.curdir, "/tmp/myedax");
+        assert_eq!(er.path, "/tmp/ledax");
+        assert_eq!(er.evfile, "/tmp/myevfile.dat");
+        assert!(er.args.is_empty());
         fs::remove_file(config_path).unwrap();
     }
 
