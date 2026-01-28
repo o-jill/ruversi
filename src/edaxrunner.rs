@@ -100,7 +100,7 @@ impl EdaxRunner {
                             .map(|s| s.trim().to_string()).collect::<Vec<_>>();
                         for a in args.iter() {
                             if a.is_empty() {
-                                return Err(format!("\"{args_txt}\" contains emty part!"));
+                                return Err(format!("\"{args_txt}\" contains empty part!"));
                             }
                         }
                         self.args = args;
@@ -247,7 +247,7 @@ impl RuversiRunner {
                             .map(|s| s.trim().to_string()).collect::<Vec<_>>();
                         for a in args.iter() {
                             if a.is_empty() {
-                                return Err(format!("\"{args_txt}\" contains emty part!"));
+                                return Err(format!("\"{args_txt}\" contains empty part!"));
                             }
                         }
                         self.args = args;
@@ -400,7 +400,7 @@ impl CassioRunner {
                             .map(|s| s.trim().to_string()).collect::<Vec<_>>();
                         for a in args.iter() {
                             if a.is_empty() {
-                                return Err(format!("\"{args_txt}\" contains emty part!"));
+                                return Err(format!("\"{args_txt}\" contains empty part!"));
                             }
                         }
                         self.args = args;
