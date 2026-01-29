@@ -1016,6 +1016,148 @@ cas:--cassioX
     }
 
     #[test]
+    fn test_cassiorunner_read_config_file_empty_arg1() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner_config_arg1.txt");
+        let contents = "\
+curdir:/tmp/mycassio
+path:/tmp/mycassio_path
+evfile:/tmp/mycassio_evfile.txt
+cas:--cassioX
+args:a,b,c,
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut rr = CassioRunner::new();
+        let result = rr.read(&config_path);
+        assert_eq!(result, Err("\"a,b,c,\" contains empty part @3! [\"a\", \"b\", \"c\", \"\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_cassiorunner_read_config_file_empty_arg2() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner_config_arg2.txt");
+        let contents = "\
+curdir:/tmp/mycassio
+path:/tmp/mycassio_path
+evfile:/tmp/mycassio_evfile.txt
+cas:--cassioX
+args:a,b,,c
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut cr = CassioRunner::new();
+        let result = cr.read(&config_path);
+        assert_eq!(result, Err("\"a,b,,c\" contains empty part @2! [\"a\", \"b\", \"\", \"c\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_cassiorunner_read_config_file_empty_arg3() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空白だけでもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner_config_arg3.txt");
+        let contents = "\
+curdir:/tmp/mycassio
+path:/tmp/mycassio_path
+evfile:/tmp/mycassio_evfile.txt
+cas:--cassioX
+args:  
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut cr = CassioRunner::new();
+        let result = cr.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(cr.curdir, "/tmp/mycassio");
+        assert_eq!(cr.path, "/tmp/mycassio_path");
+        assert_eq!(cr.evfile, "/tmp/mycassio_evfile.txt");
+        assert_eq!(cr.cas, "--cassioX");
+        assert!(cr.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_cassiorunner_read_config_file_empty_arg4() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空でもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner_config_arg4.txt");
+        let contents = "\
+curdir:/tmp/mycassio
+path:/tmp/mycassio_path
+evfile:/tmp/mycassio_evfile.txt
+cas:--cassioX
+args:
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut cr = CassioRunner::new();
+        let result = cr.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(cr.curdir, "/tmp/mycassio");
+        assert_eq!(cr.path, "/tmp/mycassio_path");
+        assert_eq!(cr.evfile, "/tmp/mycassio_evfile.txt");
+        assert_eq!(cr.cas, "--cassioX");
+        assert!(cr.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
     fn test_cassiorunner_read_config_file_not_found() {
         // 存在しないファイルを指定した場合、Errが返ることを確認
         let mut cr = CassioRunner::new();
