@@ -4,6 +4,32 @@ use std::io::{BufReader, BufRead, Write};
 use std::fmt::{Display, Formatter};
 use std::process::{Child, Command, Stdio};
 
+/**
+ * configファイルのargsタグを処理する。
+ * # Argumemts  
+ * - txt args:を含まない"arg:"の後ろに書いてある文字列。
+ * # Returns  
+ * - Ok(Vec<String>)  
+ *   引数に渡したい文字列の配列
+ * - Err(String>)  
+ *   処理エラーの内容
+ */
+fn parse_args_tag(txt : &str) -> Result<Vec<String>, String> {
+    let args = txt.trim().split(",")
+        .map(|s| s.trim().to_string()).collect::<Vec<_>>();
+    if args.len() > 1 || !args[0].is_empty() {
+        for (i, a) in args.iter().enumerate() {
+            if a.is_empty() {
+                return Err(
+                    format!("\"{txt}\" contains empty part @{i}! {args:?}"));
+            }
+        }
+        Ok(args)
+    } else  {
+        Ok(Vec::new())
+    }
+}
+
 const OBF : &str = "test.obf";
 const CD : &str = "../../edax-reversi/";
 const EDAXPATH : &str = "./bin/lEdax-x64-modern";
@@ -96,19 +122,7 @@ impl EdaxRunner {
                     } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
-                        let args = args_txt.trim().split(",")
-                            .map(|s| s.trim().to_string()).collect::<Vec<_>>();
-                        self.args =
-                            if args.len() > 1 || !args[0].is_empty() {
-                                for (i, a) in args.iter().enumerate() {
-                                    if a.is_empty() {
-                                        return Err(format!("\"{args_txt}\" contains empty part @{i}! {args:?}"));
-                                    }
-                                }
-                                args
-                            } else  {
-                                Vec::new()
-                            };
+                        self.args = parse_args_tag(&args_txt)?;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -249,19 +263,7 @@ impl RuversiRunner {
                     } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
-                        let args = args_txt.trim().split(",")
-                            .map(|s| s.trim().to_string()).collect::<Vec<_>>();
-                        self.args =
-                            if args.len() > 1 || !args[0].is_empty() {
-                                for (i, a) in args.iter().enumerate() {
-                                    if a.is_empty() {
-                                        return Err(format!("\"{args_txt}\" contains empty part @{i}! {args:?}"));
-                                    }
-                                }
-                                args
-                            } else  {
-                                Vec::new()
-                            };
+                        self.args = parse_args_tag(&args_txt)?;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -408,19 +410,7 @@ impl CassioRunner {
                         // println!("{l}");
                         self.cas = String::from(cas.trim());
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
-                        let args = args_txt.trim().split(",")
-                            .map(|s| s.trim().to_string()).collect::<Vec<_>>();
-                        self.args =
-                            if args.len() > 1 || !args[0].is_empty() {
-                                for (i, a) in args.iter().enumerate() {
-                                    if a.is_empty() {
-                                        return Err(format!("\"{args_txt}\" contains empty part @{i}! {args:?}"));
-                                    }
-                                }
-                                args
-                            } else  {
-                                Vec::new()
-                            };
+                        self.args = parse_args_tag(&args_txt)?;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
