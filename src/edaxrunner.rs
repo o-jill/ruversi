@@ -93,7 +93,7 @@ impl EdaxRunner {
                         self.curdir = String::from(cd.trim());
                     } else if let Some(ed) = l.strip_prefix("edax:") {
                         self.path = String::from(ed.trim());
-                    } else if let Some(evf) = l.strip_prefix("evfile::") {
+                    } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
                         let args = args_txt.trim().split(",")
@@ -528,7 +528,7 @@ mod tests {
 obf:/tmp/myobf.obf
 curdir:/tmp/myedax
 edax:/tmp/ledax
-evfile::/tmp/myevfile.dat
+evfile:/tmp/myevfile.dat
 ";
 
         // 前のテストのファイルが残ってたら消す
@@ -564,7 +564,7 @@ evfile::/tmp/myevfile.dat
 obf:/tmp/myobf.obf
 curdir:/tmp/myedax
 edax:/tmp/ledax
-evfile::/tmp/myevfile.dat
+evfile:/tmp/myevfile.dat
 args:a,b,c,
 ";
 
@@ -597,7 +597,7 @@ args:a,b,c,
 obf:/tmp/myobf.obf
 curdir:/tmp/myedax
 edax:/tmp/ledax
-evfile::/tmp/myevfile.dat
+evfile:/tmp/myevfile.dat
 args:a,b,,c
 ";
 
@@ -630,7 +630,7 @@ args:a,b,,c
 obf:/tmp/myobf.obf
 curdir:/tmp/myedax
 edax:/tmp/ledax
-evfile::/tmp/myevfile.dat
+evfile:/tmp/myevfile.dat
 args:  
 ";
 
@@ -668,7 +668,7 @@ args:
 obf:/tmp/myobf.obf
 curdir:/tmp/myedax
 edax:/tmp/ledax
-evfile::/tmp/myevfile.dat
+evfile:/tmp/myevfile.dat
 args:
 ";
 
