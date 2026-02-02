@@ -1080,9 +1080,9 @@ impl BitBoard {
             let newy = 7 - x;
             for y in 0..8 {
                 let newx = y;
-                let idx = BitBoard::index(x as usize, y as usize);
+                let idx = BitBoard::index(x, y);
                 let bit = LSB_CELL << idx;
-                let idx2 = BitBoard::index(newx as usize, newy as usize);
+                let idx2 = BitBoard::index(newx, newy);
                 let diff = idx2 as i32 - idx as i32;
                 if diff >= 0 {  // <<
                     black |= (bit & self.black) << diff;

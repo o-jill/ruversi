@@ -4,6 +4,32 @@ use std::io::{BufReader, BufRead, Write};
 use std::fmt::{Display, Formatter};
 use std::process::{Child, Command, Stdio};
 
+/**
+ * configファイルのargsタグを処理する。
+ * # Argumemts  
+ * - txt args:を含まない"arg:"の後ろに書いてある文字列。
+ * # Returns  
+ * - Ok(Vec<String>)  
+ *   引数に渡したい文字列の配列
+ * - Err(String>)  
+ *   処理エラーの内容
+ */
+fn parse_args_tag(txt : &str) -> Result<Vec<String>, String> {
+    let args = txt.trim().split(",")
+        .map(|s| s.trim().to_string()).collect::<Vec<_>>();
+    if args.len() > 1 || !args[0].is_empty() {
+        for (i, a) in args.iter().enumerate() {
+            if a.is_empty() {
+                return Err(
+                    format!("\"{txt}\" contains empty part @{i}! {args:?}"));
+            }
+        }
+        Ok(args)
+    } else  {
+        Ok(Vec::new())
+    }
+}
+
 const OBF : &str = "test.obf";
 const CD : &str = "../../edax-reversi/";
 const EDAXPATH : &str = "./bin/lEdax-x64-modern";
@@ -13,13 +39,14 @@ pub struct EdaxRunner {
     obfpath : String,
     curdir : String,
     path : String,
-    evfile : String
+    evfile : String,
+    args : Vec<String>,
 }
 
 impl std::fmt::Display for EdaxRunner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "obf:{}, curdir:{}, edax:{}, evfile:{}",
-               self.obfpath, self.curdir, self.path, self.evfile)
+        write!(f, "obf:{}, curdir:{}, edax:{}, evfile:{}, args:{:?}",
+               self.obfpath, self.curdir, self.path, self.evfile, self.args)
     }
 }
 
@@ -34,7 +61,8 @@ impl EdaxRunner {
             },
             curdir: String::from(CD),
             path: String::from(EDAXPATH),
-            evfile: String::from(EVFILE)
+            evfile: String::from(EVFILE),
+            args: Vec::new(),
         }
     }
 
@@ -71,6 +99,11 @@ impl EdaxRunner {
     /// curdir: ~/edax/
     /// edax: ./bin/edax
     /// evfile: ./data/eval.dat
+    /// args: --some,arguments,if,needed
+    /// 
+    /// note:
+    /// COMMAs between `"`s are not be ignored yet...
+    /// "a,b" will be `"a` and `b"`...
     pub fn read(&mut self, path : &std::path::PathBuf) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
@@ -79,15 +112,17 @@ impl EdaxRunner {
         let lines = BufReader::new(file);
         for line in lines.lines() {
             match line {
-                Ok(l) =>{
+                Ok(l) => {
                     if let Some(obf) = l.strip_prefix("obf:") {
                         self.obfpath = String::from(obf.trim());
                     } else if let Some(cd) = l.strip_prefix("curdir:") {
                         self.curdir = String::from(cd.trim());
                     } else if let Some(ed) = l.strip_prefix("edax:") {
                         self.path = String::from(ed.trim());
-                    } else if let Some(evf) = l.strip_prefix("evfile::") {
+                    } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
+                    } else if let Some(args_txt) = l.strip_prefix("args:") {
+                        self.args = parse_args_tag(&args_txt)?;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -115,7 +150,7 @@ impl EdaxRunner {
          std::env::set_current_dir(&self.curdir).unwrap();
         let mut cmd = Command::new(&self.path);
         cmd.arg("--solve").arg(&self.obfpath)
-            .arg("--eval-file").arg(&self.evfile)
+            .arg("--eval-file").arg(&self.evfile).args(&self.args)
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
         // eprintln!("cmd:{cmd:?}");
@@ -163,12 +198,13 @@ pub struct RuversiRunner {
     path : String,
     evfile : String,
     verbose : bool,
+    args : Vec<String>,
 }
 
 impl std::fmt::Display for RuversiRunner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "curdir:{}, ruversi:{}, evfile:{}",
-               self.curdir, self.path, self.evfile)
+        write!(f, "curdir:{}, ruversi:{}, evfile:{}, args:{:?}",
+               self.curdir, self.path, self.evfile, self.args)
     }
 }
 
@@ -179,6 +215,7 @@ impl RuversiRunner {
             path : String::from("./target/release/ruversi"),
             evfile : String::from("data/evaltable.txt"),
             verbose : true,
+            args : Vec::new(),
         }
     }
 
@@ -186,9 +223,10 @@ impl RuversiRunner {
         self.verbose = verbose;
     }
 
-    pub fn from_config(path : &str) -> Result<RuversiRunner, String> {
+    pub fn from_config(path : &std::path::PathBuf)
+            -> Result<RuversiRunner, String> {
         let mut rr = RuversiRunner::new();
-        if path.is_empty() {
+        if path.as_os_str().is_empty() {
             return Ok(rr);
         }
 
@@ -204,7 +242,12 @@ impl RuversiRunner {
     /// curdir: ~/ruversi/
     /// path: ./bin/ruversi
     /// evfile: ./data/eval.dat
-    pub fn read(&mut self, path : &str) -> Result<(), String> {
+    /// args: --depth,7,--silent
+    /// 
+    /// note:
+    /// COMMAs between `"`s are not be ignored yet...
+    /// "a,b" will be `"a` and `b"`...
+    pub fn read(&mut self, path : &std::path::PathBuf) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
 
@@ -212,13 +255,15 @@ impl RuversiRunner {
         let lines = BufReader::new(file);
         for line in lines.lines() {
             match line {
-                Ok(l) =>{
+                Ok(l) => {
                     if let Some(cd) = l.strip_prefix("curdir:") {
                         self.curdir = String::from(cd.trim());
                     } else if let Some(ed) = l.strip_prefix("path:") {
                         self.path = String::from(ed.trim());
-                    } else if let Some(evf) = l.strip_prefix("evfile::") {
+                    } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
+                    } else if let Some(args_txt) = l.strip_prefix("args:") {
+                        self.args = parse_args_tag(&args_txt)?;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -231,6 +276,7 @@ impl RuversiRunner {
         std::env::set_current_dir(&self.curdir).unwrap();
         let mut cmd = Command::new(&self.path);
         cmd.arg("--rfen").arg(rfen).arg("--ev1").arg(&self.evfile)
+            .args(&self.args)
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
         if self.verbose {eprintln!("cmd:{cmd:?}");}
@@ -289,13 +335,14 @@ pub struct CassioRunner {
     path : String,
     evfile : String,
     cas : String,
+    args : Vec<String>,
     // verbose : bool,
 }
 
 impl Display for CassioRunner {
     fn fmt(&self, f : &mut Formatter) -> fmt::Result {
-        write!(f, "curdir:{}, path:{}, evfile:{}, cassio:{}",
-                self.curdir, self.path, self.evfile, self.cas)
+        write!(f, "curdir:{}, path:{}, evfile:{}, cassio:{}, args:{:?}",
+                self.curdir, self.path, self.evfile, self.cas, self.args)
     }
 }
 
@@ -306,6 +353,7 @@ impl CassioRunner {
             path: String::from(EDAXPATH),
             evfile: String::from(EVFILE),
             cas: String::from("-cassio"),
+            args: Vec::new(),
         }
     }
 
@@ -313,9 +361,10 @@ impl CassioRunner {
     //     self.verbose = verbose;
     // }
 
-    pub fn from_config(path : &str) -> Result<CassioRunner, String> {
+    pub fn from_config(path : &std::path::PathBuf)
+            -> Result<CassioRunner, String> {
         let mut rr = CassioRunner::new();
-        if path.is_empty() {
+        if path.as_os_str().is_empty() {
             return Ok(rr);
         }
 
@@ -331,7 +380,12 @@ impl CassioRunner {
     /// curdir: ~/ruversi/
     /// path: ./bin/ruversi
     /// evfile: ./data/eval.dat
-    pub fn read(&mut self, path : &str) -> Result<(), String> {
+    /// args: --some,arguments,if,needed
+    /// 
+    /// note:
+    /// COMMAs between `"`s are not be ignored yet...
+    /// "a,b" will be `"a` and `b"`...
+    pub fn read(&mut self, path : &std::path::PathBuf) -> Result<(), String> {
         let file = File::open(path);
         if file.is_err() {return Err(file.err().unwrap().to_string());}
 
@@ -339,7 +393,7 @@ impl CassioRunner {
         let lines = BufReader::new(file);
         for line in lines.lines() {
             match line {
-                Ok(l) =>{
+                Ok(l) => {
                     if let Some(cd) = l.strip_prefix("curdir:") {
                         // println!("{l}");
                         self.curdir = String::from(cd.trim());
@@ -355,6 +409,8 @@ impl CassioRunner {
                     } else if let Some(cas) = l.strip_prefix("cas:") {
                         // println!("{l}");
                         self.cas = String::from(cas.trim());
+                    } else if let Some(args_txt) = l.strip_prefix("args:") {
+                        self.args = parse_args_tag(&args_txt)?;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -367,7 +423,7 @@ impl CassioRunner {
         std::env::set_current_dir(&self.curdir).unwrap();
         let mut cmd = Command::new(&self.path);
         cmd.arg(&self.cas)
-            .arg("-eval-file").arg(&self.evfile)
+            .arg("-eval-file").arg(&self.evfile).args(&self.args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
@@ -462,8 +518,15 @@ mod tests {
 obf:/tmp/myobf.obf
 curdir:/tmp/myedax
 edax:/tmp/ledax
-evfile::/tmp/myevfile.dat
+evfile:/tmp/myevfile.dat
 ";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
         {
             let cp = config_path.clone();
             let mut file = File::create(cp).unwrap();
@@ -471,11 +534,153 @@ evfile::/tmp/myevfile.dat
         }
         let mut er = EdaxRunner::new();
         let result = er.read(&config_path);
-        assert!(result.is_ok());
+        assert_eq!(result, Ok(()));
         assert_eq!(er.obfpath, "/tmp/myobf.obf");
         assert_eq!(er.curdir, "/tmp/myedax");
         assert_eq!(er.path, "/tmp/ledax");
         assert_eq!(er.evfile, "/tmp/myevfile.dat");
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_edaxrunner_read_config_file_empty_arg1() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner_config_arg1.txt");
+        let contents = "\
+obf:/tmp/myobf.obf
+curdir:/tmp/myedax
+edax:/tmp/ledax
+evfile:/tmp/myevfile.dat
+args:a,b,c,
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = EdaxRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Err("\"a,b,c,\" contains empty part @3! [\"a\", \"b\", \"c\", \"\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_edaxrunner_read_config_file_empty_arg2() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner_config_arg2.txt");
+        let contents = "\
+obf:/tmp/myobf.obf
+curdir:/tmp/myedax
+edax:/tmp/ledax
+evfile:/tmp/myevfile.dat
+args:a,b,,c
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = EdaxRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Err("\"a,b,,c\" contains empty part @2! [\"a\", \"b\", \"\", \"c\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_edaxrunner_read_config_file_empty_arg3() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空白だけでもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner_config_arg3.txt");
+        let contents = "\
+obf:/tmp/myobf.obf
+curdir:/tmp/myedax
+edax:/tmp/ledax
+evfile:/tmp/myevfile.dat
+args:  
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = EdaxRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(er.obfpath, "/tmp/myobf.obf");
+        assert_eq!(er.curdir, "/tmp/myedax");
+        assert_eq!(er.path, "/tmp/ledax");
+        assert_eq!(er.evfile, "/tmp/myevfile.dat");
+        assert!(er.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_edaxrunner_read_config_file_empty_arg4() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空でもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_edaxrunner_config_arg4.txt");
+        let contents = "\
+obf:/tmp/myobf.obf
+curdir:/tmp/myedax
+edax:/tmp/ledax
+evfile:/tmp/myevfile.dat
+args:
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = EdaxRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(er.obfpath, "/tmp/myobf.obf");
+        assert_eq!(er.curdir, "/tmp/myedax");
+        assert_eq!(er.path, "/tmp/ledax");
+        assert_eq!(er.evfile, "/tmp/myevfile.dat");
+        assert!(er.args.is_empty());
         fs::remove_file(config_path).unwrap();
     }
 
@@ -566,7 +771,7 @@ evfile::/tmp/myevfile.dat
         let contents = "\
 curdir:/tmp/myruversi
 path:/tmp/myruversi_bin
-evfile::/tmp/myruversi_evfile.txt
+evfile:/tmp/myruversi_evfile.txt
 ";
         {
             let cp = config_path.clone();
@@ -574,7 +779,7 @@ evfile::/tmp/myruversi_evfile.txt
             file.write_all(contents.as_bytes()).unwrap();
         }
         let mut rr = RuversiRunner::new();
-        let result = rr.read(config_path.to_str().unwrap());
+        let result = rr.read(&config_path);
         assert!(result.is_ok());
         assert_eq!(rr.curdir, "/tmp/myruversi");
         assert_eq!(rr.path, "/tmp/myruversi_bin");
@@ -583,17 +788,155 @@ evfile::/tmp/myruversi_evfile.txt
     }
 
     #[test]
+    fn test_ruversirunner_read_config_file_empty_arg1() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner_config_arg1.txt");
+        let contents = "\
+curdir:/tmp/myruversi
+path:/tmp/myruversi_bin
+evfile:/tmp/myruversi_evfile.txt
+args:a,b,c,
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut rr = RuversiRunner::new();
+        let result = rr.read(&config_path);
+        assert_eq!(result, Err("\"a,b,c,\" contains empty part @3! [\"a\", \"b\", \"c\", \"\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_ruversirunner_read_config_file_empty_arg2() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner_config_arg2.txt");
+        let contents = "\
+curdir:/tmp/myruversi
+path:/tmp/myruversi_bin
+evfile:/tmp/myruversi_evfile.txt
+args:a,b,,c
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = RuversiRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Err("\"a,b,,c\" contains empty part @2! [\"a\", \"b\", \"\", \"c\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_ruversirunner_read_config_file_empty_arg3() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空白だけでもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner_config_arg3.txt");
+        let contents = "\
+curdir:/tmp/myruversi
+path:/tmp/myruversi_bin
+evfile:/tmp/myruversi_evfile.txt
+args:  
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = RuversiRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(er.curdir, "/tmp/myruversi");
+        assert_eq!(er.path, "/tmp/myruversi_bin");
+        assert_eq!(er.evfile, "/tmp/myruversi_evfile.txt");
+        assert!(er.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_ruversirunner_read_config_file_empty_arg4() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空でもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_ruversirunner_config_arg4.txt");
+        let contents = "\
+curdir:/tmp/myruversi
+path:/tmp/myruversi_bin
+evfile:/tmp/myruversi_evfile.txt
+args:
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut er = RuversiRunner::new();
+        let result = er.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(er.curdir, "/tmp/myruversi");
+        assert_eq!(er.path, "/tmp/myruversi_bin");
+        assert_eq!(er.evfile, "/tmp/myruversi_evfile.txt");
+        assert!(er.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
     fn test_ruversirunner_read_config_file_not_found() {
         // 存在しないファイルを指定した場合、Errが返ることを確認
         let mut rr = RuversiRunner::new();
-        let result = rr.read("/tmp/no_such_ruversi_config.txt");
+        let result = rr.read(
+            &std::path::PathBuf::from("/tmp/no_such_ruversi_config.txt"));
         assert!(result.is_err());
     }
 
     #[test]
     fn test_ruversirunner_from_config_empty() {
         // from_config("") でデフォルト値
-        let rr = RuversiRunner::from_config("").unwrap();
+        let rr = RuversiRunner::from_config(
+            &std::path::PathBuf::from("")).unwrap();
         assert_eq!(rr.curdir, "../ruversi2");
     }
 
@@ -609,8 +952,7 @@ evfile::/tmp/myruversi_evfile.txt
             let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
-        let rr = RuversiRunner::from_config(
-                config_path.to_str().unwrap()).unwrap();
+        let rr = RuversiRunner::from_config(&config_path).unwrap();
         assert_eq!(rr.curdir, "/tmp/abc");
         fs::remove_file(config_path).unwrap();
     }
@@ -654,7 +996,7 @@ cas:--cassioX
             file.write_all(contents.as_bytes()).unwrap();
         }
         let mut cr = CassioRunner::new();
-        let result = cr.read(config_path.to_str().unwrap());
+        let result = cr.read(&config_path);
         assert!(result.is_ok());
         assert_eq!(cr.curdir, "/tmp/mycassio");
         assert_eq!(cr.path, "/tmp/mycassio_path");
@@ -664,17 +1006,161 @@ cas:--cassioX
     }
 
     #[test]
+    fn test_cassiorunner_read_config_file_empty_arg1() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner_config_arg1.txt");
+        let contents = "\
+curdir:/tmp/mycassio
+path:/tmp/mycassio_path
+evfile:/tmp/mycassio_evfile.txt
+cas:--cassioX
+args:a,b,c,
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut rr = CassioRunner::new();
+        let result = rr.read(&config_path);
+        assert_eq!(result, Err("\"a,b,c,\" contains empty part @3! [\"a\", \"b\", \"c\", \"\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_cassiorunner_read_config_file_empty_arg2() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれ、
+        // 空文字の引数が含まれているErrが返る事を確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner_config_arg2.txt");
+        let contents = "\
+curdir:/tmp/mycassio
+path:/tmp/mycassio_path
+evfile:/tmp/mycassio_evfile.txt
+cas:--cassioX
+args:a,b,,c
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut cr = CassioRunner::new();
+        let result = cr.read(&config_path);
+        assert_eq!(result, Err("\"a,b,,c\" contains empty part @2! [\"a\", \"b\", \"\", \"c\"]".to_string()));
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_cassiorunner_read_config_file_empty_arg3() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空白だけでもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner_config_arg3.txt");
+        let contents = "\
+curdir:/tmp/mycassio
+path:/tmp/mycassio_path
+evfile:/tmp/mycassio_evfile.txt
+cas:--cassioX
+args:  
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut cr = CassioRunner::new();
+        let result = cr.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(cr.curdir, "/tmp/mycassio");
+        assert_eq!(cr.path, "/tmp/mycassio_path");
+        assert_eq!(cr.evfile, "/tmp/mycassio_evfile.txt");
+        assert_eq!(cr.cas, "--cassioX");
+        assert!(cr.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_cassiorunner_read_config_file_empty_arg4() {
+        // 一時ファイルに設定を書き込み、
+        // read で値が読み込まれることを確認
+        // args:の後ろが空でもエラーに鳴らないことの確認
+        let tmp = std::env::temp_dir();
+        let config_path =
+                tmp.join("test_cassiorunner_config_arg4.txt");
+        let contents = "\
+curdir:/tmp/mycassio
+path:/tmp/mycassio_path
+evfile:/tmp/mycassio_evfile.txt
+cas:--cassioX
+args:
+";
+
+        // 前のテストのファイルが残ってたら消す
+        if config_path.exists() {
+            println!("removed config file for test.");
+            fs::remove_file(&config_path).unwrap();
+        }
+
+        {
+            let cp = config_path.clone();
+            let mut file = File::create(cp).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        let mut cr = CassioRunner::new();
+        let result = cr.read(&config_path);
+        assert_eq!(result, Ok(()));
+        assert_eq!(cr.curdir, "/tmp/mycassio");
+        assert_eq!(cr.path, "/tmp/mycassio_path");
+        assert_eq!(cr.evfile, "/tmp/mycassio_evfile.txt");
+        assert_eq!(cr.cas, "--cassioX");
+        assert!(cr.args.is_empty());
+        fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
     fn test_cassiorunner_read_config_file_not_found() {
         // 存在しないファイルを指定した場合、Errが返ることを確認
         let mut cr = CassioRunner::new();
-        let result = cr.read("/tmp/no_such_cassio_config.txt");
+        let result = cr.read(
+            &std::path::PathBuf::from("/tmp/no_such_cassio_config.txt"));
         assert!(result.is_err());
     }
 
     #[test]
     fn test_cassiorunner_from_config_empty() {
         // from_config("") でデフォルト値
-        let cr = CassioRunner::from_config("").unwrap();
+        let cr = CassioRunner::from_config(
+            &std::path::PathBuf::from("")).unwrap();
         assert_eq!(cr.curdir, "../../edax-reversi/");
     }
 
@@ -690,8 +1176,7 @@ cas:--cassioX
             let mut file = File::create(cp).unwrap();
             file.write_all(contents.as_bytes()).unwrap();
         }
-        let cr = CassioRunner::from_config(
-                config_path.to_str().unwrap()).unwrap();
+        let cr = CassioRunner::from_config(&config_path).unwrap();
         assert_eq!(cr.cas, "--abc");
         fs::remove_file(config_path).unwrap();
     }
