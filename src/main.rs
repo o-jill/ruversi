@@ -56,7 +56,8 @@ fn trial() {
 /// # Arguments
 /// - rfen : RFEN text to be thought.
 /// - depth : depth to think.
-fn verbose(rfen : &str, depth : u8, treepath : &Option<String>, cachesz : usize) {
+fn verbose(rfen : &str, depth : u8,
+        treepath : &Option<String>, cachesz : usize, show_children : bool) {
     let mut tt = transptable::TranspositionTable::with_capacity(cachesz);
     let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
     match bitboard::BitBoard::from(rfen) {
@@ -78,6 +79,19 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>, cachesz : usize)
                 eprintln!("{e}@{} {}", file!(), line!());
             } else {
                 println!("put tree into {path}.")
+            }
+        }
+
+        if !show_children {return;}
+        // 指定局面から合法手をすべて指して結果を見る
+        if let Some(mvs) = ban.genmove() {
+            for mv in mvs {
+                let newban = ban.r#move(mv).unwrap();
+                let mut node = nodebb::NodeBB::root(depth);
+                let val =
+                    nodebb::NodeBB::think_ab_simple_gk_tt(
+                        &newban, depth, &mut node, wei, &mut tt).unwrap();
+                println!("val,{val:.2},{newban},{node}");
             }
         }
     },
@@ -901,7 +915,8 @@ fn main() {
     if *mode == myoption::Mode::Rfen {
         let rfen = &MYOPT.get().unwrap().rfen;
         let treepath = &MYOPT.get().unwrap().treedump;
-        verbose(rfen, depth, treepath, cachesz);
+        let show_children = MYOPT.get().unwrap().children;
+        verbose(rfen, depth, treepath, cachesz, show_children);
     }
     if *mode == myoption::Mode::InitPos {
         let tag = &MYOPT.get().unwrap().initpos;

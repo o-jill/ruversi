@@ -51,6 +51,7 @@ impl Verbose {
 /// See 'options:' section in Readme.md.
 #[derive(Debug)]
 pub struct MyOption {
+    pub children : bool,
     pub depth : u8,
     pub eta : Option<f32>,
     pub duellv : i8,
@@ -58,19 +59,19 @@ pub struct MyOption {
     pub evaltable1 : String,
     pub evaltable2 : String,
     pub initpos : String,
+    pub minibsize : usize,
     pub mode : Mode,
     pub n : Option<usize>,
     pub opponent : Opponent,
+    pub outtrain : String,  // progress,exrfens,summary
+    pub progress : Vec<u32>,
     pub repeat : Option<usize>,
     pub rfen : String,
-    pub progress : Vec<u32>,
     pub think : String,  // "all", "ab"
-    pub outtrain : String,  // progress,exrfens,summary
-    pub turn : i8,  // SENTE, GOTE
-    pub trmode : TrainingMode,
-    pub minibsize : usize,
-    pub verbose : Verbose,
     pub treedump : Option<String>,
+    pub trmode : TrainingMode,
+    pub turn : i8,  // SENTE, GOTE
+    pub verbose : Verbose,
     cachesize : i32,
 }
 
@@ -84,6 +85,7 @@ impl MyOption {
     /// instance of MyOptions.<br>
     /// default:<br>
     /// - cachesize : 1024
+    /// - children: false
     /// - depth: 7
     /// - eta: None
     /// - duellv: 5
@@ -102,6 +104,7 @@ impl MyOption {
     /// - verbose: Normal
     pub fn new(args: Vec<String>) -> Result<MyOption, String> {
         let mut opt = MyOption {
+            children : false,
             depth : 7,
             eta : None,
             duellv : 5,
@@ -219,6 +222,8 @@ impl MyOption {
                 } else if e == "--treedump" {
                     old = e;
                     opt.treedump = Some("treeinfo.puml".to_string());
+                } else if e == "--children" {
+                    opt.children = true;
                 } else {
                     panic!("unknown option: {e}");
                 }
@@ -378,6 +383,7 @@ pub fn showhelp(msg : &str) {
     --Edconf <path>  a file for edax path configuration.
   Rfen:
     --treedump <path>  put search tree into a file w/ PlantUML format.
+    --children         also think from every children rfen.
   [deprecated]Learn:
     --repeat <number>  [deprecated]number of learning. default 10000.
     --eta <ratio>      [deprecated]learning ratio. default 0.1.
