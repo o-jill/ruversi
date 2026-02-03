@@ -72,7 +72,7 @@ fn verbose(rfen : &str, depth : u8, treepath : &Option<String>, cachesz : usize)
             // nodebb::NodeBB::think_ab(&ban, depth).unwrap();
             // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap();
         let ft = st.elapsed();
-        println!("val:{val:.4?} {} {}msec", node.dump(), ft.as_millis());
+        println!("val:{val:.4?} {node} {}msec", ft.as_millis());
         if let Some(path) = treepath {
             if let Err(e) = node.dumptree(0, path) {
                 eprintln!("{e}@{} {}", file!(), line!());

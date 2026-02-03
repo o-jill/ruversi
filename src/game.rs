@@ -59,8 +59,7 @@ impl GameBB {
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
             if self.not_silent() {
-                println!("val:{val:+5.1} {} {}msec",
-                    node.dump(), ft.as_millis());
+                println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
             }
             let best = node.best.unwrap();
             let xy = best.xypos();
@@ -109,8 +108,7 @@ impl GameBB {
 
             let ft = st.elapsed();
             if self.not_silent() {
-                println!("val:{val:+5.1} {} {}msec",
-                    node.dump(), ft.as_millis());
+                println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
             }
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
@@ -157,7 +155,7 @@ impl GameBB {
             let _val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
 
             // let ft = st.elapsed();
-            // println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+            // println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
             // apply move
@@ -253,7 +251,7 @@ impl GameBB {
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
                 if self.not_silent() {
-                    println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                    println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
                 }
                 let best = node.best.unwrap();
                 xy = best.xypos();
@@ -343,8 +341,7 @@ impl GameBB {
                 // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
                 let ft = st.elapsed();
                 if self.not_silent() {
-                    println!("val:{val:+5.1} {} {}msec",
-                        node.dump(), ft.as_millis());
+                    println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
                 xy = best.xypos();
@@ -416,8 +413,7 @@ impl GameBB {
                 let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
                 let ft = st.elapsed();
                 if self.not_silent() {
-                    println!("val:{val:+5.1} {} {}msec",
-                        node.dump(), ft.as_millis());
+                    println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
                 }
                 let best = node.best.unwrap();
                 xy = best.xypos();
@@ -495,8 +491,7 @@ impl GameBB {
                 let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
                 let ft = st.elapsed();
                 if self.not_silent() {
-                    println!("val:{val:+5.1} {} {}msec",
-                        node.dump(), ft.as_millis());
+                    println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
                 xy = best.xypos();
@@ -591,8 +586,7 @@ impl GameBB {
                 let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
                 let ft = st.elapsed();
                 if self.not_silent() {
-                    println!("  val:{val:+5.1} {} {}msec",
-                        node.dump(), ft.as_millis());
+                    println!("  val:{val:+5.1} {node} {}msec", ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
                 xy = best.xypos();
@@ -704,8 +698,7 @@ impl GameBB {
                 let val = f(&self.ban, depth, &mut node, wei, &mut tt).unwrap();
                 let ft = st.elapsed();
                 if self.not_silent() {
-                    println!("val:{val:+5.1} {} {}msec",
-                        node.dump(), ft.as_millis());
+                    println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
                 }
                 let best = node.best.as_ref().unwrap();
                 xy = best.xypos();
@@ -777,8 +770,7 @@ impl GameBB {
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
             if self.not_silent() {
-                println!("val:{val:+5.1} {} {}msec",
-                    node.dump(), ft.as_millis());
+                println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
             }
             let best = node.best.unwrap();
             let xy = best.xypos();
@@ -846,7 +838,7 @@ impl GameBB {
             // let (val, node) = node::Node::think_ab(&self.ban, 7).unwrap();
             let ft = st.elapsed();
             if self.not_silent() {
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
             }
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
@@ -908,7 +900,7 @@ impl GameBB {
             let val = f(&self.ban, depth, &mut node, wei, tt).unwrap();
             let ft = st.elapsed();
             if self.not_silent() {
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
             }
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();
@@ -969,7 +961,7 @@ impl GameBB {
             let val = f(&self.ban, depth, &mut node, wei, tt).unwrap();
             let ft = st.elapsed();
             if self.not_silent() {
-                println!("val:{val:+5.1} {} {}msec", node.dump(), ft.as_millis());
+                println!("val:{val:+5.1} {node} {}msec", ft.as_millis());
             }
             let best = node.best.as_ref().unwrap();
             let xy = best.xypos();

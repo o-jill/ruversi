@@ -86,7 +86,7 @@ impl OthelloEngineProtocol {
                 let val =
                     nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, tt).unwrap();
                 let ft = st.elapsed();
-                // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+                // eprintln!("val:{val:?} {node} {}msec", ft.as_millis());
                 let mvstr;
                 if let Some(best) = node.best.as_ref() {
                     let xy = best.pos();
@@ -145,7 +145,7 @@ impl OthelloEngineProtocol {
                 let val =
                     nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, tt).unwrap();
                 let ft = st.elapsed();
-                // eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+                // eprintln!("val:{val:?} {node} {}msec", ft.as_millis());
                 let mvstr;
                 if let Some(best) = node.best.as_ref() {
                     let xy = best.pos();
