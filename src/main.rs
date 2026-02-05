@@ -58,43 +58,50 @@ fn trial() {
 /// - depth : depth to think.
 fn verbose(rfen : &str, depth : u8,
         treepath : &Option<String>, cachesz : usize, show_children : bool) {
+    let think = MYOPT.get().unwrap().think.as_str();
+    let f = match think {
+            "all" => {
+                nodebb::NodeBB::think_simple_gk_tt
+            },
+            _ => {  // "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf(&ban, depth, &mut node, wei, &mut tt).unwrap()
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab(&ban, depth).unwrap()
+            // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap()
+            },
+        };
     let mut tt = transptable::TranspositionTable::with_capacity(cachesz);
     let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
-    match bitboard::BitBoard::from(rfen) {
-    Err(msg) => {println!("{msg}")},
-    Ok(ban) => {
-        ban.put();
+    let ban = match bitboard::BitBoard::from(rfen) {
+        Err(msg) => {panic!("{msg}");},
+        Ok(ban) => {ban},
+    };
 
-        let st = Instant::now();
-        let mut node = nodebb::NodeBB::root(depth);
-        let val =
-            // nodebb::NodeBB::think_mtdf(&ban, depth, &mut node, wei, &mut tt).unwrap();
-            nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, &mut tt).unwrap();
-            // nodebb::NodeBB::think_ab(&ban, depth).unwrap();
-            // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap();
-        let ft = st.elapsed();
-        println!("val:{val:.4?} {node} {}msec", ft.as_millis());
-        if let Some(path) = treepath {
-            if let Err(e) = node.dumptree(0, path) {
-                eprintln!("{e}@{} {}", file!(), line!());
-            } else {
-                println!("put tree into {path}.")
-            }
-        }
+    ban.put();
 
-        if !show_children {return;}
-        // 指定局面から合法手をすべて指して結果を見る
-        if let Some(mvs) = ban.genmove() {
-            for mv in mvs {
-                let newban = ban.r#move(mv).unwrap();
-                let mut node = nodebb::NodeBB::root(depth);
-                let val =
-                    nodebb::NodeBB::think_ab_simple_gk_tt(
-                        &newban, depth, &mut node, wei, &mut tt).unwrap();
-                println!("val,{val:.2},{newban},{node}");
-            }
+    let st = Instant::now();
+    let mut node = nodebb::NodeBB::root(depth);
+    let val = f(&ban, depth, &mut node, wei, &mut tt).unwrap();
+    let ft = st.elapsed();
+    println!("val:{val:.4?} {node} {}msec", ft.as_millis());
+    if let Some(path) = treepath {
+        if let Err(e) = node.dumptree(0, path) {
+            eprintln!("{e}@{} {}", file!(), line!());
+        } else {
+            println!("put tree into {path}.")
         }
-    },
+    }
+
+    if !show_children {return;}
+
+    // 指定局面から合法手をすべて指して結果を見る
+    if let Some(mvs) = ban.genmove() {
+        for mv in mvs {
+            let newban = ban.r#move(mv).unwrap();
+            let mut node = nodebb::NodeBB::root(depth);
+            let val = f(&ban, depth, &mut node, wei, &mut tt).unwrap();
+            println!("val,{val:.2},{newban},{node}");
+        }
     }
 }
 
