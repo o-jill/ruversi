@@ -99,7 +99,7 @@ fn verbose(rfen : &str, depth : u8,
         for mv in mvs {
             let newban = ban.r#move(mv).unwrap();
             let mut node = nodebb::NodeBB::root(depth);
-            let val = f(&ban, depth, &mut node, wei, &mut tt).unwrap();
+            let val = f(&newban, depth, &mut node, wei, &mut tt).unwrap();
             println!("val,{val:.2},{newban},{node}");
         }
     }
