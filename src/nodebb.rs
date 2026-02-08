@@ -80,6 +80,12 @@ pub fn init_weight() {
     }
 }
 
+impl std::fmt::Display for NodeBB {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.dump())
+    }
+}
+
 impl NodeBB {
     pub fn new(xy : u8, depth : u8, teban : i8) -> NodeBB {
         NodeBB {
