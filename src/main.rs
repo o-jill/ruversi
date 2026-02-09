@@ -93,6 +93,8 @@ fn verbose(rfen : &str, depth : u8,
     }
 
     if !show_children {return;}
+    // 残り１升以下なら見るまでもない
+    if ban.is_last1_or_full() {return;}
 
     // 指定局面から合法手をすべて指して結果を見る
     if let Some(mvs) = ban.genmove() {
