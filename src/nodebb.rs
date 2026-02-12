@@ -160,11 +160,11 @@ impl NodeBB {
 
         let node = nd;
 
-        let yomikiri = 12;
+        let yomikiri = 13;
         let yose = 18;
         let nblank = ban.nblank();
         node.depth =
-            if nblank <= yomikiri {
+            if nblank < yomikiri {
                 yomikiri as u8
             } else if nblank <= yose {
                 depth + 2
@@ -247,11 +247,11 @@ impl NodeBB {
 
         let node = nd;
 
-        let yomikiri = 12;
+        let yomikiri = 13;
         let yose = 18;
         let nblank = ban.nblank();
         node.depth =
-            if nblank <= yomikiri {
+            if nblank < yomikiri {
                 yomikiri as u8
             } else if nblank <= yose {
                 depth + 2
@@ -280,11 +280,11 @@ impl NodeBB {
             return None;
         }
         
-        let yomikiri = 12;
+        let yomikiri = 13;
         let yose = 18;
         let nblank = ban.nblank();
         node.depth =
-            if nblank <= yomikiri {
+            if nblank < yomikiri {
                 yomikiri as u8
             } else if nblank <= yose {
                 depth + 2
