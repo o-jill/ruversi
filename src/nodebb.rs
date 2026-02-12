@@ -171,8 +171,9 @@ impl NodeBB {
             } else {
                 depth
             };
+        // eprintln!("- depth:{}, nblank:{nblank}", node.depth);
 
-        let val = NodeBB::think_internal_tt(node, ban, wei, tt).unwrap();
+        let val = NodeBB::think_internal_tt(node, ban, wei, tt);
         // println!("hit:{}", tt.hit());
         let val = val * ban.teban as f32;
 
@@ -180,13 +181,22 @@ impl NodeBB {
     }
 
     pub fn think_internal_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight,
-        tt : &mut transptable::TranspositionTable) -> Option<f32> {
+        tt : &mut transptable::TranspositionTable) -> f32 {
         let depth = node.depth;
         if ban.is_full() || ban.is_passpass() {
-            return Some(ban.countf32());
+            // return Some(ban.countf32());
+            return ban.countf32() * ban.teban as f32;
+        }
+        #[cfg(feature="mate1")]
+        if ban.is_last1() {
+            let (val, xy) = ban.move_mate1();
+            if node.best.is_none() {
+                node.best = Some(Best::new(val * ban.teban as f32, xy));
+            }
+            return val * ban.teban as f32;
         }
         if depth == 0 {
-            return Some(NodeBB::evalwtt(ban, wei, tt));
+            return NodeBB::evalwtt(ban, wei, tt);
         }
 
         let teban = ban.teban;
@@ -194,24 +204,24 @@ impl NodeBB {
         let moves = ban.genmove();
 
         // no more empty cells
-        if moves.is_none() {
-            return Some(ban.countf32());
-        }
+        // if moves.is_none() {
+        //     return Some(ban.countf32());
+        // }
         let moves = moves.unwrap();
 
         node.child.reserve(moves.len());
+        let mut maxval = -9999f32;
         for mv in moves {
             let newban = ban.r#move(mv).unwrap();
             node.child.push(NodeBB::new(mv, depth - 1, teban));
             let ch = node.child.last_mut().unwrap();
-            let val = NodeBB::think_internal_tt(ch, &newban, wei, tt);
+            let val = -NodeBB::think_internal_tt(ch, &newban, wei, tt);
 
-            ch.hyoka = val;
+            ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
-            let best = node.best.as_ref();
-            let val = val.unwrap();
             let fteban = teban as f32;
-            if best.is_none() || best.unwrap().hyoka * fteban < val * fteban {
+            if maxval < val {
+                maxval = val;
                 node.best = Some(Best::new(val, mv));
                 if cfg!(feature = "withtt") {
                     tt.update(&newban, val, depth);
@@ -220,7 +230,7 @@ impl NodeBB {
                 ch.release();
             }
         }
-        Some(node.best.as_ref().unwrap().hyoka)
+        node.best.as_ref().unwrap().hyoka
     }
 
     pub fn think_ab_simple_gk_tt(ban : &bitboard::BitBoard, depth : u8, nd : &mut NodeBB,
