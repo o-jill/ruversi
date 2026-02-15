@@ -219,7 +219,6 @@ impl NodeBB {
 
             ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
-            let fteban = teban as f32;
             if maxval < val {
                 maxval = val;
                 node.best = Some(Best::new(val, mv));
