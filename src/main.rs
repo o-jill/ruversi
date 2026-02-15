@@ -100,6 +100,7 @@ fn verbose(rfen : &str, depth : u8,
         let newban = ban.r#move(nd.xy).unwrap();
         println!("val,{},{newban}", nd.best.as_ref().unwrap().hyoka);
     }
+}
 
 fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str, cachesz: usize) {
     let think = MYOPT.get().unwrap().think.as_str();
