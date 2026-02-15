@@ -92,20 +92,14 @@ fn verbose(rfen : &str, depth : u8,
         }
     }
 
-    if !show_children {return;}
-    // 残り１升以下なら見るまでもない
-    if ban.is_last1_or_full() {return;}
+    if !show_children || ban.is_last1_or_full() {return;}
 
-    // 指定局面から合法手をすべて指して結果を見る
-    if let Some(mvs) = ban.genmove() {
-        for mv in mvs {
-            let newban = ban.r#move(mv).unwrap();
-            let mut node = nodebb::NodeBB::root(depth);
-            let val = f(&newban, depth, &mut node, wei, &mut tt).unwrap();
-            println!("val,{val:.2},{newban},{node}");
-        }
+    // 子供の局面の探索結果を出力
+    // thinkall以外はあまり正確ではない。
+    for nd in node.child.iter() {
+        let newban = ban.r#move(nd.xy).unwrap();
+        println!("val,{},{newban}", nd.best.as_ref().unwrap().hyoka);
     }
-}
 
 fn genkifu_single(rfentbl : &[String], depth : u8, grp : &str, cachesz: usize) {
     let think = MYOPT.get().unwrap().think.as_str();

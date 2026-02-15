@@ -54,7 +54,7 @@ impl Best {
 }
 
 pub struct NodeBB {
-    child : Vec<NodeBB>,
+    pub child : Vec<NodeBB>,
     hyoka : Option<f32>,
     pub kyokumen : usize,
     pub best : Option<Best>,
