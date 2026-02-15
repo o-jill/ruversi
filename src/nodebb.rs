@@ -378,7 +378,6 @@ impl NodeBB {
         let mut maxval = -9999.0;
         for mv in moves {
             let newban = ban.r#move(mv).unwrap();
-            node.child.push(NodeBB::new(mv, depth - 1, teban));
             let ch = if let Some(nd)
                 = node.child.iter_mut().find(|n| n.xy == mv) {
                 nd
