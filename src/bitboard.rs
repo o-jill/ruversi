@@ -1063,6 +1063,10 @@ impl BitBoard {
         (self.black | self.white).count_zeros() == 1
     }
 
+    pub fn is_last_n(&self, n : u32) -> bool {
+        (self.black | self.white).count_zeros() == n
+    }
+
     pub fn stones(&self) -> u32 {
         (self.black | self.white).count_ones()
     }
