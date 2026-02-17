@@ -55,7 +55,7 @@ impl Best {
 
 pub struct NodeBB {
     pub child : Vec<NodeBB>,
-    hyoka : Option<f32>,
+    pub hyoka : Option<f32>,
     pub kyokumen : usize,
     pub best : Option<Best>,
     pub xy : u8,
@@ -176,8 +176,9 @@ impl NodeBB {
         let val = NodeBB::think_internal_tt(node, ban, wei, tt);
         // println!("hit:{}", tt.hit());
         let val = val * ban.teban as f32;
+        node.hyoka = Some(val);
 
-        Some(val)
+        node.hyoka
     }
 
     pub fn think_internal_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight,
@@ -229,7 +230,7 @@ impl NodeBB {
                 ch.release();
             }
         }
-        node.best.as_ref().unwrap().hyoka
+        maxval
     }
 
     pub fn think_ab_simple_gk_tt(ban : &bitboard::BitBoard, depth : u8, nd : &mut NodeBB,
@@ -265,8 +266,9 @@ impl NodeBB {
             NodeBB::think_internal_ab_failsoft(
                     node, ban, alpha, beta, wei, tt);
         let val = val * ban.teban as f32;
+        node.hyoka = Some(val);
 
-        Some(val)
+        node.hyoka
     }
 
     #[allow(dead_code)]
