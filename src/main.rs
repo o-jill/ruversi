@@ -94,6 +94,9 @@ fn verbose(rfen : &str, depth : u8,
 
     if !show_children || ban.is_last1_or_full() {return;}
 
+    for (b, v) in node.dump_all_nodes(&ban) {
+        println!("{b},{v}");
+    }
     // 子供の局面の探索結果を出力
     // thinkall以外はあまり正確ではない。
     for nd in node.child.iter() {
