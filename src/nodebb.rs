@@ -11,6 +11,7 @@ static mut INITIALIZED : bool = false;
 pub static mut WEIGHT : Option<weight::Weight> = None;
 static mut ND_ROOT : Option<NodeBB> = None;
 
+#[derive(Clone, Copy)]
 pub struct Best {
     pub hyoka : f32,
     xy : u8,
@@ -101,6 +102,11 @@ impl NodeBB {
 
     pub fn root(depth : u8) -> Self {
         NodeBB::new(0, depth, bitboard::NONE)
+    }
+
+    fn is_better_than(&self, other : &NodeBB) -> bool {
+        self.best.as_ref().unwrap().hyoka * self.teban as f32
+                > other.best.as_ref().unwrap().hyoka * other.teban as f32
     }
 
     #[cfg(target_arch="x86_64")]
@@ -626,6 +632,23 @@ impl NodeBB {
             if !ch.child.is_empty() {
                 ret += &ch.dumptree_sub(offset + 1);
             }
+        }
+        ret
+    }
+
+    pub fn dump_all_nodes(&self, ban : &bitboard::BitBoard) -> Vec<(bitboard::BitBoard, f32)> {
+        // let hyoka = self.best.as_ref().unwrap().hyoka;
+        let hyoka = self.hyoka.unwrap();
+        // let hyoka = self.hyoka.unwrap_or(-999f32);
+        let mut ret = Vec::with_capacity(self.child.len() + 1);
+        ret.push((ban.clone(), hyoka));
+        if ban.is_last_n(2) || self.child.is_empty() {return ret;}
+
+        for nd in self.child.iter() {
+            if nd.hyoka.is_none() {continue;}
+
+            let newban = ban.r#move(nd.xy).unwrap();
+            ret.append(&mut nd.dump_all_nodes(&newban));
         }
         ret
     }
