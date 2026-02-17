@@ -992,6 +992,14 @@ impl BitBoard {
         let mut bits = 0;
         let mut bit = LSB_CELL;
         for y in 0..NUMCELL {
+            let row8 = 0xffu64 << y * 8;
+            let exist = row8 & stones;
+            // その列の升が全部埋まってたら次へ。
+            if exist == row8 {
+                bit_down!(bit);
+                continue;
+            }
+
             for x in 0..NUMCELL {
                 let b = bit;
                 bit_right!(bit);
