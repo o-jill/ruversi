@@ -561,36 +561,38 @@ impl NodeBB {
             self.y() + 1)
     }
 
-    pub fn bestorder(&self) -> String {
+    pub fn best_order(&self) -> String {
         let mut ret = String::default();
         let mut n = self;
-        loop {
-            if n.best.is_none() {break;}
 
-            let best = n.best.as_ref().unwrap();
-            let xy = best.xypos();
-            if n.child.len() == 1 {
-                n = &n.child[0];
+        loop {
+            if let Some(nd) = n.best_child() {
+                ret += &nd.to_xy();  // ex. A1
+                n = nd;
             } else {
-                let m = n.child.iter().find(|&a| a.xy == xy);
-                if m.is_none() {
-                    return ret;
-                }
-                n = m.unwrap();
+                return ret;
             }
-            ret += &n.to_xy();
         }
-        ret
+    }
+
+    fn best_child(&self) -> Option<&NodeBB> {
+        if let Some(best) = self.best {
+            self.child.iter().find(|nd| {
+                nd.xy == best.xy
+            })
+        } else {
+            None
+        }
     }
 
     pub fn dump(&self) -> String {
-        format!("{} nodes. ", self.kyokumen) + &self.bestorder()
+        format!("{} nodes. ", self.kyokumen) + &self.best_order()
     }
 
     #[allow(dead_code)]
     pub fn dumpv(&self) -> String {
         format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen)
-            + &self.bestorder()
+            + &self.best_order()
     }
 
     pub fn dumptree(&self, offset : usize, path : &str) -> Result<(), std::io::Error>{

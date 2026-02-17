@@ -105,7 +105,7 @@ impl OthelloEngineProtocol {
                     } else {
                         format!("B:{val:.1} <= v <= B:{val:.1}")
                     };
-                let moves = node.bestorder();
+                let moves = node.best_order();
                 let nodes = node.kyokumen;
                 let sec = ft.as_secs_f32();
 
