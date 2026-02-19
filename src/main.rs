@@ -56,31 +56,52 @@ fn trial() {
 /// # Arguments
 /// - rfen : RFEN text to be thought.
 /// - depth : depth to think.
-fn verbose(rfen : &str, depth : u8, treepath : &Option<String>, cachesz : usize) {
+fn verbose(rfen : &str, depth : u8,
+        treepath : &Option<String>, cachesz : usize, show_children : bool) {
+    let think = MYOPT.get().unwrap().think.as_str();
+    let f = match think {
+            "all" => {
+                nodebb::NodeBB::think_simple_gk_tt
+            },
+            _ => {  // "" | "ab" => {
+            // nodebb::NodeBB::think_mtdf(&ban, depth, &mut node, wei, &mut tt).unwrap()
+            nodebb::NodeBB::think_ab_simple_gk_tt
+            // nodebb::NodeBB::think_ab(&ban, depth).unwrap()
+            // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap()
+            },
+        };
     let mut tt = transptable::TranspositionTable::with_capacity(cachesz);
     let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
-    match bitboard::BitBoard::from(rfen) {
-    Err(msg) => {println!("{msg}")},
-    Ok(ban) => {
-        ban.put();
+    let ban = match bitboard::BitBoard::from(rfen) {
+        Err(msg) => {panic!("{msg}");},
+        Ok(ban) => {ban},
+    };
 
-        let st = Instant::now();
-        let mut node = nodebb::NodeBB::root(depth);
-        let val =
-            // nodebb::NodeBB::think_mtdf(&ban, depth, &mut node, wei, &mut tt).unwrap();
-            nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, &mut tt).unwrap();
-            // nodebb::NodeBB::think_ab(&ban, depth).unwrap();
-            // nodebb::NodeBB::think_ab_extract2(&ban, depth).unwrap();
-        let ft = st.elapsed();
-        println!("val:{val:.4?} {} {}msec", node.dump(), ft.as_millis());
-        if let Some(path) = treepath {
-            if let Err(e) = node.dumptree(0, path) {
-                eprintln!("{e}@{} {}", file!(), line!());
-            } else {
-                println!("put tree into {path}.")
-            }
+    ban.put();
+
+    let st = Instant::now();
+    let mut node = nodebb::NodeBB::root(depth);
+    let val = f(&ban, depth, &mut node, wei, &mut tt).unwrap();
+    let ft = st.elapsed();
+    println!("val:{val:.4?} {node} {}msec", ft.as_millis());
+    if let Some(path) = treepath {
+        if let Err(e) = node.dumptree(0, path) {
+            eprintln!("{e}@{} {}", file!(), line!());
+        } else {
+            println!("put tree into {path}.")
         }
-    },
+    }
+
+    if !show_children || ban.is_last1_or_full() {return;}
+
+    for (b, v) in node.dump_all_nodes(&ban) {
+        println!("{b},{v}");
+    }
+    // 子供の局面の探索結果を出力
+    // thinkall以外はあまり正確ではない。
+    for nd in node.child.iter() {
+        let newban = ban.r#move(nd.xy).unwrap();
+        println!("val,{},{newban}", nd.best.as_ref().unwrap().hyoka);
     }
 }
 
@@ -901,7 +922,8 @@ fn main() {
     if *mode == myoption::Mode::Rfen {
         let rfen = &MYOPT.get().unwrap().rfen;
         let treepath = &MYOPT.get().unwrap().treedump;
-        verbose(rfen, depth, treepath, cachesz);
+        let show_children = MYOPT.get().unwrap().children;
+        verbose(rfen, depth, treepath, cachesz, show_children);
     }
     if *mode == myoption::Mode::InitPos {
         let tag = &MYOPT.get().unwrap().initpos;

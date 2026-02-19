@@ -161,7 +161,7 @@ impl Gtp {
                 let val =
                     nodebb::NodeBB::think_ab_simple_gk_tt(&self.ban, depth, &mut node, wei, &mut self.tt).unwrap();
                 let ft = st.elapsed();
-                eprintln!("val:{:?} {} {}msec", val, node.dump(), ft.as_millis());
+                eprintln!("val:{val:?} {node} {}msec", ft.as_millis());
                 let best = node.best.as_ref().unwrap();
                 let xy = best.pos();
                 if xy == "00" {

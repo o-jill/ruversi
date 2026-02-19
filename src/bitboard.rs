@@ -239,7 +239,7 @@ pub fn cell(x: u8, y: u8) -> u8 {
 }
 
 
-#[derive(Clone)]
+#[derive(PartialEq, Clone)]
 pub struct BitBoard {
     pub black: u64,
     pub white: u64,
@@ -335,7 +335,7 @@ impl BitBoard {
             return Err(String::from("Invalid rfen"));
         }
 
-        let teban =  match elem[1] {
+        let teban = match elem[1] {
             "b" => {SENTE},
             "w" => {GOTE},
             "f" => {BLANK}
@@ -343,10 +343,7 @@ impl BitBoard {
         };
 
         let mut ret = BitBoard {
-            black : 0,
-            white : 0,
-            teban,
-            pass : 0,
+            black : 0, white : 0, teban, pass : 0,
         };
         let mut x = 0;
         let mut y = 0;
@@ -518,6 +515,16 @@ impl BitBoard {
         let cw = (bit & self.white) != 0;
 
         if cb {SENTE} else if cw {GOTE} else {BLANK}
+    }
+
+    #[allow(dead_code)]
+    pub fn black_at(&self, x: usize, y: usize) -> f32 {
+        ((self.black >> BitBoard::index(x, y)) & LSB_CELL) as f32
+    }
+
+    #[allow(dead_code)]
+    pub fn white_at(&self, x: usize, y: usize) -> f32 {
+        ((self.white >> BitBoard::index(x, y)) & LSB_CELL) as f32
     }
 
     pub fn is_filled(&self, xy: u8) -> bool {
@@ -985,6 +992,14 @@ impl BitBoard {
         let mut bits = 0;
         let mut bit = LSB_CELL;
         for y in 0..NUMCELL {
+            let row8 = 0xffu64 << y * 8;
+            let exist = row8 & stones;
+            // その列の升が全部埋まってたら次へ。
+            if exist == row8 {
+                bit_down!(bit);
+                continue;
+            }
+
             for x in 0..NUMCELL {
                 let b = bit;
                 bit_right!(bit);
@@ -1056,7 +1071,10 @@ impl BitBoard {
         (self.black | self.white).count_zeros() == 1
     }
 
-    #[allow(dead_code)]
+    pub fn is_last_n(&self, n : u32) -> bool {
+        (self.black | self.white).count_zeros() == n
+    }
+
     pub fn stones(&self) -> u32 {
         (self.black | self.white).count_ones()
     }
@@ -1070,6 +1088,70 @@ impl BitBoard {
     #[allow(dead_code)]
     pub fn is_progress(&self, prgs : usize) -> bool {
         self.progress() == prgs
+    }
+
+    #[allow(dead_code)]
+    pub fn flip_all(&self) -> BitBoard {
+        BitBoard {
+            black : self.white,
+            white: self.black,
+            pass : self.pass,
+            teban : -self.teban,
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn flip_horz(&self) -> BitBoard {
+        let mut newblack = 0;
+        let mut newwhite = 0;
+        for i in 0..4 {
+            let mask = 0x0101010101010101 << i;
+            let b8 = self.black & mask;
+            let w8 = self.white & mask;
+            let shift = NUMCELL - 1 - i * 2;
+            newblack |= b8 << shift;
+            newwhite |= w8 << shift;
+
+            let mask = 0x8080808080808080 >> i;
+            let b8 = self.black & mask;
+            let w8 = self.white & mask;
+            newblack |= b8 >> shift;
+            newwhite |= w8 >> shift;
+        }
+
+        BitBoard {
+            black : newblack,
+            white : newwhite,
+            teban : self.teban,
+            pass : self.pass,
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn flip_vert(&self) -> BitBoard {
+        let mut newblack = 0;
+        let mut newwhite = 0;
+        for i in 0..4 {
+            let mask = 0xff << (i * NUMCELL);
+            let b8 = self.black & mask;
+            let w8 = self.white & mask;
+            let shift = (NUMCELL - 1 - i * 2) * NUMCELL;
+            newblack |= b8 << shift;
+            newwhite |= w8 << shift;
+
+            let mask = 0xff00000000000000u64 >> (i * NUMCELL);
+            let b8 = self.black & mask;
+            let w8 = self.white & mask;
+            newblack |= b8 >> shift;
+            newwhite |= w8 >> shift;
+        }
+
+        BitBoard {
+            black : newblack,
+            white : newwhite,
+            teban : self.teban,
+            pass : self.pass,
+        }
     }
 
     #[allow(dead_code)]
@@ -1094,6 +1176,7 @@ impl BitBoard {
                 }
             }
         }
+
         let mut b = BitBoard::new();
         b.teban = self.teban;
         b.black = black;
@@ -1108,6 +1191,39 @@ impl BitBoard {
         b.black = self.black.reverse_bits();
         b.white = self.white.reverse_bits();
         b
+    }
+
+    /// オーグメンテーション
+    /// 回転させたものや鏡反転させたものを生成する。
+    ///
+    /// # Arguments
+    /// - fsb
+    ///   確定石の数
+    /// - fsw
+    ///   確定石の数
+    /// - score
+    ///   最終結果
+    ///
+    /// # Returns
+    /// 回転させたものや鏡反転させたものの配列
+    #[allow(dead_code)]
+    pub fn rotated_mirrored(&self, fsb: i8, fsw : i8, score : i8)
+            -> Vec<(Self, i8, i8, i8)> {
+        vec![
+            (self.clone(), fsb, fsw, score),
+            (self.rotate90(), fsb, fsw, score),
+            (self.rotate180(), fsb, fsw, score),
+            (self.rotate180().rotate90(), fsb, fsw, score),
+            (self.flip_horz(), fsb, fsw, score),
+            (self.flip_vert(), fsb, fsw, score),
+            // flip color
+            (self.flip_all(), fsw, fsb, -score),
+            (self.rotate90().flip_all(), fsw, fsb, -score),
+            (self.rotate180().flip_all(), fsw, fsb, -score),
+            (self.rotate180().rotate90().flip_all(), fsw, fsb, -score),
+            (self.flip_horz().flip_all(), fsw, fsb, -score),
+            (self.flip_vert().flip_all(), fsw, fsb, -score)
+        ]
     }
 
     #[allow(dead_code)]
@@ -1495,15 +1611,15 @@ impl BitBoard {
         }
         //
         // xは@と同じ色の確定石
-        // println!("fc:{:?}, {:?}", fcells, count);
-        // println!("fc:{:?}", count);
+        // println!("fc:{fcells:?}, {count:?}");
+        // println!("fc:{count:?}");
         // for i in 0..8 {
         //     for j in 0..8 {
         //         print!("{},", fcells[i * 8 + j]);
         //     }
         //     println!("");
         // }
-        // println!("fc:{:b}, {:b}", fcellsb, fcellsw);
+        // println!("fc:{fcellsb:b}, {fcellsw:b}");
         (fcellsb.count_ones() as i8, fcellsw.count_ones() as i8)
     }
 }
@@ -6839,6 +6955,38 @@ fn testbitbrd_reverse84() {
         let result = ban.rotate180().checkreverse(BitBoard::index(5, 0));
         if result != res {ban.rotate180().put();}
         assert_eq!(result, res);
+    }
+}
+
+#[test]
+fn test_mirror_horz() {
+    let tbl = [
+        ("8/8/8/3Aa3/3aA3/8/8/8 b", "8/8/8/3aA3/3Aa3/8/8/8 b"),
+        ("A6a/a6A/A6a/a6A/A6a/a6A/A6a/a6A w", "a6A/A6a/a6A/A6a/a6A/A6a/a6A/A6a w"),
+        ("1a4A1/1a4A1/1a4A1/1a4A1/1a4A1/1a4A1/1a4A1/1a4A1 b", "1A4a1/1A4a1/1A4a1/1A4a1/1A4a1/1A4a1/1A4a1/1A4a1 b"),
+        ("2A2a2/2a2A2/2A2a2/2a2A2/2A2a2/2a2A2/2A2a2/2a2A2 w", "2a2A2/2A2a2/2a2A2/2A2a2/2a2A2/2A2a2/2a2A2/2A2a2 w"),
+        ("3aA3/3Aa3/3aA3/3Aa3/3aA3/3Aa3/3aA3/3Aa3 b", "3Aa3/3aA3/3Aa3/3aA3/3Aa3/3aA3/3Aa3/3aA3 b"),
+    ];
+    for (from_rfen, to_rfen) in tbl {
+        let ban = BitBoard::from(from_rfen).unwrap();
+        let horz = ban.flip_horz();
+        assert_eq!(horz.to_string(), to_rfen);
+    }
+}
+
+#[test]
+fn test_mirror_vert() {
+    let tbl = [
+        ("8/8/8/3Aa3/3aA3/8/8/8 b", "8/8/8/3aA3/3Aa3/8/8/8 b"),
+        ("H/8/8/8/8/8/8/h w", "h/8/8/8/8/8/8/H w"),
+        ("8/H/8/8/8/8/h/8 b", "8/h/8/8/8/8/H/8 b"),
+        ("8/8/H/8/8/h/8/8 w", "8/8/h/8/8/H/8/8 w"),
+        ("8/8/8/H/h/8/8/8 b", "8/8/8/h/H/8/8/8 b"),
+    ];
+    for (from_rfen, to_rfen) in tbl {
+        let ban = BitBoard::from(from_rfen).unwrap();
+        let horz = ban.flip_vert();
+        assert_eq!(horz.to_string(), to_rfen);
     }
 }
 

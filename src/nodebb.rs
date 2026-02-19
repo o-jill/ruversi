@@ -11,6 +11,7 @@ static mut INITIALIZED : bool = false;
 pub static mut WEIGHT : Option<weight::Weight> = None;
 static mut ND_ROOT : Option<NodeBB> = None;
 
+#[derive(Clone, Copy)]
 pub struct Best {
     pub hyoka : f32,
     xy : u8,
@@ -54,8 +55,8 @@ impl Best {
 }
 
 pub struct NodeBB {
-    child : Vec<NodeBB>,
-    hyoka : Option<f32>,
+    pub child : Vec<NodeBB>,
+    pub hyoka : Option<f32>,
     pub kyokumen : usize,
     pub best : Option<Best>,
     pub xy : u8,
@@ -80,6 +81,12 @@ pub fn init_weight() {
     }
 }
 
+impl std::fmt::Display for NodeBB {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.dump())
+    }
+}
+
 impl NodeBB {
     pub fn new(xy : u8, depth : u8, teban : i8) -> NodeBB {
         NodeBB {
@@ -95,6 +102,11 @@ impl NodeBB {
 
     pub fn root(depth : u8) -> Self {
         NodeBB::new(0, depth, bitboard::NONE)
+    }
+
+    fn is_better_than(&self, other : &NodeBB) -> bool {
+        self.best.as_ref().unwrap().hyoka * self.teban as f32
+                > other.best.as_ref().unwrap().hyoka * other.teban as f32
     }
 
     #[cfg(target_arch="x86_64")]
@@ -154,33 +166,44 @@ impl NodeBB {
 
         let node = nd;
 
-        let yomikiri = 12;
+        let yomikiri = 13;
         let yose = 18;
         let nblank = ban.nblank();
         node.depth =
-            if nblank <= yomikiri {
-                yomikiri as u8
+            if nblank < yomikiri {
+                if depth < yomikiri as u8 {yomikiri as u8} else {depth}
             } else if nblank <= yose {
                 depth + 2
             } else {
                 depth
             };
+        // eprintln!("- depth:{}, nblank:{nblank}", node.depth);
 
-        let val = NodeBB::think_internal_tt(node, ban, wei, tt).unwrap();
+        let val = NodeBB::think_internal_tt(node, ban, wei, tt);
         // println!("hit:{}", tt.hit());
         let val = val * ban.teban as f32;
+        node.hyoka = Some(val);
 
-        Some(val)
+        node.hyoka
     }
 
     pub fn think_internal_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight,
-        tt : &mut transptable::TranspositionTable) -> Option<f32> {
+        tt : &mut transptable::TranspositionTable) -> f32 {
         let depth = node.depth;
         if ban.is_full() || ban.is_passpass() {
-            return Some(ban.countf32());
+            // return Some(ban.countf32());
+            return ban.countf32() * ban.teban as f32;
+        }
+        #[cfg(feature="mate1")]
+        if ban.is_last1() {
+            let (val, xy) = ban.move_mate1();
+            if node.best.is_none() {
+                node.best = Some(Best::new(val * ban.teban as f32, xy));
+            }
+            return val * ban.teban as f32;
         }
         if depth == 0 {
-            return Some(NodeBB::evalwtt(ban, wei, tt));
+            return NodeBB::evalwtt(ban, wei, tt);
         }
 
         let teban = ban.teban;
@@ -188,24 +211,23 @@ impl NodeBB {
         let moves = ban.genmove();
 
         // no more empty cells
-        if moves.is_none() {
-            return Some(ban.countf32());
-        }
+        // if moves.is_none() {
+        //     return Some(ban.countf32());
+        // }
         let moves = moves.unwrap();
 
         node.child.reserve(moves.len());
+        let mut maxval = -9999f32;
         for mv in moves {
             let newban = ban.r#move(mv).unwrap();
             node.child.push(NodeBB::new(mv, depth - 1, teban));
             let ch = node.child.last_mut().unwrap();
-            let val = NodeBB::think_internal_tt(ch, &newban, wei, tt);
+            let val = -NodeBB::think_internal_tt(ch, &newban, wei, tt);
 
-            ch.hyoka = val;
+            ch.hyoka = Some(val);
             node.kyokumen += ch.kyokumen;
-            let best = node.best.as_ref();
-            let val = val.unwrap();
-            let fteban = teban as f32;
-            if best.is_none() || best.unwrap().hyoka * fteban < val * fteban {
+            if maxval < val {
+                maxval = val;
                 node.best = Some(Best::new(val, mv));
                 if cfg!(feature = "withtt") {
                     tt.update(&newban, val, depth);
@@ -214,7 +236,7 @@ impl NodeBB {
                 ch.release();
             }
         }
-        Some(node.best.as_ref().unwrap().hyoka)
+        maxval
     }
 
     pub fn think_ab_simple_gk_tt(ban : &bitboard::BitBoard, depth : u8, nd : &mut NodeBB,
@@ -231,11 +253,11 @@ impl NodeBB {
 
         let node = nd;
 
-        let yomikiri = 12;
+        let yomikiri = 13;
         let yose = 18;
         let nblank = ban.nblank();
         node.depth =
-            if nblank <= yomikiri {
+            if nblank < yomikiri {
                 yomikiri as u8
             } else if nblank <= yose {
                 depth + 2
@@ -250,8 +272,9 @@ impl NodeBB {
             NodeBB::think_internal_ab_failsoft(
                     node, ban, alpha, beta, wei, tt);
         let val = val * ban.teban as f32;
+        node.hyoka = Some(val);
 
-        Some(val)
+        node.hyoka
     }
 
     #[allow(dead_code)]
@@ -264,11 +287,11 @@ impl NodeBB {
             return None;
         }
         
-        let yomikiri = 12;
+        let yomikiri = 13;
         let yose = 18;
         let nblank = ban.nblank();
         node.depth =
-            if nblank <= yomikiri {
+            if nblank < yomikiri {
                 yomikiri as u8
             } else if nblank <= yose {
                 depth + 2
@@ -363,7 +386,6 @@ impl NodeBB {
         let mut maxval = -9999.0;
         for mv in moves {
             let newban = ban.r#move(mv).unwrap();
-            node.child.push(NodeBB::new(mv, depth - 1, teban));
             let ch = if let Some(nd)
                 = node.child.iter_mut().find(|n| n.xy == mv) {
                 nd
@@ -547,36 +569,38 @@ impl NodeBB {
             self.y() + 1)
     }
 
-    pub fn bestorder(&self) -> String {
+    pub fn best_order(&self) -> String {
         let mut ret = String::default();
         let mut n = self;
-        loop {
-            if n.best.is_none() {break;}
 
-            let best = n.best.as_ref().unwrap();
-            let xy = best.xypos();
-            if n.child.len() == 1 {
-                n = &n.child[0];
+        loop {
+            if let Some(nd) = n.best_child() {
+                ret += &nd.to_xy();  // ex. A1
+                n = nd;
             } else {
-                let m = n.child.iter().find(|&a| a.xy == xy);
-                if m.is_none() {
-                    return ret;
-                }
-                n = m.unwrap();
+                return ret;
             }
-            ret += &n.to_xy();
         }
-        ret
+    }
+
+    fn best_child(&self) -> Option<&NodeBB> {
+        if let Some(best) = self.best {
+            self.child.iter().find(|nd| {
+                nd.xy == best.xy
+            })
+        } else {
+            None
+        }
     }
 
     pub fn dump(&self) -> String {
-        format!("{} nodes. ", self.kyokumen) + &self.bestorder()
+        format!("{} nodes. ", self.kyokumen) + &self.best_order()
     }
 
     #[allow(dead_code)]
     pub fn dumpv(&self) -> String {
         format!("val:{:?}, {} nodes. ", self.hyoka, self.kyokumen)
-            + &self.bestorder()
+            + &self.best_order()
     }
 
     pub fn dumptree(&self, offset : usize, path : &str) -> Result<(), std::io::Error>{
@@ -608,6 +632,23 @@ impl NodeBB {
             if !ch.child.is_empty() {
                 ret += &ch.dumptree_sub(offset + 1);
             }
+        }
+        ret
+    }
+
+    pub fn dump_all_nodes(&self, ban : &bitboard::BitBoard) -> Vec<(bitboard::BitBoard, f32)> {
+        // let hyoka = self.best.as_ref().unwrap().hyoka;
+        let hyoka = self.hyoka.unwrap();
+        // let hyoka = self.hyoka.unwrap_or(-999f32);
+        let mut ret = Vec::with_capacity(self.child.len() + 1);
+        ret.push((ban.clone(), hyoka));
+        if ban.is_last_n(2) || self.child.is_empty() {return ret;}
+
+        for nd in self.child.iter() {
+            if nd.hyoka.is_none() {continue;}
+
+            let newban = ban.r#move(nd.xy).unwrap();
+            ret.append(&mut nd.dump_all_nodes(&newban));
         }
         ret
     }
