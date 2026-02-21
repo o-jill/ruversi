@@ -108,7 +108,8 @@ def search()
   puts "features: #{features}"
   rfens = [
     "8/8/8/3Aa3/3aA3/8/8/8 b", "8/8/8/3aA3/3Aa3/8/8/8 b",
-    "A1A1A3/1c4/Aa1dA/1c4/A1a1a3/2a2a2/2a3a1/2A4A b"
+    "A1A1A3/1c4/Aa1dA/1c4/A1a1a3/2a2a2/2a3a1/2A4A b",
+    "1D1a1/1BaAa1a/DaAb/1aAaAc/aAaAaAb/bAaAc/a1BaAa1/3Aa1Aa b"
   ].freeze
   result_nodes = Array.new(rfens.length(), -1)
   result_elapsed = Array.new(rfens.length()) {[]}
