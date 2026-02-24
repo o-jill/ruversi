@@ -116,11 +116,11 @@ impl NodeBB {
         }
 
         if cfg!(feature="nosimd") {
-            wei.evaluatev9bb(ban)
+            wei.evaluatev12bb(ban)
         } else if cfg!(feature="avx") {
-            wei.evaluatev9bb_simdavx(ban)
+            wei.evaluatev12bb_simdavx(ban)
         } else {
-            wei.evaluatev9bb_simd(ban)
+            wei.evaluatev12bb_simd(ban)
         }
     }
 
@@ -131,9 +131,9 @@ impl NodeBB {
         }
 
         if cfg!(feature="nosimd") {
-            wei.evaluatev9bb(ban)
+            wei.evaluatev12bb(ban)
         } else {
-            wei.evaluatev9bb_simd_mul(ban)
+            wei.evaluatev12bb_simd_mul(ban)
         }
     }
 
