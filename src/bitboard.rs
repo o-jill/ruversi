@@ -1076,10 +1076,18 @@ impl BitBoard {
         (self.black | self.white).count_ones()
     }
 
+    /// # Returns
+    /// - 0  4~23 stones, black's turn
+    /// - 1  4~23 stones, white's turn
+    /// - 2 24~43 stones, black's turn
+    /// - 3 24~43 stones, white's turn
+    /// - 4 44~64 stones, black's turn
+    /// - 5 44~64 stones, white's turn
     pub fn progress(&self) -> usize {
         let cnt = self.stones() as usize;
-        let ret = ((cnt - 4) * weight::N_PROGRESS_DIV) / 60;
-        ret.min(weight::N_PROGRESS_DIV - 1)
+        let progress = ((cnt - 4) * weight::N_PROGRESS_DIV) / 60 / 2;
+        let progress = progress * 2 + (self.teban == GOTE) as usize;
+        progress.min(weight::N_PROGRESS_DIV - 1)
     }
 
     #[allow(dead_code)]
@@ -1194,6 +1202,33 @@ impl BitBoard {
     /// 回転させたものや鏡反転させたものを生成する。
     ///
     /// # Arguments
+    /// - score
+    ///   最終結果
+    ///
+    /// # Returns
+    /// 回転させたものや鏡反転させたものの配列
+    pub fn rotated_mirrored(&self, score : i8) -> Vec<(Self, i8)> {
+        vec![
+            (self.clone(), score),
+            (self.rotate90(), score),
+            (self.rotate180(), score),
+            (self.rotate180().rotate90(), score),
+            (self.flip_horz(), score),
+            (self.flip_vert(), score),
+            // flip color
+            (self.flip_all(), -score),
+            (self.rotate90().flip_all(), -score),
+            (self.rotate180().flip_all(), -score),
+            (self.rotate180().rotate90().flip_all(), -score),
+            (self.flip_horz().flip_all(), -score),
+            (self.flip_vert().flip_all(), -score)
+        ]
+    }
+
+    /// オーグメンテーション
+    /// 回転させたものや鏡反転させたものを生成する。
+    ///
+    /// # Arguments
     /// - fsb
     ///   確定石の数
     /// - fsw
@@ -1204,7 +1239,7 @@ impl BitBoard {
     /// # Returns
     /// 回転させたものや鏡反転させたものの配列
     #[allow(dead_code)]
-    pub fn rotated_mirrored(&self, fsb: i8, fsw : i8, score : i8)
+    pub fn rotated_mirrored_fixed(&self, fsb: i8, fsw : i8, score : i8)
             -> Vec<(Self, i8, i8, i8)> {
         vec![
             (self.clone(), fsb, fsw, score),
@@ -6991,40 +7026,41 @@ fn test_mirror_vert() {
 fn test_progress() {
     let tbl_prgs = [
         // 4~23
-        ("8/8/8/3aA3/3Aa3/8/8/8 b", 0), ("8/8/8/3aA3/3Ab2/8/8/8 b", 0),
-        ("8/8/8/3aA3/3Ac1/8/8/8 b", 0), ("8/8/8/3aA3/3Ad/8/8/8 b",  0),
-        ("8/8/8/3aA3/2Bd/8/8/8 b",  0), ("8/8/8/3aA3/1Cd/8/8/8 b",  0),
-        ("8/8/8/3aA3/Dd/8/8/8 b",   0), ("8/8/8/3aB2/Dd/8/8/8 b",   0),
-        ("8/8/8/3aC1/Dd/8/8/8 b",   0), ("8/8/8/3aD/Dd/8/8/8 b",    0),
-        ("8/8/8/2bD/Dd/8/8/8 b",    0), ("8/8/8/1cD/Dd/8/8/8 b",    0),
-        ("8/8/8/dD/Dd/8/8/8 b",     0), ("8/8/7a/dD/Dd/8/8/8 b",    0),
-        ("8/8/6b/dD/Dd/8/8/8 b",    0), ("8/8/5c/dD/Dd/8/8/8 b",    0),
-        ("8/8/4d/dD/Dd/8/8/8 b",    0), ("8/8/3e/dD/Dd/8/8/8 b",    0),
-        ("8/8/2f/dD/Dd/8/8/8 b",    0), ("8/8/1g/dD/Dd/8/8/8 b",    0),
+        ("8/8/8/3aA3/3Aa3/8/8/8 b", 0), ("8/8/8/3aA3/3Ab2/8/8/8 w", 1),
+        ("8/8/8/3aA3/3Ac1/8/8/8 b", 0), ("8/8/8/3aA3/3Ad/8/8/8 w",  1),
+        ("8/8/8/3aA3/2Bd/8/8/8 b",  0), ("8/8/8/3aA3/1Cd/8/8/8 w",  1),
+        ("8/8/8/3aA3/Dd/8/8/8 b",   0), ("8/8/8/3aB2/Dd/8/8/8 w",   1),
+        ("8/8/8/3aC1/Dd/8/8/8 b",   0), ("8/8/8/3aD/Dd/8/8/8 w",    1),
+        ("8/8/8/2bD/Dd/8/8/8 b",    0), ("8/8/8/1cD/Dd/8/8/8 w",    1),
+        ("8/8/8/dD/Dd/8/8/8 b",     0), ("8/8/7a/dD/Dd/8/8/8 w",    1),
+        ("8/8/6b/dD/Dd/8/8/8 b",    0), ("8/8/5c/dD/Dd/8/8/8 w",    1),
+        ("8/8/4d/dD/Dd/8/8/8 b",    0), ("8/8/3e/dD/Dd/8/8/8 w",    1),
+        ("8/8/2f/dD/Dd/8/8/8 b",    0), ("8/8/1g/dD/Dd/8/8/8 w",    1),
         // 24~43
-        ("8/8/h/dD/Dd/8/8/8 b",     1), ("8/A7/h/dD/Dd/8/8/8 b",    1),
-        ("8/B6/h/dD/Dd/8/8/8 b",    1), ("8/C5/h/dD/Dd/8/8/8 b",    1),
-        ("8/D4/h/dD/Dd/8/8/8 b",    1), ("8/E3/h/dD/Dd/8/8/8 b",    1),
-        ("8/F2/h/dD/Dd/8/8/8 b",    1), ("8/G1/h/dD/Dd/8/8/8 b",    1),
-        ("8/H/h/dD/Dd/8/8/8 b",     1), ("a7/H/h/dD/Dd/8/8/8 b",    1),
-        ("b6/H/h/dD/Dd/8/8/8 b",    1), ("c5/H/h/dD/Dd/8/8/8 b",    1),
-        ("d4/H/h/dD/Dd/8/8/8 b",    1), ("e3/H/h/dD/Dd/8/8/8 b",    1),
-        ("f2/H/h/dD/Dd/8/8/8 b",    1), ("g1/H/h/dD/Dd/8/8/8 b",    1),
-        ("h/H/h/dD/Dd/8/8/8 b",     1), ("h/H/h/dD/Dd/7A/8/8 b",    1),
-        ("h/H/h/dD/Dd/6B/8/8 b",    1), ("h/H/h/dD/Dd/5C/8/8 b",    1),
+        ("8/8/h/dD/Dd/8/8/8 b",     2), ("8/A7/h/dD/Dd/8/8/8 w",    3),
+        ("8/B6/h/dD/Dd/8/8/8 b",    2), ("8/C5/h/dD/Dd/8/8/8 w",    3),
+        ("8/D4/h/dD/Dd/8/8/8 b",    2), ("8/E3/h/dD/Dd/8/8/8 w",    3),
+        ("8/F2/h/dD/Dd/8/8/8 b",    2), ("8/G1/h/dD/Dd/8/8/8 w",    3),
+        ("8/H/h/dD/Dd/8/8/8 b",     2), ("a7/H/h/dD/Dd/8/8/8 w",    3),
+        ("b6/H/h/dD/Dd/8/8/8 b",    2), ("c5/H/h/dD/Dd/8/8/8 w",    3),
+        ("d4/H/h/dD/Dd/8/8/8 b",    2), ("e3/H/h/dD/Dd/8/8/8 w",    3),
+        ("f2/H/h/dD/Dd/8/8/8 b",    2), ("g1/H/h/dD/Dd/8/8/8 w",    3),
+        ("h/H/h/dD/Dd/8/8/8 b",     2), ("h/H/h/dD/Dd/7A/8/8 w",    3),
+        ("h/H/h/dD/Dd/6B/8/8 b",    2), ("h/H/h/dD/Dd/5C/8/8 w",    3),
         // 44~63
-        ("h/H/h/dD/Dd/4D/8/8 b",    2), ("h/H/h/dD/Dd/3E/8/8 b",    2),
-        ("h/H/h/dD/Dd/2F/8/8 b",    2), ("h/H/h/dD/Dd/1G/8/8 b",    2),
-        ("h/H/h/dD/Dd/H/8/8 b",     2), ("h/H/h/dD/Dd/H/7a/8 b",    2),
-        ("h/H/h/dD/Dd/H/6b/8 b",    2), ("h/H/h/dD/Dd/H/5c/8 b",    2),
-        ("h/H/h/dD/Dd/H/4d/8 b",    2), ("h/H/h/dD/Dd/H/3e/8 b",    2),
-        ("h/H/h/dD/Dd/H/2f/8 b",    2), ("h/H/h/dD/Dd/H/1g/8 b",    2),
-        ("h/H/h/dD/Dd/H/h/8 b",     2), ("h/H/h/dD/Dd/H/h/7A b",    2),
-        ("h/H/h/dD/Dd/H/h/6B b",    2), ("h/H/h/dD/Dd/H/h/5C b",    2),
-        ("h/H/h/dD/Dd/H/h/4D b",    2), ("h/H/h/dD/Dd/H/h/3E b",    2),
-        ("h/H/h/dD/Dd/H/h/2F b",    2), ("h/H/h/dD/Dd/H/h/1G b",    2),
+        ("h/H/h/dD/Dd/4D/8/8 b",    4), ("h/H/h/dD/Dd/3E/8/8 w",    5),
+        ("h/H/h/dD/Dd/2F/8/8 b",    4), ("h/H/h/dD/Dd/1G/8/8 w",    5),
+        ("h/H/h/dD/Dd/H/8/8 b",     4), ("h/H/h/dD/Dd/H/7a/8 w",    5),
+        ("h/H/h/dD/Dd/H/6b/8 b",    4), ("h/H/h/dD/Dd/H/5c/8 w",    5),
+        ("h/H/h/dD/Dd/H/4d/8 b",    4), ("h/H/h/dD/Dd/H/3e/8 w",    5),
+        ("h/H/h/dD/Dd/H/2f/8 b",    4), ("h/H/h/dD/Dd/H/1g/8 w",    5),
+        ("h/H/h/dD/Dd/H/h/8 b",     4), ("h/H/h/dD/Dd/H/h/7A w",    5),
+        ("h/H/h/dD/Dd/H/h/6B b",    4), ("h/H/h/dD/Dd/H/h/5C w",    5),
+        ("h/H/h/dD/Dd/H/h/4D b",    4), ("h/H/h/dD/Dd/H/h/3E w",    5),
+        ("h/H/h/dD/Dd/H/h/2F b",    4), ("h/H/h/dD/Dd/H/h/1G w",    5),
         // 63
-        ("h/H/h/dD/Dd/H/h/H b",     2),
+        ("h/H/h/dD/Dd/H/h/H b",     5),
+        ("h/H/h/dD/Dd/H/h/H w",     5),
     ];
     for (rfen, prgs) in tbl_prgs {
         let ban = BitBoard::from(rfen).unwrap();
