@@ -1035,8 +1035,9 @@ impl BitBoard {
 
     /// 最後のひとマスを埋めて石の差を返す。
     ///
-    /// #Returns
+    /// # Returns
     /// (score, move)
+    #[allow(dead_code)]
     pub fn move_mate1(&self) -> (f32, u8) {
         let remain = !(self.black | self.white);
         let xy = remain.trailing_zeros();
@@ -1065,10 +1066,6 @@ impl BitBoard {
     #[allow(dead_code)]
     pub fn is_last1_or_full(&self) -> bool {
         (self.black | self.white).count_zeros() <= 1
-    }
-
-    pub fn is_last1(&self) -> bool {
-        (self.black | self.white).count_zeros() == 1
     }
 
     pub fn is_last_n(&self, n : u32) -> bool {
