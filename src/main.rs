@@ -39,7 +39,7 @@ fn trial() {
     print!("{}", kifu.to_str());
 
     println!();
-    let ban = bitboard::BitBoard::from("4A3/2AaB2/3aAa2/2Ca2/2Ad1/1BaAa2/2aBa2/1f1 b").unwrap();
+    let ban = bitboard::BitBoard::try_from("4A3/2AaB2/3aAa2/2Ca2/2Ad1/1BaAa2/2aBa2/1f1 b").unwrap();
     ban.put();
     let moves = ban.genmove();
     println!("moves:{moves:?}");
@@ -72,7 +72,7 @@ fn verbose(rfen : &str, depth : u8,
         };
     let mut tt = transptable::TranspositionTable::with_capacity(cachesz);
     let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
-    let ban = match bitboard::BitBoard::from(rfen) {
+    let ban = match bitboard::BitBoard::try_from(rfen) {
         Err(msg) => {panic!("{msg}");},
         Ok(ban) => {ban},
     };
@@ -676,7 +676,7 @@ fn geninitpos(tag : &str) -> Result<(), String>{
 
     let pos = pos.unwrap();
     for rfen in pos.rfens.iter() {
-        let ban = bitboard::BitBoard::from(rfen);
+        let ban = bitboard::BitBoard::try_from(rfen.as_str());
         if ban.is_err() {
             return Err(format!("error: reading rfen \"{rfen}\"."));
         }
@@ -734,7 +734,7 @@ fn equalrfen() -> Result<(), String> {
     let er = edaxrunner::EdaxRunner::new();
     for rfen in rfentbl.iter() {
         // println!("rfen:{rfen}");
-        let ban = bitboard::BitBoard::from(rfen).unwrap();
+        let ban = bitboard::BitBoard::try_from(rfen.as_str()).unwrap();
         // launch edax
         match er.run(&ban.to_obf()) {
             Ok((_, score)) => {

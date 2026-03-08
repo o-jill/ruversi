@@ -1046,9 +1046,9 @@ fn testweight() {
         "aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A b",
         "aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA w",
     ];
-    for rfen in rfens.iter() {
-        let bban = bitboard::BitBoard::from(rfen).unwrap();
-        let ban = bitboard::BitBoard::from(rfen).unwrap();
+    for &rfen in rfens.iter() {
+        let bban = bitboard::BitBoard::try_from(rfen).unwrap();
+        let ban = bitboard::BitBoard::try_from(rfen).unwrap();
         ban.put();
         eprintln!("- - -");
         let mut w = weight::Weight::new();
