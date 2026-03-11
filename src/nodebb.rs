@@ -190,23 +190,24 @@ impl NodeBB {
     pub fn think_internal_tt(node:&mut NodeBB, ban : &bitboard::BitBoard, wei : &weight::Weight,
         tt : &mut transptable::TranspositionTable) -> f32 {
         let depth = node.depth;
+        let fteban = ban.teban as f32;
+        let teban = ban.teban;
         if ban.is_full() || ban.is_passpass() {
             // return Some(ban.countf32());
-            return ban.countf32() * ban.teban as f32;
+            return ban.countf32() * fteban;
         }
         #[cfg(feature="mate1")]
-        if ban.is_last1() {
+        if ban.is_last_n(1) {
             let (val, xy) = ban.move_mate1();
             if node.best.is_none() {
-                node.best = Some(Best::new(val * ban.teban as f32, xy));
+                node.best = Some(Best::new(val * fteban, xy));
             }
-            return val * ban.teban as f32;
+            return val * fteban;
         }
         if depth == 0 {
             return NodeBB::evalwtt(ban, wei, tt);
         }
 
-        let teban = ban.teban;
         // let sum = 0;
         let moves = ban.genmove();
 
@@ -325,7 +326,7 @@ impl NodeBB {
             return ban.countf32() * ban.teban as f32;
         }
         #[cfg(feature="mate1")]
-        if ban.is_last1() {
+        if ban.is_last_n(1) {
             let (val, xy) = ban.move_mate1();
             if node.best.is_none() {
                 node.best = Some(Best::new(val * ban.teban as f32, xy));
