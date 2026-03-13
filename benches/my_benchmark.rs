@@ -60,19 +60,19 @@ fn criterion_benchmark_weight(_c : &mut Criterion) {
     let ban = BitBoard::new();
     c.bench_function(
         "weight_nosimd_init",
-        |b| b.iter(|| w.evaluatev9bb(black_box(&ban))));
+        |b| b.iter(|| w.evaluatev12bb(black_box(&ban))));
     c.bench_function(
         "weight_simd_neon_mul_init",
-        |b| b.iter(|| w.evaluatev9bb_simd_mul(black_box(&ban))));
+        |b| b.iter(|| w.evaluatev12bb_simd_mul(black_box(&ban))));
     // let ban = BitBoard::from("h/h/h/h/H/H/H/H b").unwrap();
     let ban = BitBoard::from(
         "aAaAaAaA/AaAaAaAa/aCaC/AcAc/bBb/BbBb/dD/Dd w").unwrap();
     c.bench_function(
         "weight_nosimd",
-        |b| b.iter(|| w.evaluatev9bb(black_box(&ban))));
+        |b| b.iter(|| w.evaluatev12bb(black_box(&ban))));
     c.bench_function(
         "weight_simd_neon_mul",
-        |b| b.iter(|| w.evaluatev9bb_simd_mul(black_box(&ban))));
+        |b| b.iter(|| w.evaluatev12bb_simd_mul(black_box(&ban))));
     let ban = BitBoard::new();
     c.bench_function("genmove_init", |b| {
         b.iter(|| {
