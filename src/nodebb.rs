@@ -637,6 +637,8 @@ impl NodeBB {
         ret
     }
 
+    /// # Returns
+    /// vector of (BitBoard, hyoka)
     pub fn dump_all_nodes(&self, ban : &bitboard::BitBoard) -> Vec<(bitboard::BitBoard, f32)> {
         // let hyoka = self.best.as_ref().unwrap().hyoka;
         let hyoka = self.hyoka.unwrap();
