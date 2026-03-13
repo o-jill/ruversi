@@ -996,7 +996,7 @@ fn test_exchange_weight() {
         for p in 0..N_PROGRESS_DIV {
             let wei = w.wban(p);
             let vwei = w.wbanv(p);
-            for i in 0..N_WEIGHT_INPUT {
+            for i in 0..N_WEIGHT_INPUTBIAS {
                 assert_ne!(wei[i], 0.0f32);
                 assert_ne!(vwei[i], 0.0f32);
 
