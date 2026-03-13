@@ -15,7 +15,7 @@ fn criterion_benchmark_weight(_c : &mut Criterion) {
     c.bench_function("weight_simd_sse_init", |b| b.iter(|| w.evaluatev9bb_simd(black_box(&ban))));
     c.bench_function("weight_simd_avx_init", |b| b.iter(|| w.evaluatev9bb_simdavx(black_box(&ban))));
     // let ban = BitBoard::from("h/h/h/h/H/H/H/H b").unwrap();
-    let ban = BitBoard::from(
+    let ban = BitBoard::try_from(
         "aAaAaAaA/AaAaAaAa/aCaC/AcAc/bBb/BbBb/dD/Dd w").unwrap();
     c.bench_function("weight_nosimd", |b| b.iter(|| w.evaluatev9bb(black_box(&ban))));
     c.bench_function("weight_simd_sse", |b| b.iter(|| w.evaluatev9bb_simd(black_box(&ban))));
@@ -27,14 +27,14 @@ fn criterion_benchmark_weight(_c : &mut Criterion) {
             ban.genmove()
         })
     });
-    let ban = BitBoard::from(
+    let ban = BitBoard::try_from(
         "h/aFa/aC1Ba/aFa/aFa/aFa/aFa/h w").unwrap();
     c.bench_function("genmove_last1", |b| {
         b.iter(|| {
             ban.genmove()
         })
     });
-    let ban = BitBoard::from(
+    let ban = BitBoard::try_from(
         "2A1A1A1/3c2/Ac1bA/3c2/2cAa1/1a1Aa2A/A3a3/4A3 b").unwrap();
         // --*-*-*-
         // ---###--
