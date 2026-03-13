@@ -701,10 +701,10 @@ impl Weight {
                 let sum4 = vld1q_f32_x4(hid.as_ptr().add(i));
 
                 let wdc4 = vld1q_f32_x4(wdc.as_ptr().add(i));
-                let sum41 = vaddq_f32(sum41, wdc4.0);
-                let sum42 = vaddq_f32(sum42, wdc4.1);
-                let sum43 = vaddq_f32(sum43, wdc4.2);
-                let sum44 = vaddq_f32(sum44, wdc4.3);
+                let sum41 = vaddq_f32(sum4.0, wdc4.0);
+                let sum42 = vaddq_f32(sum4.1, wdc4.1);
+                let sum43 = vaddq_f32(sum4.2, wdc4.2);
+                let sum44 = vaddq_f32(sum4.3, wdc4.3);
                 // relu
                 let zero = vmovq_n_f32(0.0);
                 let rl1 = vmaxq_f32(zero, sum41);
