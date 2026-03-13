@@ -460,14 +460,13 @@ impl Weight {
         let wdc = self.wibias(prgs);
         let mut hid = [0f32 ; N_HIDDEN];
         hid.copy_from_slice(wdc);
-        let mut black = ban.black;
-        let mut white = ban.white;
+        let black = ban.black;
+        let white = ban.white;
+        let mut bit = bitboard::LSB_CELL;
         for idx in 0..bitboard::CELL_2D {
-            let bit = bitboard::LSB_CELL;
             let b = black & bit;
             let w = white & bit;
-            black >>= 1;
-            white >>= 1;
+            bit <<= 1;
             if b | w == 0 {continue;}  // no stone
 
             let start = idx * N_HIDDEN * 2 + if b != 0 {0} else {N_HIDDEN};
@@ -499,8 +498,8 @@ impl Weight {
     #[cfg(target_arch="x86_64")]
     pub fn evaluatev12bb_simd(&self, ban : &bitboard::BitBoard) -> f32 {
         let prgs = ban.progress();
-        let mut black = ban.black;
-        let mut white = ban.white;
+        let black = ban.black;
+        let white = ban.white;
 
         let ow = self.wbanv(prgs);
 
@@ -509,12 +508,11 @@ impl Weight {
         let mut hid = [0f32 ; N_HIDDEN];
         hid.copy_from_slice(wdc);
         const N : usize = 16;
+        let mut bit = bitboard::LSB_CELL;
         for idx in 0..bitboard::CELL_2D {
-            let bit = bitboard::LSB_CELL;
             let b = black & bit;
             let w = white & bit;
-            black >>= 1;
-            white >>= 1;
+            bit <<= 1;
             if b | w == 0 {continue;}  // no stone
 
             let wei = if b != 0 {
@@ -665,20 +663,19 @@ impl Weight {
     #[cfg(target_arch="aarch64")]
     pub fn evaluatev12bb_simd_mul(&self, ban : &bitboard::BitBoard) -> f32 {
         let prgs = ban.progress();
-        let mut black = ban.black;
-        let mut white = ban.white;
+        let black = ban.black;
+        let white = ban.white;
 
         let ow = self.wbanv(prgs);
         let wdc = self.wibias(prgs);
         const N : usize = 16;
         let mut hid = [0f32 ; N_HIDDEN];
+        let mut bit = bitboard::LSB_CELL;
         // cells
         for idx in 0..bitboard::CELL_2D {
-            let bit = bitboard::LSB_CELL;
             let b = black & bit;
             let w = white & bit;
-            black >>= 1;
-            white >>= 1;
+            bit <<= 1;
             if b | w == 0 {continue;}  // no stone
 
             let wei = if b != 0 {
@@ -778,20 +775,19 @@ impl Weight {
     #[cfg(target_arch="x86_64")]
     pub fn evaluatev12bb_simdavx(&self, ban : &bitboard::BitBoard) -> f32 {
         let prgs = ban.progress();
-        let mut black = ban.black;
-        let mut white = ban.white;
+        let black = ban.black;
+        let white = ban.white;
 
         let ow = self.wbanv(prgs);
         let wdc = self.wibias(prgs);
         const N : usize = 32;
         let mut hid = [0f32 ; N_HIDDEN];
         hid.copy_from_slice(wdc);
+        let mut bit = bitboard::LSB_CELL;
         for idx in 0..bitboard::CELL_2D {
-            let bit = bitboard::LSB_CELL;
             let b = black & bit;
             let w = white & bit;
-            black >>= 1;
-            white >>= 1;
+            bit <<= 1;
             if b | w == 0 {continue;}  // no stone
 
             let wei = if b != 0 {
