@@ -438,12 +438,12 @@ impl Weight {
     pub fn writev12(&self, path : &str) {
         let mut f = fs::File::create(path).unwrap();
         f.write_all(
-            format!("{}\n", EvalFile::V11).as_bytes()).unwrap();
+            format!("{}\n", EvalFile::V12).as_bytes()).unwrap();
         for prgs in 0..N_PROGRESS_DIV {
             let offset = prgs * N_WEIGHT_PAD;
             let w = &self.weight[offset..offset + N_WEIGHT];
             let sv = w.iter().map(|a| a.to_string()).collect::<Vec<String>>();
-            f.write_all((sv.join(",") + "¥n").as_bytes()).unwrap();
+            f.write_all((sv.join(",") + "\n").as_bytes()).unwrap();
         }
     }
 
