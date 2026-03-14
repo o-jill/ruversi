@@ -24,7 +24,7 @@ impl GameBB {
 
     pub fn from(rfen : &str) -> GameBB {
         GameBB {
-            ban: bitboard::BitBoard::from(rfen).unwrap(),
+            ban: bitboard::BitBoard::try_from(rfen).unwrap(),
             kifu: kifu::Kifu::new(),
             cachesize : 100,
             verbose : myoption::Verbose::Normal,

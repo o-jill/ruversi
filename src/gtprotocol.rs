@@ -115,7 +115,7 @@ impl Gtp {
             },
             "clear_board" => {
 // not_implemented_yet();
-                self.ban = bitboard::BitBoard::from(
+                self.ban = bitboard::BitBoard::try_from(
                     "8/8/8/3aA3/3Aa3/8/8/8 b").unwrap();
                 self.tt.clear();
                 self.respond(id);
