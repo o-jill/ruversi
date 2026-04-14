@@ -36,7 +36,7 @@ impl GameBB {
     }
 
     pub fn set_verbose(&mut self, vb : &myoption::Verbose) {
-        self.verbose = vb.clone();
+        self.verbose = *vb;
     }
 
     pub fn is_verbose(&self) -> bool {self.verbose == myoption::Verbose::Full}

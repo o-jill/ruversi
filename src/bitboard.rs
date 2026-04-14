@@ -27,7 +27,6 @@ const CORNER_CELL : u64 = 0x8100000000000081;
 const GUARD_RIGHT : u64 = 0xfefefefefefefefe;
 const GUARD_LEFT : u64 = 0x7f7f7f7f7f7f7f7f;
 const GUARD_VERTICAL : u64 = 0x7e7e7e7e7e7e7e7e;
-const N_PROGRESS_DIV : usize = 3;
 const BITPTN : [u64 ; 27] = [
     0, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff,
     0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff, 0x3fff, 0x7fff, 0xffff,
@@ -1146,7 +1145,7 @@ impl BitBoard {
         let mut bits = 0;
         let mut bit = LSB_CELL;
         for y in 0..NUMCELL {
-            let row8 = 0xffu64 << y * 8;
+            let row8 = 0xffu64 << (y * 8);
             let exist = row8 & stones;
             // その列の升が全部埋まってたら次へ。
             if exist == row8 {
@@ -1361,6 +1360,7 @@ impl BitBoard {
     ///
     /// # Returns
     /// 回転させたものや鏡反転させたものの配列
+    #[allow(dead_code)]
     pub fn rotated_mirrored(&self, score : i8) -> Vec<(Self, i8)> {
         vec![
             (self.clone(), score),
@@ -1421,6 +1421,7 @@ impl BitBoard {
     ///
     /// # Returns
     /// 回転させたものや鏡反転させたものの"rfen,score"の配列
+    #[allow(dead_code)]
     pub fn rotated_mirrored_string(&self, score : i8)
             -> Vec<String> {
         let mscore = -score;

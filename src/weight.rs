@@ -18,9 +18,12 @@ use std::arch::aarch64::*;
 pub const N_INPUT_BLACK : usize = bitboard::CELL_2D;
 pub const N_INPUT_WHITE : usize = N_INPUT_BLACK + bitboard::CELL_2D;
 pub const N_INPUT : usize = N_INPUT_WHITE;
+
 const N_HIDDEN : usize = 128;
 pub const N_HIDDEN2 : usize = 16;
 const N_OUTPUT : usize = 1;
+
+#[allow(dead_code)]
 const N_WEIGHT_INPUT : usize = 0;
 const N_WEIGHT_INPUTBIAS : usize = N_INPUT * N_HIDDEN;
 const N_WEIGHT_LAYER1 : usize = N_WEIGHT_INPUTBIAS + N_HIDDEN;
