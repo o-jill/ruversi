@@ -315,7 +315,7 @@ impl OthelloEngineProtocolServer {
     pub fn init(&mut self) -> Result<(), String> {
         let (toeng, fromeng) = self.getio()?;
 
-        if let Err(e) = toeng.write("ENGINE-PROTOCOL init\n".as_bytes()) {
+        if let Err(e) = toeng.write_all("ENGINE-PROTOCOL init\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -340,7 +340,7 @@ impl OthelloEngineProtocolServer {
         let (toeng, fromeng) = self.getio()?;
 
         if let Err(e) =
-                toeng.write("ENGINE-PROTOCOL get-version\n".as_bytes()) {
+                toeng.write_all("ENGINE-PROTOCOL get-version\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -362,7 +362,7 @@ impl OthelloEngineProtocolServer {
         let (toeng, fromeng) = self.getio()?;
 
         if let Err(e) =
-                toeng.write("ENGINE-PROTOCOL new-position\n".as_bytes()) {
+                toeng.write_all("ENGINE-PROTOCOL new-position\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -382,7 +382,7 @@ impl OthelloEngineProtocolServer {
             -> Result<String, String> {
         let (toeng, fromeng) = self.getio()?;
 
-        if let Err(e) = toeng.write(
+        if let Err(e) = toeng.write_all(
             format!(
                 "ENGINE-PROTOCOL midgame-search {obf} {alpha} {beta} {depth} {precision}\n"
             ).as_bytes()) {
@@ -408,7 +408,7 @@ impl OthelloEngineProtocolServer {
     //          -> Result<String, String> {
     //     let (toeng, fromeng) = self.getio()?;
 
-    //     if let Err(e) = toeng.write(
+    //     if let Err(e) = toeng.write_all(
     //         format!(
     //             "ENGINE-PROTOCOL midgame-search {obf} {alpha} {beta} {depth} {precision}\n"
     //         ).as_bytes()) {
@@ -429,7 +429,7 @@ impl OthelloEngineProtocolServer {
 
     //                 std::thread::sleep(Duration::from_millis(10));
     //             }
-    //             toeng.write("\n".as_bytes()).unwrap();
+    //             toeng.write_all("\n".as_bytes()).unwrap();
     //         }
     //     });
     //     let mut bufreader = BufReader::new(fromeng);
@@ -473,7 +473,7 @@ impl OthelloEngineProtocolServer {
     pub fn stop(&mut self) -> Result<(), String> {
         let (toeng, fromeng) = self.getio()?;
 
-        if let Err(e) = toeng.write("ENGINE-PROTOCOL stop\n".as_bytes()) {
+        if let Err(e) = toeng.write_all("ENGINE-PROTOCOL stop\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -493,7 +493,7 @@ impl OthelloEngineProtocolServer {
         let (toeng, fromeng) = self.getio()?;
 
         if let Err(e) =
-                toeng.write("ENGINE-PROTOCOL empty-hash\n".as_bytes()) {
+                toeng.write_all("ENGINE-PROTOCOL empty-hash\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -511,7 +511,7 @@ impl OthelloEngineProtocolServer {
     pub fn quit(&mut self) -> Result<(), String> {
         let (toeng, _fromeng) = self.getio()?;
 
-        if let Err(e) = toeng.write("ENGINE-PROTOCOL quit\n".as_bytes()) {
+        if let Err(e) = toeng.write_all("ENGINE-PROTOCOL quit\n".as_bytes()) {
             return Err(e.to_string());
         }
 
