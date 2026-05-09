@@ -72,12 +72,12 @@ impl OthelloEngineProtocol {
             let cmd = body.to_string();
             let _thread = spawn(move || {
                 let elem = cmd.split(" ").collect::<Vec<_>>();
-                let obf = elem[1];
-                let ban = bitboard::BitBoard::from_obf(obf).unwrap();
-                let _alpha = elem[2].parse::<f32>().unwrap();
-                let _beta = elem[3].parse::<f32>().unwrap();
-                let depth = elem[4].parse::<u8>().unwrap();
-                let _precision = elem[5].parse::<f32>().unwrap();
+                let obf = format!("{} {}", elem[1], elem[2]);
+                let ban = bitboard::BitBoard::from_obf(&obf).unwrap();
+                let _alpha = elem[3].parse::<f32>().unwrap();
+                let _beta = elem[4].parse::<f32>().unwrap();
+                let depth = elem[5].parse::<u8>().unwrap();
+                let _precision = elem[6].parse::<f32>().unwrap();
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
