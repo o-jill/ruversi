@@ -56,7 +56,7 @@ impl EdaxRunner {
             obfpath: {
                 let id = std::process::id();
                 let tmp = std::env::temp_dir().join(
-                    &format!("ruversi_{id:x}_{OBF}"));
+                    format!("ruversi_{id:x}_{OBF}"));
                 tmp.to_str().unwrap().to_string()
             },
             curdir: String::from(CD),
@@ -122,7 +122,7 @@ impl EdaxRunner {
                     } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
-                        self.args = parse_args_tag(&args_txt)?;
+                        self.args = parse_args_tag(args_txt)?;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -263,7 +263,7 @@ impl RuversiRunner {
                     } else if let Some(evf) = l.strip_prefix("evfile:") {
                         self.evfile = String::from(evf.trim());
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
-                        self.args = parse_args_tag(&args_txt)?;
+                        self.args = parse_args_tag(args_txt)?;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}
@@ -410,7 +410,7 @@ impl CassioRunner {
                         // println!("{l}");
                         self.cas = String::from(cas.trim());
                     } else if let Some(args_txt) = l.strip_prefix("args:") {
-                        self.args = parse_args_tag(&args_txt)?;
+                        self.args = parse_args_tag(args_txt)?;
                     }
                 },
                 Err(err) => {return Err(err.to_string())}

@@ -259,7 +259,7 @@ fn test_ttentry_new_and_is_hit() {
     let b = bitboard::BitBoard::new();
     let entry = TTEntry::from(42, &b, 100.0);
     assert!(entry.is_hit(&b));
-    let b2 = bitboard::BitBoard::from("8/8/8/H/H/8/8/8 w").unwrap();
+    let b2 = bitboard::BitBoard::try_from("8/8/8/H/H/8/8/8 w").unwrap();
     assert!(!entry.is_hit(&b2));
 }
 
@@ -291,7 +291,7 @@ fn test_transptable_basic_insert_and_check() {
     ttable.append(&b, 200.0, 5);
     assert_eq!(ttable.check(&b), Some(200.0));
     // 別の盤面ではヒットしない
-    let b2 = bitboard::BitBoard::from("h/h/h/H/H/H/8/8 b").unwrap();
+    let b2 = bitboard::BitBoard::try_from("h/h/h/H/H/H/8/8 b").unwrap();
     assert_eq!(ttable.check(&b2), None);
 }
 

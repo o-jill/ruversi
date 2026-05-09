@@ -282,6 +282,7 @@ impl OthelloEngineProtocolServer {
         }
     }
 
+    #[allow(dead_code)]
     pub fn new2(ch1 : Child, ch2 : Child) -> Self {
         OthelloEngineProtocolServer {
             ply1 : Some(ch1),
@@ -470,10 +471,13 @@ impl OthelloEngineProtocolServer {
 
     // }
 
+    #[allow(dead_code)]
     pub fn endgame_search(&mut self) {unimplemented!()}
 
+    #[allow(dead_code)]
     pub fn get_serach_infos(&mut self) {unimplemented!()}
 
+    #[allow(dead_code)]
     pub fn stop(&mut self) -> Result<(), String> {
         let (toeng, fromeng) = self.getio()?;
 
@@ -492,6 +496,7 @@ impl OthelloEngineProtocolServer {
         Err(format!("unknown response sp: \"{buf}\""))
     }
 
+    #[allow(dead_code)]
     pub fn empty_hash(&mut self) -> Result<(), String> {
         let (toeng, fromeng) = self.getio()?;
 

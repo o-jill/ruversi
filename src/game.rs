@@ -24,7 +24,7 @@ impl GameBB {
 
     pub fn from(rfen : &str) -> GameBB {
         GameBB {
-            ban: bitboard::BitBoard::from(rfen).unwrap(),
+            ban: bitboard::BitBoard::try_from(rfen).unwrap(),
             kifu: kifu::Kifu::new(),
             cachesize : 100,
             verbose : myoption::Verbose::Normal,
@@ -36,7 +36,7 @@ impl GameBB {
     }
 
     pub fn set_verbose(&mut self, vb : &myoption::Verbose) {
-        self.verbose = vb.clone();
+        self.verbose = *vb;
     }
 
     pub fn is_verbose(&self) -> bool {self.verbose == myoption::Verbose::Full}

@@ -607,7 +607,7 @@ impl Trainer {
                     continue;
                 }
                 unsafe {RFENCACHE.push((rfen.clone(), score));}
-                let b = bitboard::BitBoard::from(&rfen).unwrap();
+                let b = bitboard::BitBoard::try_from(&rfen).unwrap();
                 let b90 = b.rotate90();
                 unsafe {RFENCACHE.push((b90.to_str(), score));}
                 let b180 = b.rotate180();
@@ -785,7 +785,7 @@ impl Trainer {
                 if bitboard::count_emptycells(&rfen).unwrap() < 1 {
                     continue;
                 }
-                let b = bitboard::BitBoard::from(&rfen).unwrap();
+                let b = bitboard::BitBoard::try_from(&rfen).unwrap();
                 let b90 = b.rotate90();
                 let b180 = b.rotate180();
                 let b270 = b90.rotate180();
@@ -982,7 +982,7 @@ impl Trainer {
                     continue;
                 }
 
-                let b = bitboard::BitBoard::from(&rfen).unwrap();
+                let b = bitboard::BitBoard::try_from(&rfen).unwrap();
                 let b90 = b.rotate90();
                 let b180 = b.rotate180();
                 let b270 = b90.rotate180();
@@ -1251,7 +1251,7 @@ impl Trainer {
                 if bitboard::count_emptycells(&rfen).unwrap() < 1 {
                     continue;
                 }
-                let b = bitboard::BitBoard::from(&rfen).unwrap();
+                let b = bitboard::BitBoard::try_from(&rfen).unwrap();
                 let b90 = b.rotate90();
                 let b180 = b.rotate180();
                 let b270 = b90.rotate180();
