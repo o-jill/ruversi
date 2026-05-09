@@ -632,6 +632,10 @@ impl BitBoard {
         )
     }
 
+    pub fn is_sente(&self) -> bool {self.teban == SENTE}
+    #[allow(dead_code)]
+    pub fn is_gote(&self) -> bool {self.teban == GOTE}
+
     #[allow(dead_code)]
     pub fn flipturn(&mut self) {
         self.teban = -self.teban;

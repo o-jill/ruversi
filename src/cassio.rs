@@ -99,12 +99,8 @@ impl OthelloEngineProtocol {
                     mvstr = "--".to_string();
                 }
 
-                let range =
-                    if val.is_sign_negative() {
-                        format!("W:{val:.1} <= v <= W:{val:.1}")
-                    } else {
-                        format!("B:{val:.1} <= v <= B:{val:.1}")
-                    };
+                let c = if ban.is_sente() {'B'} else {'W'};
+                let range = format!("{c}{val:+.2} <= v <= {c}{val:+.2}");
                 let moves = node.best_order();
                 let nodes = node.kyokumen;
                 let sec = ft.as_secs_f32();
@@ -158,12 +154,8 @@ impl OthelloEngineProtocol {
                     mvstr = "--".to_string();
                 }
 
-                let range =
-                    if val.is_sign_negative() {
-                        format!("W:{val:.1} <= v <= W:{val:.1}")
-                    } else {
-                        format!("B:{val:.1} <= v <= B:{val:.1}")
-                    };
+                let c = if ban.is_sente() {'B'} else {'W'};
+                let range = format!("{c}{val:+.2} <= v <= {c}{val:+.2}");
                 let hash = "0123456789ABCDEF";
                 let nodes = node.kyokumen;
                 let sec = ft.as_secs_f32();
