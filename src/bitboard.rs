@@ -410,7 +410,7 @@ impl BitBoard {
 
     #[allow(dead_code)]
     pub fn from_obf(obf : &str) -> Result<BitBoard, String> {
-        if obf.len() < 65 {return Err("less letters.".to_string());}
+        if obf.len() < 65 {return Err(format!("less letters. [{obf}]"));}
 
         let mut ret = BitBoard {
             black : 0,
