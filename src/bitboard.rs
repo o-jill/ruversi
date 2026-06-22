@@ -1899,6 +1899,12 @@ pub fn count_stones(rfen : &str) -> Result<i8, String> {
 
 #[test]
 fn testbitbrd() {
+    let bobf = BitBoard::try_from("OOOOOOOOXOOOOXXXXOOOXOOOOOOOOOOO-OOOOOOOO--OOOOO--OOOO-O-O-OOO-- X").unwrap();
+    let brfen = BitBoard::try_from("hAdDcAk1h2e2d1a1a1c2 b").unwrap();
+    assert_eq!(bobf.black, brfen.black);
+    assert_eq!(bobf.white, brfen.white);
+    assert_eq!(bobf.teban, brfen.teban);
+
     let b = BitBoard::new();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);
