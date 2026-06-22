@@ -25,7 +25,7 @@ pub struct OthelloEngineProtocol {
 impl OthelloEngineProtocol {
     pub fn new() -> Self {
         let mut path = std::env::temp_dir();
-        path.push("/ruversi.log");
+        path.push("ruversi.log");
         let log = OpenOptions::new().create(true)
             .append(true).open(path);
 
