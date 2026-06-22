@@ -820,26 +820,6 @@ impl Weight {
             }
         }
 
-        for hidx in (0..N_HIDDEN).step_by(N) {
-            unsafe {
-                let h1 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(hidx));
-                let h2 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(hidx + 8));
-                let h3 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(hidx + 16));
-                let h4 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(hidx + 24));
-
-                // relu
-                let zero = x86_64::_mm256_setzero_ps();
-                let y1 = x86_64::_mm256_max_ps(zero, h1);
-                let y2 = x86_64::_mm256_max_ps(zero, h2);
-                let y3 = x86_64::_mm256_max_ps(zero, h3);
-                let y4 = x86_64::_mm256_max_ps(zero, h4);
-                x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx), y1);
-                x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx + 8), y2);
-                x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx + 16), y3);
-                x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx + 24), y4);
-            }
-        }
-
         // 2nd layer to output
         let mut res = self.wl2bias(prgs);
         let wh = self.wlayer1(prgs);
@@ -851,10 +831,16 @@ impl Weight {
         let mut sumhn = [0f32 ; N_HIDDEN2 * 4 * 2];
         for j in (0..N_HIDDEN).step_by(32) {
             unsafe {
-                let x1 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j));
-                let x2 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j + 8));
-                let x3 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j + 16));
-                let x4 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j + 24));
+                let h1 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j));
+                let h2 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j + 8));
+                let h3 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j + 16));
+                let h4 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j + 24));
+                // relu
+                let zero = x86_64::_mm256_setzero_ps();
+                let x1 = x86_64::_mm256_max_ps(zero, h1);
+                let x2 = x86_64::_mm256_max_ps(zero, h2);
+                let x3 = x86_64::_mm256_max_ps(zero, h3);
+                let x4 = x86_64::_mm256_max_ps(zero, h4);
                 for i in 0..N_HIDDEN2 {
                     let idx = i * N_HIDDEN + j;
                     let w1 = x86_64::_mm256_load_ps(wh.as_ptr().add(idx));
