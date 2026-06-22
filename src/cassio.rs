@@ -76,8 +76,8 @@ impl OthelloEngineProtocol {
                 let ban = bitboard::BitBoard::from_obf(&obf).unwrap();
                 let _alpha = elem[3].parse::<f32>().unwrap();
                 let _beta = elem[4].parse::<f32>().unwrap();
-                let depth = elem[5].parse::<u8>().unwrap();
-                let _precision = elem[6].parse::<f32>().unwrap();
+                let depth = ban.nblank() as u8;
+                let _precision = elem[5].parse::<f32>().unwrap();
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
@@ -127,19 +127,21 @@ impl OthelloEngineProtocol {
             let cmd = body.to_string();
             let _thread = spawn(move || {
                 let elem = cmd.split(" ").collect::<Vec<_>>();
-                let obf = elem[1];
-                let ban = bitboard::BitBoard::from_obf(obf).unwrap();
-                let _alpha = elem[2].parse::<f32>().unwrap();
-                let _beta = elem[3].parse::<f32>().unwrap();
-                let depth = ban.nblank() as u8;
-                let _precision = elem[4].parse::<f32>().unwrap();
+                let obf = format!("{} {}", elem[1], elem[2]);
+                let ban = bitboard::BitBoard::from_obf(&obf).unwrap();
+                let _alpha = elem[3].parse::<f32>().unwrap();
+                let _beta = elem[4].parse::<f32>().unwrap();
+                let blanks = ban.nblank();
+                let depth = blanks as u8 * 2;
+                let _precision = elem[5].parse::<f32>().unwrap();
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
                 let mut node = nodebb::NodeBB::root(depth);
                 let tt = unsafe {TRTABLE.as_mut().unwrap()};
                 let val =
-                    nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, tt).unwrap();
+                    nodebb::NodeBB::think_ab_simple_gk_tt(
+                        &ban, depth, &mut node, wei, tt).unwrap();
                 let ft = st.elapsed();
                 // eprintln!("val:{val:?} {node} {}msec", ft.as_millis());
                 let mvstr;
@@ -156,11 +158,11 @@ impl OthelloEngineProtocol {
 
                 let c = if ban.is_sente() {'B'} else {'W'};
                 let range = format!("{c}{val:+.2} <= v <= {c}{val:+.2}");
-                let hash = "0123456789ABCDEF";
+                let moves = node.best_order();
                 let nodes = node.kyokumen;
                 let sec = ft.as_secs_f32();
 
-                println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {hash}, node {nodes}, time {sec:3}");
+                println!("{obf}, move {mvstr}, depth {blanks}, @0%, {range}, {moves}, node {nodes}, time {sec:3}");
                 running.store(false, Ordering::Relaxed);
                 Self::send_ready();
             });
