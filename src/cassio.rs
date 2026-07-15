@@ -72,12 +72,58 @@ impl OthelloEngineProtocol {
             let cmd = body.to_string();
             let _thread = spawn(move || {
                 let elem = cmd.split(" ").collect::<Vec<_>>();
+                if elem.len() < 7 {
+                    println!("malformed format error: length={} < 7", elem.len());
+                    running.store(false, Ordering::Relaxed);
+                    Self::send_ready();
+                    return;
+                }
                 let obf = format!("{} {}", elem[1], elem[2]);
-                let ban = bitboard::BitBoard::from_obf(&obf).unwrap();
-                let _alpha = elem[3].parse::<f32>().unwrap();
-                let _beta = elem[4].parse::<f32>().unwrap();
-                let depth = ban.nblank() as u8;
-                let _precision = elem[5].parse::<f32>().unwrap();
+                let ban = match bitboard::BitBoard::from_obf(&obf) {
+                    Ok(b) => {b},
+                    Err(e) => {
+                        println!("obf parse error: {e}");
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                }
+                let _alpha = match elem[3].parse::<f32>() {
+                    Ok(a) => {a},
+                    Err(e) => {
+                        println!("alpha parse error: {e} {}", elem[3]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let _beta = match elem[4].parse::<f32>() {
+                    Ok(b) => {b},
+                    Err(e) => {
+                        println!("beta parse error: {e} {}", elem[4]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let depth = match elem[5].parse::<u8>() {
+                    Ok(d) => {d},
+                    Err(e) => {
+                        println!("depth parse error: {e} {}", elem[5]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    }
+                };
+                let _precision = match elem[6].parse::<f32>() {
+                    Ok(p) => {p},
+                    Err(e) => {
+                        println!("precision parse error: {e} {}", elem[5]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    }
+                };
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
@@ -127,13 +173,51 @@ impl OthelloEngineProtocol {
             let cmd = body.to_string();
             let _thread = spawn(move || {
                 let elem = cmd.split(" ").collect::<Vec<_>>();
+                if elem.len() < 6 {
+                    println!("malformed format error: length={} < 6", elem.len());
+                    running.store(false, Ordering::Relaxed);
+                    Self::send_ready();
+                    return;
+                }
                 let obf = format!("{} {}", elem[1], elem[2]);
-                let ban = bitboard::BitBoard::from_obf(&obf).unwrap();
-                let _alpha = elem[3].parse::<f32>().unwrap();
-                let _beta = elem[4].parse::<f32>().unwrap();
+                let ban = match bitboard::BitBoard::from_obf(&obf) {
+                    Ok(b) => {b},
+                    Err(e) => {
+                        println!("obf parse error: {e}");
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let _alpha = match elem[3].parse::<f32>() {
+                    Ok(a) => {a},
+                    Err(e) => {
+                        println!("alpha parse error: {e} {}", elem[3]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let _beta = match elem[4].parse::<f32>() {
+                    Ok(b) => {b},
+                    Err(e) => {
+                        println!("beta parse error: {e} {}", elem[4]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
                 let blanks = ban.nblank();
                 let depth = blanks as u8 * 2;
-                let _precision = elem[5].parse::<f32>().unwrap();
+                let _precision = match elem[5].parse::<f32>() {
+                    Ok(p) => {p},
+                    Err(e) => {
+                        println!("precision parse error: {e} {}", elem[5]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
