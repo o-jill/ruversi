@@ -87,7 +87,7 @@ impl OthelloEngineProtocol {
                         Self::send_ready();
                         return;
                     },
-                }
+                };
                 let _alpha = match elem[3].parse::<f32>() {
                     Ok(a) => {a},
                     Err(e) => {
