@@ -118,7 +118,7 @@ impl OthelloEngineProtocol {
                 let _precision = match elem[6].parse::<f32>() {
                     Ok(p) => {p},
                     Err(e) => {
-                        println!("precision parse error: {e} {}", elem[5]);
+                        println!("precision parse error: {e} {}", elem[6]);
                         running.store(false, Ordering::Relaxed);
                         Self::send_ready();
                         return;
