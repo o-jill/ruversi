@@ -20,7 +20,7 @@ pub const N_INPUT_WHITE : usize = N_INPUT_BLACK + bitboard::CELL_2D;
 pub const N_INPUT : usize = N_INPUT_WHITE;
 
 const N_HIDDEN : usize = 128;
-pub const N_HIDDEN2 : usize = 16;
+pub const N_HIDDEN2 : usize = 32;
 const N_OUTPUT : usize = 1;
 
 #[allow(dead_code)]
@@ -58,12 +58,14 @@ const WSZV8 : usize = (bitboard::CELL_2D + 1 + 2 + 1) * N_HIDDEN
 const WSZV9 : usize = WSZV8;
 #[allow(dead_code)]
 const WSZV10 : usize = (bitboard::CELL_2D * 2 + 1 + 2 + 1) * N_HIDDEN
-        + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
+        + (N_HIDDEN + 1) * 16 + 16 + 1;
 #[allow(dead_code)]
 const WSZV11 : usize = (bitboard::CELL_2D * 2 + 1 + 1) * N_HIDDEN
-        + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
+        + (N_HIDDEN + 1) * 16 + 16 + 1;
 #[allow(dead_code)]
 const WSZV12 : usize = (bitboard::CELL_2D * 2 + 1) * N_HIDDEN
+        + (N_HIDDEN + 1) * 16 + 16 + 1;
+const WSZV13 : usize = (bitboard::CELL_2D * 2 + 1) * N_HIDDEN
         + (N_HIDDEN + 1) * N_HIDDEN2 + N_HIDDEN2 + 1;
 
 // v2
@@ -87,6 +89,7 @@ enum EvalFile{
     V10,
     V11,
     V12,
+    V13,
 }
 
 impl std::fmt::Display for EvalFile {
@@ -106,6 +109,7 @@ impl std::fmt::Display for EvalFile {
             EvalFile::V10 => {"# 3x 128+1+2-128-16-1"},
             EvalFile::V11 => {"# 3x 128+1-128-16-1"},
             EvalFile::V12 => {"# 6x 128-128-16-1"},
+            EvalFile::V13 => {"# 6x 128-128-32-1"},
             }
         )
     }
@@ -126,6 +130,7 @@ impl EvalFile {
             "# 3x 128+1+2-128-16-1" => Some(EvalFile::V10),
             "# 3x 128+1-128-16-1" => Some(EvalFile::V11),
             "# 6x 128-128-16-1" => Some(EvalFile::V12),
+            "# 6x 128-128-32-1" => Some(EvalFile::V13),
             _ => {
                 None
             }
@@ -329,6 +334,14 @@ impl Weight {
                                 return Ok(());
                             }
                         },
+                        EvalFile::V13 => {
+                            self.readv13(&l, idx)?;
+                            idx += 1;
+                            if idx >= N_PROGRESS_DIV {
+                                self.exchange();
+                                return Ok(());
+                            }
+                        },
                         _ => {
                             panic!("EvalFile::Unknown...");
                         }
@@ -377,24 +390,8 @@ impl Weight {
         Err(String::from("v9 format is not supported any more."))
     }
 
-    fn readv10(&mut self, line : &str, progress : usize) -> Result<(), String> {
-        let csv = line.split(",").collect::<Vec<_>>();
-        let newtable : Vec<f32> =
-                csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
-        let nsz = newtable.len();
-        if WSZV10 != nsz {
-            return Err(format!("size mismatch v10:{WSZV10} != {nsz}"));
-        }
-
-        let offset = progress * N_WEIGHT_PAD;
-        // stones + teban
-        self.weight[offset..offset + N_WEIGHT_INPUTBIAS].copy_from_slice(
-            &newtable[..N_WEIGHT_INPUTBIAS]);
-        // input bias + the others
-        self.weight[offset + N_WEIGHT_INPUTBIAS..offset + N_WEIGHT].copy_from_slice(
-            &newtable[(bitboard::CELL_2D * 2 + 3) * N_HIDDEN..]);
-        // println!("v9:{:?}", self.weight);
-        Ok(())
+    fn readv10(&mut self, _line : &str, _progress : usize) -> Result<(), String> {
+        Err(String::from("v10 format is not supported any more."))
     }
 
     fn readv11(&mut self, line : &str, progress : usize) -> Result<(), String> {
@@ -406,19 +403,31 @@ impl Weight {
             return Err(format!("size mismatch v11:{WSZV11} != {nsz}"));
         }
 
-        let offset = progress * N_WEIGHT_PAD * 2;
-        self.weight[offset..offset + N_WEIGHT_INPUTBIAS].copy_from_slice(
+        let mut v12table = [0.0 ; N_WEIGHT];
+        v12table[..N_WEIGHT_INPUTBIAS].copy_from_slice(
             &newtable[..N_WEIGHT_INPUTBIAS]);
-        self.weight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT]
-                .copy_from_slice(&newtable[N_WEIGHT_INPUTBIAS + N_HIDDEN * 2..]);
+        v12table[N_WEIGHT_LAYER1..N_WEIGHT].copy_from_slice(
+            &newtable[N_WEIGHT_INPUTBIAS + N_HIDDEN * 2..]);
         // self.weight[offset + N_WEIGHT_PAD..offset + N_WEIGHT + N_WEIGHT_PAD]
         //         .copy_from_slice(&newtable);
 
         // self.weight[offset + N_WEIGHT_PAD..offset + N_WEIGHT_PAD * 2]
         //     .copy_from_slice(&self.weight[offset..offset + N_WEIGHT_PAD]);
-        let (dest, src) = self.weight.split_at_mut(offset + N_WEIGHT_PAD);
-        src[..N_WEIGHT].copy_from_slice(&dest[offset..offset + N_WEIGHT]);
+        let (dest, src) = v12table.split_at_mut(N_WEIGHT_PAD);
+        src[..N_WEIGHT].copy_from_slice(&dest[..N_WEIGHT]);
         // println!("v11:{:?}", self.weight);
+
+        let offset = progress * N_WEIGHT_PAD * 2;
+        let size = N_WEIGHT_LAYER1 + N_HIDDEN * 16;
+        self.weight[offset..offset + size].copy_from_slice(&v12table[..size]);
+        let size2 = size + 16/* dc */ ;
+        self.weight[offset..offset + 16].copy_from_slice(
+            &v12table[size..size2]);
+        let size3 = size2 + 16 /* h2 */;
+        self.weight[offset..offset + 16].copy_from_slice(
+            &v12table[size2..size3]);
+        self.weight[N_WEIGHT_LAYER2BIAS] = v12table[size3];
+
         Ok(())
     }
 
@@ -432,16 +441,37 @@ impl Weight {
         }
 
         let offset = progress * N_WEIGHT_PAD;
+        let size = N_WEIGHT_LAYER1 + N_HIDDEN * 16;
+        self.weight[offset..offset + size].copy_from_slice(&newtable[..size]);
+        let size2 = size + 16/* dc */ ;
+        self.weight[offset..offset + 16].copy_from_slice(&newtable[size..size2]);
+        let size3 = size2 + 16 /* h2 */;
+        self.weight[offset..offset + 16].copy_from_slice(&newtable[size2..size3]);
+        self.weight[N_WEIGHT_LAYER2BIAS] = newtable[size3];
+        // println!("v12:{:?}", self.weight);
+        Ok(())
+    }
+
+    fn readv13(&mut self, line : &str, progress : usize) -> Result<(), String> {
+        let csv = line.split(",").collect::<Vec<_>>();
+        let newtable : Vec<f32> =
+                csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+        let nsz = newtable.len();
+        if WSZV13 != nsz {
+            return Err(format!("size mismatch v13:{WSZV13} != {nsz}"));
+        }
+
+        let offset = progress * N_WEIGHT_PAD;
         self.weight[offset..offset + N_WEIGHT].copy_from_slice(&newtable);
         // println!("v12:{:?}", self.weight);
         Ok(())
     }
 
     #[allow(dead_code)]
-    pub fn writev12(&self, path : &str) {
+    pub fn writev13(&self, path : &str) {
         let mut f = fs::File::create(path).unwrap();
         f.write_all(
-            format!("{}\n", EvalFile::V12).as_bytes()).unwrap();
+            format!("{}\n", EvalFile::V13).as_bytes()).unwrap();
         for prgs in 0..N_PROGRESS_DIV {
             let offset = prgs * N_WEIGHT_PAD;
             let w = &self.weight[offset..offset + N_WEIGHT];
@@ -839,8 +869,6 @@ impl Weight {
                             sumhn.as_mut_ptr().add(i * 8), s1234);
                 }
                 for (k, _hn) in sumhn.iter().enumerate().step_by(32) {
-                    use std::arch::x86_64::_mm256_extractf128_ps;
-
                     let a = x86_64::_mm256_loadu_ps(
                             sumhn.as_ptr().add(k));  // a0~a7
                     let b = x86_64::_mm256_loadu_ps(
@@ -860,7 +888,7 @@ impl Weight {
                     let t2 = x86_64::_mm256_shuffle_ps(s1, s2,
                             0b11101110/*(3 << 6) | (2 << 4) | (3 << 2) | 2*/);
                     let s3 = x86_64::_mm256_add_ps(t1, t2);
-                    let s4 = _mm256_extractf128_ps(s3, 1);
+                    let s4 = x86_64::_mm256_extractf128_ps(s3, 1);
                     let s5 = x86_64::_mm_add_ps(
                             s4, x86_64::_mm256_castps256_ps128(s3));
                     let hn2 = x86_64::_mm_loadu_ps(
@@ -870,60 +898,38 @@ impl Weight {
                 }
             }
         }
-        if N_HIDDEN2 >= 32 {
-            for i in (0..N_HIDDEN2).step_by(32) {
-                unsafe {  // relu
-                    let x1 = x86_64::_mm256_load_ps(hid2.as_ptr().add(i));
-                    let x2 = x86_64::_mm256_load_ps(hid2.as_ptr().add(i + 8));
-                    let x3 = x86_64::_mm256_load_ps(hid2.as_ptr().add(i + 16));
-                    let x4 = x86_64::_mm256_load_ps(hid2.as_ptr().add(i + 24));
-                    let zero = x86_64::_mm256_setzero_ps();
-                    let h1 = x86_64::_mm256_max_ps(zero, x1);
-                    let h2 = x86_64::_mm256_max_ps(zero, x2);
-                    let h3 = x86_64::_mm256_max_ps(zero, x3);
-                    let h4 = x86_64::_mm256_max_ps(zero, x4);
-                    let w1 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i));
-                    let w2 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i + 8));
-                    let w3 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i + 16));
-                    let w4 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i + 24));
-                    let y1 = x86_64::_mm256_mul_ps(h1, w1);
-                    let y2 = x86_64::_mm256_mul_ps(h2, w2);
-                    let y3 = x86_64::_mm256_mul_ps(h3, w3);
-                    let y4 = x86_64::_mm256_mul_ps(h4, w4);
-                    let y12 = x86_64::_mm256_add_ps(y1, y2);
-                    let y34 = x86_64::_mm256_add_ps(y3, y4);
-                    let y1234 = x86_64::_mm256_add_ps(y12, y34);
-                    let s1 = x86_64::_mm256_castps256_ps128(y1234);
-                    let s2 = x86_64::_mm256_extractf128_ps(y1234, 1);
-                    let s4 = x86_64::_mm_add_ps(s1, s2);
-                    x86_64::_mm_storeu_ps(hid2.as_mut_ptr().add(i / 8), s4);
-                }
-            }
-            for h in hid2.iter().take(N_HIDDEN2 / 8) {
-                res += h;
-            }
-        } else {
+        for i in (0..N_HIDDEN2).step_by(32) {
             unsafe {  // relu
-                let x1 = x86_64::_mm256_loadu_ps(hid2.as_ptr());
-                let x2 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(8));
+                let x1 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(i));
+                let x2 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(i + 8));
+                let x3 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(i + 16));
+                let x4 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(i + 24));
                 let zero = x86_64::_mm256_setzero_ps();
                 let h1 = x86_64::_mm256_max_ps(zero, x1);
                 let h2 = x86_64::_mm256_max_ps(zero, x2);
-                let w1 = x86_64::_mm256_load_ps(wh2.as_ptr());
-                let w2 = x86_64::_mm256_load_ps(wh2.as_ptr().add(8));
+                let h3 = x86_64::_mm256_max_ps(zero, x3);
+                let h4 = x86_64::_mm256_max_ps(zero, x4);
+                let w1 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i));
+                let w2 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i + 8));
+                let w3 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i + 16));
+                let w4 = x86_64::_mm256_load_ps(wh2.as_ptr().add(i + 24));
                 let y1 = x86_64::_mm256_mul_ps(h1, w1);
                 let y2 = x86_64::_mm256_mul_ps(h2, w2);
-                let y3 = x86_64::_mm256_add_ps(y1, y2);
-                let s1 = x86_64::_mm256_castps256_ps128(y3);
-                let s2 = x86_64::_mm256_extractf128_ps(y3, 1);
+                let y3 = x86_64::_mm256_mul_ps(h3, w3);
+                let y4 = x86_64::_mm256_mul_ps(h4, w4);
+                let y12 = x86_64::_mm256_add_ps(y1, y2);
+                let y34 = x86_64::_mm256_add_ps(y3, y4);
+                let y1234 = x86_64::_mm256_add_ps(y12, y34);
+                let s1 = x86_64::_mm256_castps256_ps128(y1234);
+                let s2 = x86_64::_mm256_extractf128_ps(y1234, 1);
                 let s4 = x86_64::_mm_add_ps(s1, s2);
-                x86_64::_mm_storeu_ps(hid2.as_mut_ptr(), s4);
+                x86_64::_mm_storeu_ps(hid2.as_mut_ptr().add(i / 8), s4);
             }
-            for h in hid2.iter().take(4) {
-                res += h;
-            }
-         }
-         res
+        }
+        for h in hid2.iter().take(N_HIDDEN2 / 8) {
+            res += h;
+        }
+        res
     }
 }
 
