@@ -444,9 +444,11 @@ impl Weight {
         let size = N_WEIGHT_LAYER1 + N_HIDDEN * 16;
         self.weight[offset..offset + size].copy_from_slice(&newtable[..size]);
         let size2 = size + 16/* dc */ ;
-        self.weight[offset..offset + 16].copy_from_slice(&newtable[size..size2]);
+        self.weight[offset + N_WEIGHT_LAYER1BIAS..offset + N_WEIGHT_LAYER1BIAS+ 16]
+            .copy_from_slice(&newtable[size..size2]);
         let size3 = size2 + 16 /* h2 */;
-        self.weight[offset..offset + 16].copy_from_slice(&newtable[size2..size3]);
+        self.weight[offset + N_WEIGHT_LAYER2..offset + N_WEIGHT_LAYER2 + 16]
+            .copy_from_slice(&newtable[size2..size3]);
         self.weight[N_WEIGHT_LAYER2BIAS] = newtable[size3];
         // println!("v12:{:?}", self.weight);
         Ok(())
