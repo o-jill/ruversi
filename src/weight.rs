@@ -406,8 +406,11 @@ impl Weight {
         let mut v12table = [0.0 ; N_WEIGHT];
         v12table[..N_WEIGHT_INPUTBIAS].copy_from_slice(
             &newtable[..N_WEIGHT_INPUTBIAS]);
-        v12table[N_WEIGHT_LAYER1..N_WEIGHT].copy_from_slice(
-            &newtable[N_WEIGHT_INPUTBIAS + N_HIDDEN * 2..]);
+        const N_HIDDEN2_16 : usize = 16;
+        let size = N_HIDDEN * N_HIDDEN2_16 + N_HIDDEN2_16 + N_HIDDEN2_16 + 1;
+        let to = N_WEIGHT_LAYER1;
+        let from = N_WEIGHT_INPUTBIAS + N_HIDDEN * 2;
+        v12table[to..to + size].copy_from_slice(&newtable[from..from + size]);
         // self.weight[offset + N_WEIGHT_PAD..offset + N_WEIGHT + N_WEIGHT_PAD]
         //         .copy_from_slice(&newtable);
 
