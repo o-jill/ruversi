@@ -397,7 +397,10 @@ impl Weight {
     fn readv11(&mut self, line : &str, progress : usize) -> Result<(), String> {
         let csv = line.split(",").collect::<Vec<_>>();
         let newtable : Vec<f32> =
-                csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+            csv.iter().map(|&a| a.parse::<f32>()
+                .map_err(|e|
+                    format!("invalid data in reading v10 format: {e}, {a}")))
+                .collect::<Result<_, _>>()?;
         let nsz = newtable.len();
         if WSZV11 != nsz {
             return Err(format!("size mismatch v11:{WSZV11} != {nsz}"));
@@ -437,7 +440,10 @@ impl Weight {
     fn readv12(&mut self, line : &str, progress : usize) -> Result<(), String> {
         let csv = line.split(",").collect::<Vec<_>>();
         let newtable : Vec<f32> =
-                csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+            csv.iter().map(|&a| a.parse::<f32>()
+                .map_err(|e|
+                    format!("invalid data in reading v12 format: {e}, {a}")))
+                .collect::<Result<_, _>>()?;
         let nsz = newtable.len();
         if WSZV12 != nsz {
             return Err(format!("size mismatch v12:{WSZV12} != {nsz}"));
@@ -460,7 +466,10 @@ impl Weight {
     fn readv13(&mut self, line : &str, progress : usize) -> Result<(), String> {
         let csv = line.split(",").collect::<Vec<_>>();
         let newtable : Vec<f32> =
-                csv.iter().map(|&a| a.parse::<f32>().unwrap()).collect();
+            csv.iter().map(|&a| a.parse::<f32>()
+                .map_err(|e|
+                    format!("invalid data in reading v13 format: {e}, {a}")))
+                .collect::<Result<_, _>>()?;
         let nsz = newtable.len();
         if WSZV13 != nsz {
             return Err(format!("size mismatch v13:{WSZV13} != {nsz}"));
