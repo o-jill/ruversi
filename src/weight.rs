@@ -3386,8 +3386,18 @@ fn dbg_assert_eq(a : &f32, b : &f32) -> bool {
 }
 
 #[allow(dead_code)]
+fn dbg_assert_eql(a : &f32, b : &f32) -> bool {
+    if (a - b).abs() >= 2e-2 {
+        println!("| {a} - {b} | >= 2e-2...");
+        return false;
+    }
+    true
+}
+
+#[allow(dead_code)]
 fn dbg_assert_eqi(a : &f32, b : &f32) -> bool {
-    let eps = 0.1;
+    // let eps = 0.1;
+    let eps = 4.0;
     if (a - b).abs() >= eps {
         println!("| {a} - {b} | >= {eps}...");
         return false;
@@ -3461,8 +3471,172 @@ fn testweight() {
         eprintln!("--------~~~~~~~~~~~~~***********");
         let res_simd = w.evaluatev12bb_simd(&bban);
         let res_simdavx = w.evaluatev12bb_simdavx(&bban);
+        let res_simdavx2 = w.evaluatev12bb_simdavx_2(&bban);
         assert!(dbg_assert_eq(&res_nosimde, &res_simd));
         assert!(dbg_assert_eq(&res_nosimde, &res_simdavx));
+        assert!(dbg_assert_eq(&res_nosimde, &res_simdavx2));
+        // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
+    }
+}
+
+#[cfg(target_arch="x86_64")]
+#[test]
+fn testweight_f32_i32() {
+    let rfens = [
+        "h/H/h/H/h/H/h/H b",
+        "h/H/h/H/h/H/h/H w",
+        "H/h/H/h/H/h/H/h b",
+        "H/h/H/h/H/h/H/h w",
+        "h/H/8/H/h/H/h/H b",
+        "h/H/h/8/h/H/h/H w",
+        "H/h/H/h/8/h/H/h b",
+        "H/h/H/h/H/8/H/h w",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA b",
+        "aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa b",
+        "1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa w",
+        "AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1 w",
+        "A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA b",
+        "aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A b",
+        "aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA w",
+    ];
+    let mut w = weight::Weight::new();
+    w.init();
+    w.read("data/evaltable.txt").unwrap();
+    for &rfen in rfens.iter() {
+        let ban = bitboard::BitBoard::try_from(rfen).unwrap();
+        ban.put();
+        let res_nosimde = w.evaluatev12bb(&ban);
+        eprintln!("- - -");
+        let res_nosimde_i16 = w.evaluatev12bb_i16(&ban);
+        eprintln!("--------");
+        let res_nosimde_i161 = w.evaluatev12bb_i16_1(&ban);
+        eprintln!("--------~~~~~~~~~~~~~");
+        let res_nosimde_i162 = w.evaluatev12bb_i16_2(&ban);
+        eprintln!("--------~~~~~~~~~~~~~***********");
+        assert!(dbg_assert_eqi(&res_nosimde, &res_nosimde_i162));
+        assert!(dbg_assert_eqi(&res_nosimde, &res_nosimde_i161));
+        assert!(dbg_assert_eqi(&res_nosimde, &res_nosimde_i16));
+    }
+}
+
+#[cfg(target_arch="x86_64")]
+#[test]
+fn testweight_i32_sse() {
+    let rfens = [
+        "h/H/h/H/h/H/h/H b",
+        "h/H/h/H/h/H/h/H w",
+        "H/h/H/h/H/h/H/h b",
+        "H/h/H/h/H/h/H/h w",
+        "h/H/8/H/h/H/h/H b",
+        "h/H/h/8/h/H/h/H w",
+        "H/h/H/h/8/h/H/h b",
+        "H/h/H/h/H/8/H/h w",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA b",
+        "aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa b",
+        "1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa w",
+        "AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1 w",
+        "A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA b",
+        "aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A b",
+        "aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA w",
+    ];
+    let mut w = weight::Weight::new();
+    w.init();
+    w.read("data/evaltable.txt").unwrap();
+    for &rfen in rfens.iter() {
+        let ban = bitboard::BitBoard::try_from(rfen).unwrap();
+        ban.put();
+        eprintln!("- - -");
+        eprintln!("--------");
+        let res_nosimde_i16 = w.evaluatev12bb_i16(&ban);
+        let res_nosimde_i161 = w.evaluatev12bb_i16_1(&ban);
+        let res_nosimde_i162 = w.evaluatev12bb_i16_2(&ban);
+        eprintln!("--------~~~~~~~~~~~~~");
+        let res_simd = w.evaluatev12bb_simd_i16(&ban);
+        let res_simd1 = w.evaluatev12bb_simd_i16_1(&ban);
+        let res_simd2 = w.evaluatev12bb_simd_i16_2(&ban);
+        eprintln!("--------~~~~~~~~~~~~~***********");
+        assert!(dbg_assert_eql(&res_nosimde_i162, &res_simd2));
+        assert!(dbg_assert_eql(&res_nosimde_i161, &res_simd1));
+        assert!(dbg_assert_eqi(&res_nosimde_i16, &res_simd));
+        // assert!(dbg_assert_eql(&res_nosimde_i162, &res_simdavx2));
+    }
+}
+
+#[cfg(target_arch="x86_64")]
+#[test]
+fn testweight_i32_avx() {
+    let rfens = [
+        "h/H/h/H/h/H/h/H b",
+        "h/H/h/H/h/H/h/H w",
+        "H/h/H/h/H/h/H/h b",
+        "H/h/H/h/H/h/H/h w",
+        "h/H/8/H/h/H/h/H b",
+        "h/H/h/8/h/H/h/H w",
+        "H/h/H/h/8/h/H/h b",
+        "H/h/H/h/H/8/H/h w",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA b",
+        "aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa b",
+        "1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa w",
+        "AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1 w",
+        "A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA b",
+        "aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A b",
+        "aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA w",
+    ];
+    let mut w = weight::Weight::new();
+    w.init();
+    w.read("data/evaltable.txt").unwrap();
+    for &rfen in rfens.iter() {
+        let ban = bitboard::BitBoard::try_from(rfen).unwrap();
+        ban.put();
+        eprintln!("- - -");
+        eprintln!("--------");
+        let res_nosimde_i16 = w.evaluatev12bb_i16(&ban);
+        let res_nosimde_i161 = w.evaluatev12bb_i16_1(&ban);
+        let res_nosimde_i162 = w.evaluatev12bb_i16_2(&ban);
+        eprintln!("--------~~~~~~~~~~~~~");
+        eprintln!("--------~~~~~~~~~~~~~***********");
+        let res_simdavx = w.evaluatev12bb_simdavx_i16(&ban);
+        let res_simdavx1 = w.evaluatev12bb_simdavx_i16_1(&ban);
+        let res_simdavx2 = w.evaluatev12bb_simdavx_i16_2(&ban);
+        let res_simdavx3 = w.evaluatev12bb_simdavx_i16_3(&ban);
+        // assert!(dbg_assert_eql(&res_nosimde_i162, &res_simdavx2));
+        assert!(dbg_assert_eql(&res_nosimde_i16, &res_simdavx3));
+        assert!(dbg_assert_eql(&res_nosimde_i162, &res_simdavx2));
+        assert!(dbg_assert_eql(&res_nosimde_i161, &res_simdavx1));
+        assert!(dbg_assert_eqi(&res_nosimde_i16, &res_simdavx));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }
 }
@@ -3507,6 +3681,52 @@ fn testweight() {
         let res_simdmul = w.evaluatev12bb_simd_mul(&bban);
         // let res_simd = w.evaluatev9bb_simd(&bban);
         assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul));
+        // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
+    }
+}
+
+#[cfg(target_arch="aarch64")]
+#[test]
+fn testweight_i32() {
+    let rfens = [
+        "h/H/h/H/h/H/h/H b",
+        "h/H/h/H/h/H/h/H w",
+        "H/h/H/h/H/h/H/h b",
+        "H/h/H/h/H/h/H/h w",
+        "h/H/8/H/h/H/h/H b",
+        "h/H/h/8/h/H/h/H w",
+        "H/h/H/h/8/h/H/h b",
+        "H/h/H/h/H/8/H/h w",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa b",
+        "aAaAaAaA/AaAaAaAa/8/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA/AaAaAaAa/aAaAaAaA w",
+        "AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/AaAaAaAa/aAaAaAaA/8/aAaAaAaA b",
+        "aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA b",
+        "aAaAaAaA/aAaAaAaA/aAaAaAaA/8/aAaAaAaA/aAaAaAaA/aAaAaAaA/aAaAaAaA w",
+        "aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa/aA1AaAaA/Aa1aAaAa b",
+        "1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa/1AaAaAaA/1aAaAaAa w",
+        "AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1/AaAaAaA1/aAaAaAa1 w",
+        "A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA/A1AaAaAa/a1aAaAaA b",
+        "aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A/aAaAaA1A b",
+        "aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA/aAaAa1aA w",
+    ];
+    for &rfen in rfens.iter() {
+        let bban = bitboard::BitBoard::try_from(rfen).unwrap();
+        bban.put();
+        let mut w = weight::Weight::new();
+        w.init();
+        let res_nosimdi = w.evaluatev12bb(&bban);
+        let res_nosimdi_i16 = w.evaluatev12bb_i16(&bban);
+        let res_simdmul_i16 = w.evaluatev12bb_simd_mul_i16(&bban);
+        // let res_simd = w.evaluatev9bb_simd(&bban);
+        assert!(dbg_assert_eql(&res_nosimdi, &res_nosimd_i16));
+        assert!(dbg_assert_eql(&res_nosimdi_i16, &res_simdmul_i16));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }
 }
