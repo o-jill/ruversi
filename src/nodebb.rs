@@ -118,7 +118,8 @@ impl NodeBB {
         if cfg!(feature="nosimd") {
             wei.evaluatev12bb(ban)
         } else if cfg!(feature="avx") {
-            wei.evaluatev12bb_simdavx(ban)
+            wei.evaluatev12bb_simdavx_i16(ban)
+            // wei.evaluatev12bb_simdavx(ban)
         } else {
             wei.evaluatev12bb_simd(ban)
         }
