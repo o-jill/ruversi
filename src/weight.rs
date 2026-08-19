@@ -72,6 +72,13 @@ const WSZV12 : usize = (bitboard::CELL_2D * 2 + 1) * N_HIDDEN
 // 8/8/1A6/2Ab3/2aB3/1a6/8/8 b
 // val:-3.506 val:Some(-3.5055861), 334278 nodes. @@c3[]c2@@d1[]c1@@b1[]a4@@a2 80msec
 
+// const CONVERT_TO_FIXPOINT_I16 : f32 = 128.0;
+// const CONVERT_TO_FIXPOINT_I16_SHIFT : i32 = 7;
+const CONVERT_TO_FIXPOINT_I16 : f32 = 256.0;
+const CONVERT_TO_FIXPOINT_I16_SHIFT : i32 = 8;
+// const CONVERT_TO_FIXPOINT_I16 : f32 = 256.0 * 2.0;
+// const CONVERT_TO_FIXPOINT_I16_SHIFT : i32 = 8 + 1;
+
 #[derive(PartialEq)]
 enum EvalFile{
     Unknown,
@@ -140,6 +147,10 @@ pub struct Weight {
     pub weight : AVec<f32>,
     // H1x128 + H1 + H1x2 + H1 + H1 x (H2+1) + H2 + 1
     vweight : AVec<f32>,
+    iweight : AVec<i16>,
+    ivweight : AVec<i16>,
+    i32vweight : AVec<i32>,
+    iweightdc : AVec<i32>,
 }
 
 impl Default for Weight {
@@ -163,6 +174,30 @@ impl Weight {
                 let mut w = AVec::with_capacity(
                     MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
                 w.resize(w.capacity(), 0f32);
+                w
+            },
+            iweight: {
+                let mut w = AVec::with_capacity(
+                    MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
+                w.resize(w.capacity(), 0i16);
+                w
+            },
+            ivweight: {
+                let mut w = AVec::with_capacity(
+                    MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
+                w.resize(w.capacity(), 0i16);
+                w
+            },
+            i32vweight: {
+                let mut w = AVec::with_capacity(
+                    MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
+                w.resize(w.capacity(), 0i32);
+                w
+            },
+            iweightdc: {
+                let mut w = AVec::with_capacity(
+                    MEM_ALIGN, (N_HIDDEN + N_HIDDEN2) * N_PROGRESS_DIV);
+                w.resize(w.capacity(), 0i32);
                 w
             },
         }
@@ -194,6 +229,51 @@ impl Weight {
                 if c == 0 {
                     panic!("check error @ {i}!");
                 }
+            }
+            let wei = &self.weight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1 + N_HIDDEN * N_HIDDEN2];
+            let vwei = &mut self.vweight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1 + N_HIDDEN * N_HIDDEN2];
+            // let mut check = [0i8 ; N_HIDDEN * N_HIDDEN2];
+            for (i, &w) in wei.iter().enumerate().take(N_HIDDEN2 * N_HIDDEN) {
+                let ii = i;
+                let hidx2 = ii / N_HIDDEN;
+                let hidx1 = ii % N_HIDDEN;
+                let idx = hidx1 * N_HIDDEN2 + hidx2;
+                vwei[idx] = w;
+                // check[idx] = 1;
+            }
+            // for (i, &c) in check.iter().enumerate() {
+            //     if c == 0 {
+            //         panic!("check error2 @ {i}! {}", check2[i]);
+            //     }
+            // }
+        }
+        self.quantize();
+    }
+
+    fn quantize(&mut self) {
+        for (w, i) in self.weight.iter().zip(self.iweight.iter_mut()){
+            *i = (*w * CONVERT_TO_FIXPOINT_I16 + 0.5) as i16;
+            // *i = (*v * CONVERT_TO_FIXPOINT_I32 + 0.5) as i32;
+        }
+        for (v, (i, i_32)) in self.vweight.iter().zip(self.ivweight.iter_mut().zip(self.i32vweight.iter_mut())){
+            *i = (*v * CONVERT_TO_FIXPOINT_I16 + 0.5) as i16;
+            *i_32 = *i as i32;
+            // *i = (*v * CONVERT_TO_FIXPOINT_I32 + 0.5) as i32;
+        }
+        // dc
+        for progress in 0..N_PROGRESS_DIV {
+            for i in 0..N_HIDDEN {
+                let idx = progress * (N_HIDDEN + N_HIDDEN2);
+                let wdc = self.wibias(progress)[i];
+                self.iweightdc[idx + i] =
+                    (wdc * CONVERT_TO_FIXPOINT_I16 + 0.5) as i32;
+            }
+            for i in 0..N_HIDDEN2 {
+                let idx = progress * (N_HIDDEN + N_HIDDEN2) + N_HIDDEN;
+                let wdc = self.wl1bias(progress)[i];
+                self.iweightdc[idx + i] =
+                    (wdc * CONVERT_TO_FIXPOINT_I16 * CONVERT_TO_FIXPOINT_I16 + 0.5) as i32
+                    + (CONVERT_TO_FIXPOINT_I16 * 0.5) as i32;
             }
         }
     }
@@ -227,9 +307,31 @@ impl Weight {
         &self.vweight[offset..]
     }
 
+    pub fn wbani(&self, progress : usize) -> &[i16] {
+    // pub fn wbani(&self, progress : usize) -> &[i32] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.ivweight[offset..]
+    }
+
+    pub fn wbani32(&self, progress : usize) -> &[i32] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.i32vweight[offset..]
+    }
+
     pub fn wibias(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_INPUTBIAS..offset + N_WEIGHT_LAYER1]
+    }
+
+    pub fn wibiasi(&self, progress : usize) -> &[i16] {
+    // pub fn wibiasi(&self, progress : usize) -> &[i32] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.ivweight[offset + N_WEIGHT_INPUTBIAS..offset + N_WEIGHT_LAYER1]
+    }
+
+    pub fn wibiasi32(&self, progress : usize) -> &[i32] {
+        let offset = progress * (N_HIDDEN + N_HIDDEN2);
+        &self.iweightdc[offset..offset + N_HIDDEN]
     }
 
     pub fn wlayer1(&self, progress : usize) -> &[f32] {
@@ -237,9 +339,34 @@ impl Weight {
         &self.weight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1BIAS]
     }
 
+    pub fn wlayer1v(&self, progress : usize) -> &[f32] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.vweight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1BIAS]
+    }
+
+    pub fn wlayer1i(&self, progress : usize) -> &[i16] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.iweight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1BIAS]
+    }
+
+    pub fn wlayer1iv(&self, progress : usize) -> &[i16] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.ivweight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1BIAS]
+    }
+
     pub fn wl1bias(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_LAYER1BIAS..offset + N_WEIGHT_LAYER2]
+    }
+
+    pub fn wl1biasi(&self, progress : usize) -> &[i16] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.iweight[offset + N_WEIGHT_LAYER1BIAS..offset + N_WEIGHT_LAYER2]
+    }
+
+    pub fn wl1biasi32(&self, progress : usize) -> &[i32] {
+        let offset = progress * (N_HIDDEN + N_HIDDEN2) + N_HIDDEN;
+        &self.iweightdc[offset..offset + N_HIDDEN2]
     }
 
     pub fn wlayer2(&self, progress : usize) -> &[f32] {
@@ -250,6 +377,16 @@ impl Weight {
     pub fn wl2bias(&self, progress : usize) -> f32 {
         let offset = progress * N_WEIGHT_PAD;
         self.weight[offset + N_WEIGHT - 1]
+    }
+
+    pub fn wlayer2i(&self, progress : usize) -> &[i16] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.ivweight[offset + N_WEIGHT_LAYER2..offset + N_WEIGHT_LAYER2BIAS]
+    }
+
+    pub fn wl2biasi(&self, progress : usize) -> i16 {
+        let offset = progress * N_WEIGHT_PAD;
+        self.iweight[offset + N_WEIGHT - 1]
     }
 
     /// read eval table from a file.
