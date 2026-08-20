@@ -1190,6 +1190,40 @@ impl BitBoard {
         (self.black.count_ones() as i8 - self.white.count_ones() as i8) as f32
     }
 
+    /// get final score for mate1 situation.
+    ///
+    /// # Returns
+    /// result as f32
+    fn countf32_mate1(&self, xy : u8) -> f32 {
+        if xy == PASS {  // pass
+            self.countf32()
+        } else {
+            let mut ban = self.clone();
+            ban.reverse(xy);
+
+            ban.countf32()
+        }
+    }
+
+    /// get final score if legal.
+    ///
+    /// # Arguments
+    /// - 'xy' PASS : pass, 0 ~ 63 : cell index.
+    /// - 'oppo' opponents stone bits.
+    /// - 'mine' my stone bits.
+    ///
+    /// # Returns
+    /// - `None`: PASS
+    /// - `Some(f32)` : final result as f32
+    fn check_move_mate1(&self, xy : u32, oppo : u64, mine : u64) -> Option<f32> {
+        let chk = self.checkreverse_ex(xy as usize, oppo, mine);
+        if chk {
+            Some(self.countf32_mate1(xy as u8))
+        } else {
+            None
+        }
+    }
+
     /// 最後のひとマスを埋めて石の差を返す。
     ///
     /// # Returns
@@ -1203,17 +1237,19 @@ impl BitBoard {
         } else {
             (self.white, self.black)
         };
-        if self.checkreverse_ex(xy as usize, oppo, mine) {
-            (self.r#move(xy as u8).unwrap().countf32(), xy as u8)
-        } else {
-            let newban = self.r#move(PASS).unwrap();
-            let val = if newban.checkreverse_ex(xy as usize, mine, oppo) {
-                newban.r#move(xy as u8).unwrap().countf32()
+        if let Some(val) = self.check_move_mate1(xy, oppo, mine) {
+            return (val, xy as u8);
+        }
+
+        let mut newban = self.clone();
+        newban.pass();
+        let val =
+            if let Some(val) = newban.check_move_mate1(xy, mine, oppo) {
+                val
             } else {
                 self.countf32()
             };
-            (val, PASS)
-        }
+        (val, PASS)
     }
 
     pub fn is_full(&self) -> bool {
