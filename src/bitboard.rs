@@ -1146,6 +1146,49 @@ impl BitBoard {
             (self.white, self.black)
         };
 
+        let empties = !stones;  // 空きマス
+        const THRESHOLD_EMPTY : u32 = 4;  // 残り4マス以下
+        // const THRESHOLD_EMPTY : u32 = 6;  // 残り6マス以下
+        // const THRESHOLD_EMPTY : u32 = 8;  // 残り8マス以下
+        // const THRESHOLD_EMPTY : u32 = 10;  // 残り10マス以下
+        // const THRESHOLD_EMPTY : u32 = 12;  // 残り12マス以下
+        if empties.count_ones() <= THRESHOLD_EMPTY {
+            let mut bits = 0;
+            let mut bit = LSB_CELL;
+            for y in 0..NUMCELL {
+                let row8 = 0xffu64 << (y * 8);
+                let empty = row8 & empties;
+                // その列の升が全部埋まってたら次へ。
+                if empty == 0 {
+                    bit_down!(bit);
+                    continue;
+                }
+
+                for x in 0..NUMCELL {
+                    let b = bit;
+                    bit_right!(bit);
+                    let exist = b & stones;
+                    if exist != 0 {
+                        continue;
+                    }
+                    let xy = BitBoard::index(x, y);
+                    // check surrounding stones.
+                    // if (TBL_SURROUND[xy] & oppo) == 0 {continue;}
+
+                    if self.checkreverse_ex(xy, oppo, mine) {
+                        bits |= b;
+                    }
+                }
+            }
+
+            if bits == 0 {  // pass
+                // return Some(vec![]);
+                return Some(vec![PASS]);
+            }
+
+            return Some(cells2vec(bits));
+        }
+
         let mut bits = 0;
         let mut bit = LSB_CELL;
         for y in 0..NUMCELL {
