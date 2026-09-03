@@ -969,7 +969,7 @@ impl BitBoard {
                 let pos85 = x86_64::_mm_and_si128(pos85, fmask);
                 let rbit4 = x86_64::_mm_set_epi8(
                     0xf, 0x7, 0xb, 0x3, 0xd, 0x5, 0x9, 0x1,
-                     0xe, 0x6, 0xa, 0x2, 0xc, 0x4, 0x8, 0);
+                    0xe, 0x6, 0xa, 0x2, 0xc, 0x4, 0x8, 0);
                 let ropmn41 = x86_64::_mm_shuffle_epi8(rbit4, opmn41);
                 let ropmn85 = x86_64::_mm_shuffle_epi8(rbit4, opmn85);
                 let rpos41 = x86_64::_mm_shuffle_epi8(rbit4, pos41);
