@@ -25,7 +25,7 @@ pub struct OthelloEngineProtocol {
 impl OthelloEngineProtocol {
     pub fn new() -> Self {
         let mut path = std::env::temp_dir();
-        path.push("/ruversi.log");
+        path.push("ruversi.log");
         let log = OpenOptions::new().create(true)
             .append(true).open(path);
 
@@ -72,12 +72,58 @@ impl OthelloEngineProtocol {
             let cmd = body.to_string();
             let _thread = spawn(move || {
                 let elem = cmd.split(" ").collect::<Vec<_>>();
-                let obf = elem[1];
-                let ban = bitboard::BitBoard::from_obf(obf).unwrap();
-                let _alpha = elem[2].parse::<f32>().unwrap();
-                let _beta = elem[3].parse::<f32>().unwrap();
-                let depth = elem[4].parse::<u8>().unwrap();
-                let _precision = elem[5].parse::<f32>().unwrap();
+                if elem.len() < 7 {
+                    println!("malformed format error: length={} < 7", elem.len());
+                    running.store(false, Ordering::Relaxed);
+                    Self::send_ready();
+                    return;
+                }
+                let obf = format!("{} {}", elem[1], elem[2]);
+                let ban = match bitboard::BitBoard::from_obf(&obf) {
+                    Ok(b) => {b},
+                    Err(e) => {
+                        println!("obf parse error: {e}");
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let _alpha = match elem[3].parse::<f32>() {
+                    Ok(a) => {a},
+                    Err(e) => {
+                        println!("alpha parse error: {e} {}", elem[3]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let _beta = match elem[4].parse::<f32>() {
+                    Ok(b) => {b},
+                    Err(e) => {
+                        println!("beta parse error: {e} {}", elem[4]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let depth = match elem[5].parse::<u8>() {
+                    Ok(d) => {d},
+                    Err(e) => {
+                        println!("depth parse error: {e} {}", elem[5]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    }
+                };
+                let _precision = match elem[6].parse::<f32>() {
+                    Ok(p) => {p},
+                    Err(e) => {
+                        println!("precision parse error: {e} {}", elem[6]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    }
+                };
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
@@ -99,12 +145,8 @@ impl OthelloEngineProtocol {
                     mvstr = "--".to_string();
                 }
 
-                let range =
-                    if val.is_sign_negative() {
-                        format!("W:{val:.1} <= v <= W:{val:.1}")
-                    } else {
-                        format!("B:{val:.1} <= v <= B:{val:.1}")
-                    };
+                let c = if ban.is_sente() {'B'} else {'W'};
+                let range = format!("{c}{val:+.2} <= v <= {c}{val:+.2}");
                 let moves = node.best_order();
                 let nodes = node.kyokumen;
                 let sec = ft.as_secs_f32();
@@ -131,19 +173,59 @@ impl OthelloEngineProtocol {
             let cmd = body.to_string();
             let _thread = spawn(move || {
                 let elem = cmd.split(" ").collect::<Vec<_>>();
-                let obf = elem[1];
-                let ban = bitboard::BitBoard::from_obf(obf).unwrap();
-                let _alpha = elem[2].parse::<f32>().unwrap();
-                let _beta = elem[3].parse::<f32>().unwrap();
-                let depth = ban.nblank() as u8;
-                let _precision = elem[4].parse::<f32>().unwrap();
+                if elem.len() < 6 {
+                    println!("malformed format error: length={} < 6", elem.len());
+                    running.store(false, Ordering::Relaxed);
+                    Self::send_ready();
+                    return;
+                }
+                let obf = format!("{} {}", elem[1], elem[2]);
+                let ban = match bitboard::BitBoard::from_obf(&obf) {
+                    Ok(b) => {b},
+                    Err(e) => {
+                        println!("obf parse error: {e}");
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let _alpha = match elem[3].parse::<f32>() {
+                    Ok(a) => {a},
+                    Err(e) => {
+                        println!("alpha parse error: {e} {}", elem[3]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let _beta = match elem[4].parse::<f32>() {
+                    Ok(b) => {b},
+                    Err(e) => {
+                        println!("beta parse error: {e} {}", elem[4]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
+                let blanks = ban.nblank();
+                let depth = blanks as u8 * 2;
+                let _precision = match elem[5].parse::<f32>() {
+                    Ok(p) => {p},
+                    Err(e) => {
+                        println!("precision parse error: {e} {}", elem[5]);
+                        running.store(false, Ordering::Relaxed);
+                        Self::send_ready();
+                        return;
+                    },
+                };
                 // eprintln!("{obf} {_alpha}, {_beta}, {depth}, {_precision}");
                 let st = Instant::now();
                 let wei = unsafe{nodebb::WEIGHT.as_ref().unwrap()};
                 let mut node = nodebb::NodeBB::root(depth);
                 let tt = unsafe {TRTABLE.as_mut().unwrap()};
                 let val =
-                    nodebb::NodeBB::think_ab_simple_gk_tt(&ban, depth, &mut node, wei, tt).unwrap();
+                    nodebb::NodeBB::think_ab_simple_gk_tt(
+                        &ban, depth, &mut node, wei, tt).unwrap();
                 let ft = st.elapsed();
                 // eprintln!("val:{val:?} {node} {}msec", ft.as_millis());
                 let mvstr;
@@ -158,17 +240,13 @@ impl OthelloEngineProtocol {
                     mvstr = "--".to_string();
                 }
 
-                let range =
-                    if val.is_sign_negative() {
-                        format!("W:{val:.1} <= v <= W:{val:.1}")
-                    } else {
-                        format!("B:{val:.1} <= v <= B:{val:.1}")
-                    };
-                let hash = "0123456789ABCDEF";
+                let c = if ban.is_sente() {'B'} else {'W'};
+                let range = format!("{c}{val:+.2} <= v <= {c}{val:+.2}");
+                let moves = node.best_order();
                 let nodes = node.kyokumen;
                 let sec = ft.as_secs_f32();
 
-                println!("{obf}, move {mvstr}, depth {depth}, @0%, {range}, {hash}, node {nodes}, time {sec:3}");
+                println!("{obf}, move {mvstr}, depth {blanks}, @0%, {range}, {moves}, node {nodes}, time {sec:3}");
                 running.store(false, Ordering::Relaxed);
                 Self::send_ready();
             });
@@ -323,7 +401,7 @@ impl OthelloEngineProtocolServer {
     pub fn init(&mut self) -> Result<(), String> {
         let (toeng, fromeng) = self.getio()?;
 
-        if let Err(e) = toeng.write("ENGINE-PROTOCOL init\n".as_bytes()) {
+        if let Err(e) = toeng.write_all("ENGINE-PROTOCOL init\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -348,7 +426,7 @@ impl OthelloEngineProtocolServer {
         let (toeng, fromeng) = self.getio()?;
 
         if let Err(e) =
-                toeng.write("ENGINE-PROTOCOL get-version\n".as_bytes()) {
+                toeng.write_all("ENGINE-PROTOCOL get-version\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -370,7 +448,7 @@ impl OthelloEngineProtocolServer {
         let (toeng, fromeng) = self.getio()?;
 
         if let Err(e) =
-                toeng.write("ENGINE-PROTOCOL new-position\n".as_bytes()) {
+                toeng.write_all("ENGINE-PROTOCOL new-position\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -390,7 +468,7 @@ impl OthelloEngineProtocolServer {
             -> Result<String, String> {
         let (toeng, fromeng) = self.getio()?;
 
-        if let Err(e) = toeng.write(
+        if let Err(e) = toeng.write_all(
             format!(
                 "ENGINE-PROTOCOL midgame-search {obf} {alpha} {beta} {depth} {precision}\n"
             ).as_bytes()) {
@@ -416,7 +494,7 @@ impl OthelloEngineProtocolServer {
     //          -> Result<String, String> {
     //     let (toeng, fromeng) = self.getio()?;
 
-    //     if let Err(e) = toeng.write(
+    //     if let Err(e) = toeng.write_all(
     //         format!(
     //             "ENGINE-PROTOCOL midgame-search {obf} {alpha} {beta} {depth} {precision}\n"
     //         ).as_bytes()) {
@@ -437,7 +515,7 @@ impl OthelloEngineProtocolServer {
 
     //                 std::thread::sleep(Duration::from_millis(10));
     //             }
-    //             toeng.write("\n".as_bytes()).unwrap();
+    //             toeng.write_all("\n".as_bytes()).unwrap();
     //         }
     //     });
     //     let mut bufreader = BufReader::new(fromeng);
@@ -481,7 +559,7 @@ impl OthelloEngineProtocolServer {
     pub fn stop(&mut self) -> Result<(), String> {
         let (toeng, fromeng) = self.getio()?;
 
-        if let Err(e) = toeng.write("ENGINE-PROTOCOL stop\n".as_bytes()) {
+        if let Err(e) = toeng.write_all("ENGINE-PROTOCOL stop\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -501,7 +579,7 @@ impl OthelloEngineProtocolServer {
         let (toeng, fromeng) = self.getio()?;
 
         if let Err(e) =
-                toeng.write("ENGINE-PROTOCOL empty-hash\n".as_bytes()) {
+                toeng.write_all("ENGINE-PROTOCOL empty-hash\n".as_bytes()) {
             return Err(e.to_string());
         }
 
@@ -519,7 +597,7 @@ impl OthelloEngineProtocolServer {
     pub fn quit(&mut self) -> Result<(), String> {
         let (toeng, _fromeng) = self.getio()?;
 
-        if let Err(e) = toeng.write("ENGINE-PROTOCOL quit\n".as_bytes()) {
+        if let Err(e) = toeng.write_all("ENGINE-PROTOCOL quit\n".as_bytes()) {
             return Err(e.to_string());
         }
 

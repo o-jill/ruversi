@@ -410,7 +410,7 @@ impl BitBoard {
 
     #[allow(dead_code)]
     pub fn from_obf(obf : &str) -> Result<BitBoard, String> {
-        if obf.len() < 65 {return Err("less letters.".to_string());}
+        if obf.len() < 65 {return Err(format!("less letters. [{obf}]"));}
 
         let mut ret = BitBoard {
             black : 0,
@@ -631,6 +631,10 @@ impl BitBoard {
             }
         )
     }
+
+    pub fn is_sente(&self) -> bool {self.teban == SENTE}
+    #[allow(dead_code)]
+    pub fn is_gote(&self) -> bool {self.teban == GOTE}
 
     #[allow(dead_code)]
     pub fn flipturn(&mut self) {
@@ -1895,6 +1899,12 @@ pub fn count_stones(rfen : &str) -> Result<i8, String> {
 
 #[test]
 fn testbitbrd() {
+    let bobf = BitBoard::try_from("OOOOOOOOXOOOOXXXXOOOXOOOOOOOOOOO-OOOOOOOO--OOOOO--OOOO-O-O-OOO-- X").unwrap();
+    let brfen = BitBoard::try_from("hAdDcAk1h2e2d1a1a1c2 b").unwrap();
+    assert_eq!(bobf.black, brfen.black);
+    assert_eq!(bobf.white, brfen.white);
+    assert_eq!(bobf.teban, brfen.teban);
+
     let b = BitBoard::new();
     assert_eq!(b.teban, SENTE);
     assert_eq!(b.pass, 0);

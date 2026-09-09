@@ -829,7 +829,6 @@ fn main() {
         oep();
     }
 
-    println!("Hello, reversi world!");
     println!("mode:{mode:?}");
 
     nodebb::init_weight();
