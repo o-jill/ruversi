@@ -890,7 +890,7 @@ impl Weight {
         let mut hid2 = [0f32 ; N_HIDDEN2];
         hid2.copy_from_slice(wdc1);
         for j in 0..N_HIDDEN {
-            if hid[j] == 0.0 {continue;}
+            // if hid[j] == 0.0 {continue;}
 
             unsafe {
                 let x1 = x86_64::_mm256_set1_ps(hid[j]);
