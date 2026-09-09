@@ -200,6 +200,17 @@ impl Weight {
                     panic!("check error @ {i}!");
                 }
             }
+            let wei = &self.weight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1 + N_HIDDEN * N_HIDDEN2];
+            let vwei = &mut self.vweight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1 + N_HIDDEN * N_HIDDEN2];
+            // let mut check = [0i8 ; N_HIDDEN * N_HIDDEN2];
+            for (i, &w) in wei.iter().enumerate().take(N_HIDDEN2 * N_HIDDEN) {
+                let ii = i;
+                let hidx2 = ii / N_HIDDEN;
+                let hidx1 = ii % N_HIDDEN;
+                let idx = hidx1 * N_HIDDEN2 + hidx2;
+                vwei[idx] = w;
+                // check[idx] = 1;
+            }
         }
     }
 
@@ -240,6 +251,11 @@ impl Weight {
     pub fn wlayer1(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1BIAS]
+    }
+
+    pub fn wlayer1v(&self, progress : usize) -> &[f32] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.vweight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1BIAS]
     }
 
     pub fn wl1bias(&self, progress : usize) -> &[f32] {
@@ -816,11 +832,13 @@ impl Weight {
             bit <<= 1;
             if b | w == 0 {continue;}  // no stone
 
-            let wei = if b != 0 {
-                &ow[idx * N_HIDDEN * 2 .. ]
-            } else {
-                &ow[idx * N_HIDDEN * 2 + N_HIDDEN.. ]
-            };
+            // let wei = if b != 0 {
+            //     &ow[idx * N_HIDDEN * 2 .. ]
+            // } else {
+            //     &ow[idx * N_HIDDEN * 2 + N_HIDDEN.. ]
+            // };
+            let wei =
+                &ow[idx * N_HIDDEN * 2 + N_HIDDEN * (b == 0) as usize .. ];
             for i in (0..N_HIDDEN).step_by(N) {
                 unsafe {
                     let w1 = x86_64::_mm256_load_ps(wei.as_ptr().add(i));
@@ -843,72 +861,61 @@ impl Weight {
             }
         }
 
+        for hidx in (0..N_HIDDEN).step_by(N) {
+            unsafe {
+                let h1 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(hidx));
+                let h2 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(hidx + 8));
+                let h3 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(hidx + 16));
+                let h4 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(hidx + 24));
+
+                // relu
+                let zero = x86_64::_mm256_setzero_ps();
+                let y1 = x86_64::_mm256_max_ps(zero, h1);
+                let y2 = x86_64::_mm256_max_ps(zero, h2);
+                let y3 = x86_64::_mm256_max_ps(zero, h3);
+                let y4 = x86_64::_mm256_max_ps(zero, h4);
+                x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx), y1);
+                x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx + 8), y2);
+                x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx + 16), y3);
+                x86_64::_mm256_storeu_ps(hid.as_mut_ptr().add(hidx + 24), y4);
+            }
+        }
+
         // 2nd layer to output
         let mut res = self.wl2bias(prgs);
-        let wh = self.wlayer1(prgs);
+        let wh = self.wlayer1v(prgs);
         let wdc1 = self.wl1bias(prgs);
         let wh2 = self.wlayer2(prgs);
 
         let mut hid2 = [0f32 ; N_HIDDEN2];
         hid2.copy_from_slice(wdc1);
-        let mut sumhn = [0f32 ; N_HIDDEN2 * 4 * 2];
-        for j in (0..N_HIDDEN).step_by(32) {
+        for j in 0..N_HIDDEN {
+            if hid[j] == 0.0 {continue;}
+
             unsafe {
-                let h1 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j));
-                let h2 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j + 8));
-                let h3 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j + 16));
-                let h4 = x86_64::_mm256_loadu_ps(hid.as_ptr().add(j + 24));
-                // relu
-                let zero = x86_64::_mm256_setzero_ps();
-                let x1 = x86_64::_mm256_max_ps(zero, h1);
-                let x2 = x86_64::_mm256_max_ps(zero, h2);
-                let x3 = x86_64::_mm256_max_ps(zero, h3);
-                let x4 = x86_64::_mm256_max_ps(zero, h4);
-                for i in 0..N_HIDDEN2 {
-                    let idx = i * N_HIDDEN + j;
+                let x1 = x86_64::_mm256_set1_ps(hid[j]);
+                for i in (0..N_HIDDEN2).step_by(32) {
+                    let idx = i + N_HIDDEN2 * j;
                     let w1 = x86_64::_mm256_load_ps(wh.as_ptr().add(idx));
                     let w2 = x86_64::_mm256_load_ps(wh.as_ptr().add(idx + 8));
                     let w3 = x86_64::_mm256_load_ps(wh.as_ptr().add(idx + 16));
                     let w4 = x86_64::_mm256_load_ps(wh.as_ptr().add(idx + 24));
-                    let mul1 = x86_64::_mm256_mul_ps(x1, w1);
-                    let mul2 = x86_64::_mm256_mul_ps(x2, w2);
-                    // let mul3 = x86_64::_mm256_mul_ps(x3, w3);
-                    // let mul4 = x86_64::_mm256_mul_ps(x4, w4);
-                    // let s12 = x86_64::_mm256_add_ps(mul1, mul2);
-                    // let s34 = x86_64::_mm256_add_ps(mul3, mul4);
-                    let s12 = x86_64::_mm256_fmadd_ps(x3, w3, mul1);
-                    let s34 = x86_64::_mm256_fmadd_ps(x4, w4, mul2);
-                    let s1234 = x86_64::_mm256_add_ps(s12, s34);
+                    let h1 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(i));
+                    let h2 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(i + 8));
+                    let h3 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(i + 16));
+                    let h4 = x86_64::_mm256_loadu_ps(hid2.as_ptr().add(i + 24));
+                    let mul1 = x86_64::_mm256_fmadd_ps(x1, w1, h1);
+                    let mul2 = x86_64::_mm256_fmadd_ps(x1, w2, h2);
+                    let mul3 = x86_64::_mm256_fmadd_ps(x1, w3, h3);
+                    let mul4 = x86_64::_mm256_fmadd_ps(x1, w4, h4);
                     x86_64::_mm256_storeu_ps(
-                            sumhn.as_mut_ptr().add(i * 8), s1234);
-                }
-                for (k, _hn) in sumhn.iter().enumerate().step_by(32) {
-                    let a = x86_64::_mm256_loadu_ps(
-                            sumhn.as_ptr().add(k));  // a0~a7
-                    let b = x86_64::_mm256_loadu_ps(
-                            sumhn.as_ptr().add(k + 8));  // a8~a15
-                    let c = x86_64::_mm256_loadu_ps(
-                            sumhn.as_ptr().add(k + 16));  // b0~b7
-                    let d = x86_64::_mm256_loadu_ps(
-                            sumhn.as_ptr().add(k + 24));  // b8~b15
-                    let a0c0 = x86_64::_mm256_unpacklo_ps(a, b);
-                    let b0d0 = x86_64::_mm256_unpacklo_ps(c, d);
-                    let a2c2 = x86_64::_mm256_unpackhi_ps(a, b);
-                    let b2d2 = x86_64::_mm256_unpackhi_ps(c, d);
-                    let s1 = x86_64::_mm256_add_ps(a0c0, a2c2);
-                    let s2 = x86_64::_mm256_add_ps(b0d0, b2d2);
-                    let t1 = x86_64::_mm256_shuffle_ps(s1, s2,
-                            0b01000100/*(1 << 6) | (0 << 4) | (1 << 2) | 0*/);
-                    let t2 = x86_64::_mm256_shuffle_ps(s1, s2,
-                            0b11101110/*(3 << 6) | (2 << 4) | (3 << 2) | 2*/);
-                    let s3 = x86_64::_mm256_add_ps(t1, t2);
-                    let s4 = x86_64::_mm256_extractf128_ps(s3, 1);
-                    let s5 = x86_64::_mm_add_ps(
-                            s4, x86_64::_mm256_castps256_ps128(s3));
-                    let hn2 = x86_64::_mm_loadu_ps(
-                            hid2.as_mut_ptr().add(k / 8));
-                    let s6 = x86_64::_mm_add_ps(s5, hn2);
-                    x86_64::_mm_storeu_ps(hid2.as_mut_ptr().add(k / 8), s6);
+                            hid2.as_mut_ptr().add(i), mul1);
+                    x86_64::_mm256_storeu_ps(
+                            hid2.as_mut_ptr().add(i + 8), mul2);
+                    x86_64::_mm256_storeu_ps(
+                            hid2.as_mut_ptr().add(i + 16), mul3);
+                    x86_64::_mm256_storeu_ps(
+                            hid2.as_mut_ptr().add(i + 24), mul4);
                 }
             }
         }
