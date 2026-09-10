@@ -184,6 +184,8 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         panic!("duel level:{duellv} is not supported...");
     }
 
+    eprint!("init...\r");
+
     let mut w1 = Box::new(weight::Weight::new());
     w1.read(ev1).unwrap();
     let mut w2 = Box::new(weight::Weight::new());
@@ -197,7 +199,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
 
     let verbose = MYOPT.get().unwrap().verbose;
     let eqfile = initialpos::equalfile(duellv);
-    println!("equal file: {eqfile}");
+    if verbose.is_not_silent() {println!("equal file: {eqfile}");}
     let ip = initialpos::InitialPos::read(&eqfile).unwrap();
     let rfentbl = &mut ip.rfens_all();
     let n = rfentbl.len() / 2;
@@ -260,7 +262,20 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
             }
         }});
 
+    let n = rfentbl.len() * 4;
     for rfen in rfentbl.iter() {
+        if verbose.is_silent() {
+            let idx = {
+                let dr = dresult.lock().unwrap();
+                dr.total as usize
+            };
+            const BAR_LENGTH : usize = 30;
+            let prog = (2 * BAR_LENGTH * idx / n + 1) / 2;
+            let rest = BAR_LENGTH - prog;
+            let bar = "=".repeat(prog);
+            let unbar = " ".repeat(rest);
+            eprint!("[{bar}{unbar}] {idx} / {n} \r");
+        }
         // prepare game
         let mut g = game::GameBB::from(rfen);
         g.set_cachesize(cachesz);
