@@ -184,6 +184,7 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
         panic!("duel level:{duellv} is not supported...");
     }
 
+    let st = Instant::now();
     eprint!("init...\r");
 
     let mut w1 = Box::new(weight::Weight::new());
@@ -328,6 +329,9 @@ fn duel_para(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     }
     println!("ev1:{}", MYOPT.get().unwrap().evaltable1);
     println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
+
+    let d = st.elapsed().as_millis() as f64 * 0.001;
+    println!("processing time: {d:.2}sec");
 }
 
 /// duel between 2 eval tables.
@@ -339,6 +343,8 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
+
+    let st = Instant::now();
 
     let mut w1 = weight::Weight::new();
     w1.read(ev1).unwrap();
@@ -388,6 +394,8 @@ fn duel(ev1 : &str, ev2 : &str, duellv : i8, depth : u8, cachesz : usize) {
     }
     println!("ev1:{}", MYOPT.get().unwrap().evaltable1);
     println!("ev2:{}", MYOPT.get().unwrap().evaltable2);
+    let d = st.elapsed().as_millis() as f64 * 0.001;
+    println!("processing time: {d:.2}sec");
 }
 
 /// duel between 2 eval tables.
@@ -398,6 +406,8 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
+
+    let st = Instant::now();
 
     let mut dr = duelresult::DuelResult::default();
     let mut dresult;
@@ -445,6 +455,8 @@ fn duel_vs_edax(duellv : i8, depth : u8, cachesz : usize) {
 
         println!("{}", dr.opponent());
     }
+    let d = st.elapsed().as_millis() as f64 * 0.001;
+    println!("processing time: {d:.2}sec");
 }
 
 /// duel between 2 eval tables.
@@ -455,6 +467,8 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
+
+    let st = Instant::now();
 
     let mut dr = duelresult::DuelResult::default();
     let mut dresult;
@@ -504,6 +518,8 @@ fn duel_vs_cassio(duellv : i8, depth : u8, cachesz : usize) {
 
         println!("{}", dr.opponent());
     }
+    let d = st.elapsed().as_millis() as f64 * 0.001;
+    println!("processing time: {d:.2}sec");
 }
 
 /// duel between 2 eval tables.
@@ -514,6 +530,8 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
     if !(1..=14).contains(&duellv) {
         panic!("duel level:{duellv} is not supported...");
     }
+
+    let st = Instant::now();
 
     let mut dr = duelresult::DuelResult::default();
     let mut dresult;
@@ -561,6 +579,8 @@ fn duel_vs_ruversi(duellv : i8, depth : u8, cachesz : usize) {
         if !verbose.is_silent() {println!("{}", dr.opponent());}
     }
     if verbose.is_silent() {println!("{}", dr.opponent());}
+    let d = st.elapsed().as_millis() as f64 * 0.001;
+    println!("processing time: {d:.2}sec");
 }
 
 /// read eval file.
