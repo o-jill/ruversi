@@ -150,14 +150,23 @@ end
 # ev1   ,win,draw,lose
 # 8,4,0,4,0,8,50.00%,+0.0,60.2
 # total,win,draw,lose,balance-s,balance-g,winrate,R,95%
-def gameresult_table(lines, elapsed)
+# processing time: 0.00sec
+# def gameresult_table(lines, elapsed)
+def gameresult_table(lines)
   # p lines
   value = 0
   games = 1
   prev_line = ""
+  elapsed = -1
   lines.each do |line|
     puts line
 
+    # processing time: 0.00sec
+    if line.start_with?("processing")
+      m = /([0-9.]+)sec/.match(line)
+      elapsed = m[1].to_f
+      next
+    end
     # ex.
     # 8687,1630,56,7001,...
     # total,win,draw,lose,...
@@ -169,6 +178,7 @@ def gameresult_table(lines, elapsed)
 
     prev_line = line
   end
+  elapsed
 end
 
 # total,8,win,4,draw,0,lose,4,balance,0,8,50.00%,R,+0.0
@@ -223,8 +233,8 @@ def game()
   # duellv=2
   duellv=3
 
-  buildcmd = "cargo build --release #{features}"
-  exec_command(buildcmd)
+  # buildcmd = "cargo build --release #{features}"
+  # exec_command(buildcmd)
 
   if RUBY_PLATFORM =~ /mswin|mingw/
     devnull = 'NUL'
@@ -236,16 +246,16 @@ def game()
   txtout = nil
   for j in 1..REPEAT do
     print("#{j} ")
-    elapsed, _res = elapsed_time_of() do
-      # runcmd = "cargo run --release --silent #{features} -- --duel #{duellv} #{sdepth}  --ev1 #{evfile} --ev2 #{evfile} >> #{RESULT} 2>/dev/null"
-      runcmd = "cargo run --release #{features} -- --silent --duel #{duellv} #{sdepth}  --ev1 #{EVFILE} --ev2 #{EVFILE} 2>#{devnull}"
-      txtout = exec_command(runcmd)
-      # echo(txtout, RESULT)
-    end
+
+    # runcmd = "cargo run --release --silent #{features} -- --duel #{duellv} #{sdepth}  --ev1 #{evfile} --ev2 #{evfile} >> #{RESULT} 2>/dev/null"
+    runcmd = "cargo run --release #{features} -- --silent --duel #{duellv} #{sdepth}  --ev1 #{EVFILE} --ev2 #{EVFILE} 2>#{devnull}"
+    txtout = exec_command(runcmd)
+    # echo(txtout, RESULT)
  
     # gameresult(tail(RESULT, 5), elapsed)
     # gameresult(txtout.split("\n").reverse, elapsed)
-    gameresult_table(txtout.split("\n").reverse, elapsed)
+    elapsed = gameresult_table(txtout.split("\n").reverse)
+
     listelapsed << elapsed
   end
 
