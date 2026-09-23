@@ -762,31 +762,31 @@ impl Weight {
         }
         // 2nd layer to output
         let mut res = self.wl2bias(prgs);
-        let wh = self.wlayer1(prgs);
         let wdc1 = self.wl1bias(prgs);
         let wh2 = self.wlayer2(prgs);
         let mut hid2 = [0f32 ; N_HIDDEN2];
         hid2.copy_from_slice(wdc1);
-        for j in (0..N_HIDDEN).step_by(32) {
-            unsafe {
-                let inp = vld1q_f32_x4(hid.as_ptr().add(j));
-                for (i, h2) in hid2.iter_mut().enumerate() {
-                    let wei = vld1q_f32_x4(wh.as_ptr().add(i * N_HIDDEN + j));
-                    let mul0 = vmulq_f32(inp.0, wei.0);
-                    let mul1 = vmulq_f32(inp.1, wei.1);
-                    let mul2 = vmlaq_f32(mul0, inp.2, wei.2);
-                    let mul3 = vmlaq_f32(mul1, inp.3, wei.3);
-                    let add4 = vaddq_f32(mul2, mul3);
-
-                    let inp = vld1q_f32_x4(hid.as_ptr().add(j + 16));
-                    let wei = vld1q_f32_x4(wh.as_ptr().add(i * N_HIDDEN + j + 16));
-                    let mul0 = vmulq_f32(inp.0, wei.0);
-                    let mul1 = vmulq_f32(inp.1, wei.1);
-                    let mul2 = vmlaq_f32(mul0, inp.2, wei.2);
-                    let mul3 = vmlaq_f32(mul1, inp.3, wei.3);
-                    let add42 = vaddq_f32(mul2, mul3);
-                    let add4 = vaddq_f32(add4, add42);
-                    *h2 += vaddvq_f32(add4);
+        let whv = self.wlayer1v(prgs);
+        const M : usize = 16;
+        for (j, l1) in hid.iter().enumerate() {
+            let l = unsafe {vdupq_n_f32(*l1)};
+            for i in (0..N_HIDDEN2).step_by(M) {
+                unsafe {
+                    let w = vld1q_f32_x4(whv.as_ptr().add(i + j * N_HIDDEN2));
+                    let l1 = vmulq_f32(w.0, l);
+                    let l2 = vmulq_f32(w.1, l);
+                    let l3 = vmulq_f32(w.2, l);
+                    let l4 = vmulq_f32(w.3, l);
+                    let h4 = vld1q_f32_x4(hid2.as_ptr().add(i));
+                    let rl1 = vaddq_f32(l1, h4.0);
+                    let rl2 = vaddq_f32(l2, h4.1);
+                    let rl3 = vaddq_f32(l3, h4.2);
+                    let rl4 = vaddq_f32(l4, h4.3);
+                    // vst1q_f32_x4(hid2.as_mut_ptr().add(i), float32x4x4_t(rl1, rl2, rl3, rl4));
+                    vst1q_f32(hid2.as_mut_ptr().add(i), rl1);
+                    vst1q_f32(hid2.as_mut_ptr().add(i + 4), rl2);
+                    vst1q_f32(hid2.as_mut_ptr().add(i + 8), rl3);
+                    vst1q_f32(hid2.as_mut_ptr().add(i + 12), rl4);
                 }
             }
         }
