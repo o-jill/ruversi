@@ -969,7 +969,7 @@ impl BitBoard {
                 let pos85 = x86_64::_mm_and_si128(pos85, fmask);
                 let rbit4 = x86_64::_mm_set_epi8(
                     0xf, 0x7, 0xb, 0x3, 0xd, 0x5, 0x9, 0x1,
-                     0xe, 0x6, 0xa, 0x2, 0xc, 0x4, 0x8, 0);
+                    0xe, 0x6, 0xa, 0x2, 0xc, 0x4, 0x8, 0);
                 let ropmn41 = x86_64::_mm_shuffle_epi8(rbit4, opmn41);
                 let ropmn85 = x86_64::_mm_shuffle_epi8(rbit4, opmn85);
                 let rpos41 = x86_64::_mm_shuffle_epi8(rbit4, pos41);
@@ -1146,6 +1146,49 @@ impl BitBoard {
             (self.white, self.black)
         };
 
+        let empties = !stones;  // 空きマス
+        const THRESHOLD_EMPTY : u32 = 4;  // 残り4マス以下
+        // const THRESHOLD_EMPTY : u32 = 6;  // 残り6マス以下
+        // const THRESHOLD_EMPTY : u32 = 8;  // 残り8マス以下
+        // const THRESHOLD_EMPTY : u32 = 10;  // 残り10マス以下
+        // const THRESHOLD_EMPTY : u32 = 12;  // 残り12マス以下
+        if empties.count_ones() <= THRESHOLD_EMPTY {
+            let mut bits = 0;
+            let mut bit = LSB_CELL;
+            for y in 0..NUMCELL {
+                let row8 = 0xffu64 << (y * 8);
+                let empty = row8 & empties;
+                // その列の升が全部埋まってたら次へ。
+                if empty == 0 {
+                    bit_down!(bit);
+                    continue;
+                }
+
+                for x in 0..NUMCELL {
+                    let b = bit;
+                    bit_right!(bit);
+                    let exist = b & stones;
+                    if exist != 0 {
+                        continue;
+                    }
+                    let xy = BitBoard::index(x, y);
+                    // check surrounding stones.
+                    // if (TBL_SURROUND[xy] & oppo) == 0 {continue;}
+
+                    if self.checkreverse_ex(xy, oppo, mine) {
+                        bits |= b;
+                    }
+                }
+            }
+
+            if bits == 0 {  // pass
+                // return Some(vec![]);
+                return Some(vec![PASS]);
+            }
+
+            return Some(cells2vec(bits));
+        }
+
         let mut bits = 0;
         let mut bit = LSB_CELL;
         for y in 0..NUMCELL {
@@ -1190,6 +1233,40 @@ impl BitBoard {
         (self.black.count_ones() as i8 - self.white.count_ones() as i8) as f32
     }
 
+    /// get final score for mate1 situation.
+    ///
+    /// # Returns
+    /// result as f32
+    fn countf32_mate1(&self, xy : u8) -> f32 {
+        if xy == PASS {  // pass
+            self.countf32()
+        } else {
+            let mut ban = self.clone();
+            ban.reverse(xy);
+
+            ban.countf32()
+        }
+    }
+
+    /// get final score if legal.
+    ///
+    /// # Arguments
+    /// - 'xy' PASS : pass, 0 ~ 63 : cell index.
+    /// - 'oppo' opponents stone bits.
+    /// - 'mine' my stone bits.
+    ///
+    /// # Returns
+    /// - `None`: PASS
+    /// - `Some(f32)` : final result as f32
+    fn check_move_mate1(&self, xy : u32, oppo : u64, mine : u64) -> Option<f32> {
+        let chk = self.checkreverse_ex(xy as usize, oppo, mine);
+        if chk {
+            Some(self.countf32_mate1(xy as u8))
+        } else {
+            None
+        }
+    }
+
     /// 最後のひとマスを埋めて石の差を返す。
     ///
     /// # Returns
@@ -1203,17 +1280,19 @@ impl BitBoard {
         } else {
             (self.white, self.black)
         };
-        if self.checkreverse_ex(xy as usize, oppo, mine) {
-            (self.r#move(xy as u8).unwrap().countf32(), xy as u8)
-        } else {
-            let newban = self.r#move(PASS).unwrap();
-            let val = if newban.checkreverse_ex(xy as usize, mine, oppo) {
-                newban.r#move(xy as u8).unwrap().countf32()
+        if let Some(val) = self.check_move_mate1(xy, oppo, mine) {
+            return (val, xy as u8);
+        }
+
+        let mut newban = self.clone();
+        newban.pass();
+        let val =
+            if let Some(val) = newban.check_move_mate1(xy, mine, oppo) {
+                val
             } else {
                 self.countf32()
             };
-            (val, PASS)
-        }
+        (val, PASS)
     }
 
     pub fn is_full(&self) -> bool {
