@@ -157,6 +157,54 @@ impl EdaxRunner {
         cmd.spawn()
     }
 
+    /// Edaxの出力から探索結果を読み取る  
+    /// 
+    /// # Arguments  
+    /// - `lines` Edaxdの出力を行区切りにしたもの  
+    /// 
+    /// # Returns  
+    /// Ok(move, score) or Err(msg)  
+    fn find_result(lines : &[&str]) -> Result<(String, String), String> {
+        let scoreptn = regex::Regex::new("\\s+([+-]\\d\\d)").unwrap();
+
+        let num = lines.len();
+        for i in 0..num {
+            if !lines[i].starts_with("---+-") {continue;}
+
+            let n = i + 1;  // 結果の行
+            let l = lines[n];
+            let pos = if let Some(p) = l.chars().position(|c| c.is_alphabetic()) {
+                p
+            } else {
+                return Err(format!("invalid input from edax. \"{l}\""));
+            };
+
+            if l.len() - 1 <= pos {
+                return Err(format!("invalid input from edax. \"{l}\" pos:{pos}"));
+            }
+
+            // pos番目から2文字分が探索結果
+            let mv = l.chars().skip(pos).take(2).collect::<String>();
+
+            return match scoreptn.captures(l) {
+                Some(cap) => {
+                    Ok((mv, cap[1].to_string()))
+                },
+                _ => {
+                    Err(format!("invalid input from edax. \"{l}\" move:{mv}"))
+                }
+            }
+        }
+        return Err(format!("no info from edax:\"{}\"", lines.join("\n")));
+    }
+
+    /// edaxの出力から最善手と評価を抜き出す
+    /// 
+    /// # Arguments  
+    /// - `obf` : 探索する局面
+    /// 
+    /// # Returns  
+    /// Ok(move, score) or Err(msg)  
     pub fn run(&self, obf : &str) -> Result<(String, String), String> {
         // launch edax
         let curdir = std::env::current_dir().unwrap();
@@ -177,19 +225,10 @@ impl EdaxRunner {
         let lines : Vec<_> = txt.split("\n").collect();
         // println!("{}", lines[2]);
         if lines.len() < 3 {
-            panic!("invalid input {lines:?}");
+            return Err(format!("invalid input {lines:?}"));
         }
-        let pos = lines[2].chars().position(|c| c.is_alphabetic());
-        if pos.is_none() {return Err(format!("EDAX:\"{txt}\""));}
-        let i = pos.unwrap();
-        let mut xtxt = lines[2].chars().nth(i).unwrap().to_ascii_lowercase().to_string();
-        xtxt.push(lines[2].chars().nth(i + 1).unwrap());
 
-        let scoreptn = regex::Regex::new("\\s+([+-]\\d\\d)").unwrap();
-        match scoreptn.captures(lines[2]) {
-            Some(cap) => {Ok((xtxt, String::from(&cap[1])))},
-            _ => {Err(format!("invalid input from edax. \"{}\" pos{xtxt}", lines[2]))}
-        }
+        Self::find_result(&lines)
     }
 }
 
