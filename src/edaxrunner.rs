@@ -759,6 +759,100 @@ args:
     }
 
     #[test]
+    fn test_edaxrunner_find_result_edax47() {
+        let txt = "\
+Edax version 4.7 Oct 14 2026 03:04:23 for Linux
+copyright 1998 - 2026 Richard Delorme, Toshihiko Okuhara
+
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+---+------+-----+--------------+-------------+----------+---------------------
+  1|24@73%  -01        0:00.129       4316071   33457915 c3 F3 f4 G5 c6 C4 f5
+---+------+-----+--------------+-------------+----------+---------------------";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Ok(("c3".to_string(), "-01".to_string())), res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_edax46() {
+        let txt = "\
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+---+------+-----+--------------+-------------+----------+---------------------
+  1|24@73%  -01        0:00.129       4316071   33457915 c3 F3 f4 G5 c6 C4 f5
+---+------+-----+--------------+-------------+----------+---------------------";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Ok(("c3".to_string(), "-01".to_string())), res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_empty() {
+        let txt = "";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Err(format!("no info from edax:\"\"")), res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_edax_invalid1() {
+        let txt = "\
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+---+------+-----+--------------+-------------+----------+---------------------
+  1|24@73%  -01        0:00.129       4316071   33457915 c
+---+------+-----+--------------+-------------+----------+---------------------";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Err("\
+invalid input from edax. \"  1|24@73%  -01        0:00.129       4316071   33457915 c\" pos:57".to_string()),
+            res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_edax_invalid2() {
+        let txt = "\
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+---+------+-----+--------------+-------------+----------+---------------------
+  1|24@73%  -01        0:00.129       4316071   33457915
+---+------+-----+--------------+-------------+----------+---------------------";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Err("\
+invalid input from edax. \"  1|24@73%  -01        0:00.129       4316071   33457915\"".to_string()),
+            res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_edax_invalid3() {
+        let txt = "\
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+  1|24@73%  -01        0:00.129       4316071   33457915 c3 F3 f4 G5 c6 C4 f5";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Err("\
+no info from edax:\"# | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+  1|24@73%  -01        0:00.129       4316071   33457915 c3 F3 f4 G5 c6 C4 f5\"".to_string()),
+            res);
+    }
+
+    #[test]
     fn test_obf2file_creates_file_and_writes_content() {
         // obf2file でファイルが作成され、内容が正しいことを確認
         let er = EdaxRunner::new();
