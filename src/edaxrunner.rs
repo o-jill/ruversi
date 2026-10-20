@@ -195,7 +195,8 @@ impl EdaxRunner {
                 }
             }
         }
-        return Err(format!("no info from edax:\"{}\"", lines.join("\n")));
+
+        Err(format!("no info from edax:\"{}\"", lines.join("\n")))
     }
 
     /// edaxの出力から最善手と評価を抜き出す
@@ -344,7 +345,7 @@ impl RuversiRunner {
         }
 
         let res = lines[12].to_ascii_lowercase();
-        if self.verbose {println!("opp:{}", &res);}
+        if self.verbose {println!("opp:{res}");}
         let posptn = regex::Regex::new("nodes\\. ([A-Ha-h][1-8])").unwrap();
         let xtxt = match posptn.captures(&res) {
             Some(cap) => {
@@ -352,7 +353,7 @@ impl RuversiRunner {
             },
             _ => {
                 return Err(
-                    format!("invalid input from ruversi. \"{}\"", &res));
+                    format!("invalid input from ruversi. \"{res}\""));
             }
         };
 
