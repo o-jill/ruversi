@@ -256,7 +256,7 @@ function mannWhitneyU(groupA, groupB) {
     // varianceU = n1·n2·(n1+n2+1)/12 - [n1·n2/(12n(n-1))] x Σ(t_k^3 - t_k)
     const n1n2 = (n1 * n2 * (n1 + n2 + 1.0)) / 12.0;
     const compDiv = n1 * n2 / ((n1 + n2) * (n1 + n2 + 1.0) * 12.0);
-    const varU = n1n2 - tieComp / compDiv;
+    const varU = n1n2 - tieComp * compDiv;
 
     const sdU = Math.sqrt(varU);
 

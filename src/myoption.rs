@@ -41,6 +41,7 @@ pub enum Verbose {
 
 impl Verbose {
     pub fn is_silent(&self) -> bool {self.eq(&Verbose::Silent)}
+    pub fn is_not_silent(&self) -> bool {self.ne(&Verbose::Silent)}
     #[allow(dead_code)]
     pub fn is_normal(&self) -> bool {self.eq(&Verbose::Normal)}
     #[allow(dead_code)]
