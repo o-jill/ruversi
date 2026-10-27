@@ -120,8 +120,8 @@ impl NodeBB {
      * # Returns  
      * better node.  
      */
-    fn max(&self, other : &NodeBB) -> &NodeBB {
-        if self.is_better_than(b) {self} else {b}
+    fn max<'a>(&'a self, other : &'a NodeBB) -> &'a NodeBB {
+        if self.is_better_than(other) {self} else {other}
     }
 
     #[cfg(target_arch="x86_64")]
