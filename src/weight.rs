@@ -141,8 +141,8 @@ pub struct Weight {
     // H1x128 + H1 + H1x2 + H1 + H1 x (H2+1) + H2 + 1
     vweight : AVec<f32>,
 
-    hweight : AVec<i16>,  // for fp16
-    hvweight : AVec<i16>,  // for fp16
+    hweight : AVec<i16>,  // for f16
+    hvweight : AVec<i16>,  // for f16
 }
 
 impl Default for Weight {
@@ -1285,10 +1285,10 @@ fn testweight() {
         w.init();
         let res_nosimdi = w.evaluatev12bb(&bban);
         let res_simdmul = w.evaluatev12bb_simd_mul(&bban);
-        let res_simdmul_fp16 = w.evaluatev12bb_simd_mul_fp16(&bban);
+        let res_simdmul_f16 = w.evaluatev12bb_simd_mul_f16(&bban);
         // let res_simd = w.evaluatev9bb_simd(&bban);
         assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul));
-        assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul_fp16));
+        assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul_f16));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }
 }
