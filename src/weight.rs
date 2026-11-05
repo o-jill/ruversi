@@ -140,6 +140,9 @@ pub struct Weight {
     pub weight : AVec<f32>,
     // H1x128 + H1 + H1x2 + H1 + H1 x (H2+1) + H2 + 1
     vweight : AVec<f32>,
+
+    hweight : AVec<i16>,  // for fp16
+    hvweight : AVec<i16>,  // for fp16
 }
 
 impl Default for Weight {
@@ -163,6 +166,18 @@ impl Weight {
                 let mut w = AVec::with_capacity(
                     MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
                 w.resize(w.capacity(), 0f32);
+                w
+            },
+            hweight: {
+                let mut w = AVec::with_capacity(
+                        MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
+                w.resize(w.capacity(), 0i16);
+                w
+            },
+            hvweight: {
+                let mut w = AVec::with_capacity(
+                    MEM_ALIGN, N_WEIGHT_PAD * N_PROGRESS_DIV);
+                w.resize(w.capacity(), 0i16);
                 w
             },
         }
