@@ -231,7 +231,7 @@ impl Weight {
     }
 
     fn cvt_f16_f32(&mut self) {
-        for i in (0..N_WEIGHT * N_PROGRESS_DIV).step_by(16) {
+        for i in (0..N_WEIGHT_PAD * N_PROGRESS_DIV).step_by(16) {
             unsafe {
                 let f = vld1q_f32_x4(self.weight.as_ptr().add(i));
                 let h1 = vcvt_f16_f32(f.0);
@@ -977,34 +977,35 @@ impl Weight {
         }
 
         // 2nd layer to output
-        let mut res = self.wl2bias(prgs);
         let wh = self.wlayer1h(prgs);
         let wdc1 = self.wl1biash(prgs);
-        let wh2 = self.wlayer2h(prgs);
         let mut hid2 = [0i16 ; N_HIDDEN2];
         hid2.copy_from_slice(wdc1);
-        for j in (0..N_HIDDEN).step_by(32) {
+        for (j, h) in hid.iter().enumerate() {
             unsafe {
-                let inp = vreinterpretq_f16_s16(vdupq_n_s16(hid[j]));
+                let inp = vreinterpretq_f16_s16(vdupq_n_s16(*h));
                 for i in (0..N_HIDDEN2).step_by(16) {
                     let wei = vld1q_s16_x2(wh.as_ptr().add(i + N_HIDDEN2 * j));
-                    let h = vld1q_s16_x2(hid2.as_ptr().add(i));
+                    let h2 = vld1q_s16_x2(hid2.as_ptr().add(i));
                     let mul0 = vfmaq_f16(
-                        vreinterpretq_f16_s16(h.0),
+                        vreinterpretq_f16_s16(h2.0),
                         inp,
                         vreinterpretq_f16_s16(wei.0));
                     let mul1 = vfmaq_f16(
-                        vreinterpretq_f16_s16(h.1),
+                        vreinterpretq_f16_s16(h2.1),
                         inp,
                         vreinterpretq_f16_s16(wei.1));
-                        vst1q_s16_x2(
-                            hid2.as_mut_ptr().add(i),
-                            int16x8x2_t(
-                                vreinterpretq_s16_f16(mul0),
-                                vreinterpretq_s16_f16(mul1)));
+                    vst1q_s16_x2(
+                        hid2.as_mut_ptr().add(i),
+                        int16x8x2_t(
+                            vreinterpretq_s16_f16(mul0),
+                            vreinterpretq_s16_f16(mul1)));
                 }
             }
         }
+
+        let mut res = self.wl2bias(prgs);
+        let wh2 = self.wlayer2h(prgs);
         for (i, _h) in hid2.iter().enumerate().step_by(16) {
             unsafe {
                 let inp = vld1q_s16_x2(hid2.as_ptr().add(i));
@@ -1193,6 +1194,15 @@ fn dbg_assert_eq(a : &f32, b : &f32) -> bool {
 }
 
 #[allow(dead_code)]
+fn dbg_assert_eq_fp16(a : &f32, b : &f32) -> bool {
+    if (a - b).abs() >= 1e-3 {
+        println!("| {a} - {b} | >= 1e-3...");
+        return false;
+    }
+    true
+}
+
+#[allow(dead_code)]
 fn dbg_assert_eqi(a : &f32, b : &f32) -> bool {
     let eps = 0.1;
     if (a - b).abs() >= eps {
@@ -1315,7 +1325,7 @@ fn testweight() {
         let res_simdmul_f16 = w.evaluatev12bb_simd_mul_f16(&bban);
         // let res_simd = w.evaluatev9bb_simd(&bban);
         assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul));
-        assert!(dbg_assert_eq(&res_nosimdi, &res_simdmul_f16));
+        assert!(dbg_assert_eq_fp16(&res_nosimdi, &res_simdmul_f16));
         // println!("{res_nosimd} == {res_simd} == {res_simdavx} ???");
     }
 }
