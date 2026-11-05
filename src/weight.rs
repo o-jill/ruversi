@@ -211,6 +211,39 @@ impl Weight {
                 }
             }
         }
+        self.cvt_f16_f32();
+    }
+
+    fn cvt_f16_f32(&mut self) {
+        for i in (0..N_WEIGHT * N_PROGRESS_DIV).step_by(16) {
+            unsafe {
+                let f = vld1q_f32_x4(self.weight.as_ptr().add(i));
+                let h1 = vcvt_f16_f32(f.0);
+                let h2 = vcvt_f16_f32(f.1);
+                let h3 = vcvt_f16_f32(f.2);
+                let h4 = vcvt_f16_f32(f.3);
+                vst1_s16_x4(
+                    self.hweight.as_mut_ptr().add(i),
+                    int16x4x4_t(
+                        vreinterpret_s16_f16(h1),
+                        vreinterpret_s16_f16(h2),
+                        vreinterpret_s16_f16(h3),
+                        vreinterpret_s16_f16(h4)));
+
+                let f = vld1q_f32_x4(self.vweight.as_ptr().add(i));
+                let h1 = vcvt_f16_f32(f.0);
+                let h2 = vcvt_f16_f32(f.1);
+                let h3 = vcvt_f16_f32(f.2);
+                let h4 = vcvt_f16_f32(f.3);
+                vst1_s16_x4(
+                    self.hvweight.as_mut_ptr().add(i),
+                    int16x4x4_t(
+                        vreinterpret_s16_f16(h1),
+                        vreinterpret_s16_f16(h2),
+                        vreinterpret_s16_f16(h3),
+                        vreinterpret_s16_f16(h4)));
+            }
+        }
     }
 
     pub fn init(&mut self) {
