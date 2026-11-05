@@ -157,6 +157,55 @@ impl EdaxRunner {
         cmd.spawn()
     }
 
+    /// Edaxの出力から探索結果を読み取る  
+    /// 
+    /// # Arguments  
+    /// - `lines` Edaxdの出力を行区切りにしたもの  
+    /// 
+    /// # Returns  
+    /// Ok(move, score) or Err(msg)  
+    fn find_result(lines : &[&str]) -> Result<(String, String), String> {
+        let scoreptn = regex::Regex::new("\\s+([+-]\\d\\d)").unwrap();
+
+        let num = lines.len();
+        for i in 0..num {
+            if !lines[i].starts_with("---+-") {continue;}
+
+            let n = i + 1;  // 結果の行
+            let l = lines[n];
+            let pos = if let Some(p) = l.chars().position(|c| c.is_alphabetic()) {
+                p
+            } else {
+                return Err(format!("invalid input from edax. \"{l}\""));
+            };
+
+            if l.len() - 1 <= pos {
+                return Err(format!("invalid input from edax. \"{l}\" pos:{pos}"));
+            }
+
+            // pos番目から2文字分が探索結果
+            let mv = l.chars().skip(pos).take(2).collect::<String>();
+
+            return match scoreptn.captures(l) {
+                Some(cap) => {
+                    Ok((mv, cap[1].to_string()))
+                },
+                _ => {
+                    Err(format!("invalid input from edax. \"{l}\" move:{mv}"))
+                }
+            }
+        }
+
+        Err(format!("no info from edax:\"{}\"", lines.join("\n")))
+    }
+
+    /// edaxの出力から最善手と評価を抜き出す
+    /// 
+    /// # Arguments  
+    /// - `obf` : 探索する局面
+    /// 
+    /// # Returns  
+    /// Ok(move, score) or Err(msg)  
     pub fn run(&self, obf : &str) -> Result<(String, String), String> {
         // launch edax
         let curdir = std::env::current_dir().unwrap();
@@ -177,19 +226,10 @@ impl EdaxRunner {
         let lines : Vec<_> = txt.split("\n").collect();
         // println!("{}", lines[2]);
         if lines.len() < 3 {
-            panic!("invalid input {lines:?}");
+            return Err(format!("invalid input {lines:?}"));
         }
-        let pos = lines[2].chars().position(|c| c.is_alphabetic());
-        if pos.is_none() {return Err(format!("EDAX:\"{txt}\""));}
-        let i = pos.unwrap();
-        let mut xtxt = lines[2].chars().nth(i).unwrap().to_ascii_lowercase().to_string();
-        xtxt.push(lines[2].chars().nth(i + 1).unwrap());
 
-        let scoreptn = regex::Regex::new("\\s+([+-]\\d\\d)").unwrap();
-        match scoreptn.captures(lines[2]) {
-            Some(cap) => {Ok((xtxt, String::from(&cap[1])))},
-            _ => {Err(format!("invalid input from edax. \"{}\" pos{xtxt}", lines[2]))}
-        }
+        Self::find_result(&lines)
     }
 }
 
@@ -305,7 +345,7 @@ impl RuversiRunner {
         }
 
         let res = lines[12].to_ascii_lowercase();
-        if self.verbose {println!("opp:{}", &res);}
+        if self.verbose {println!("opp:{res}");}
         let posptn = regex::Regex::new("nodes\\. ([A-Ha-h][1-8])").unwrap();
         let xtxt = match posptn.captures(&res) {
             Some(cap) => {
@@ -313,7 +353,7 @@ impl RuversiRunner {
             },
             _ => {
                 return Err(
-                    format!("invalid input from ruversi. \"{}\"", &res));
+                    format!("invalid input from ruversi. \"{res}\""));
             }
         };
 
@@ -717,6 +757,100 @@ args:
         let er = EdaxRunner::from_config(&config_path).unwrap();
         assert_eq!(er.obfpath, "/tmp/zzz.obf");
         fs::remove_file(config_path).unwrap();
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_edax47() {
+        let txt = "\
+Edax version 4.7 Oct 14 2026 03:04:23 for Linux
+copyright 1998 - 2026 Richard Delorme, Toshihiko Okuhara
+
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+---+------+-----+--------------+-------------+----------+---------------------
+  1|24@73%  -01        0:00.129       4316071   33457915 c3 F3 f4 G5 c6 C4 f5
+---+------+-----+--------------+-------------+----------+---------------------";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Ok(("c3".to_string(), "-01".to_string())), res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_edax46() {
+        let txt = "\
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+---+------+-----+--------------+-------------+----------+---------------------
+  1|24@73%  -01        0:00.129       4316071   33457915 c3 F3 f4 G5 c6 C4 f5
+---+------+-----+--------------+-------------+----------+---------------------";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Ok(("c3".to_string(), "-01".to_string())), res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_empty() {
+        let txt = "";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Err(format!("no info from edax:\"\"")), res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_edax_invalid1() {
+        let txt = "\
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+---+------+-----+--------------+-------------+----------+---------------------
+  1|24@73%  -01        0:00.129       4316071   33457915 c
+---+------+-----+--------------+-------------+----------+---------------------";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Err("\
+invalid input from edax. \"  1|24@73%  -01        0:00.129       4316071   33457915 c\" pos:57".to_string()),
+            res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_edax_invalid2() {
+        let txt = "\
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+---+------+-----+--------------+-------------+----------+---------------------
+  1|24@73%  -01        0:00.129       4316071   33457915
+---+------+-----+--------------+-------------+----------+---------------------";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Err("\
+invalid input from edax. \"  1|24@73%  -01        0:00.129       4316071   33457915\"".to_string()),
+            res);
+    }
+
+    #[test]
+    fn test_edaxrunner_find_result_edax_invalid3() {
+        let txt = "\
+ # | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+  1|24@73%  -01        0:00.129       4316071   33457915 c3 F3 f4 G5 c6 C4 f5";
+
+        let lines : Vec<_> = txt.split("\n").collect();
+
+        let res = EdaxRunner::find_result(&lines);
+
+        assert_eq!(Err("\
+no info from edax:\"# | depth|score|       time   |  nodes (N)  |   N/s    | principal variation
+  1|24@73%  -01        0:00.129       4316071   33457915 c3 F3 f4 G5 c6 C4 f5\"".to_string()),
+            res);
     }
 
     #[test]

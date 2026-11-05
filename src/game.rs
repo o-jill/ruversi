@@ -477,7 +477,9 @@ impl GameBB {
                     // launch edax
                     match er.run(&self.ban.to_obf()) {
                         Ok((pos, _)) => {
-                            let xx = "0abcdefgh".find(pos.chars().nth(0).unwrap()).unwrap_or(10) as u8;
+                            let xx = "0abcdefgh".find(
+                                pos.chars().nth(0).unwrap().to_ascii_lowercase())
+                                    .ok_or(format!("invalid move from edax:\"{pos}\""))? as u8;
                             let yy = pos.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
                             xy = bitboard::cell(xx, yy);
                         },
