@@ -1006,24 +1006,34 @@ impl Weight {
 
         let mut res = self.wl2bias(prgs);
         let wh2 = self.wlayer2h(prgs);
-        for (i, _h) in hid2.iter().enumerate().step_by(16) {
+        for (i, _h) in hid2.iter().enumerate().step_by(32) {
             unsafe {
-                let inp = vld1q_s16_x2(hid2.as_ptr().add(i));
+                let inp = vld1q_s16_x4(hid2.as_ptr().add(i));
                 // relu
                 let zero = vreinterpretq_f16_s16(vmovq_n_s16(0));
                 let inp0 = vmaxq_f16(
                     zero, vreinterpretq_f16_s16(inp.0));
                 let inp1 = vmaxq_f16(
                     zero, vreinterpretq_f16_s16(inp.1));
+                let inp2 = vmaxq_f16(
+                    zero, vreinterpretq_f16_s16(inp.2));
+                let inp3 = vmaxq_f16(
+                    zero, vreinterpretq_f16_s16(inp.3));
 
-                let wei = vld1q_s16_x2(wh2.as_ptr().add(i));
+                let wei = vld1q_s16_x4(wh2.as_ptr().add(i));
                 let mul0 = vmulq_f16(
                     vreinterpretq_f16_s16(wei.0), inp0);
                 let mul1 = vmulq_f16(
                     vreinterpretq_f16_s16(wei.1), inp1);
+                let mul2 = vmulq_f16(
+                    vreinterpretq_f16_s16(wei.2), inp2);
+                let mul3 = vmulq_f16(
+                    vreinterpretq_f16_s16(wei.3), inp3);
                 let mul12 = vaddq_f16(mul0, mul1);
-                let low = vget_low_f16(mul12);
-                let high = vget_high_f16(mul12);
+                let mul34 = vaddq_f16(mul2, mul3);
+                let mul1234 = vaddq_f16(mul12, mul34);
+                let low = vget_low_f16(mul1234);
+                let high = vget_high_f16(mul1234);
                 let sum = vadd_f16(low, high);
                 let sum32 = vcvt_f32_f16(sum);
 
