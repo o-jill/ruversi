@@ -275,9 +275,19 @@ impl Weight {
         &self.vweight[offset..]
     }
 
+    pub fn wbanh(&self, progress : usize) -> &[i16] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.hvweight[offset..]
+    }
+
     pub fn wibias(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_INPUTBIAS..offset + N_WEIGHT_LAYER1]
+    }
+
+    pub fn whbias(&self, progress : usize) -> &[i16] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.hvweight[offset + N_WEIGHT_INPUTBIAS..offset + N_WEIGHT_LAYER1]
     }
 
     pub fn wlayer1(&self, progress : usize) -> &[f32] {
@@ -285,9 +295,19 @@ impl Weight {
         &self.weight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1BIAS]
     }
 
+    pub fn wlayer1h(&self, progress : usize) -> &[i16] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.hvweight[offset + N_WEIGHT_LAYER1..offset + N_WEIGHT_LAYER1BIAS]
+    }
+
     pub fn wl1bias(&self, progress : usize) -> &[f32] {
         let offset = progress * N_WEIGHT_PAD;
         &self.weight[offset + N_WEIGHT_LAYER1BIAS..offset + N_WEIGHT_LAYER2]
+    }
+
+    pub fn wl1biash(&self, progress : usize) -> &[i16] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.hweight[offset + N_WEIGHT_LAYER1BIAS..offset + N_WEIGHT_LAYER2]
     }
 
     pub fn wlayer2(&self, progress : usize) -> &[f32] {
@@ -295,9 +315,20 @@ impl Weight {
         &self.weight[offset + N_WEIGHT_LAYER2..offset + N_WEIGHT_LAYER2BIAS]
     }
 
+    pub fn wlayer2h(&self, progress : usize) -> &[i16] {
+        let offset = progress * N_WEIGHT_PAD;
+        &self.hvweight[offset + N_WEIGHT_LAYER2..offset + N_WEIGHT_LAYER2BIAS]
+    }
+
     pub fn wl2bias(&self, progress : usize) -> f32 {
         let offset = progress * N_WEIGHT_PAD;
         self.weight[offset + N_WEIGHT - 1]
+    }
+
+    #[allow(dead_code)]
+    pub fn wl2biash(&self, progress : usize) -> i16 {
+        let offset = progress * N_WEIGHT_PAD;
+        self.hweight[offset + N_WEIGHT - 1]
     }
 
     /// read eval table from a file.
