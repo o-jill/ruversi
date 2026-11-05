@@ -833,6 +833,145 @@ impl Weight {
         res
     }
 
+
+    #[cfg(target_arch="aarch64")]
+    pub fn evaluatev12bb_simd_mul_f16(&self, ban : &bitboard::BitBoard) -> f32 {
+        let prgs = ban.progress();
+        let black = ban.black;
+        let white = ban.white;
+
+        let ow = self.wbanh(prgs);
+        let wdc = self.whbias(prgs);
+        const N : usize = 16 * 2;
+        let mut hid = [0i16 ; N_HIDDEN];
+        let mut bit = bitboard::LSB_CELL;
+        // cells
+        for idx in 0..bitboard::CELL_2D {
+            let b = black & bit;
+            let w = white & bit;
+            bit <<= 1;
+            if b | w == 0 {continue;}  // no stone
+
+            let wei = if b != 0 {
+                &ow[idx * N_HIDDEN * 2 .. ]
+            } else {
+                &ow[idx * N_HIDDEN * 2 + N_HIDDEN.. ]
+            };
+            for i in (0..N_HIDDEN).step_by(N) {
+                unsafe {
+                    let w = vld1q_s16_x4(wei.as_ptr().add(i));
+                    let h = vld1q_s16_x4(hid.as_ptr().add(i));
+                    let w1 = vaddq_f16(
+                        vreinterpretq_f16_s16(h.0),
+                        vreinterpretq_f16_s16(w.0));
+                    let w2 = vaddq_f16(
+                        vreinterpretq_f16_s16(h.1),
+                        vreinterpretq_f16_s16(w.1));
+                    let w3 = vaddq_f16(
+                        vreinterpretq_f16_s16(h.2),
+                        vreinterpretq_f16_s16(w.2));
+                    let w4 = vaddq_f16(
+                        vreinterpretq_f16_s16(h.3),
+                        vreinterpretq_f16_s16(w.3));
+                    vst1q_s16_x4(hid.as_mut_ptr().add(i),
+                        int16x8x4_t(vreinterpretq_s16_f16(w1),
+                            vreinterpretq_s16_f16(w2),
+                            vreinterpretq_s16_f16(w3),
+                            vreinterpretq_s16_f16(w4)));
+                }
+            }
+        }
+        for i in (0..N_HIDDEN).step_by(N) {
+            unsafe {
+                let sum4 = vld1q_s16_x4(hid.as_ptr().add(i));
+
+                let wdc4 = vld1q_s16_x4(wdc.as_ptr().add(i));
+                let sum41 = vaddq_f16(
+                    vreinterpretq_f16_s16(sum4.0),
+                    vreinterpretq_f16_s16(wdc4.0));
+                let sum42 = vaddq_f16(
+                    vreinterpretq_f16_s16(sum4.1),
+                    vreinterpretq_f16_s16(wdc4.1));
+                let sum43 = vaddq_f16(
+                    vreinterpretq_f16_s16(sum4.2),
+                    vreinterpretq_f16_s16(wdc4.2));
+                let sum44 = vaddq_f16(
+                    vreinterpretq_f16_s16(sum4.3),
+                    vreinterpretq_f16_s16(wdc4.3));
+                // relu
+                let zero = vreinterpretq_f16_s16(vmovq_n_s16(0));
+                let rl1 = vmaxq_f16(zero, sum41);
+                let rl2 = vmaxq_f16(zero, sum42);
+                let rl3 = vmaxq_f16(zero, sum43);
+                let rl4 = vmaxq_f16(zero, sum44);
+                vst1q_s16_x4(hid.as_mut_ptr().add(i),
+                    int16x8x4_t(vreinterpretq_s16_f16(rl1),
+                        vreinterpretq_s16_f16(rl2),
+                        vreinterpretq_s16_f16(rl3),
+                        vreinterpretq_s16_f16(rl4)));
+                // vst1q_f32(hid.as_mut_ptr().add(i), rl1);
+                // vst1q_f32(hid.as_mut_ptr().add(i + 4), rl2);
+                // vst1q_f32(hid.as_mut_ptr().add(i + 8), rl3);
+                // vst1q_f32(hid.as_mut_ptr().add(i + 12), rl4);
+            }
+        }
+
+        // 2nd layer to output
+        let mut res = self.wl2bias(prgs);
+        let wh = self.wlayer1h(prgs);
+        let wdc1 = self.wl1biash(prgs);
+        let wh2 = self.wlayer2h(prgs);
+        let mut hid2 = [0i16 ; N_HIDDEN2];
+        hid2.copy_from_slice(wdc1);
+        for j in (0..N_HIDDEN).step_by(32) {
+            unsafe {
+                let inp = vreinterpretq_f16_s16(vdupq_n_s16(hid[j]));
+                for i in (0..N_HIDDEN2).step_by(16) {
+                    let wei = vld1q_s16_x2(wh.as_ptr().add(i + N_HIDDEN2 * j));
+                    let h = vld1q_s16_x2(hid2.as_ptr().add(i));
+                    let mul0 = vfmaq_f16(
+                        vreinterpretq_f16_s16(h.0),
+                        inp,
+                        vreinterpretq_f16_s16(wei.0));
+                    let mul1 = vfmaq_f16(
+                        vreinterpretq_f16_s16(h.1),
+                        inp,
+                        vreinterpretq_f16_s16(wei.1));
+                        vst1q_s16_x2(
+                            hid2.as_mut_ptr().add(i),
+                            int16x8x2_t(
+                                vreinterpretq_s16_f16(mul0),
+                                vreinterpretq_s16_f16(mul1)));
+                }
+            }
+        }
+        for (i, _h) in hid2.iter().enumerate().step_by(16) {
+            unsafe {
+                let inp = vld1q_s16_x2(hid2.as_ptr().add(i));
+                // relu
+                let zero = vreinterpretq_f16_s16(vmovq_n_s16(0));
+                let inp0 = vmaxq_f16(
+                    zero, vreinterpretq_f16_s16(inp.0));
+                let inp1 = vmaxq_f16(
+                    zero, vreinterpretq_f16_s16(inp.1));
+
+                let wei = vld1q_s16_x2(wh2.as_ptr().add(i));
+                let mul0 = vmulq_f16(
+                    vreinterpretq_f16_s16(wei.0), inp0);
+                let mul1 = vmulq_f16(
+                    vreinterpretq_f16_s16(wei.1), inp1);
+                let mul12 = vaddq_f16(mul0, mul1);
+                let low = vget_low_f16(mul12);
+                let high = vget_high_f16(mul12);
+                let sum = vadd_f16(low, high);
+                let sum32 = vcvt_f32_f16(sum);
+
+                res += vaddvq_f32(sum32);
+            }
+        }
+        res
+    }
+
     #[cfg(target_arch="x86_64")]
     pub fn evaluatev12bb_simdavx(&self, ban : &bitboard::BitBoard) -> f32 {
         let prgs = ban.progress();
