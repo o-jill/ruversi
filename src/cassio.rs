@@ -224,7 +224,8 @@ impl OthelloEngineProtocol {
                 let mut node = nodebb::NodeBB::root(depth);
                 let tt = unsafe {TRTABLE.as_mut().unwrap()};
                 let val =
-                    nodebb::NodeBB::think_ab_simple_gk_tt(
+                    nodebb::NodeBB::think_simple_gk_tt(
+                    // nodebb::NodeBB::think_ab_simple_gk_tt(
                         &ban, depth, &mut node, wei, tt).unwrap();
                 let ft = st.elapsed();
                 // eprintln!("val:{val:?} {node} {}msec", ft.as_millis());

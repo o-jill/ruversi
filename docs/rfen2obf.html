@@ -5,6 +5,7 @@
 const FMT_NONE = 0;
 const FMT_OBF = 1;
 const FMT_RFEN = 2;
+const FMT_SHORT_RFEN = 3;
 
 function readrfen(rfen) {
     let board = new Array(64);
@@ -48,20 +49,50 @@ function readrfen(rfen) {
     }
 }
 
-function readobf(line) {
-    let board = new Array(64);
-    for (y = 0; y < 8; ++y) {
-        for (x = 0; x < 8; ++x) {
-            let ch = line[y * 8 + x];
-            if (ch == '-' || ch == 'o' || ch == 'x'
-                    || ch == 'O' || ch == 'X') {
-                board[y * 8 + x] = ch.toUpperCase();
-                continue;
+function readshortrfen(rfen) {
+    let board = "";
+    let el = rfen.split(' ');
+    let turn = el[1];
+    let index = 0;
+    for (const ch of el[0]) {
+        let n = "12345678".indexOf(ch);
+        if (n >= 0) {
+            for (let _i = 0; _i <= n; ++_i) {
+                board += '-';
+                ++index;
             }
-
-            return ("[" + ch + "] is invalid...");
+            continue;
+        }
+        let s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(ch);
+        if (s >= 0) {
+            for (let _i = 0; _i <= s; ++_i) {
+                board += 'X';
+                ++index;
+            }
+            continue;
+        }
+        let g = "abcdefghijklmnopqrstuvwxyz".indexOf(ch);
+        if (g >= 0) {
+            for (let _i = 0; _i <= g; ++_i) {
+                board += 'O';
+                ++index;
+            }
+            continue;
         }
     }
+
+    if (board.length < 64) return "too short for short RFEN.";
+
+    if (turn == 'b') {
+        return board + " X";
+    } else {
+        return board + " O";
+    }
+}
+
+function readobf2rfen(line) {
+    if (line.length < 66) return "too short for obf.";
+
     let turn;
     let ch = line[65];
     if (ch == 'O' || ch == 'X' || ch == 'o' || ch == 'x') {
@@ -74,10 +105,20 @@ function readobf(line) {
     let rfen = new Array(8);
     for (y = 0; y < 8; ++y) {
         let txt = "";
-        let ch = board[y * 8];
+        let ch = line[y * 8].toUpperCase();
+        if (ch != 'O' && ch != 'X' && ch != '-') {
+            return ("[" + ch + "] is invalid @(1," + (y + 1) + ")....");
+        }
+
         let n = 1;
         for (x = 1; x < 8; ++x) {
-            if (ch == board[y * 8 + x]) {
+            let ch2 = line[y * 8 + x].toUpperCase();
+            if (ch2 != 'O' && ch2 != 'X' && ch2 != '-') {
+                return ("[" + ch + "] is invalid @("
+                    + (x + 1) + "," + (y + 1) + ")....");
+            }
+
+            if (ch == ch2) {
                 ++n;
                 continue;
             }
@@ -89,7 +130,7 @@ function readobf(line) {
             } else {  // 'O'
                 txt += abc[n];
             }
-            ch = board[y * 8 + x];
+            ch = ch2;
             n = 1;
         }
         if (ch == '-') {
@@ -110,20 +151,91 @@ function readobf(line) {
     }
 }
 
+function readobf2shortrfen(line) {
+    if (line.length < 66) return "too short for obf.";
+
+    let turn = line[65].toUpperCase();
+    if (turn != 'O' && turn != 'X') {
+        return ("[" + turn + "] is invalid as turn....");
+    }
+
+    let ABC=" ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let abc = " abcdefghijklmnopqrstuvwxyz";
+    let rfen = "";
+    let old = line[0].toUpperCase();
+    if (old != 'O' && old != 'X' && old != '-') {
+        return ("[" + old + "] is invalid @1....");
+    }
+    let n = 1;
+    for (xy = 1; xy < 64; ++xy) {
+        let ch = line[xy].toUpperCase();
+        if (ch != 'O' && ch != 'X' && ch != '-') {
+            return ("[" + ch + "] is invalid @" + (xy + 1) + "....");
+        }
+
+        if (ch == old) {
+            ++n;
+            if (old == '-' && n > 8) {
+                rfen += "8";
+                n = 1;
+            }
+            if (n > 26) {
+                if (ch == 'X') {
+                    rfen += "Z";
+                } else {  // 'O'
+                    rfen += "z";
+                }
+                n = 1;
+            }
+            continue;
+        }
+
+        if (old == '-') {
+            rfen += n;
+        } else if (old == 'X') {
+            rfen += ABC[n];
+        } else {  // 'O'
+            rfen += abc[n];
+        }
+
+        old = ch;
+        n = 1;
+    }
+
+    if (old == '-') {
+        rfen += n;
+    } else if (old == 'X') {
+        rfen += ABC[n];
+    } else {  // 'O'
+        rfen += abc[n];
+    }
+
+    if (turn == 'X') {
+        return rfen + " b";
+    } else {
+        return rfen + " w";
+    }
+}
+
 function checkfmt(line) {
     if (line.length == 0) return FMT_NONE;
 
-    let ch = line[0];
-    if (ch == '-' || ch == 'o' || ch == 'x' || ch == 'O' || ch == 'X')
+    let ch = line.at(-1);
+    if (ch == 'o' || ch == 'x' || ch == 'O' || ch == 'X')
         return FMT_OBF;
 
-    return FMT_RFEN;
+    if (line.includes('/')) return FMT_RFEN;
+
+    return FMT_SHORT_RFEN;
 }
 
 function cnvt(line) {
     if (line.length == 0) return "-";
 
-    if (checkfmt(line) == FMT_OBF) return readobf(line);
+    let fmt = checkfmt(line);
+    if (fmt == FMT_OBF) return readobf2rfen(line) + ", " + readobf2shortrfen(line);
+
+    if (fmt == FMT_SHORT_RFEN) return readshortrfen(line);
 
     return readrfen(line);
 }
@@ -202,6 +314,43 @@ function readrfen2d(rfen) {
     return genboard(board, turn);
 }
 
+function readshortrfen2d(rfen) {
+    let board = new Array(64);
+    let el = rfen.split(' ');
+    let turn = el[1];
+    let index = 0;
+    for (const row of el[0].split('/')) {
+        let x = 0;
+        for (const ch of row) {
+            let n = "12345678".indexOf(ch);
+            if (n >= 0) {
+                for (let _i = 0; _i <= n; ++_i) {
+                    board[index] = '-';
+                    ++index;
+                }
+                continue;
+            }
+            let s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(ch);
+            if (s >= 0) {
+                for (let _i = 0; _i <= s; ++_i) {
+                    board[index] = 'X';
+                    ++index;
+                }
+                continue;
+            }
+            let g = "abcdefghijklmnopqrstuvwxyz".indexOf(ch);
+            if (g >= 0) {
+                for (let _i = 0; _i <= g; ++_i) {
+                    board[index] = 'O';
+                    ++index;
+                }
+                continue;
+            }
+        }
+    }
+    return genboard(board, turn);
+}
+
 function readobf2d(line) {
     let board = new Array(64);
     for (y = 0; y < 8; ++y) {
@@ -230,9 +379,12 @@ function readobf2d(line) {
 function cvt22d(txt) {
     if (txt.length == 0) return "-";
 
-    if (checkfmt(txt) == FMT_OBF) return readobf2d(txt);
+    let fmt = checkfmt(txt);
+    if (fmt == FMT_OBF) return readobf2d(txt);
 
-    return readrfen2d(txt);
+    if (fmt == FMT_RFEN) return readrfen2d(txt);
+
+    return readshortrfen2d(txt);
 }
 
 function to2d() {

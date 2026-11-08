@@ -104,9 +104,24 @@ impl NodeBB {
         NodeBB::new(0, depth, bitboard::NONE)
     }
 
+    /**
+     * Compare other's and self values.  
+     * 
+     * # Returns  
+     * `true`: self is better than other's.  
+     * `false`: self is equal to or worse than other's.  
+     */
     fn is_better_than(&self, other : &NodeBB) -> bool {
         self.best.as_ref().unwrap().hyoka * self.teban as f32
                 > other.best.as_ref().unwrap().hyoka * other.teban as f32
+    }
+
+    /**
+     * # Returns  
+     * better node.  
+     */
+    fn max<'a>(&'a self, other : &'a NodeBB) -> &'a NodeBB {
+        if self.is_better_than(other) {self} else {other}
     }
 
     #[cfg(target_arch="x86_64")]
@@ -171,7 +186,7 @@ impl NodeBB {
         let nblank = ban.nblank();
         node.depth =
             if nblank < yomikiri {
-                if depth < yomikiri as u8 {yomikiri as u8} else {depth}
+                depth.max(yomikiri as u8)
             } else if nblank <= yose {
                 depth + 2
             } else {
@@ -293,7 +308,7 @@ impl NodeBB {
         let nblank = ban.nblank();
         node.depth =
             if nblank < yomikiri {
-                if depth < yomikiri as u8 {yomikiri as u8} else {depth}
+                depth.max(yomikiri as u8)
             } else if nblank <= yose {
                 depth + 2
             } else {
